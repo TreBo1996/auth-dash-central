@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -90,7 +89,7 @@ const UploadResumePage: React.FC = () => {
     if (!fileExtension.endsWith('.pdf') && !fileExtension.endsWith('.docx')) {
       toast({
         title: "Invalid file type",
-        description: "Please select a PDF or DOCX file.",
+        description: "Please select a PDF or DOCX file. DOCX format is recommended for best results.",
         variant: "destructive"
       });
       return;
@@ -111,7 +110,7 @@ const UploadResumePage: React.FC = () => {
       setUploadError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast({
         title: "Parse Error",
-        description: "Could not parse the document. Please try a different file.",
+        description: error instanceof Error ? error.message : "Could not parse the document. Please try a different file.",
         variant: "destructive"
       });
     } finally {
@@ -309,6 +308,9 @@ const UploadResumePage: React.FC = () => {
           <p className="text-gray-600">
             Upload your resume in PDF or DOCX format to get started
           </p>
+          <div className="mt-2 text-sm text-blue-600 bg-blue-50 p-2 rounded-lg inline-block">
+            💡 <strong>Tip:</strong> DOCX format is recommended for best parsing results
+          </div>
         </div>
 
         {/* Show upload error if any */}
@@ -317,6 +319,16 @@ const UploadResumePage: React.FC = () => {
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               {uploadError}
+              {uploadError.includes('PDF') && (
+                <div className="mt-2 text-sm">
+                  <strong>Suggested solutions:</strong>
+                  <ul className="list-disc list-inside mt-1">
+                    <li>Convert your PDF to DOCX format using an online converter</li>
+                    <li>Ensure your PDF is not password-protected or encrypted</li>
+                    <li>Try a different PDF file if the current one is corrupted</li>
+                  </ul>
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -358,9 +370,19 @@ const UploadResumePage: React.FC = () => {
                   </label>
                 </Button>
                 
-                <p className="text-sm text-gray-500 mt-4">
-                  Supported formats: PDF, DOCX (max 10MB)
-                </p>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm text-gray-500">
+                    Supported formats: PDF, DOCX (max 10MB)
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-xs">
+                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                      ✓ DOCX Recommended
+                    </span>
+                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                      ⚠ PDF Support
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
