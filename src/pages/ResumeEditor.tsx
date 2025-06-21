@@ -414,6 +414,7 @@ const ResumeEditor: React.FC = () => {
           <ExperienceSection
             experiences={parsedResume.experience}
             onChange={(experiences) => setParsedResume(prev => prev ? { ...prev, experience: experiences } : null)}
+            jobDescriptionId={resume?.job_description_id}
           />
 
           {/* Skills Section */}
