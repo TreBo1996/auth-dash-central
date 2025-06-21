@@ -1,13 +1,15 @@
 
 import React from 'react';
+import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
 import { parseResumeContent } from '../utils/parseResumeContent';
 
 interface ClassicTemplateProps {
-  resumeData: string;
+  resumeData: string | StructuredResumeData;
 }
 
 export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) => {
-  const parsedData = parseResumeContent(resumeData);
+  // Handle both structured data and legacy text parsing
+  const parsedData = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
 
   return (
     <div className="min-h-[800px] bg-white p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>

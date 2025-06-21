@@ -29,6 +29,27 @@ export interface StructuredResumeData {
   }>;
 }
 
+// Type guard for contact data
+interface ContactData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+}
+
+// Type guard for summary data
+interface SummaryData {
+  summary?: string;
+}
+
+const isContactData = (data: any): data is ContactData => {
+  return typeof data === 'object' && data !== null;
+};
+
+const isSummaryData = (data: any): data is SummaryData => {
+  return typeof data === 'object' && data !== null;
+};
+
 export const fetchStructuredResumeData = async (optimizedResumeId: string): Promise<StructuredResumeData> => {
   console.log('Fetching structured resume data for:', optimizedResumeId);
 
@@ -91,8 +112,9 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
   const contactSection = sections.find(s => s.section_type === 'contact');
   const summarySection = sections.find(s => s.section_type === 'summary');
 
-  const contactData = contactSection?.content || {};
-  const summaryData = summarySection?.content || {};
+  // Safely extract contact and summary data with type guards
+  const contactData: ContactData = isContactData(contactSection?.content) ? contactSection.content : {};
+  const summaryData: SummaryData = isSummaryData(summarySection?.content) ? summarySection.content : {};
 
   // Build structured data
   const structuredData: StructuredResumeData = {

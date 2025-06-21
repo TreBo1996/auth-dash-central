@@ -1,15 +1,17 @@
 
 import React from 'react';
+import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
 import { templateConfigs } from '../templateConfigs';
 import { parseResumeContent } from '../utils/parseResumeContent';
 
 interface AcademicTemplateProps {
-  resumeData: string;
+  resumeData: string | StructuredResumeData;
 }
 
 export const AcademicTemplate: React.FC<AcademicTemplateProps> = ({ resumeData }) => {
   const config = templateConfigs.academic;
-  const parsedData = parseResumeContent(resumeData);
+  // Handle both structured data and legacy text parsing
+  const parsedData = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
 
   return (
     <div 

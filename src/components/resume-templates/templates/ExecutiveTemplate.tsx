@@ -1,14 +1,16 @@
 
 import React from 'react';
+import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
 import { parseResumeContent } from '../utils/parseResumeContent';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
 interface ExecutiveTemplateProps {
-  resumeData: string;
+  resumeData: string | StructuredResumeData;
 }
 
 export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData }) => {
-  const parsedData = parseResumeContent(resumeData);
+  // Handle both structured data and legacy text parsing
+  const parsedData = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
 
   return (
     <div className="min-h-[800px] bg-white" style={{ fontFamily: 'Inter, sans-serif' }}>
