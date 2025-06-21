@@ -1,18 +1,5 @@
-
 import React from 'react';
-import { ParsedResume } from '@/pages/ResumeEditor';
-
-interface TemplateConfig {
-  layout: string;
-  colors: {
-    primary: string;
-    accent: string;
-  };
-  fonts: {
-    heading: string;
-    body: string;
-  };
-}
+import { ParsedResume, TemplateConfig } from '@/types/resume';
 
 interface ResumeTemplateRendererProps {
   resume: ParsedResume;

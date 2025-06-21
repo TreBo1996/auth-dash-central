@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Crown, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ResumeTemplateRenderer } from './ResumeTemplateRenderer';
-import { ParsedResume } from '@/pages/ResumeEditor';
+import { ParsedResume } from '@/types/resume';
 
 interface Template {
   id: string;

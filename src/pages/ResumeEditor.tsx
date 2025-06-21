@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -17,6 +18,7 @@ import { ResumeTemplateRenderer } from '@/components/templates/ResumeTemplateRen
 import { PDFExporter } from '@/components/templates/PDFExporter';
 import { useUserPlan } from '@/hooks/useUserPlan';
 import { useTemplatePreferences } from '@/hooks/useTemplatePreferences';
+import { ParsedResume } from '@/types/resume';
 
 interface OptimizedResume {
   id: string;
