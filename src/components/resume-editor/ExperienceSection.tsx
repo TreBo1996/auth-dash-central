@@ -66,14 +66,16 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   const hasAIOptimizedContent = (description: string) => {
     // Check if content has AI-optimized characteristics
     return description.includes('•') && (
-      description.length > 200 || // Longer descriptions are likely AI-optimized
+      description.length > 150 || // Longer descriptions are likely AI-optimized
       description.includes('%') || // Contains metrics
       description.includes('$') || // Contains financial figures
       /\d+\+/.test(description) || // Contains numbers with +
       description.includes('Led') ||
       description.includes('Managed') ||
       description.includes('Implemented') ||
-      description.includes('Achieved')
+      description.includes('Achieved') ||
+      description.includes('utilizing') ||
+      description.includes('coordinated')
     );
   };
 
@@ -178,11 +180,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 value={experience.description}
                 onChange={(e) => updateExperience(experience.id, 'description', e.target.value)}
                 placeholder="• Describe your key responsibilities and achievements...&#10;• Use bullet points for better readability&#10;• Include quantifiable results when possible"
-                className="min-h-[200px] font-mono text-sm leading-relaxed"
-                style={{ 
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
-                }}
+                className="min-h-[200px] text-sm leading-relaxed"
               />
               <div className="mt-2 space-y-1">
                 {hasAIOptimizedContent(experience.description) ? (

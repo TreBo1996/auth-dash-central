@@ -75,14 +75,13 @@ const ResumeEditor: React.FC = () => {
       if (error) throw error;
       
       setResume(data);
-      console.log('=== DEBUGGING GENERATED TEXT ===');
-      console.log('Full generated_text length:', data.generated_text.length);
-      console.log('First 500 characters:', data.generated_text.substring(0, 500));
-      console.log('Contains bullet points (•):', data.generated_text.includes('•'));
-      console.log('Contains EXPERIENCE section:', data.generated_text.includes('EXPERIENCE'));
+      console.log('=== FETCHED OPTIMIZED RESUME ===');
+      console.log('Generated text length:', data.generated_text.length);
+      console.log('Has bullet points:', data.generated_text.includes('•'));
+      console.log('Preview:', data.generated_text.substring(0, 300));
       
-      // Try AI parsing first, with better fallback to preserve bullet points
-      await parseResumeWithAI(data.generated_text);
+      // Parse the AI-optimized resume with direct preservation
+      parseOptimizedResume(data.generated_text);
     } catch (error) {
       console.error('Error fetching resume:', error);
       toast({
@@ -96,49 +95,10 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
-  const parseResumeWithAI = async (text: string) => {
-    try {
-      setParsing(true);
-      console.log('Parsing optimized resume with AI...');
-      
-      const { data, error } = await supabase.functions.invoke('parse-resume-sections', {
-        body: { resume_text: text }
-      });
-
-      if (error) {
-        console.error('AI parsing error:', error);
-        throw error;
-      }
-
-      console.log('AI parsing successful:', data);
-      setParsedResume(data);
-    } catch (error) {
-      console.error('Error parsing resume with AI:', error);
-      console.log('Using bullet-point preserving fallback...');
-      
-      // Enhanced fallback that preserves bullet points from AI-optimized content
-      const preservedParsed = parseWithBulletPreservation(text);
-      setParsedResume(preservedParsed);
-      
-      toast({
-        title: "Parsing Notice",
-        description: "Using enhanced parsing to preserve AI-optimized bullet points.",
-        variant: "default"
-      });
-    } finally {
-      setParsing(false);
-    }
-  };
-
-  const parseWithBulletPreservation = (text: string): ParsedResume => {
-    console.log('=== BULLET PRESERVATION PARSING ===');
-    console.log('Input text length:', text.length);
-    console.log('Text has bullet points:', text.includes('•'));
+  const parseOptimizedResume = (text: string) => {
+    console.log('=== PARSING AI-OPTIMIZED RESUME ===');
     
-    // Split by sections but preserve all bullet point formatting
     const sections = text.split(/\n\n+/);
-    console.log('Number of sections found:', sections.length);
-    
     const parsed: ParsedResume = {
       summary: '',
       experience: [],
@@ -150,24 +110,19 @@ const ResumeEditor: React.FC = () => {
     let currentSection = '';
     let experienceBlocks: string[] = [];
     
-    sections.forEach((section, index) => {
+    sections.forEach((section) => {
       const trimmed = section.trim();
       const lowerSection = trimmed.toLowerCase();
       
-      console.log(`Processing section ${index}:`, trimmed.substring(0, 100));
-      
       if (lowerSection.startsWith('summary') || lowerSection.startsWith('professional summary')) {
         parsed.summary = trimmed.replace(/^(summary|professional summary)[\s\n]*/gi, '').trim();
-        console.log('Found summary, length:', parsed.summary.length);
       } 
       else if (lowerSection.startsWith('experience') || lowerSection.startsWith('work experience')) {
         currentSection = 'experience';
-        console.log('Found experience section header');
       }
       else if (lowerSection.startsWith('skills')) {
         currentSection = 'skills';
         const skillsText = trimmed.replace(/^skills[\s\n]*/gi, '').trim();
-        // Handle both comma-separated and bullet point skills
         if (skillsText.includes('•')) {
           parsed.skills = skillsText
             .split('•')
@@ -179,7 +134,6 @@ const ResumeEditor: React.FC = () => {
             .map(s => s.trim())
             .filter(s => s && s.length > 1);
         }
-        console.log('Found skills, count:', parsed.skills.length);
       }
       else if (lowerSection.startsWith('education')) {
         currentSection = 'education';
@@ -195,7 +149,6 @@ const ResumeEditor: React.FC = () => {
             });
           }
         });
-        console.log('Found education, count:', parsed.education.length);
       }
       else if (lowerSection.startsWith('certifications')) {
         currentSection = 'certifications';
@@ -211,43 +164,38 @@ const ResumeEditor: React.FC = () => {
             });
           }
         });
-        console.log('Found certifications, count:', parsed.certifications.length);
       }
-      else if (currentSection === 'experience' && trimmed) {
-        // Collect experience blocks, preserving bullet points
+      else if (currentSection === 'experience' && trimmed && !lowerSection.startsWith('skills') && !lowerSection.startsWith('education')) {
         experienceBlocks.push(trimmed);
       }
     });
 
-    // Parse experience blocks with bullet point preservation
+    // Parse experience blocks with direct bullet point preservation
     if (experienceBlocks.length > 0) {
-      console.log('=== PARSING EXPERIENCE BLOCKS WITH BULLET PRESERVATION ===');
-      console.log('Experience blocks to process:', experienceBlocks.length);
+      console.log('=== PROCESSING EXPERIENCE BLOCKS ===');
+      console.log('Number of experience blocks:', experienceBlocks.length);
       
       experienceBlocks.forEach((block, index) => {
-        console.log(`Processing experience block ${index}:`, block.substring(0, 100));
+        const lines = block.split('\n');
+        const firstLine = lines[0].trim();
         
-        const lines = block.split('\n').filter(line => line.trim());
-        if (lines.length === 0) return;
-        
-        const firstLine = lines[0];
-        
-        // Look for job header pattern: Company | Role | Dates
+        // Look for company | role | dates pattern
         if (firstLine.includes('|')) {
           const parts = firstLine.split('|').map(p => p.trim());
           
           if (parts.length >= 2) {
-            // Extract dates from the third part if available
             const datePart = parts[2] || 'Present';
             const dateMatch = datePart.match(/(.+?)\s*-\s*(.+)/);
             
-            // Get all remaining lines as description, PRESERVING bullet points
+            // Get all remaining lines as description - PRESERVE BULLET POINTS EXACTLY
             const descriptionLines = lines.slice(1);
             const description = descriptionLines.join('\n');
             
-            console.log(`Experience ${index}: Company=${parts[0]}, Role=${parts[1]}`);
-            console.log(`Description with bullets:`, description.includes('•'));
-            console.log(`Description preview:`, description.substring(0, 200));
+            console.log(`Experience ${index + 1}:`);
+            console.log('Company:', parts[0]);
+            console.log('Role:', parts[1]);
+            console.log('Description has bullets:', description.includes('•'));
+            console.log('Description preview:', description.substring(0, 150));
             
             parsed.experience.push({
               id: Date.now().toString() + index,
@@ -259,48 +207,31 @@ const ResumeEditor: React.FC = () => {
             });
           }
         } else {
-          // If no clear header pattern, treat the entire block as a single job
-          console.log('No clear header pattern, treating as single job entry');
+          // Single job with all content as description
           parsed.experience.push({
             id: Date.now().toString() + index,
             company: 'Company Name',
             role: 'Job Title',
             startDate: '2023',
             endDate: 'Present',
-            description: block // Preserve the entire block with bullet points
+            description: block
           });
         }
       });
     }
 
-    // Final fallback: if no experience was parsed but we have bullet points, preserve them
-    if (parsed.experience.length === 0 && text.includes('•')) {
-      console.log('Final fallback: preserving bullet points in single job entry');
-      
-      // Extract the section that contains bullet points
-      const bulletSection = sections.find(section => section.includes('•')) || text;
-      
-      parsed.experience.push({
-        id: '1',
-        company: 'Company Name',
-        role: 'Job Title',
-        startDate: '2023',
-        endDate: 'Present',
-        description: bulletSection.substring(0, 3000) // Preserve bullet points
-      });
-    }
-
-    console.log('=== FINAL PARSED RESULT WITH BULLET PRESERVATION ===');
-    console.log('Summary length:', parsed.summary.length);
+    console.log('=== FINAL PARSED RESULT ===');
     console.log('Experience count:', parsed.experience.length);
-    console.log('Experience descriptions with bullets:', parsed.experience.map(exp => ({
-      company: exp.company,
-      hasBullets: exp.description.includes('•'),
-      descLength: exp.description.length,
-      preview: exp.description.substring(0, 100)
-    })));
+    parsed.experience.forEach((exp, i) => {
+      console.log(`Experience ${i + 1}:`, {
+        company: exp.company,
+        role: exp.role,
+        hasBullets: exp.description.includes('•'),
+        descLength: exp.description.length
+      });
+    });
 
-    return parsed;
+    setParsedResume(parsed);
   };
 
   const handleSave = async () => {
