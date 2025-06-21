@@ -3,10 +3,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight, Sparkles, Palette } from 'lucide-react';
+import { FileText, Calendar, Edit, Trash2, Sparkles, Palette } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { User } from '@supabase/supabase-js';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +48,6 @@ const Dashboard: React.FC = () => {
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [optimizedResumes, setOptimizedResumes] = useState<OptimizedResume[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -387,10 +385,6 @@ const Dashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-3 w-3 mr-1" />
-                        View
-                      </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
@@ -417,32 +411,6 @@ const Dashboard: React.FC = () => {
                         Delete
                       </Button>
                     </div>
-                    
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="w-full justify-start p-0 h-auto"
-                          onClick={() => toggleExpanded(optimizedResume.id)}
-                        >
-                          {expandedItems.has(optimizedResume.id) ? (
-                            <ChevronDown className="h-4 w-4 mr-1" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 mr-1" />
-                          )}
-                          <span className="text-sm text-gray-600">Preview optimized content</span>
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="mt-2">
-                        <div className="bg-purple-50 rounded-lg p-3 max-h-32 overflow-y-auto">
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                            {optimizedResume.generated_text.substring(0, 300)}
-                            {optimizedResume.generated_text.length > 300 && '...'}
-                          </p>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
                   </CardContent>
                 </Card>
               ))}
