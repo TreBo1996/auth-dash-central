@@ -107,44 +107,60 @@ serve(async (req) => {
 
     console.log('Calling OpenAI API for resume optimization...');
 
-    const prompt = `You are an expert resume optimizer and ATS specialist. Your task is to optimize the resume for the specific job description.
+    const prompt = `You are an expert resume optimizer and ATS specialist. Your task is to optimize the resume for the specific job description and return the result as structured JSON.
 
 CRITICAL OUTPUT FORMAT REQUIREMENTS:
-You MUST format the output using EXACTLY this structure with NO markdown formatting:
+You MUST return ONLY valid JSON in exactly this structure:
 
-SUMMARY
-[Write a compelling 2-3 sentence professional summary here]
-
-EXPERIENCE
-[Company Name] | [Job Title] | [Start Date] - [End Date]
-• [Achievement/responsibility with metrics and keywords]
-• [Achievement/responsibility with metrics and keywords]
-• [Achievement/responsibility with metrics and keywords]
-• [Achievement/responsibility with metrics and keywords]
-
-[Next Company Name] | [Job Title] | [Start Date] - [End Date]
-• [Achievement/responsibility with metrics and keywords]
-• [Achievement/responsibility with metrics and keywords]
-• [Achievement/responsibility with metrics and keywords]
-
-SKILLS
-[Skill 1], [Skill 2], [Skill 3], [Skill 4], [Skill 5]
-
-EDUCATION
-[Degree] from [Institution] ([Year])
-
-CERTIFICATIONS
-[Certification Name] from [Issuer] ([Year])
+{
+  "name": "Full Name",
+  "contact": {
+    "email": "email@example.com",
+    "phone": "+1234567890",
+    "location": "City, State"
+  },
+  "summary": "Professional summary paragraph",
+  "experience": [
+    {
+      "title": "Job Title",
+      "company": "Company Name",
+      "duration": "Start Date - End Date",
+      "bullets": [
+        "Achievement/responsibility with metrics and keywords",
+        "Achievement/responsibility with metrics and keywords",
+        "Achievement/responsibility with metrics and keywords"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "category": "Technical Skills",
+      "items": ["Skill 1", "Skill 2", "Skill 3"]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Degree Name",
+      "school": "Institution Name",
+      "year": "Year"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Certification Name",
+      "issuer": "Issuing Organization",
+      "year": "Year"
+    }
+  ]
+}
 
 OPTIMIZATION GUIDELINES:
-1. Use the bullet symbol • (not - or *) for ALL bullet points
-2. Each job should have 3-5 bullet points maximum
-3. Include quantifiable metrics (percentages, dollar amounts, team sizes)
-4. Use powerful action verbs (Led, Developed, Implemented, Managed, Coordinated)
-5. Integrate relevant keywords from the job description naturally
-6. Keep all original company names, job titles, and dates EXACTLY as provided
-7. Do NOT use any markdown formatting (no **bold**, no #headers, no ---lines)
-8. Use plain text with the exact structure shown above
+1. Each job should have 3-5 bullet points maximum
+2. Include quantifiable metrics (percentages, dollar amounts, team sizes)
+3. Use powerful action verbs (Led, Developed, Implemented, Managed, Coordinated)
+4. Integrate relevant keywords from the job description naturally
+5. Keep all original company names, job titles, and dates EXACTLY as provided
+6. Return ONLY the JSON structure above, no additional text or markdown
 
 Original Resume:
 ${resume.parsed_text}
@@ -152,7 +168,7 @@ ${resume.parsed_text}
 Target Job Description:
 ${jobDescription.parsed_text}
 
-Provide ONLY the optimized resume in the exact plain text format specified above.`;
+Provide ONLY the optimized resume as valid JSON in the exact structure specified above.`;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -165,7 +181,7 @@ Provide ONLY the optimized resume in the exact plain text format specified above
         messages: [
           {
             role: 'system',
-            content: 'You are a professional resume optimization expert. You create ATS-friendly resumes using only plain text formatting with bullet points (•). Never use markdown formatting. Always follow the exact structure provided in the prompt.'
+            content: 'You are a professional resume optimization expert. You create ATS-friendly resumes using structured JSON format. Always return valid JSON only, never include markdown or additional text.'
           },
           {
             role: 'user',
@@ -187,10 +203,24 @@ Provide ONLY the optimized resume in the exact plain text format specified above
     const generatedText = openAIData.choices[0].message.content;
 
     console.log('Generated resume length:', generatedText.length);
-    console.log('Contains bullet points:', generatedText.includes('•'));
     console.log('Generated preview:', generatedText.substring(0, 500));
 
-    // Save optimized resume to database
+    // Validate that the response is valid JSON
+    let structuredResume;
+    try {
+      structuredResume = JSON.parse(generatedText);
+      console.log('Successfully parsed structured resume:', {
+        name: structuredResume.name,
+        experienceCount: structuredResume.experience?.length || 0,
+        skillsCount: structuredResume.skills?.length || 0,
+        educationCount: structuredResume.education?.length || 0
+      });
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response as JSON:', parseError);
+      throw new Error('OpenAI response was not valid JSON');
+    }
+
+    // Save optimized resume to database (store as JSON string)
     console.log('Saving optimized resume to database...');
     const { data: optimizedResume, error: saveError } = await supabase
       .from('optimized_resumes')

@@ -1,3 +1,4 @@
+
 interface ParsedResume {
   name: string;
   email: string;
@@ -21,7 +22,63 @@ interface ParsedResume {
   }>;
 }
 
+interface StructuredResumeData {
+  name: string;
+  contact: {
+    email: string;
+    phone: string;
+    location: string;
+  };
+  summary: string;
+  experience: Array<{
+    title: string;
+    company: string;
+    duration: string;
+    bullets: string[];
+  }>;
+  education: Array<{
+    degree: string;
+    school: string;
+    year: string;
+  }>;
+  skills: Array<{
+    category: string;
+    items: string[];
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer: string;
+    year: string;
+  }>;
+}
+
 export const parseResumeContent = (resumeText: string): ParsedResume => {
+  console.log('Parsing resume data:', resumeText.substring(0, 200) + '...');
+
+  // First, try to parse as structured JSON (new format)
+  try {
+    const structuredData: StructuredResumeData = JSON.parse(resumeText);
+    
+    // Validate that it has the expected structure
+    if (structuredData && typeof structuredData === 'object' && structuredData.name) {
+      console.log('Found structured JSON data, using direct parsing');
+      
+      return {
+        name: structuredData.name || 'Professional Name',
+        email: structuredData.contact?.email || '',
+        phone: structuredData.contact?.phone || '',
+        location: structuredData.contact?.location || '',
+        summary: structuredData.summary || '',
+        experience: structuredData.experience || [],
+        education: structuredData.education || [],
+        skills: structuredData.skills || []
+      };
+    }
+  } catch (e) {
+    console.log('Not structured JSON, falling back to text parsing');
+  }
+
+  // Fallback to legacy text parsing for existing resumes
   const result: ParsedResume = {
     name: '',
     email: '',
@@ -32,27 +89,6 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     education: [],
     skills: []
   };
-
-  console.log('Parsing resume text:', resumeText.substring(0, 500) + '...');
-
-  // Try to parse as JSON first (in case it's structured data)
-  try {
-    const jsonData = JSON.parse(resumeText);
-    if (jsonData && typeof jsonData === 'object') {
-      return {
-        name: jsonData.name || jsonData.fullName || '',
-        email: jsonData.email || '',
-        phone: jsonData.phone || jsonData.phoneNumber || '',
-        location: jsonData.location || jsonData.address || '',
-        summary: jsonData.summary || jsonData.professionalSummary || jsonData.objective || '',
-        experience: jsonData.experience || jsonData.workExperience || [],
-        education: jsonData.education || [],
-        skills: jsonData.skills || []
-      };
-    }
-  } catch (e) {
-    // Not JSON, continue with text parsing
-  }
 
   const lines = resumeText.split('\n').map(line => line.trim()).filter(line => line);
   
@@ -96,7 +132,7 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     if (result.name) break;
   }
 
-  // Enhanced summary extraction with multiple patterns
+  // Enhanced summary extraction
   const summaryPatterns = [
     /(?:PROFESSIONAL\s+SUMMARY|SUMMARY|OBJECTIVE|PROFILE)(?:\s*:?)?\s*\n((?:(?!\n(?:[A-Z\s]{3,}|EXPERIENCE|EDUCATION|SKILLS|WORK)).+\n?)*)/i,
     /(?:SUMMARY|OBJECTIVE)(?:\s*:?)?\s*((?:(?!\n[A-Z]{3,}).+\n?)*)/i
@@ -110,7 +146,7 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     }
   }
 
-  // Enhanced experience extraction - specifically for the actual data format
+  // Enhanced experience extraction - handle both formats
   const experiencePatterns = [
     /(?:PROFESSIONAL\s+EXPERIENCE|WORK\s+EXPERIENCE|EXPERIENCE)(?:\s*:?)?\s*\n((?:(?!\n(?:EDUCATION|SKILLS|CERTIFICATIONS|SUMMARY)).+\n?)*)/i
   ];
@@ -125,43 +161,50 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
   }
 
   if (experienceText) {
-    console.log('Found experience text:', experienceText.substring(0, 500) + '...');
+    console.log('Found experience text, parsing...');
     
-    // Split experience text into blocks separated by double newlines or company entries
     const experienceBlocks = experienceText.split(/\n\s*\n/).filter(block => block.trim());
-    
-    console.log('Experience blocks found:', experienceBlocks.length);
     
     for (const block of experienceBlocks) {
       const blockLines = block.split('\n').filter(line => line.trim());
       if (blockLines.length === 0) continue;
       
-      // Look for the first line that contains pipe separators (Company | Title | Date format)
+      // Look for pipe-separated format (both Company|Title|Date and Title|Company|Date)
       const headerLine = blockLines.find(line => line.includes('|') && line.split('|').length >= 2);
       
       if (headerLine) {
         const parts = headerLine.split('|').map(part => part.trim());
         
         if (parts.length >= 2) {
-          // Format: Company | Job Title | Date (or just Company | Job Title)
-          const company = parts[0];
-          const title = parts[1];
-          const duration = parts[2] || 'Date Range';
+          let company, title, duration;
           
-          // Extract bullets from the remaining lines in the block
+          // Try to determine format by checking for common company indicators
+          if (parts[0].toLowerCase().includes('inc') || parts[0].toLowerCase().includes('corp') || 
+              parts[0].toLowerCase().includes('llc') || parts[0].toLowerCase().includes('ltd') ||
+              parts[0].match(/^[A-Z][a-z]+(\s+[A-Z][a-z]*)*$/)) {
+            // Company | Title | Date format
+            company = parts[0];
+            title = parts[1];
+            duration = parts[2] || 'Date Range';
+          } else {
+            // Title | Company | Date format
+            title = parts[0];
+            company = parts[1];
+            duration = parts[2] || 'Date Range';
+          }
+          
+          // Extract bullets from the remaining lines
           const bullets = [];
           const bulletLines = blockLines.slice(blockLines.indexOf(headerLine) + 1);
           
           for (const line of bulletLines) {
             const trimmedLine = line.trim();
-            // Look for bullet points starting with •, -, *, or just regular text
             if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
               const bullet = trimmedLine.replace(/^[•\-\*]\s*/, '').trim();
               if (bullet && bullet.length > 5) {
                 bullets.push(bullet);
               }
             } else if (trimmedLine.length > 10 && !trimmedLine.includes('|')) {
-              // Regular text that might be a bullet point without a marker
               bullets.push(trimmedLine);
             }
           }
@@ -173,60 +216,11 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
               duration,
               bullets
             });
-            
-            console.log(`Added experience: ${title} at ${company} (${bullets.length} bullets)`);
           }
         }
-      }
-    }
-    
-    // Fallback: If no experiences found with the above method, try line-by-line parsing
-    if (result.experience.length === 0) {
-      console.log('Fallback parsing method...');
-      
-      const allLines = experienceText.split('\n').filter(line => line.trim());
-      let currentExp = null;
-      
-      for (const line of allLines) {
-        const trimmedLine = line.trim();
-        
-        // Check if this line looks like a header (contains |)
-        if (trimmedLine.includes('|')) {
-          // Save previous experience if exists
-          if (currentExp && currentExp.company && currentExp.title) {
-            result.experience.push(currentExp);
-          }
-          
-          // Start new experience
-          const parts = trimmedLine.split('|').map(part => part.trim());
-          if (parts.length >= 2) {
-            currentExp = {
-              company: parts[0],
-              title: parts[1],
-              duration: parts[2] || 'Date Range',
-              bullets: []
-            };
-          }
-        } else if (currentExp && (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*'))) {
-          // Add bullet to current experience
-          const bullet = trimmedLine.replace(/^[•\-\*]\s*/, '').trim();
-          if (bullet && bullet.length > 5) {
-            currentExp.bullets.push(bullet);
-          }
-        }
-      }
-      
-      // Don't forget the last experience
-      if (currentExp && currentExp.company && currentExp.title) {
-        result.experience.push(currentExp);
       }
     }
   }
-
-  console.log('Final parsed experience count:', result.experience.length);
-  result.experience.forEach((exp, index) => {
-    console.log(`Experience ${index + 1}: ${exp.title} at ${exp.company} (${exp.bullets.length} bullets)`);
-  });
 
   // Enhanced education extraction
   const educationPatterns = [
@@ -237,15 +231,9 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     const educationMatch = resumeText.match(pattern);
     if (educationMatch && educationMatch[1]) {
       const eduText = educationMatch[1];
-      
-      // Multiple education parsing strategies
       const eduStrategies = [
-        // Degree, School, Year format
         /([^,\n]+),\s*([^,\n]+)(?:,\s*(\d{4}|\d{4}-\d{4}))?/g,
-        // School | Degree | Year format
         /([^|\n]+)\s*\|\s*([^|\n]+)\s*\|\s*([^|\n]+)/g,
-        // Line-by-line format
-        /^([A-Z][^|\n]*?)(?:\s*[\-–]\s*([^|\n]*?))?(?:\s*[\-–]\s*(\d{4}|\d{4}-\d{4}))?$/gm
       ];
       
       for (const strategy of eduStrategies) {
@@ -255,7 +243,6 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
           let school = eduMatch[2] ? eduMatch[2].trim() : '';
           let year = eduMatch[3] ? eduMatch[3].trim() : 'N/A';
           
-          // Swap if school and degree seem reversed
           if (degree.toLowerCase().includes('university') || degree.toLowerCase().includes('college')) {
             [degree, school] = [school, degree];
           }
@@ -294,25 +281,12 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
               });
             }
           }
-        } else if (line.match(/^[•\-\*]/)) {
-          const skillItem = line.replace(/^[•\-\*]\s*/, '').trim();
-          if (skillItem) {
-            const existingGeneral = result.skills.find(s => s.category === 'Technical Skills');
-            if (existingGeneral) {
-              existingGeneral.items.push(skillItem);
-            } else {
-              result.skills.push({
-                category: 'Technical Skills',
-                items: [skillItem]
-              });
-            }
-          }
         }
       }
     }
   }
 
-  // Fallback data to ensure templates always have content to display
+  // Fallback data to ensure templates always have content
   if (!result.name) {
     result.name = 'Professional Name';
   }
