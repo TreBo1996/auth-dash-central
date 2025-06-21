@@ -53,7 +53,7 @@ const parsePDF = async (file: File): Promise<string> => {
     
     console.log('Loading PDF document in worker-free mode...');
     
-    // Force PDF.js to work without workers by using specific configuration
+    // Force PDF.js to work without workers using the most restrictive configuration
     const pdf = await pdfjsLib.getDocument({ 
       data: arrayBuffer,
       verbosity: 0, // Reduce console noise
@@ -63,12 +63,13 @@ const parsePDF = async (file: File): Promise<string> => {
       disableAutoFetch: true,
       disableStream: true,
       useSystemFonts: true,
-      // Force main thread operation
+      // Force main thread operation - no worker references
       standardFontDataUrl: undefined,
       cMapUrl: undefined,
       cMapPacked: false,
-      // Explicitly disable worker
-      worker: null
+      // Explicitly disable worker - this is the key setting
+      worker: null,
+      disableWorker: true
     }).promise;
     
     console.log(`PDF loaded successfully, ${pdf.numPages} pages`);
@@ -80,8 +81,7 @@ const parsePDF = async (file: File): Promise<string> => {
       try {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent({
-          includeMarkedContent: false,
-          disableCombineTextItems: false
+          includeMarkedContent: false
         });
         
         const pageText = textContent.items
