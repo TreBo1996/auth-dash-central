@@ -107,22 +107,43 @@ serve(async (req) => {
 
     console.log('Calling OpenAI API for resume optimization...');
 
-    const prompt = `You are an expert resume optimizer. Your task is to take the original resume below and optimize it for the specific job description provided, while maintaining the exact structure and ALL original jobs/positions.
+    const prompt = `You are an expert resume optimizer and ATS (Applicant Tracking System) specialist. Your task is to optimize the original resume for the specific job description while maintaining authenticity and ALL original job information.
 
 CRITICAL REQUIREMENTS:
-1. PRESERVE ALL ORIGINAL JOBS: Keep every single job title, company name, and employment dates exactly as they appear in the original resume
-2. REWRITE DESCRIPTIONS ONLY: Focus solely on rewriting the job descriptions/responsibilities for each position
-3. USE BULLET POINTS: Format each job description as 3-5 compelling bullet points starting with strong action verbs
-4. TAILOR TO JOB: Incorporate keywords and requirements from the target job description into the bullet points
-5. QUANTIFY ACHIEVEMENTS: Include specific metrics, numbers, and measurable results where possible
-6. MAINTAIN SECTIONS: Keep all original sections (Summary, Experience, Skills, Education, etc.) in the same order
+1. PRESERVE ALL ORIGINAL JOBS: Keep every single job title, company name, and employment dates exactly as they appear
+2. OPTIMIZE JOB DESCRIPTIONS ONLY: Focus exclusively on rewriting job descriptions using strategic bullet points
+3. MANDATORY BULLET POINT FORMAT: Each job MUST have exactly 3-5 bullet points using "•" symbol
+4. STRATEGIC KEYWORD INTEGRATION: Analyze the job description and weave relevant keywords naturally into bullet points
+5. QUANTIFY ACHIEVEMENTS: Include specific metrics, percentages, dollar amounts, and measurable results
+6. MAINTAIN AUTHENTICITY: Only use realistic achievements that could reasonably apply to the original role
 
-FORMATTING GUIDELINES:
-- Use clear section headers (SUMMARY, EXPERIENCE, SKILLS, EDUCATION, CERTIFICATIONS)
-- For each job: Company Name | Job Title | Start Date - End Date
-- Follow each job header with 3-5 bullet points using "•" symbol
-- Use strong action verbs (Led, Developed, Implemented, Managed, Created, etc.)
-- Keep the same overall structure and flow as the original resume
+BULLET POINT OPTIMIZATION STRATEGY:
+- Start each bullet with powerful action verbs (Led, Developed, Implemented, Managed, Coordinated, Optimized, etc.)
+- Include 1-2 key industry terms/keywords from the job description per bullet point
+- Focus on transferable skills that match the target role requirements
+- Use quantifiable results (increased efficiency by X%, managed budgets of $X, coordinated X projects, etc.)
+- Emphasize leadership, problem-solving, and project management aspects
+
+KEYWORD EXTRACTION INSTRUCTIONS:
+Carefully analyze the job description and identify:
+- Core responsibilities and required skills
+- Industry-specific terminology
+- Technical tools and software mentioned
+- Soft skills emphasized (communication, leadership, organization, etc.)
+- Key action words and phrases used
+
+FORMATTING REQUIREMENTS:
+- Section headers: SUMMARY, EXPERIENCE, SKILLS, EDUCATION, CERTIFICATIONS
+- Job format: Company Name | Job Title | Start Date - End Date
+- Follow immediately with 3-5 bullet points using "•" symbol
+- Maintain consistent formatting throughout
+- Keep all other sections (Summary, Skills, Education) intact
+
+EXAMPLE OPTIMIZATION:
+Original: "Responsible for managing projects and working with teams."
+Optimized: "• Coordinated cross-functional project teams of 8+ members, ensuring 95% on-time delivery of key initiatives
+• Implemented project tracking systems using Gantt charts, reducing project delays by 30%
+• Managed stakeholder communication across multiple venues, facilitating seamless project execution"
 
 Original Resume:
 ${resume.parsed_text}
@@ -130,7 +151,7 @@ ${resume.parsed_text}
 Target Job Description:
 ${jobDescription.parsed_text}
 
-Please provide the complete optimized resume that maintains all original jobs while strategically tailoring each job description to align with the target role requirements.`;
+Please provide the complete optimized resume with strategically enhanced bullet points that incorporate relevant keywords from the job description while maintaining the original job structure and authenticity.`;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -143,7 +164,7 @@ Please provide the complete optimized resume that maintains all original jobs wh
         messages: [
           {
             role: 'system',
-            content: 'You are an expert resume writer and career coach. You specialize in preserving candidate authenticity while strategically optimizing job descriptions to match target opportunities. Always maintain the original structure and job history while enhancing descriptions with relevant keywords and achievements.'
+            content: 'You are a world-class resume optimization expert with deep knowledge of ATS systems, keyword optimization, and professional formatting. You specialize in creating compelling bullet points that showcase achievements while strategically incorporating job-relevant keywords. You always maintain candidate authenticity while maximizing their competitiveness for specific roles.'
           },
           {
             role: 'user',
