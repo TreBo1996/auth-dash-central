@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -28,31 +27,6 @@ interface OptimizedResume {
   generated_text: string;
   created_at: string;
   updated_at: string;
-}
-
-interface ParsedResume {
-  summary: string;
-  experience: Array<{
-    id: string;
-    company: string;
-    role: string;
-    startDate: string;
-    endDate: string;
-    description: string;
-  }>;
-  skills: string[];
-  education: Array<{
-    id: string;
-    institution: string;
-    degree: string;
-    year: string;
-  }>;
-  certifications: Array<{
-    id: string;
-    name: string;
-    issuer: string;
-    year: string;
-  }>;
 }
 
 const ResumeEditor: React.FC = () => {
