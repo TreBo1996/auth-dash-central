@@ -26,12 +26,12 @@ export const parseDocument = async (file: File): Promise<string> => {
     
     // Provide more specific error messages
     if (error instanceof Error) {
-      if (error.message.includes('Invalid PDF') || error.message.includes('invalid')) {
-        throw new Error('The PDF file appears to be corrupted or invalid. Please try a different file or convert to DOCX format.');
-      } else if (error.message.includes('password') || error.message.includes('encrypted')) {
-        throw new Error('Password-protected or encrypted PDFs are not supported. Please use an unprotected file or convert to DOCX format.');
+      if (error.message.includes('No text could be extracted')) {
+        throw new Error('No text could be extracted from this PDF. This may be because:\n• The PDF is image-based or scanned\n• The PDF is password-protected\n• The PDF format is not supported\n\nPlease try converting to DOCX format for better results.');
+      } else if (error.message.includes('Server processing failed')) {
+        throw new Error('PDF processing failed on the server. Please try:\n• Converting your PDF to DOCX format\n• Ensuring your PDF is not password-protected\n• Using a different PDF file');
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
-        throw new Error('Network error while processing PDF. Please check your connection and try again, or use DOCX format instead.');
+        throw new Error('Network error while processing PDF. Please check your connection and try again.');
       } else if (error.message.includes('Unsupported file type')) {
         throw error; // Keep the specific message
       } else {
@@ -75,7 +75,7 @@ const parsePDFServerSide = async (file: File): Promise<string> => {
       throw new Error(data.error || 'Server-side PDF parsing failed');
     }
 
-    console.log(`Server-side PDF parsing successful: ${data.text.length} characters from ${data.pages} pages`);
+    console.log(`Server-side PDF parsing successful: ${data.text.length} characters extracted`);
     return data.text;
 
   } catch (error) {
