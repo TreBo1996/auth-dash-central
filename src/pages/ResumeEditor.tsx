@@ -55,7 +55,6 @@ const ResumeEditor: React.FC = () => {
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [parsing, setParsing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -75,13 +74,13 @@ const ResumeEditor: React.FC = () => {
       if (error) throw error;
       
       setResume(data);
-      console.log('=== FETCHED OPTIMIZED RESUME ===');
-      console.log('Generated text length:', data.generated_text.length);
-      console.log('Has bullet points:', data.generated_text.includes('•'));
-      console.log('Preview:', data.generated_text.substring(0, 300));
+      console.log('=== RESUME FETCH SUCCESS ===');
+      console.log('Raw generated_text length:', data.generated_text.length);
+      console.log('First 500 chars:', data.generated_text.substring(0, 500));
+      console.log('Contains bullet points:', data.generated_text.includes('•'));
       
-      // Parse the AI-optimized resume with direct preservation
-      parseOptimizedResume(data.generated_text);
+      // Parse the resume with enhanced parsing
+      parseResumeContent(data.generated_text);
     } catch (error) {
       console.error('Error fetching resume:', error);
       toast({
@@ -95,10 +94,11 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
-  const parseOptimizedResume = (text: string) => {
-    console.log('=== PARSING AI-OPTIMIZED RESUME ===');
-    
-    const sections = text.split(/\n\n+/);
+  const parseResumeContent = (text: string) => {
+    console.log('=== STARTING RESUME PARSING ===');
+    console.log('Input text length:', text.length);
+    console.log('Text preview:', text.substring(0, 200));
+
     const parsed: ParsedResume = {
       summary: '',
       experience: [],
@@ -107,128 +107,136 @@ const ResumeEditor: React.FC = () => {
       certifications: []
     };
 
+    // Split into major sections
+    const sections = text.split(/\n\n+/);
+    console.log('Split into sections:', sections.length);
+
     let currentSection = '';
-    let experienceBlocks: string[] = [];
-    
-    sections.forEach((section) => {
+    let experienceEntries: string[] = [];
+
+    sections.forEach((section, index) => {
       const trimmed = section.trim();
-      const lowerSection = trimmed.toLowerCase();
+      const upperSection = trimmed.toUpperCase();
       
-      if (lowerSection.startsWith('summary') || lowerSection.startsWith('professional summary')) {
-        parsed.summary = trimmed.replace(/^(summary|professional summary)[\s\n]*/gi, '').trim();
-      } 
-      else if (lowerSection.startsWith('experience') || lowerSection.startsWith('work experience')) {
+      console.log(`Section ${index}:`, trimmed.substring(0, 100));
+
+      if (upperSection.startsWith('SUMMARY') || upperSection.startsWith('PROFESSIONAL SUMMARY')) {
+        currentSection = 'summary';
+        parsed.summary = trimmed.replace(/^(SUMMARY|PROFESSIONAL SUMMARY)[\s\n]*/i, '').trim();
+        console.log('Found summary:', parsed.summary.substring(0, 100));
+      }
+      else if (upperSection.startsWith('EXPERIENCE') || upperSection.startsWith('WORK EXPERIENCE')) {
         currentSection = 'experience';
+        console.log('Found experience section header');
       }
-      else if (lowerSection.startsWith('skills')) {
+      else if (upperSection.startsWith('SKILLS')) {
         currentSection = 'skills';
-        const skillsText = trimmed.replace(/^skills[\s\n]*/gi, '').trim();
-        if (skillsText.includes('•')) {
-          parsed.skills = skillsText
-            .split('•')
-            .map(s => s.trim())
-            .filter(s => s && s.length > 1);
-        } else {
-          parsed.skills = skillsText
-            .split(/[,\n]/)
-            .map(s => s.trim())
-            .filter(s => s && s.length > 1);
-        }
+        const skillsText = trimmed.replace(/^SKILLS[\s\n]*/i, '').trim();
+        parsed.skills = skillsText.split(/[,\n]/).map(s => s.trim()).filter(s => s.length > 0);
+        console.log('Found skills:', parsed.skills);
       }
-      else if (lowerSection.startsWith('education')) {
+      else if (upperSection.startsWith('EDUCATION')) {
         currentSection = 'education';
-        const educationLines = trimmed.replace(/^education[\s\n]*/gi, '').split('\n').filter(line => line.trim());
+        const educationText = trimmed.replace(/^EDUCATION[\s\n]*/i, '').trim();
+        const educationLines = educationText.split('\n').filter(line => line.trim());
         educationLines.forEach(line => {
-          if (line.trim()) {
-            const parts = line.split('|').map(p => p.trim());
+          const parts = line.split(' from ');
+          if (parts.length >= 2) {
+            const yearMatch = line.match(/\((\d{4})\)/);
             parsed.education.push({
               id: Date.now().toString() + Math.random(),
-              institution: parts[0] || 'University',
-              degree: parts[1] || 'Degree',
-              year: parts[2] || line.match(/\d{4}/)?.[0] || '2020'
+              degree: parts[0].trim(),
+              institution: parts[1].replace(/\s*\(\d{4}\)/, '').trim(),
+              year: yearMatch ? yearMatch[1] : '2020'
             });
           }
         });
+        console.log('Found education:', parsed.education);
       }
-      else if (lowerSection.startsWith('certifications')) {
+      else if (upperSection.startsWith('CERTIFICATIONS')) {
         currentSection = 'certifications';
-        const certLines = trimmed.replace(/^certifications[\s\n]*/gi, '').split('\n').filter(line => line.trim());
+        const certsText = trimmed.replace(/^CERTIFICATIONS[\s\n]*/i, '').trim();
+        const certLines = certsText.split('\n').filter(line => line.trim());
         certLines.forEach(line => {
-          if (line.trim()) {
-            const parts = line.split('|').map(p => p.trim());
+          const parts = line.split(' from ');
+          if (parts.length >= 2) {
+            const yearMatch = line.match(/\((\d{4})\)/);
             parsed.certifications.push({
               id: Date.now().toString() + Math.random(),
-              name: parts[0] || line.trim(),
-              issuer: parts[1] || 'Issuing Organization',
-              year: parts[2] || line.match(/\d{4}/)?.[0] || '2023'
+              name: parts[0].trim(),
+              issuer: parts[1].replace(/\s*\(\d{4}\)/, '').trim(),
+              year: yearMatch ? yearMatch[1] : '2023'
             });
           }
         });
+        console.log('Found certifications:', parsed.certifications);
       }
-      else if (currentSection === 'experience' && trimmed && !lowerSection.startsWith('skills') && !lowerSection.startsWith('education')) {
-        experienceBlocks.push(trimmed);
+      else if (currentSection === 'experience' && trimmed.length > 0 && !upperSection.startsWith('SKILLS')) {
+        experienceEntries.push(trimmed);
+        console.log('Added experience entry:', trimmed.substring(0, 100));
       }
     });
 
-    // Parse experience blocks with direct bullet point preservation
-    if (experienceBlocks.length > 0) {
-      console.log('=== PROCESSING EXPERIENCE BLOCKS ===');
-      console.log('Number of experience blocks:', experienceBlocks.length);
+    // Process experience entries
+    console.log('=== PROCESSING EXPERIENCE ENTRIES ===');
+    console.log('Experience entries count:', experienceEntries.length);
+
+    experienceEntries.forEach((entry, index) => {
+      console.log(`Processing experience ${index + 1}:`, entry.substring(0, 100));
       
-      experienceBlocks.forEach((block, index) => {
-        const lines = block.split('\n');
-        const firstLine = lines[0].trim();
+      const lines = entry.split('\n');
+      const headerLine = lines[0].trim();
+      
+      // Look for company | role | dates pattern
+      if (headerLine.includes('|')) {
+        const parts = headerLine.split('|').map(p => p.trim());
+        console.log('Header parts:', parts);
         
-        // Look for company | role | dates pattern
-        if (firstLine.includes('|')) {
-          const parts = firstLine.split('|').map(p => p.trim());
+        if (parts.length >= 3) {
+          const [company, role, dates] = parts;
+          const dateRange = dates.split(' - ');
           
-          if (parts.length >= 2) {
-            const datePart = parts[2] || 'Present';
-            const dateMatch = datePart.match(/(.+?)\s*-\s*(.+)/);
-            
-            // Get all remaining lines as description - PRESERVE BULLET POINTS EXACTLY
-            const descriptionLines = lines.slice(1);
-            const description = descriptionLines.join('\n');
-            
-            console.log(`Experience ${index + 1}:`);
-            console.log('Company:', parts[0]);
-            console.log('Role:', parts[1]);
-            console.log('Description has bullets:', description.includes('•'));
-            console.log('Description preview:', description.substring(0, 150));
-            
-            parsed.experience.push({
-              id: Date.now().toString() + index,
-              company: parts[0] || 'Company Name',
-              role: parts[1] || 'Job Title',
-              startDate: dateMatch ? dateMatch[1].trim() : datePart.split('-')[0]?.trim() || '2023',
-              endDate: dateMatch ? dateMatch[2].trim() : datePart.split('-')[1]?.trim() || 'Present',
-              description: description || 'Job responsibilities and achievements'
-            });
-          }
-        } else {
-          // Single job with all content as description
+          // Get bullet points (all lines after the header)
+          const bulletLines = lines.slice(1).filter(line => line.trim());
+          const description = bulletLines.join('\n');
+          
+          console.log('Bullet points found:', bulletLines.length);
+          console.log('Description preview:', description.substring(0, 150));
+          
           parsed.experience.push({
             id: Date.now().toString() + index,
-            company: 'Company Name',
-            role: 'Job Title',
-            startDate: '2023',
-            endDate: 'Present',
-            description: block
+            company: company || 'Company Name',
+            role: role || 'Job Title', 
+            startDate: dateRange[0]?.trim() || '2023',
+            endDate: dateRange[1]?.trim() || 'Present',
+            description: description || '• Job responsibilities and achievements'
           });
         }
-      });
-    }
+      } else {
+        // Fallback for single block entries
+        parsed.experience.push({
+          id: Date.now().toString() + index,
+          company: 'Company Name',
+          role: 'Job Title',
+          startDate: '2023',
+          endDate: 'Present',
+          description: entry
+        });
+      }
+    });
 
-    console.log('=== FINAL PARSED RESULT ===');
+    console.log('=== PARSING COMPLETE ===');
+    console.log('Final parsed result:');
+    console.log('Summary length:', parsed.summary.length);
     console.log('Experience count:', parsed.experience.length);
+    console.log('Skills count:', parsed.skills.length);
+    console.log('Education count:', parsed.education.length);
+    console.log('Certifications count:', parsed.certifications.length);
+
     parsed.experience.forEach((exp, i) => {
-      console.log(`Experience ${i + 1}:`, {
-        company: exp.company,
-        role: exp.role,
-        hasBullets: exp.description.includes('•'),
-        descLength: exp.description.length
-      });
+      console.log(`Experience ${i + 1}: ${exp.company} | ${exp.role}`);
+      console.log(`  Description has bullets: ${exp.description.includes('•')}`);
+      console.log(`  Description length: ${exp.description.length}`);
     });
 
     setParsedResume(parsed);
@@ -344,13 +352,7 @@ const ResumeEditor: React.FC = () => {
               Back to Dashboard
             </Button>
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
-            <p className="text-gray-600">Edit your AI-optimized resume with preserved bullet points</p>
-            {parsing && (
-              <p className="text-sm text-blue-600 mt-1">
-                <Loader2 className="h-3 w-3 inline mr-1 animate-spin" />
-                Parsing resume sections...
-              </p>
-            )}
+            <p className="text-gray-600">Edit your AI-optimized resume</p>
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (

@@ -105,63 +105,46 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase secrets.');
     }
 
-    console.log('Calling OpenAI API for two-stage resume optimization...');
+    console.log('Calling OpenAI API for resume optimization...');
 
-    const prompt = `You are an expert resume optimizer and ATS (Applicant Tracking System) specialist. Your task is to optimize the original resume for the specific job description using a TWO-STAGE APPROACH.
+    const prompt = `You are an expert resume optimizer and ATS specialist. Your task is to optimize the resume for the specific job description.
 
-CRITICAL REQUIREMENTS:
-1. PRESERVE ALL ORIGINAL JOBS: Keep every single job title, company name, and employment dates exactly as they appear
-2. TWO-STAGE PROCESSING for each job description:
-   - STAGE 1: Break down paragraph descriptions into 3-5 logical bullet points
-   - STAGE 2: Optimize each bullet point with strategic keywords and metrics
-3. MANDATORY BULLET POINT FORMAT: Each job MUST have exactly 3-5 bullet points using "•" symbol
-4. MAINTAIN AUTHENTICITY: Only use realistic achievements that could reasonably apply to the original role
+CRITICAL OUTPUT FORMAT REQUIREMENTS:
+You MUST format the output using EXACTLY this structure with NO markdown formatting:
 
-TWO-STAGE PROCESSING INSTRUCTIONS:
+SUMMARY
+[Write a compelling 2-3 sentence professional summary here]
 
-STAGE 1 - CONTENT BREAKDOWN:
-- If job description is in paragraph format: Break it into 3-5 key responsibilities/achievements
-- If job description already has bullet points: Use existing structure as foundation
-- Identify core responsibilities, key achievements, and quantifiable results
-- Ensure each bullet point represents a distinct accomplishment or responsibility
+EXPERIENCE
+[Company Name] | [Job Title] | [Start Date] - [End Date]
+• [Achievement/responsibility with metrics and keywords]
+• [Achievement/responsibility with metrics and keywords]
+• [Achievement/responsibility with metrics and keywords]
+• [Achievement/responsibility with metrics and keywords]
 
-STAGE 2 - STRATEGIC OPTIMIZATION:
-- Analyze the job description for relevant keywords and requirements
-- Integrate 1-2 key industry terms per bullet point naturally
-- Add quantifiable metrics (percentages, dollar amounts, team sizes, project counts)
-- Use powerful action verbs (Led, Developed, Implemented, Managed, Coordinated, Optimized)
-- Align content with target role requirements and responsibilities
+[Next Company Name] | [Job Title] | [Start Date] - [End Date]
+• [Achievement/responsibility with metrics and keywords]
+• [Achievement/responsibility with metrics and keywords]
+• [Achievement/responsibility with metrics and keywords]
 
-KEYWORD INTEGRATION STRATEGY:
-Carefully analyze the job description and identify:
-- Core responsibilities and required skills
-- Industry-specific terminology and technical tools
-- Soft skills emphasized (communication, leadership, organization)
-- Key action words and measurable outcomes mentioned
-- Company culture and values indicated
+SKILLS
+[Skill 1], [Skill 2], [Skill 3], [Skill 4], [Skill 5]
 
-BULLET POINT OPTIMIZATION FORMULA:
-Each bullet should follow: [Action Verb] + [What You Did] + [How/Tools Used] + [Quantifiable Result]
+EDUCATION
+[Degree] from [Institution] ([Year])
 
-Example Transformation:
-Original Paragraph: "Responsible for managing projects and working with teams to deliver results on time."
+CERTIFICATIONS
+[Certification Name] from [Issuer] ([Year])
 
-STAGE 1 - Breakdown:
-• Managed multiple cross-functional projects
-• Collaborated with diverse teams 
-• Ensured timely project completion
-
-STAGE 2 - Optimization:
-• Led cross-functional project teams of 8+ members, utilizing Agile methodologies to achieve 95% on-time delivery rate
-• Coordinated stakeholder communication across 5 departments, implementing weekly status meetings that improved project transparency by 40%
-• Managed project budgets totaling $2M+, delivering initiatives 15% under budget through strategic resource allocation
-
-FORMATTING REQUIREMENTS:
-- Section headers: SUMMARY, EXPERIENCE, SKILLS, EDUCATION, CERTIFICATIONS
-- Job format: Company Name | Job Title | Start Date - End Date
-- Follow immediately with 3-5 bullet points using "•" symbol
-- Maintain consistent formatting throughout
-- Keep all other sections (Summary, Skills, Education) intact but enhance with relevant keywords
+OPTIMIZATION GUIDELINES:
+1. Use the bullet symbol • (not - or *) for ALL bullet points
+2. Each job should have 3-5 bullet points maximum
+3. Include quantifiable metrics (percentages, dollar amounts, team sizes)
+4. Use powerful action verbs (Led, Developed, Implemented, Managed, Coordinated)
+5. Integrate relevant keywords from the job description naturally
+6. Keep all original company names, job titles, and dates EXACTLY as provided
+7. Do NOT use any markdown formatting (no **bold**, no #headers, no ---lines)
+8. Use plain text with the exact structure shown above
 
 Original Resume:
 ${resume.parsed_text}
@@ -169,7 +152,7 @@ ${resume.parsed_text}
 Target Job Description:
 ${jobDescription.parsed_text}
 
-Please provide the complete optimized resume with strategically enhanced bullet points that result from the two-stage processing approach. Each job description should be transformed from paragraph format (if applicable) into 3-5 optimized bullet points that incorporate relevant keywords while maintaining authenticity.`;
+Provide ONLY the optimized resume in the exact plain text format specified above.`;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -182,7 +165,7 @@ Please provide the complete optimized resume with strategically enhanced bullet 
         messages: [
           {
             role: 'system',
-            content: 'You are a world-class resume optimization expert specializing in ATS systems and strategic keyword integration. You excel at breaking down complex job descriptions into compelling bullet points and then optimizing each one for maximum impact. You understand both the technical requirements of ATS systems and the human psychology of hiring managers. Your two-stage approach ensures that every resume you optimize maintains authenticity while maximizing competitiveness for specific roles.'
+            content: 'You are a professional resume optimization expert. You create ATS-friendly resumes using only plain text formatting with bullet points (•). Never use markdown formatting. Always follow the exact structure provided in the prompt.'
           },
           {
             role: 'user',
@@ -203,7 +186,9 @@ Please provide the complete optimized resume with strategically enhanced bullet 
     const openAIData = await openAIResponse.json();
     const generatedText = openAIData.choices[0].message.content;
 
-    console.log('Successfully generated optimized resume with two-stage processing');
+    console.log('Generated resume length:', generatedText.length);
+    console.log('Contains bullet points:', generatedText.includes('•'));
+    console.log('Generated preview:', generatedText.substring(0, 500));
 
     // Save optimized resume to database
     console.log('Saving optimized resume to database...');
@@ -223,7 +208,7 @@ Please provide the complete optimized resume with strategically enhanced bullet 
       throw new Error(`Failed to save optimized resume: ${saveError.message}`);
     }
 
-    console.log('Successfully created optimized resume with enhanced bullet points:', optimizedResume.id);
+    console.log('Successfully created optimized resume:', optimizedResume.id);
 
     return new Response(JSON.stringify({ 
       success: true, 
