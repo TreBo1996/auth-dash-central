@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -57,6 +56,7 @@ const ResumeEditor: React.FC = () => {
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [parsing, setParsing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -76,7 +76,7 @@ const ResumeEditor: React.FC = () => {
       if (error) throw error;
       
       setResume(data);
-      parseResumeText(data.generated_text);
+      await parseResumeWithAI(data.generated_text);
     } catch (error) {
       console.error('Error fetching resume:', error);
       toast({
@@ -90,7 +90,41 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
-  const parseResumeText = (text: string) => {
+  const parseResumeWithAI = async (text: string) => {
+    try {
+      setParsing(true);
+      console.log('Parsing optimized resume with AI...');
+      
+      const { data, error } = await supabase.functions.invoke('parse-resume-sections', {
+        body: { resume_text: text }
+      });
+
+      if (error) {
+        console.error('AI parsing error:', error);
+        throw error;
+      }
+
+      console.log('AI parsing successful:', data);
+      setParsedResume(data);
+    } catch (error) {
+      console.error('Error parsing resume with AI:', error);
+      console.log('Falling back to basic parsing...');
+      
+      // Fallback to basic parsing
+      const basicParsed = parseResumeTextBasic(text);
+      setParsedResume(basicParsed);
+      
+      toast({
+        title: "Parsing Notice",
+        description: "Using basic parsing as AI parsing failed.",
+        variant: "default"
+      });
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const parseResumeTextBasic = (text: string): ParsedResume => {
     // Simple parsing logic - in production, you might want more sophisticated parsing
     const sections = text.split('\n\n');
     const parsed: ParsedResume = {
@@ -160,7 +194,7 @@ const ResumeEditor: React.FC = () => {
       });
     }
 
-    setParsedResume(parsed);
+    return parsed;
   };
 
   const handleSave = async () => {
@@ -274,6 +308,12 @@ const ResumeEditor: React.FC = () => {
             </Button>
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
             <p className="text-gray-600">Edit your AI-optimized resume</p>
+            {parsing && (
+              <p className="text-sm text-blue-600 mt-1">
+                <Loader2 className="h-3 w-3 inline mr-1 animate-spin" />
+                Parsing resume sections...
+              </p>
+            )}
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
