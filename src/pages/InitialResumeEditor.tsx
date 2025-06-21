@@ -20,29 +20,38 @@ interface Resume {
   updated_at: string;
 }
 
+interface Experience {
+  title: string;
+  company: string;
+  duration: string;
+  bullets: string[];
+}
+
+interface SkillGroup {
+  category: string;
+  items: string[];
+}
+
+interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  year: string;
+}
+
+interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  year: string;
+}
+
 interface ParsedResume {
   summary: string;
-  experience: Array<{
-    id: string;
-    company: string;
-    role: string;
-    startDate: string;
-    endDate: string;
-    description: string;
-  }>;
-  skills: string[];
-  education: Array<{
-    id: string;
-    institution: string;
-    degree: string;
-    year: string;
-  }>;
-  certifications: Array<{
-    id: string;
-    name: string;
-    issuer: string;
-    year: string;
-  }>;
+  experience: Experience[];
+  skills: SkillGroup[];
+  education: Education[];
+  certifications: Certification[];
 }
 
 const InitialResumeEditor: React.FC = () => {
@@ -163,15 +172,13 @@ const InitialResumeEditor: React.FC = () => {
             
             const parts = line.split('|').map(p => p.trim());
             currentJob = {
-              id: Date.now().toString() + Math.random(),
               company: parts[0] || 'Company Name',
-              role: parts[1] || 'Job Title',
-              startDate: parts[2]?.split('-')[0]?.trim() || '2023',
-              endDate: parts[2]?.split('-')[1]?.trim() || '2024',
-              description: ''
+              title: parts[1] || 'Job Title',
+              duration: parts[2] || '2023 - 2024',
+              bullets: []
             };
           } else if (currentJob && line.trim()) {
-            currentJob.description += (currentJob.description ? '\n' : '') + line.trim();
+            currentJob.bullets.push(line.trim());
           }
         });
         
@@ -181,18 +188,23 @@ const InitialResumeEditor: React.FC = () => {
         
         if (parsed.experience.length === 0 && experienceLines.length > 0) {
           parsed.experience.push({
-            id: '1',
             company: 'Company Name',
-            role: 'Job Title',
-            startDate: '2023',
-            endDate: '2024',
-            description: experienceLines.join('\n')
+            title: 'Job Title',
+            duration: '2023 - 2024',
+            bullets: experienceLines.filter(line => line.trim()).map(line => line.trim())
           });
         }
       } else if (lowerSection.includes('skill')) {
         currentSection = 'skills';
         const skillsText = lines.slice(1).join(' ').replace(/skills/gi, '').trim();
-        parsed.skills = skillsText.split(/[,•\-\n|]/).map(s => s.trim()).filter(s => s && s.length > 1);
+        const skillItems = skillsText.split(/[,•\-\n|]/).map(s => s.trim()).filter(s => s && s.length > 1);
+        
+        if (skillItems.length > 0) {
+          parsed.skills.push({
+            category: 'Technical Skills',
+            items: skillItems
+          });
+        }
       } else if (lowerSection.includes('education')) {
         currentSection = 'education';
         const educationLines = lines.slice(1);
@@ -227,14 +239,15 @@ const InitialResumeEditor: React.FC = () => {
       parsed.summary = firstLines || 'Professional Summary';
       
       if (text.length > firstLines.length) {
-        parsed.experience.push({
-          id: '1',
-          company: 'Company Name',
-          role: 'Job Title',
-          startDate: '2023',
-          endDate: '2024',
-          description: text.substring(firstLines.length).trim() || 'Job description and achievements...'
-        });
+        const remainingText = text.substring(firstLines.length).trim();
+        if (remainingText) {
+          parsed.experience.push({
+            company: 'Company Name',
+            title: 'Job Title',
+            duration: '2023 - 2024',
+            bullets: [remainingText]
+          });
+        }
       }
     }
 
@@ -285,12 +298,20 @@ const InitialResumeEditor: React.FC = () => {
     if (parsed.experience.length > 0) {
       text += `EXPERIENCE\n`;
       parsed.experience.forEach(exp => {
-        text += `${exp.company} | ${exp.role} | ${exp.startDate} - ${exp.endDate}\n${exp.description}\n\n`;
+        text += `${exp.company} | ${exp.title} | ${exp.duration}\n`;
+        exp.bullets.forEach(bullet => {
+          text += `• ${bullet}\n`;
+        });
+        text += '\n';
       });
     }
     
     if (parsed.skills.length > 0) {
-      text += `SKILLS\n${parsed.skills.join(', ')}\n\n`;
+      text += `SKILLS\n`;
+      parsed.skills.forEach(skillGroup => {
+        text += `${skillGroup.category}: ${skillGroup.items.join(', ')}\n`;
+      });
+      text += '\n';
     }
     
     if (parsed.education.length > 0) {

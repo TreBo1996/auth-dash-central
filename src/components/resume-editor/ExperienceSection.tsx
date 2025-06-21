@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Briefcase, Plus, Trash2, ListOrdered, Sparkles } from 'lucide-react';
+import { Briefcase, Plus, Trash2, ListOrdered, Sparkles, X } from 'lucide-react';
 import { BulletSuggestionsModal } from './BulletSuggestionsModal';
 
 interface Experience {
