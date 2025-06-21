@@ -120,6 +120,132 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_certifications: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          issuer: string
+          name: string
+          optimized_resume_id: string
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          issuer: string
+          name: string
+          optimized_resume_id: string
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          issuer?: string
+          name?: string
+          optimized_resume_id?: string
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_certifications_optimized_resume_id_fkey"
+            columns: ["optimized_resume_id"]
+            isOneToOne: false
+            referencedRelation: "optimized_resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resume_education: {
+        Row: {
+          created_at: string
+          degree: string
+          display_order: number
+          id: string
+          optimized_resume_id: string
+          school: string
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          degree: string
+          display_order?: number
+          id?: string
+          optimized_resume_id: string
+          school: string
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          created_at?: string
+          degree?: string
+          display_order?: number
+          id?: string
+          optimized_resume_id?: string
+          school?: string
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_education_optimized_resume_id_fkey"
+            columns: ["optimized_resume_id"]
+            isOneToOne: false
+            referencedRelation: "optimized_resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resume_experiences: {
+        Row: {
+          bullets: string[]
+          company: string
+          created_at: string
+          display_order: number
+          duration: string
+          id: string
+          optimized_resume_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bullets?: string[]
+          company: string
+          created_at?: string
+          display_order?: number
+          duration: string
+          id?: string
+          optimized_resume_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bullets?: string[]
+          company?: string
+          created_at?: string
+          display_order?: number
+          duration?: string
+          id?: string
+          optimized_resume_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_experiences_optimized_resume_id_fkey"
+            columns: ["optimized_resume_id"]
+            isOneToOne: false
+            referencedRelation: "optimized_resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resume_exports: {
         Row: {
           created_at: string
@@ -164,6 +290,79 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "resume_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resume_sections: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          optimized_resume_id: string
+          section_type: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          optimized_resume_id: string
+          section_type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          optimized_resume_id?: string
+          section_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_sections_optimized_resume_id_fkey"
+            columns: ["optimized_resume_id"]
+            isOneToOne: false
+            referencedRelation: "optimized_resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resume_skills: {
+        Row: {
+          category: string
+          created_at: string
+          display_order: number
+          id: string
+          items: string[]
+          optimized_resume_id: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          items?: string[]
+          optimized_resume_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          items?: string[]
+          optimized_resume_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_skills_optimized_resume_id_fkey"
+            columns: ["optimized_resume_id"]
+            isOneToOne: false
+            referencedRelation: "optimized_resumes"
             referencedColumns: ["id"]
           },
         ]

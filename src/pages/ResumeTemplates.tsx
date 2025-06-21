@@ -169,6 +169,7 @@ const ResumeTemplates: React.FC = () => {
                     <ResumePreview
                       template={selectedTemplate}
                       resumeData={optimizedResume.generated_text}
+                      optimizedResumeId={optimizedResumeId}
                     />
                   </div>
                 </CardContent>

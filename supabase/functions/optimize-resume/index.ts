@@ -220,7 +220,7 @@ Provide ONLY the optimized resume as valid JSON in the exact structure specified
       throw new Error('OpenAI response was not valid JSON');
     }
 
-    // Save optimized resume to database (store as JSON string)
+    // Save optimized resume to database (store as JSON string for backward compatibility)
     console.log('Saving optimized resume to database...');
     const { data: optimizedResume, error: saveError } = await supabase
       .from('optimized_resumes')
@@ -239,6 +239,94 @@ Provide ONLY the optimized resume as valid JSON in the exact structure specified
     }
 
     console.log('Successfully created optimized resume:', optimizedResume.id);
+
+    // Now store structured data in the new tables
+    console.log('Storing structured resume data...');
+
+    // Store contact information and summary
+    const contactData = {
+      name: structuredResume.name || '',
+      email: structuredResume.contact?.email || '',
+      phone: structuredResume.contact?.phone || '',
+      location: structuredResume.contact?.location || ''
+    };
+
+    await supabase
+      .from('resume_sections')
+      .insert([
+        {
+          optimized_resume_id: optimizedResume.id,
+          section_type: 'contact',
+          content: contactData
+        },
+        {
+          optimized_resume_id: optimizedResume.id,
+          section_type: 'summary',
+          content: { summary: structuredResume.summary || '' }
+        }
+      ]);
+
+    // Store experiences
+    if (structuredResume.experience && structuredResume.experience.length > 0) {
+      const experienceInserts = structuredResume.experience.map((exp, index) => ({
+        optimized_resume_id: optimizedResume.id,
+        title: exp.title || '',
+        company: exp.company || '',
+        duration: exp.duration || '',
+        bullets: exp.bullets || [],
+        display_order: index
+      }));
+
+      await supabase
+        .from('resume_experiences')
+        .insert(experienceInserts);
+    }
+
+    // Store skills
+    if (structuredResume.skills && structuredResume.skills.length > 0) {
+      const skillsInserts = structuredResume.skills.map((skill, index) => ({
+        optimized_resume_id: optimizedResume.id,
+        category: skill.category || '',
+        items: skill.items || [],
+        display_order: index
+      }));
+
+      await supabase
+        .from('resume_skills')
+        .insert(skillsInserts);
+    }
+
+    // Store education
+    if (structuredResume.education && structuredResume.education.length > 0) {
+      const educationInserts = structuredResume.education.map((edu, index) => ({
+        optimized_resume_id: optimizedResume.id,
+        degree: edu.degree || '',
+        school: edu.school || '',
+        year: edu.year || '',
+        display_order: index
+      }));
+
+      await supabase
+        .from('resume_education')
+        .insert(educationInserts);
+    }
+
+    // Store certifications
+    if (structuredResume.certifications && structuredResume.certifications.length > 0) {
+      const certificationsInserts = structuredResume.certifications.map((cert, index) => ({
+        optimized_resume_id: optimizedResume.id,
+        name: cert.name || '',
+        issuer: cert.issuer || '',
+        year: cert.year || '',
+        display_order: index
+      }));
+
+      await supabase
+        .from('resume_certifications')
+        .insert(certificationsInserts);
+    }
+
+    console.log('Successfully stored all structured resume data');
 
     return new Response(JSON.stringify({ 
       success: true, 
