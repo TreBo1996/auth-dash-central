@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight } from
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { User } from '@supabase/supabase-js';
 
 interface Resume {
   id: string;
@@ -24,13 +24,6 @@ interface JobDescription {
   parsed_text: string;
   file_name: string | null;
   created_at: string;
-}
-
-interface User {
-  email: string;
-  user_metadata?: {
-    full_name?: string;
-  };
 }
 
 const Dashboard: React.FC = () => {
