@@ -22,17 +22,17 @@ export interface TemplateConfig {
 }
 
 export const templateConfigs: Record<string, TemplateConfig> = {
-  modern: {
-    id: 'modern',
-    name: 'Modern',
+  sidebar: {
+    id: 'sidebar',
+    name: 'Sidebar Professional',
     category: 'Professional',
-    description: 'Clean and minimal design with accent colors',
+    description: 'Two-column layout with gray sidebar for contact and skills',
     colors: {
-      primary: '#2563eb',
-      secondary: '#64748b',
-      accent: '#06b6d4',
-      text: '#1e293b',
-      background: '#ffffff'
+      primary: '#4a5568',
+      secondary: '#718096',
+      accent: '#2d3748',
+      text: '#2d3748',
+      background: '#f7fafc'
     },
     fonts: {
       heading: 'Inter, sans-serif',
@@ -43,11 +43,53 @@ export const templateConfigs: Record<string, TemplateConfig> = {
       spacing: 'normal'
     }
   },
+  modern: {
+    id: 'modern',
+    name: 'Modern Clean',
+    category: 'Professional',
+    description: 'Clean single-column design with skill tags and modern typography',
+    colors: {
+      primary: '#1a202c',
+      secondary: '#4a5568',
+      accent: '#3182ce',
+      text: '#2d3748',
+      background: '#ffffff'
+    },
+    fonts: {
+      heading: 'Inter, sans-serif',
+      body: 'Inter, sans-serif'
+    },
+    layout: {
+      columns: 1,
+      spacing: 'normal'
+    }
+  },
+  executive: {
+    id: 'executive',
+    name: 'Executive Banner',
+    category: 'Corporate',
+    description: 'Professional header banner with sophisticated single-column layout',
+    colors: {
+      primary: '#2b6cb0',
+      secondary: '#4299e1',
+      accent: '#1a365d',
+      text: '#2d3748',
+      background: '#ffffff'
+    },
+    fonts: {
+      heading: 'Inter, sans-serif',
+      body: 'Inter, sans-serif'
+    },
+    layout: {
+      columns: 1,
+      spacing: 'normal'
+    }
+  },
   classic: {
     id: 'classic',
-    name: 'Classic',
+    name: 'Classic Lines',
     category: 'Traditional',
-    description: 'Traditional black and white professional layout',
+    description: 'Traditional layout with horizontal line separators between sections',
     colors: {
       primary: '#000000',
       secondary: '#4a5568',
@@ -62,90 +104,6 @@ export const templateConfigs: Record<string, TemplateConfig> = {
     layout: {
       columns: 1,
       spacing: 'compact'
-    }
-  },
-  creative: {
-    id: 'creative',
-    name: 'Creative',
-    category: 'Design',
-    description: 'Colorful design with visual elements and icons',
-    colors: {
-      primary: '#7c3aed',
-      secondary: '#a78bfa',
-      accent: '#06b6d4',
-      text: '#374151',
-      background: '#ffffff'
-    },
-    fonts: {
-      heading: 'Poppins, sans-serif',
-      body: 'Open Sans, sans-serif'
-    },
-    layout: {
-      columns: 2,
-      spacing: 'relaxed'
-    }
-  },
-  executive: {
-    id: 'executive',
-    name: 'Executive',
-    category: 'Corporate',
-    description: 'Sophisticated corporate-style layout',
-    colors: {
-      primary: '#1f2937',
-      secondary: '#6b7280',
-      accent: '#059669',
-      text: '#374151',
-      background: '#ffffff'
-    },
-    fonts: {
-      heading: 'Playfair Display, serif',
-      body: 'Source Sans Pro, sans-serif'
-    },
-    layout: {
-      columns: 1,
-      spacing: 'normal'
-    }
-  },
-  technical: {
-    id: 'technical',
-    name: 'Technical',
-    category: 'Developer',
-    description: 'Developer-focused with skills emphasis',
-    colors: {
-      primary: '#0f172a',
-      secondary: '#475569',
-      accent: '#3b82f6',
-      text: '#334155',
-      background: '#ffffff'
-    },
-    fonts: {
-      heading: 'JetBrains Mono, monospace',
-      body: 'Inter, sans-serif'
-    },
-    layout: {
-      columns: 2,
-      spacing: 'compact'
-    }
-  },
-  academic: {
-    id: 'academic',
-    name: 'Academic',
-    category: 'Education',
-    description: 'Education and research-focused layout',
-    colors: {
-      primary: '#7c2d12',
-      secondary: '#a3a3a3',
-      accent: '#dc2626',
-      text: '#404040',
-      background: '#ffffff'
-    },
-    fonts: {
-      heading: 'Crimson Text, serif',
-      body: 'Lato, sans-serif'
-    },
-    layout: {
-      columns: 1,
-      spacing: 'relaxed'
     }
   }
 };

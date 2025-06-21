@@ -1,173 +1,126 @@
 
 import React from 'react';
-import { templateConfigs } from '../templateConfigs';
 import { parseResumeContent } from '../utils/parseResumeContent';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 interface ExecutiveTemplateProps {
   resumeData: string;
 }
 
 export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData }) => {
-  const config = templateConfigs.executive;
   const parsedData = parseResumeContent(resumeData);
 
   return (
-    <div 
-      className="max-w-4xl mx-auto p-8 bg-white"
-      style={{ 
-        fontFamily: config.fonts.body,
-        color: config.colors.text
-      }}
-    >
-      {/* Header */}
-      <div className="mb-8">
-        <h1 
-          className="text-5xl font-light mb-3"
-          style={{ 
-            fontFamily: config.fonts.heading,
-            color: config.colors.primary
-          }}
-        >
-          {parsedData.name || 'Your Name'}
-        </h1>
-        <div 
-          className="text-lg border-l-4 pl-4"
-          style={{ 
-            borderColor: config.colors.accent,
-            color: config.colors.secondary
-          }}
-        >
-          {parsedData.email && <span>{parsedData.email}</span>}
-          {parsedData.phone && <span> • {parsedData.phone}</span>}
-          {parsedData.location && <span> • {parsedData.location}</span>}
+    <div className="min-h-[800px] bg-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-bold mb-3">{parsedData.name || 'Your Name'}</h1>
+          <div className="flex flex-wrap gap-6 text-blue-100 mb-4">
+            {parsedData.email && (
+              <div className="flex items-center gap-2">
+                <Mail size={16} />
+                <span>{parsedData.email}</span>
+              </div>
+            )}
+            {parsedData.phone && (
+              <div className="flex items-center gap-2">
+                <Phone size={16} />
+                <span>{parsedData.phone}</span>
+              </div>
+            )}
+            {parsedData.location && (
+              <div className="flex items-center gap-2">
+                <MapPin size={16} />
+                <span>{parsedData.location}</span>
+              </div>
+            )}
+          </div>
+          <p className="text-lg text-blue-50 leading-relaxed max-w-3xl">
+            {parsedData.summary || 'Executive-level professional with proven track record of leadership and strategic vision'}
+          </p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="space-y-8">
-        {/* Summary */}
-        {parsedData.summary && (
-          <section>
-            <h2 
-              className="text-2xl font-light mb-4 pb-2 border-b"
-              style={{ 
-                color: config.colors.primary,
-                borderColor: config.colors.accent,
-                fontFamily: config.fonts.heading
-              }}
-            >
-              Executive Summary
-            </h2>
-            <p className="text-base leading-relaxed italic" style={{ fontFamily: config.fonts.heading }}>
-              {parsedData.summary}
-            </p>
-          </section>
-        )}
-
+      <div className="max-w-4xl mx-auto p-8">
         {/* Experience */}
         {parsedData.experience.length > 0 && (
-          <section>
-            <h2 
-              className="text-2xl font-light mb-4 pb-2 border-b"
-              style={{ 
-                color: config.colors.primary,
-                borderColor: config.colors.accent,
-                fontFamily: config.fonts.heading
-              }}
-            >
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-blue-600">
               Professional Experience
             </h2>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {parsedData.experience.map((exp, index) => (
                 <div key={index}>
-                  <div className="mb-3">
-                    <h3 
-                      className="text-xl font-medium"
-                      style={{ 
-                        color: config.colors.primary,
-                        fontFamily: config.fonts.heading
-                      }}
-                    >
-                      {exp.title}
-                    </h3>
-                    <div className="flex justify-between items-baseline">
-                      <p className="text-lg font-medium" style={{ color: config.colors.accent }}>
-                        {exp.company}
-                      </p>
-                      <span className="text-sm" style={{ color: config.colors.secondary }}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{exp.title}</h3>
+                      <p className="text-lg font-semibold text-blue-600">{exp.company}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded">
                         {exp.duration}
                       </span>
                     </div>
                   </div>
-                  <ul className="space-y-2 text-sm">
-                    {exp.bullets.map((bullet, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <span 
-                          className="w-2 h-2 rounded-full mt-2 mr-3 flex-shrink-0"
-                          style={{ backgroundColor: config.colors.accent }}
-                        ></span>
-                        {bullet}
-                      </li>
-                    ))}
-                  </ul>
+                  {exp.bullets.length > 0 && (
+                    <ul className="space-y-2 ml-4">
+                      {exp.bullets.map((bullet, bulletIndex) => (
+                        <li key={bulletIndex} className="flex items-start gap-3 text-gray-700">
+                          <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2.5 flex-shrink-0"></span>
+                          <span className="leading-relaxed">{bullet}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         )}
 
-        <div className="grid grid-cols-2 gap-8">
-          {/* Education */}
-          {parsedData.education.length > 0 && (
-            <section>
-              <h2 
-                className="text-2xl font-light mb-4 pb-2 border-b"
-                style={{ 
-                  color: config.colors.primary,
-                  borderColor: config.colors.accent,
-                  fontFamily: config.fonts.heading
-                }}
-              >
-                Education
-              </h2>
-              <div className="space-y-3">
-                {parsedData.education.map((edu, index) => (
-                  <div key={index}>
-                    <h3 className="font-semibold text-base">{edu.degree}</h3>
-                    <p style={{ color: config.colors.accent }}>{edu.school}</p>
-                    <p className="text-sm" style={{ color: config.colors.secondary }}>
-                      {edu.year}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
+        {/* Skills and Education Grid */}
+        <div className="grid md:grid-cols-2 gap-8">
           {/* Skills */}
           {parsedData.skills.length > 0 && (
-            <section>
-              <h2 
-                className="text-2xl font-light mb-4 pb-2 border-b"
-                style={{ 
-                  color: config.colors.primary,
-                  borderColor: config.colors.accent,
-                  fontFamily: config.fonts.heading
-                }}
-              >
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">
                 Core Competencies
               </h2>
-              <div className="space-y-3">
-                {parsedData.skills.map((skill, index) => (
+              <div className="space-y-4">
+                {parsedData.skills.map((skillGroup, index) => (
                   <div key={index}>
-                    <h3 className="font-semibold text-sm mb-1" style={{ color: config.colors.accent }}>
-                      {skill.category}
-                    </h3>
-                    <p className="text-sm">{skill.items.join(' • ')}</p>
+                    <h3 className="font-bold text-gray-800 mb-2">{skillGroup.category}</h3>
+                    <ul className="space-y-1">
+                      {skillGroup.items.map((skill, skillIndex) => (
+                        <li key={skillIndex} className="text-gray-700 flex items-center gap-2">
+                          <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
+                          {skill}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ))}
               </div>
-            </section>
+            </div>
+          )}
+
+          {/* Education */}
+          {parsedData.education.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">
+                Education
+              </h2>
+              <div className="space-y-4">
+                {parsedData.education.map((edu, index) => (
+                  <div key={index}>
+                    <h3 className="font-bold text-gray-900">{edu.degree}</h3>
+                    <p className="text-gray-700 font-medium">{edu.school}</p>
+                    <p className="text-sm text-gray-600">{edu.year}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

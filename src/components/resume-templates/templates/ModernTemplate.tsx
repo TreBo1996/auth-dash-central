@@ -1,147 +1,118 @@
 
 import React from 'react';
-import { templateConfigs } from '../templateConfigs';
 import { parseResumeContent } from '../utils/parseResumeContent';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 interface ModernTemplateProps {
   resumeData: string;
 }
 
 export const ModernTemplate: React.FC<ModernTemplateProps> = ({ resumeData }) => {
-  const config = templateConfigs.modern;
   const parsedData = parseResumeContent(resumeData);
 
   return (
-    <div 
-      className="max-w-4xl mx-auto p-8 bg-white"
-      style={{ 
-        fontFamily: config.fonts.body,
-        color: config.colors.text
-      }}
-    >
+    <div className="min-h-[800px] bg-white p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Header */}
-      <div className="mb-8 pb-6 border-b-2" style={{ borderColor: config.colors.primary }}>
-        <h1 
-          className="text-4xl font-bold mb-2"
-          style={{ 
-            fontFamily: config.fonts.heading,
-            color: config.colors.primary
-          }}
-        >
-          {parsedData.name || 'Your Name'}
-        </h1>
-        <div className="text-lg" style={{ color: config.colors.secondary }}>
-          {parsedData.email && <span>{parsedData.email}</span>}
-          {parsedData.phone && <span className="ml-4">{parsedData.phone}</span>}
-          {parsedData.location && <span className="ml-4">{parsedData.location}</span>}
+      <div className="text-center mb-8 pb-6 border-b border-gray-200">
+        <h1 className="text-4xl font-bold text-gray-900 mb-3">{parsedData.name || 'Your Name'}</h1>
+        <div className="flex justify-center items-center gap-6 text-sm text-gray-600 mb-4">
+          {parsedData.email && (
+            <div className="flex items-center gap-1">
+              <Mail size={14} />
+              <span>{parsedData.email}</span>
+            </div>
+          )}
+          {parsedData.phone && (
+            <div className="flex items-center gap-1">
+              <Phone size={14} />
+              <span>{parsedData.phone}</span>
+            </div>
+          )}
+          {parsedData.location && (
+            <div className="flex items-center gap-1">
+              <MapPin size={14} />
+              <span>{parsedData.location}</span>
+            </div>
+          )}
         </div>
+        <p className="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
+          {parsedData.summary || 'Professional summary highlighting key achievements and expertise'}
+        </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="col-span-2 space-y-6">
-          {/* Summary */}
-          {parsedData.summary && (
-            <section>
-              <h2 
-                className="text-2xl font-semibold mb-3 pb-1 border-b"
-                style={{ 
-                  color: config.colors.primary,
-                  borderColor: config.colors.accent
-                }}
-              >
-                Professional Summary
-              </h2>
-              <p className="text-sm leading-relaxed">{parsedData.summary}</p>
-            </section>
-          )}
-
-          {/* Experience */}
-          {parsedData.experience.length > 0 && (
-            <section>
-              <h2 
-                className="text-2xl font-semibold mb-3 pb-1 border-b"
-                style={{ 
-                  color: config.colors.primary,
-                  borderColor: config.colors.accent
-                }}
-              >
-                Experience
-              </h2>
-              <div className="space-y-4">
-                {parsedData.experience.map((exp, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg" style={{ color: config.colors.text }}>
-                          {exp.title}
-                        </h3>
-                        <p className="font-medium" style={{ color: config.colors.accent }}>
-                          {exp.company}
-                        </p>
-                      </div>
-                      <span className="text-sm" style={{ color: config.colors.secondary }}>
-                        {exp.duration}
-                      </span>
-                    </div>
-                    <ul className="list-disc list-inside space-y-1 text-sm">
-                      {exp.bullets.map((bullet, idx) => (
-                        <li key={idx}>{bullet}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+      {/* Skills */}
+      {parsedData.skills.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Core Competencies</h2>
+          <div className="space-y-3">
+            {parsedData.skills.map((skillGroup, index) => (
+              <div key={index}>
+                <h3 className="font-semibold text-gray-800 mb-2">{skillGroup.category}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {skillGroup.items.map((skill, skillIndex) => (
+                    <span 
+                      key={skillIndex} 
+                      className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </section>
-          )}
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Skills */}
-          {parsedData.skills.length > 0 && (
-            <section>
-              <h2 
-                className="text-xl font-semibold mb-3"
-                style={{ color: config.colors.primary }}
-              >
-                Skills
-              </h2>
-              <div className="space-y-2">
-                {parsedData.skills.map((skill, index) => (
-                  <div key={index} className="text-sm">
-                    <span className="font-medium">{skill.category}:</span>
-                    <p className="text-xs mt-1">{skill.items.join(', ')}</p>
+      {/* Experience */}
+      {parsedData.experience.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Professional Experience</h2>
+          <div className="space-y-6">
+            {parsedData.experience.map((exp, index) => (
+              <div key={index} className="pb-6 border-b border-gray-100 last:border-b-0">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{exp.title}</h3>
+                    <p className="text-lg font-semibold text-blue-600">{exp.company}</p>
                   </div>
-                ))}
+                  <span className="text-sm font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded">
+                    {exp.duration}
+                  </span>
+                </div>
+                {exp.bullets.length > 0 && (
+                  <ul className="space-y-2">
+                    {exp.bullets.map((bullet, bulletIndex) => (
+                      <li key={bulletIndex} className="flex items-start gap-3 text-gray-700">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                        <span className="leading-relaxed">{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </section>
-          )}
-
-          {/* Education */}
-          {parsedData.education.length > 0 && (
-            <section>
-              <h2 
-                className="text-xl font-semibold mb-3"
-                style={{ color: config.colors.primary }}
-              >
-                Education
-              </h2>
-              <div className="space-y-3">
-                {parsedData.education.map((edu, index) => (
-                  <div key={index} className="text-sm">
-                    <h3 className="font-semibold">{edu.degree}</h3>
-                    <p style={{ color: config.colors.accent }}>{edu.school}</p>
-                    <p className="text-xs" style={{ color: config.colors.secondary }}>
-                      {edu.year}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Education */}
+      {parsedData.education.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Education</h2>
+          <div className="space-y-4">
+            {parsedData.education.map((edu, index) => (
+              <div key={index} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <h3 className="font-bold text-gray-900">{edu.degree}</h3>
+                  <p className="text-gray-700">{edu.school}</p>
+                </div>
+                <span className="text-sm font-medium text-gray-500">{edu.year}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

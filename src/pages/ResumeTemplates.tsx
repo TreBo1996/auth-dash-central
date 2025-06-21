@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const ResumeTemplates: React.FC = () => {
   const { toast } = useToast();
   
   const [optimizedResume, setOptimizedResume] = useState<OptimizedResume | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const [selectedTemplate, setSelectedTemplate] = useState('sidebar');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
