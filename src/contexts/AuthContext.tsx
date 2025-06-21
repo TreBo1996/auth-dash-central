@@ -31,57 +31,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('AuthProvider: Starting initialization...');
+    
     let mounted = true;
 
     const initializeAuth = async () => {
       try {
-        console.log('Initializing auth...');
+        console.log('AuthProvider: Checking for existing session...');
         
-        // Check for existing session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError(sessionError.message);
-        } else {
-          console.log('Session retrieved:', session?.user?.email || 'No session');
+          console.error('AuthProvider: Session error:', sessionError);
           if (mounted) {
-            setSession(session);
-            setUser(session?.user ?? null);
+            setError(sessionError.message);
+            setLoading(false);
           }
+          return;
         }
+
+        console.log('AuthProvider: Session check complete:', session?.user?.email || 'No session');
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setError(null);
+          setLoading(false);
+        }
+        
       } catch (err) {
-        console.error('Auth initialization error:', err);
+        console.error('AuthProvider: Initialization error:', err);
         if (mounted) {
           setError(err instanceof Error ? err.message : 'Authentication initialization failed');
-        }
-      } finally {
-        if (mounted) {
           setLoading(false);
         }
       }
     };
 
     // Set up auth state listener
+    console.log('AuthProvider: Setting up auth state listener...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email || 'No user');
+        console.log('AuthProvider: Auth state change:', event, session?.user?.email || 'No user');
         
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
-          setError(null); // Clear errors on successful auth state change
+          setError(null);
           
-          if (event === 'SIGNED_OUT') {
+          // Only set loading to false after we've processed the auth change
+          if (event !== 'INITIAL_SESSION') {
             setLoading(false);
           }
         }
       }
     );
 
+    // Initialize auth
     initializeAuth();
 
     return () => {
+      console.log('AuthProvider: Cleaning up...');
       mounted = false;
       subscription.unsubscribe();
     };
@@ -89,7 +99,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     try {
+      console.log('AuthProvider: Attempting sign up for:', email);
       setError(null);
+      
       const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { error } = await supabase.auth.signUp({
@@ -104,12 +116,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        console.error('AuthProvider: Sign up error:', error);
         setError(error.message);
+      } else {
+        console.log('AuthProvider: Sign up successful');
       }
       
       return { error };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Sign up failed';
+      console.error('AuthProvider: Sign up exception:', err);
       setError(errorMessage);
       return { error: { message: errorMessage } };
     }
@@ -117,19 +133,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('AuthProvider: Attempting sign in for:', email);
       setError(null);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
+        console.error('AuthProvider: Sign in error:', error);
         setError(error.message);
+      } else {
+        console.log('AuthProvider: Sign in successful');
       }
       
       return { error };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Sign in failed';
+      console.error('AuthProvider: Sign in exception:', err);
       setError(errorMessage);
       return { error: { message: errorMessage } };
     }
@@ -137,10 +159,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      console.log('AuthProvider: Attempting sign out...');
       setError(null);
       await supabase.auth.signOut();
+      console.log('AuthProvider: Sign out successful');
     } catch (err) {
-      console.error('Sign out error:', err);
+      console.error('AuthProvider: Sign out error:', err);
       setError(err instanceof Error ? err.message : 'Sign out failed');
     }
   };
@@ -148,6 +172,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearError = () => {
     setError(null);
   };
+
+  console.log('AuthProvider: Current state - loading:', loading, 'user:', user?.email || 'none', 'error:', error);
 
   const value = {
     user,

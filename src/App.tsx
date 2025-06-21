@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { SimpleErrorBoundary } from './components/SimpleErrorBoundary';
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -30,86 +30,92 @@ const queryClient = new QueryClient({
             return false;
           }
         }
-        return failureCount < 3;
+        return failureCount < 2; // Reduced retry count
       },
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
 
-const App: React.FC = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ErrorBoundary>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                {/* Redirect root to home */}
-                <Route path="/" element={<Navigate to="/home" replace />} />
-                <Route path="/home" element={
-                  <ErrorBoundary>
-                    <Home />
-                  </ErrorBoundary>
-                } />
-                <Route path="/auth" element={
-                  <ErrorBoundary>
-                    <Auth />
-                  </ErrorBoundary>
-                } />
-                <Route path="/verify-email" element={
-                  <ErrorBoundary>
-                    <VerifyEmail />
-                  </ErrorBoundary>
-                } />
-                
-                {/* Protected routes */}
-                <Route path="/upload" element={
-                  <ErrorBoundary>
-                    <ProtectedRoute><Upload /></ProtectedRoute>
-                  </ErrorBoundary>
-                } />
-                <Route path="/dashboard" element={
-                  <ErrorBoundary>
-                    <ProtectedRoute><Dashboard /></ProtectedRoute>
-                  </ErrorBoundary>
-                } />
-                <Route path="/upload-resume" element={
-                  <ErrorBoundary>
-                    <ProtectedRoute><UploadResumePage /></ProtectedRoute>
-                  </ErrorBoundary>
-                } />
-                <Route path="/upload-job" element={
-                  <ErrorBoundary>
-                    <ProtectedRoute><UploadJobPage /></ProtectedRoute>
-                  </ErrorBoundary>
-                } />
-                <Route path="/profile" element={
-                  <ErrorBoundary>
-                    <ProtectedRoute><Profile /></ProtectedRoute>
-                  </ErrorBoundary>
-                } />
-                <Route path="/resume-editor/:id" element={
-                  <ErrorBoundary>
-                    <ProtectedRoute><ResumeEditor /></ProtectedRoute>
-                  </ErrorBoundary>
-                } />
-                
-                {/* Catch-all route */}
-                <Route path="*" element={
-                  <ErrorBoundary>
-                    <NotFound />
-                  </ErrorBoundary>
-                } />
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </ErrorBoundary>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+const App: React.FC = () => {
+  console.log('App: Starting application...');
+  
+  return (
+    <SimpleErrorBoundary fallbackMessage="The application failed to load properly.">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <SimpleErrorBoundary fallbackMessage="Authentication system failed to load.">
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  {/* Redirect root to home */}
+                  <Route path="/" element={<Navigate to="/home" replace />} />
+                  
+                  {/* Public routes */}
+                  <Route path="/home" element={
+                    <SimpleErrorBoundary fallbackMessage="Home page failed to load.">
+                      <Home />
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/auth" element={
+                    <SimpleErrorBoundary fallbackMessage="Authentication page failed to load.">
+                      <Auth />
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/verify-email" element={
+                    <SimpleErrorBoundary fallbackMessage="Email verification page failed to load.">
+                      <VerifyEmail />
+                    </SimpleErrorBoundary>
+                  } />
+                  
+                  {/* Protected routes */}
+                  <Route path="/upload" element={
+                    <SimpleErrorBoundary fallbackMessage="Upload page failed to load.">
+                      <ProtectedRoute><Upload /></ProtectedRoute>
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/dashboard" element={
+                    <SimpleErrorBoundary fallbackMessage="Dashboard failed to load.">
+                      <ProtectedRoute><Dashboard /></ProtectedRoute>
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/upload-resume" element={
+                    <SimpleErrorBoundary fallbackMessage="Resume upload page failed to load.">
+                      <ProtectedRoute><UploadResumePage /></ProtectedRoute>
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/upload-job" element={
+                    <SimpleErrorBoundary fallbackMessage="Job upload page failed to load.">
+                      <ProtectedRoute><UploadJobPage /></ProtectedRoute>
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/profile" element={
+                    <SimpleErrorBoundary fallbackMessage="Profile page failed to load.">
+                      <ProtectedRoute><Profile /></ProtectedRoute>
+                    </SimpleErrorBoundary>
+                  } />
+                  <Route path="/resume-editor/:id" element={
+                    <SimpleErrorBoundary fallbackMessage="Resume editor failed to load.">
+                      <ProtectedRoute><ResumeEditor /></ProtectedRoute>
+                    </SimpleErrorBoundary>
+                  } />
+                  
+                  {/* Catch-all route */}
+                  <Route path="*" element={
+                    <SimpleErrorBoundary fallbackMessage="Page not found.">
+                      <NotFound />
+                    </SimpleErrorBoundary>
+                  } />
+                </Routes>
+              </BrowserRouter>
+            </AuthProvider>
+          </SimpleErrorBoundary>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </SimpleErrorBoundary>
+  );
+};
 
 export default App;
