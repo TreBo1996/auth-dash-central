@@ -1,4 +1,3 @@
-
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -68,8 +67,7 @@ const parsePDF = async (file: File): Promise<string> => {
       cMapUrl: undefined,
       cMapPacked: false,
       // Explicitly disable worker - this is the key setting
-      worker: null,
-      disableWorker: true
+      worker: null
     }).promise;
     
     console.log(`PDF loaded successfully, ${pdf.numPages} pages`);
