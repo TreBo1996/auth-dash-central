@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import UploadResumePage from "./pages/UploadResumePage";
 import UploadJobPage from "./pages/UploadJobPage";
 import Profile from "./pages/Profile";
+import ResumeEditor from "./pages/ResumeEditor";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +28,7 @@ const App: React.FC = () => (
           <Route path="/upload-resume" element={<UploadResumePage />} />
           <Route path="/upload-job" element={<UploadJobPage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/resume-editor/:id" element={<ResumeEditor />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

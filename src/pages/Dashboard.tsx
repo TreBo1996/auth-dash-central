@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { User } from '@supabase/supabase-js';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
+import { useNavigate } from 'react-router-dom';
 
 interface Resume {
   id: string;
@@ -43,6 +43,7 @@ interface OptimizedResume {
 }
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
@@ -448,7 +449,11 @@ const Dashboard: React.FC = () => {
                         <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)}
+                      >
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
