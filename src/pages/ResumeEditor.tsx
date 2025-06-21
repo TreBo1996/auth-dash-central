@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -12,6 +11,10 @@ import { ExperienceSection } from '@/components/resume-editor/ExperienceSection'
 import { SkillsSection } from '@/components/resume-editor/SkillsSection';
 import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { TemplateSelector } from '@/components/resume-editor/TemplateSelector';
+import { PdfExport } from '@/components/resume-editor/PdfExport';
+import { ResumePreview } from '@/components/resume-editor/ResumePreview';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface OptimizedResume {
   id: string;
@@ -57,6 +60,7 @@ const ResumeEditor: React.FC = () => {
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('modern');
 
   useEffect(() => {
     if (id) {
@@ -260,7 +264,7 @@ const ResumeEditor: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -275,49 +279,94 @@ const ResumeEditor: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
             <p className="text-gray-600">Edit your AI-optimized resume</p>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Changes
-          </Button>
+          <div className="flex gap-3">
+            <TemplateSelector
+              selectedTemplate={selectedTemplate}
+              onTemplateSelect={setSelectedTemplate}
+            />
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </div>
         </div>
 
-        {/* Resume Sections */}
-        <div className="space-y-6">
-          {/* Summary Section */}
-          <ResumeSection
-            title="Professional Summary"
-            value={parsedResume.summary}
-            onChange={(value) => setParsedResume(prev => prev ? { ...prev, summary: value } : null)}
-          />
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="editor" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="editor">Editor</TabsTrigger>
+            <TabsTrigger value="preview">Preview & Export</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="editor" className="space-y-6 mt-6">
+            {/* Resume Sections */}
+            <div className="space-y-6">
+              {/* Summary Section */}
+              <ResumeSection
+                title="Professional Summary"
+                value={parsedResume.summary}
+                onChange={(value) => setParsedResume(prev => prev ? { ...prev, summary: value } : null)}
+              />
 
-          {/* Experience Section */}
-          <ExperienceSection
-            experiences={parsedResume.experience}
-            onChange={(experiences) => setParsedResume(prev => prev ? { ...prev, experience: experiences } : null)}
-          />
+              {/* Experience Section */}
+              <ExperienceSection
+                experiences={parsedResume.experience}
+                onChange={(experiences) => setParsedResume(prev => prev ? { ...prev, experience: experiences } : null)}
+              />
 
-          {/* Skills Section */}
-          <SkillsSection
-            skills={parsedResume.skills}
-            onChange={(skills) => setParsedResume(prev => prev ? { ...prev, skills } : null)}
-          />
+              {/* Skills Section */}
+              <SkillsSection
+                skills={parsedResume.skills}
+                onChange={(skills) => setParsedResume(prev => prev ? { ...prev, skills } : null)}
+              />
 
-          {/* Education Section */}
-          <EducationSection
-            education={parsedResume.education}
-            onChange={(education) => setParsedResume(prev => prev ? { ...prev, education } : null)}
-          />
+              {/* Education Section */}
+              <EducationSection
+                education={parsedResume.education}
+                onChange={(education) => setParsedResume(prev => prev ? { ...prev, education } : null)}
+              />
 
-          {/* Certifications Section */}
-          <CertificationsSection
-            certifications={parsedResume.certifications}
-            onChange={(certifications) => setParsedResume(prev => prev ? { ...prev, certifications } : null)}
-          />
-        </div>
+              {/* Certifications Section */}
+              <CertificationsSection
+                certifications={parsedResume.certifications}
+                onChange={(certifications) => setParsedResume(prev => prev ? { ...prev, certifications } : null)}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preview" className="mt-6">
+            <div className="space-y-6">
+              {/* Export Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Export Resume</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <PdfExport
+                      resumeContent={generateResumeText(parsedResume)}
+                      selectedTemplate={selectedTemplate}
+                      resumeId={resume.id}
+                    />
+                    <p className="text-sm text-gray-600">
+                      Download your resume as a styled PDF using the {selectedTemplate} template
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Resume Preview */}
+              <ResumePreview
+                content={generateResumeText(parsedResume)}
+                selectedTemplate={selectedTemplate}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Bottom Actions */}
         <div className="flex justify-between items-center pt-6 border-t">
