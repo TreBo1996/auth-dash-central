@@ -272,10 +272,6 @@ const Dashboard: React.FC = () => {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
@@ -293,34 +289,6 @@ const Dashboard: React.FC = () => {
                           Delete
                         </Button>
                       </div>
-                      
-                      {resume.parsed_text && (
-                        <Collapsible>
-                          <CollapsibleTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="w-full justify-start p-0 h-auto"
-                              onClick={() => toggleExpanded(resume.id)}
-                            >
-                              {expandedItems.has(resume.id) ? (
-                                <ChevronDown className="h-4 w-4 mr-1" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 mr-1" />
-                              )}
-                              <span className="text-sm text-gray-600">Preview content</span>
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-2">
-                            <div className="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                {resume.parsed_text.substring(0, 300)}
-                                {resume.parsed_text.length > 300 && '...'}
-                              </p>
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -369,10 +337,6 @@ const Dashboard: React.FC = () => {
                     <CardContent className="space-y-3">
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline">
-                          <Eye className="h-3 w-3 mr-1" />
-                          View
-                        </Button>
-                        <Button size="sm" variant="outline">
                           <Edit className="h-3 w-3 mr-1" />
                           Edit
                         </Button>
@@ -385,32 +349,6 @@ const Dashboard: React.FC = () => {
                           Delete
                         </Button>
                       </div>
-                      
-                      <Collapsible>
-                        <CollapsibleTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="w-full justify-start p-0 h-auto"
-                            onClick={() => toggleExpanded(jobDesc.id)}
-                          >
-                            {expandedItems.has(jobDesc.id) ? (
-                              <ChevronDown className="h-4 w-4 mr-1" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 mr-1" />
-                            )}
-                            <span className="text-sm text-gray-600">Preview content</span>
-                          </Button>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="mt-2">
-                          <div className="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
-                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                              {jobDesc.parsed_text.substring(0, 300)}
-                              {jobDesc.parsed_text.length > 300 && '...'}
-                            </p>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
                     </CardContent>
                   </Card>
                 ))}
