@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +25,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
   const [showPreview, setShowPreview] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const acceptedFileTypes = '.pdf,.docx';
   const maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -171,6 +173,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       }
       
       console.log('Resume inserted successfully:', data);
+      return data[0];
     } else {
       const insertData = {
         user_id: userId,
@@ -194,6 +197,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       }
       
       console.log('Job description inserted successfully:', data);
+      return data[0];
     }
   };
 
@@ -236,7 +240,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         }
       }
 
-      await saveToDatabase(user.id, fileUrl);
+      const savedRecord = await saveToDatabase(user.id, fileUrl);
 
       toast({
         title: "Upload Successful",
@@ -251,7 +255,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       setShowPreview(false);
       setUploadError(null);
       
-      if (onUploadSuccess) {
+      // Redirect to editor for resumes
+      if (type === 'resume' && savedRecord?.id) {
+        navigate(`/resume-editor/initial/${savedRecord.id}`);
+      } else if (onUploadSuccess) {
         onUploadSuccess();
       }
 

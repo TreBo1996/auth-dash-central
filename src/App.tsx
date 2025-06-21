@@ -16,6 +16,7 @@ import UploadResumePage from "./pages/UploadResumePage";
 import UploadJobPage from "./pages/UploadJobPage";
 import Profile from "./pages/Profile";
 import ResumeEditor from "./pages/ResumeEditor";
+import InitialResumeEditor from "./pages/InitialResumeEditor";
 import InterviewPrep from "./pages/InterviewPrep";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,7 @@ const App: React.FC = () => (
             <Route path="/upload-job" element={<ProtectedRoute><UploadJobPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/resume-editor/:id" element={<ProtectedRoute><ResumeEditor /></ProtectedRoute>} />
+            <Route path="/resume-editor/initial/:id" element={<ProtectedRoute><InitialResumeEditor /></ProtectedRoute>} />
             <Route path="/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
             
             {/* Catch-all route */}

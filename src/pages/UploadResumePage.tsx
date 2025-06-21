@@ -259,7 +259,12 @@ const UploadResumePage: React.FC = () => {
         description: "Your resume has been uploaded successfully.",
       });
 
-      navigate('/dashboard');
+      // Redirect to the resume editor
+      if (insertResult?.[0]?.id) {
+        navigate(`/resume-editor/initial/${insertResult[0].id}`);
+      } else {
+        navigate('/dashboard');
+      }
 
     } catch (error) {
       console.error('Upload process error:', error);
