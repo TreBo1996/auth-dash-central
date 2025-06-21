@@ -25,24 +25,32 @@ serve(async (req) => {
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    // Get the authorization header and create authenticated client
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase environment variables not configured');
+      throw new Error('Supabase configuration missing');
+    }
+
+    // Create Supabase client with service role key for server-side operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    // Get the authorization header to extract the JWT token
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Authorization header is required');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    });
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Extract the JWT token from the Bearer token
+    const jwt = authHeader.replace('Bearer ', '');
+    
+    // Verify the JWT token and get the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
     if (userError || !user) {
       console.error('User authentication error:', userError);
       throw new Error('User not authenticated');
