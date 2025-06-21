@@ -1,7 +1,8 @@
 
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, Zap } from "lucide-react";
+import { Upload, FileText, Zap, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
@@ -15,16 +16,24 @@ const Index = () => {
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             Transform your resume with AI-powered optimization. Upload your documents and let our intelligent system help you land your dream job.
           </p>
-          <Link to="/upload">
-            <Button size="lg" className="text-lg px-8 py-3">
-              <Upload className="mr-2 h-5 w-5" />
-              Get Started
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/dashboard">
+              <Button size="lg" className="text-lg px-8 py-3">
+                <ArrowRight className="mr-2 h-5 w-5" />
+                Go to Dashboard
+              </Button>
+            </Link>
+            <Link to="/upload-resume">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+                <Upload className="mr-2 h-5 w-5" />
+                Upload Resume
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <Card className="text-center">
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <Upload className="h-12 w-12 mx-auto text-primary mb-4" />
               <CardTitle>Upload Documents</CardTitle>
@@ -34,7 +43,7 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="text-center">
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <Zap className="h-12 w-12 mx-auto text-primary mb-4" />
               <CardTitle>AI Optimization</CardTitle>
@@ -44,7 +53,7 @@ const Index = () => {
             </CardHeader>
           </Card>
 
-          <Card className="text-center">
+          <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <FileText className="h-12 w-12 mx-auto text-primary mb-4" />
               <CardTitle>Get Results</CardTitle>
@@ -56,7 +65,7 @@ const Index = () => {
         </div>
 
         <div className="text-center mt-16">
-          <Card className="max-w-2xl mx-auto">
+          <Card className="max-w-2xl mx-auto hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle>Ready to optimize your resume?</CardTitle>
               <CardDescription>
@@ -64,12 +73,20 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Link to="/upload">
-                <Button size="lg" className="w-full">
-                  <Upload className="mr-2 h-5 w-5" />
-                  Start Upload Process
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/dashboard" className="flex-1">
+                  <Button size="lg" className="w-full">
+                    <ArrowRight className="mr-2 h-5 w-5" />
+                    Access Dashboard
+                  </Button>
+                </Link>
+                <Link to="/upload-resume" className="flex-1">
+                  <Button size="lg" variant="outline" className="w-full">
+                    <Upload className="mr-2 h-5 w-5" />
+                    Upload Resume
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
