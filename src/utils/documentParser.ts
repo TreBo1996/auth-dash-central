@@ -10,8 +10,8 @@ export const parseDocument = async (file: File): Promise<string> => {
 
   try {
     if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      console.log('Processing PDF using server-side edge function...');
-      return await parsePDFServerSide(file);
+      console.log('Processing PDF using new parse-resume-pdf edge function...');
+      return await parsePDFWithStorage(file);
     } else if (
       fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       fileName.endsWith('.docx')
@@ -26,10 +26,11 @@ export const parseDocument = async (file: File): Promise<string> => {
     
     // Provide more specific error messages with conversion guidance
     if (error instanceof Error) {
-      if (error.message.includes('No text could be extracted') || 
-          error.message.includes('Server processing failed') ||
-          error.message.includes('Failed to extract readable text')) {
-        throw new Error(`PDF parsing failed. This PDF may be:\n• Image-based or scanned\n• Password-protected\n• Using complex formatting\n\n✅ RECOMMENDED SOLUTION:\nConvert your PDF to DOCX format using:\n• Microsoft Word (File → Save As → Word Document)\n• Google Docs (Upload PDF → Download as Word)\n• Online converters like SmallPDF or ILovePDF\n\nDOCX format provides much better text extraction results.`);
+      if (error.message.includes('No readable text could be extracted') || 
+          error.message.includes('poor quality results') ||
+          error.message.includes('image-based') ||
+          error.message.includes('garbled')) {
+        throw new Error(`PDF parsing failed. This PDF may be:\n• Image-based or scanned\n• Password-protected\n• Using complex formatting\n• Corrupted or encoded\n\n✅ RECOMMENDED SOLUTION:\nConvert your PDF to DOCX format using:\n• Microsoft Word (File → Save As → Word Document)\n• Google Docs (Upload PDF → Download as Word)\n• Online converters like SmallPDF or ILovePDF\n\nDOCX format provides much better text extraction results.`);
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         throw new Error('Network error while processing PDF. Please check your connection and try again, or convert to DOCX format for better reliability.');
       } else if (error.message.includes('Unsupported file type')) {
@@ -43,57 +44,64 @@ export const parseDocument = async (file: File): Promise<string> => {
   }
 };
 
-const parsePDFServerSide = async (file: File): Promise<string> => {
+const parsePDFWithStorage = async (file: File): Promise<string> => {
   try {
-    console.log('Converting PDF to base64 for server processing...');
+    console.log('Uploading PDF to temporary storage for parsing...');
     
-    // Convert file to base64
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Authentication required for PDF parsing');
     }
-    const fileBase64 = btoa(binary);
+
+    // Upload file to temporary location in storage
+    const tempFileName = `temp_${crypto.randomUUID()}.pdf`;
+    const tempFilePath = `${user.id}/temp/${tempFileName}`;
     
-    console.log('Sending PDF to server-side parser...');
-    
-    // Call the edge function
-    const { data, error } = await supabase.functions.invoke('parse-pdf', {
+    const { error: uploadError } = await supabase.storage
+      .from('user-files')
+      .upload(tempFilePath, file);
+
+    if (uploadError) {
+      console.error('Temporary upload error:', uploadError);
+      throw new Error(`Failed to upload PDF for processing: ${uploadError.message}`);
+    }
+
+    console.log('PDF uploaded to temporary storage, calling parse-resume-pdf function...');
+
+    // Call the new parse-resume-pdf edge function
+    const { data, error } = await supabase.functions.invoke('parse-resume-pdf', {
       body: {
-        fileBase64,
-        fileName: file.name
+        file_path: tempFilePath
       }
     });
 
+    // Clean up temporary file
+    await supabase.storage
+      .from('user-files')
+      .remove([tempFilePath]);
+
     if (error) {
       console.error('Edge function error:', error);
-      throw new Error(`Server processing failed: ${error.message}`);
+      throw new Error(`PDF parsing failed: ${error.message}`);
     }
 
-    if (!data.success) {
-      throw new Error(data.error || 'Server-side PDF parsing failed');
+    if (!data.parsed_text) {
+      throw new Error('No text could be extracted from this PDF');
     }
 
-    console.log(`Server-side PDF parsing successful: ${data.text.length} characters extracted`);
-    
-    // Check if the extracted text looks like garbage (contains too many random characters)
-    const textQuality = assessTextQuality(data.text);
-    if (textQuality.isLowQuality) {
-      throw new Error('PDF text extraction produced poor quality results. This usually indicates the PDF is image-based or uses complex formatting.');
-    }
-    
-    return data.text;
+    console.log(`PDF parsing successful: ${data.parsed_text.length} characters extracted`);
+    return data.parsed_text;
 
   } catch (error) {
-    console.error('Server-side PDF parsing failed:', error);
+    console.error('PDF storage parsing failed:', error);
     
     if (error instanceof Error) {
-      if (error.message.includes('Server processing failed') || 
-          error.message.includes('Server-side PDF parsing failed') ||
-          error.message.includes('poor quality results')) {
-        throw error; // Keep the specific message
-      } else if (error.message.includes('No text could be extracted')) {
+      if (error.message.includes('Authentication required')) {
+        throw error;
+      } else if (error.message.includes('PDF parsing failed') || 
+          error.message.includes('poor quality results') ||
+          error.message.includes('image-based')) {
         throw error; // Keep the specific message
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
         throw new Error('Network error while processing PDF. Please check your connection and try again.');
@@ -124,31 +132,4 @@ const parseDocx = async (file: File): Promise<string> => {
     console.error('DOCX parsing failed:', error);
     throw error;
   }
-};
-
-// Helper function to assess text quality
-const assessTextQuality = (text: string): { isLowQuality: boolean; reason?: string } => {
-  if (!text || text.length < 50) {
-    return { isLowQuality: true, reason: 'Text too short' };
-  }
-  
-  // Check for too many single characters or very short words
-  const words = text.split(/\s+/).filter(word => word.length > 0);
-  const singleCharWords = words.filter(word => word.length === 1).length;
-  const singleCharRatio = singleCharWords / words.length;
-  
-  if (singleCharRatio > 0.3) {
-    return { isLowQuality: true, reason: 'Too many single character fragments' };
-  }
-  
-  // Check for too many non-alphabetic characters
-  const alphabeticChars = text.match(/[a-zA-Z]/g)?.length || 0;
-  const totalChars = text.replace(/\s/g, '').length;
-  const alphabeticRatio = alphabeticChars / totalChars;
-  
-  if (alphabeticRatio < 0.5) {
-    return { isLowQuality: true, reason: 'Too few alphabetic characters' };
-  }
-  
-  return { isLowQuality: false };
 };

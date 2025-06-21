@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import pdfParse from "npm:pdf-parse@1.1.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,14 +52,15 @@ serve(async (req: Request) => {
 
     console.log(`File downloaded successfully, size: ${fileData.size} bytes`);
 
-    // Convert blob to array buffer
+    // Convert blob to buffer for pdf-parse
     const arrayBuffer = await fileData.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
+    const buffer = new Uint8Array(arrayBuffer);
     
-    console.log(`Converting file to bytes: ${bytes.length} bytes`);
+    console.log(`Converting file to buffer: ${buffer.length} bytes`);
 
-    // Extract text from PDF using improved method
-    const extractedText = await extractTextFromPDF(bytes);
+    // Parse PDF using pdf-parse
+    const extractedData = await pdfParse(buffer);
+    const extractedText = extractedData.text;
     
     console.log(`PDF parsing completed: ${extractedText.length} characters extracted`);
 
@@ -66,9 +68,21 @@ serve(async (req: Request) => {
       throw new Error('No readable text could be extracted from this PDF. The file may be image-based, scanned, or corrupted.');
     }
 
+    // Clean up the extracted text
+    const cleanedText = extractedText
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // Assess text quality to detect potential issues
+    const textQuality = assessTextQuality(cleanedText);
+    if (textQuality.isLowQuality) {
+      console.warn(`Low quality text detected: ${textQuality.reason}`);
+      throw new Error(`PDF text extraction produced poor quality results. This usually indicates the PDF is image-based or uses complex formatting. Reason: ${textQuality.reason}`);
+    }
+
     return new Response(
       JSON.stringify({
-        parsed_text: extractedText.trim()
+        parsed_text: cleanedText
       }),
       {
         headers: {
@@ -81,9 +95,15 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error('Resume PDF parsing error:', error);
     
+    let errorMessage = 'Unknown error occurred during resume PDF parsing';
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error occurred during resume PDF parsing'
+        error: errorMessage
       }),
       {
         status: 400,
@@ -96,137 +116,38 @@ serve(async (req: Request) => {
   }
 });
 
-async function extractTextFromPDF(pdfBytes: Uint8Array): Promise<string> {
-  try {
-    console.log('Starting enhanced PDF text extraction...');
-    
-    // Convert to string for processing
-    const pdfString = new TextDecoder('latin1').decode(pdfBytes);
-    
-    let extractedText = '';
-    
-    // Method 1: Extract from text objects (Tj and TJ operators)
-    const textObjectRegex = /(?:Tj|TJ)\s*(?:\[([^\]]*)\]|\(([^)]*)\))/g;
-    let match;
-    
-    while ((match = textObjectRegex.exec(pdfString)) !== null) {
-      if (match[1]) {
-        // Handle array format [(...) (...)]
-        const arrayContent = match[1];
-        const textInParens = arrayContent.match(/\(([^)]*)\)/g);
-        if (textInParens) {
-          textInParens.forEach(text => {
-            const cleanText = text.slice(1, -1);
-            if (cleanText.length > 0 && /[a-zA-Z]/.test(cleanText)) {
-              extractedText += cleanText + ' ';
-            }
-          });
-        }
-      } else if (match[2]) {
-        // Handle simple parentheses format
-        const cleanText = match[2];
-        if (cleanText.length > 0 && /[a-zA-Z]/.test(cleanText)) {
-          extractedText += cleanText + ' ';
-        }
-      }
-    }
-    
-    // Method 2: Look for BT/ET blocks (text blocks)
-    const textBlockRegex = /BT\s*([\s\S]*?)\s*ET/g;
-    let blockMatch;
-    
-    while ((blockMatch = textBlockRegex.exec(pdfString)) !== null) {
-      const blockContent = blockMatch[1];
-      
-      // Extract text from within this block
-      const blockTextRegex = /\(([^)]+)\)\s*Tj/g;
-      let textMatch;
-      
-      while ((textMatch = blockTextRegex.exec(blockContent)) !== null) {
-        const text = textMatch[1];
-        if (text.length > 1 && /[a-zA-Z]/.test(text)) {
-          extractedText += text + ' ';
-        }
-      }
-    }
-    
-    // Method 3: Enhanced stream content extraction
-    const streamRegex = /stream\s*([\s\S]*?)\s*endstream/g;
-    let streamMatch;
-    
-    while ((streamMatch = streamRegex.exec(pdfString)) !== null) {
-      const streamContent = streamMatch[1];
-      
-      // Look for readable text patterns in streams
-      const readableTextRegex = /[A-Za-z][A-Za-z0-9\s.,!?;:'"()\-]{4,}/g;
-      const matches = streamContent.match(readableTextRegex);
-      
-      if (matches) {
-        matches.forEach(text => {
-          // Filter out likely garbage
-          if (text.length >= 4 && 
-              !text.match(/^[0-9\s]+$/) && 
-              !text.match(/^[^a-zA-Z]*$/) &&
-              text.match(/[a-zA-Z]{2,}/)) {
-            extractedText += text + ' ';
-          }
-        });
-      }
-    }
-    
-    // Method 4: Direct text search (fallback)
-    if (extractedText.length < 100) {
-      console.log('Using fallback text extraction method...');
-      
-      // Look for any readable text patterns
-      const fallbackRegex = /[A-Za-z][A-Za-z0-9\s.,!?;:'"()\-@]{8,}/g;
-      const fallbackMatches = pdfString.match(fallbackRegex);
-      
-      if (fallbackMatches) {
-        fallbackMatches.forEach(text => {
-          // More lenient filtering for fallback
-          if (text.length >= 8 && 
-              text.match(/[a-zA-Z]{3,}/) &&
-              !text.match(/^[0-9\s\W]+$/)) {
-            extractedText += text + ' ';
-          }
-        });
-      }
-    }
-    
-    // Clean up the extracted text
-    extractedText = extractedText
-      .replace(/\s+/g, ' ')
-      .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    // Remove duplicate phrases (common in PDF extraction)
-    const words = extractedText.split(' ');
-    const uniqueWords: string[] = [];
-    const seen = new Set<string>();
-    
-    for (const word of words) {
-      const cleanWord = word.toLowerCase().trim();
-      if (cleanWord.length > 0 && !seen.has(cleanWord)) {
-        seen.add(cleanWord);
-        uniqueWords.push(word);
-      }
-    }
-    
-    const finalText = uniqueWords.join(' ');
-    
-    console.log(`Enhanced extraction completed: ${finalText.length} characters`);
-    
-    // If we still don't have enough readable text, it might be a scanned/image PDF
-    if (finalText.length < 50) {
-      throw new Error('This PDF appears to contain mostly images or scanned content. Please try converting it to a text-based format or use DOCX instead.');
-    }
-    
-    return finalText;
-    
-  } catch (error) {
-    console.error('Enhanced text extraction error:', error);
-    throw new Error('Failed to extract readable text from this PDF. The file may be corrupted, password-protected, or contain only images.');
+// Helper function to assess text quality and detect garbled output
+function assessTextQuality(text: string): { isLowQuality: boolean; reason?: string } {
+  if (!text || text.length < 50) {
+    return { isLowQuality: true, reason: 'Text too short (less than 50 characters)' };
   }
+  
+  // Check for too many single characters or very short words
+  const words = text.split(/\s+/).filter(word => word.length > 0);
+  const singleCharWords = words.filter(word => word.length === 1).length;
+  const singleCharRatio = singleCharWords / words.length;
+  
+  if (singleCharRatio > 0.3) {
+    return { isLowQuality: true, reason: 'Too many single character fragments (indicates parsing issues)' };
+  }
+  
+  // Check for too many non-alphabetic characters (garbled text indicator)
+  const alphabeticChars = text.match(/[a-zA-Z]/g)?.length || 0;
+  const totalChars = text.replace(/\s/g, '').length;
+  const alphabeticRatio = alphabeticChars / totalChars;
+  
+  if (alphabeticRatio < 0.5) {
+    return { isLowQuality: true, reason: 'Too few alphabetic characters (likely garbled or encoded content)' };
+  }
+  
+  // Check for excessive special characters that indicate encoding issues
+  const specialCharPattern = /[^\w\s.,!?;:()\-@#$%&*+=<>[\]{}|\\/"'`~]/g;
+  const specialChars = text.match(specialCharPattern)?.length || 0;
+  const specialCharRatio = specialChars / text.length;
+  
+  if (specialCharRatio > 0.1) {
+    return { isLowQuality: true, reason: 'Too many special/encoded characters (indicates binary data interpretation)' };
+  }
+  
+  return { isLowQuality: false };
 }
