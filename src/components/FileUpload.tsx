@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { parseDocument } from '@/utils/documentParser';
@@ -23,14 +23,39 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
   const [isUploading, setIsUploading] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const acceptedFileTypes = '.pdf,.docx';
   const maxFileSize = 10 * 1024 * 1024; // 10MB
 
+  const testDatabaseConnection = async () => {
+    try {
+      console.log('Testing database connection...');
+      const tableName = type === 'resume' ? 'resumes' : 'job_descriptions';
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('id')
+        .limit(1);
+      
+      if (error) {
+        console.error('Database test failed:', error);
+        return false;
+      }
+      
+      console.log('Database connection successful');
+      return true;
+    } catch (error) {
+      console.error('Database test error:', error);
+      return false;
+    }
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
+
+    setUploadError(null);
 
     if (selectedFile.size > maxFileSize) {
       toast({
@@ -45,11 +70,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
     
     // Parse document immediately for preview
     try {
+      console.log('Starting document parsing for:', selectedFile.name);
       const parsedText = await parseDocument(selectedFile);
+      console.log('Document parsed successfully, length:', parsedText.length);
       setParsedContent(parsedText);
       setShowPreview(true);
     } catch (error) {
       console.error('Error parsing document:', error);
+      setUploadError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast({
         title: "Parse Error",
         description: "Could not parse the document. Please try a different file.",
@@ -59,6 +87,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
   };
 
   const handleTextSubmit = () => {
+    setUploadError(null);
+    
     if (!textInput.trim()) {
       toast({
         title: "Empty Content",
@@ -79,6 +109,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
 
     setParsedContent(textInput);
     setShowPreview(true);
+    console.log('Text content prepared for upload, length:', textInput.length);
   };
 
   const uploadFileToStorage = async (file: File, userId: string): Promise<string> => {
@@ -86,54 +117,94 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
     const fileName = `${crypto.randomUUID()}.${fileExtension}`;
     const filePath = `${userId}/${type === 'resume' ? 'resumes' : 'job-descriptions'}/${fileName}`;
 
+    console.log('Attempting file upload to:', filePath);
+
     const { error } = await supabase.storage
       .from('user-files')
       .upload(filePath, file);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw error;
+    }
 
     const { data } = supabase.storage
       .from('user-files')
       .getPublicUrl(filePath);
 
+    console.log('File uploaded successfully to:', data.publicUrl);
     return data.publicUrl;
   };
 
   const saveToDatabase = async (userId: string, fileUrl?: string) => {
+    console.log('Starting database save for user:', userId);
+    
     if (type === 'resume') {
-      const { error } = await supabase
+      const insertData = {
+        user_id: userId,
+        original_file_url: fileUrl || null,
+        parsed_text: parsedContent,
+        file_name: file?.name || null,
+        file_size: file?.size || null
+      };
+      
+      console.log('Inserting resume data:', { ...insertData, parsed_text: `${parsedContent.length} characters` });
+
+      const { data, error } = await supabase
         .from('resumes')
-        .insert({
-          user_id: userId,
-          original_file_url: fileUrl || null,
-          parsed_text: parsedContent,
-          file_name: file?.name || null,
-          file_size: file?.size || null
-        });
+        .insert(insertData)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Resume insert error:', error);
+        throw error;
+      }
+      
+      console.log('Resume inserted successfully:', data);
     } else {
-      const { error } = await supabase
-        .from('job_descriptions')
-        .insert({
-          user_id: userId,
-          title: jobTitle || file?.name || 'Untitled Job Description',
-          source_file_url: fileUrl || null,
-          parsed_text: parsedContent,
-          file_name: file?.name || null,
-          file_size: file?.size || null
-        });
+      const insertData = {
+        user_id: userId,
+        title: jobTitle || file?.name || 'Untitled Job Description',
+        source_file_url: fileUrl || null,
+        parsed_text: parsedContent,
+        file_name: file?.name || null,
+        file_size: file?.size || null
+      };
+      
+      console.log('Inserting job description data:', { ...insertData, parsed_text: `${parsedContent.length} characters` });
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('job_descriptions')
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error('Job description insert error:', error);
+        throw error;
+      }
+      
+      console.log('Job description inserted successfully:', data);
     }
   };
 
   const handleUpload = async () => {
+    setUploadError(null);
+    
     try {
       setIsUploading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Test database connection first
+      const dbConnected = await testDatabaseConnection();
+      if (!dbConnected) {
+        throw new Error('Database connection failed');
+      }
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Auth check during upload:', { user: user?.id, authError });
+      
+      if (authError || !user) {
+        console.error('Authentication failed during upload:', authError);
+        setUploadError('Authentication failed. Please log in and try again.');
         toast({
           title: "Authentication Error",
           description: "Please log in to upload files.",
@@ -142,10 +213,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         return;
       }
 
+      console.log('Starting upload process for user:', user.id);
+
       let fileUrl: string | undefined;
 
       if (file) {
-        fileUrl = await uploadFileToStorage(file, user.id);
+        try {
+          fileUrl = await uploadFileToStorage(file, user.id);
+        } catch (storageError) {
+          console.log('Storage upload failed, proceeding without file URL:', storageError);
+          // Continue without file URL - we still have the parsed content
+        }
       }
 
       await saveToDatabase(user.id, fileUrl);
@@ -161,13 +239,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       setJobTitle('');
       setParsedContent('');
       setShowPreview(false);
+      setUploadError(null);
       
       if (onUploadSuccess) {
         onUploadSuccess();
       }
 
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Upload process error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setUploadError(`Upload failed: ${errorMessage}`);
       toast({
         title: "Upload Failed",
         description: "There was an error uploading your file. Please try again.",
@@ -193,6 +274,16 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Show upload error if any */}
+        {uploadError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {uploadError}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {type === 'job-description' && (
           <div className="space-y-2">
             <Label htmlFor="job-title">Job Title</Label>
@@ -250,7 +341,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
               <div className="space-y-2">
-                <p className="font-medium">Content Preview:</p>
+                <p className="font-medium">Content Preview ({parsedContent.length} characters):</p>
                 <div className="max-h-32 overflow-y-auto text-sm bg-muted p-2 rounded">
                   {parsedContent.substring(0, 500)}
                   {parsedContent.length > 500 && '...'}

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, Loader2, X } from 'lucide-react';
+import { Upload, FileText, CheckCircle, Loader2, X, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { parseDocument } from '@/utils/documentParser';
@@ -17,8 +17,39 @@ const UploadResumePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check authentication status on component mount
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        console.log('Auth check result:', { user: user?.id, error });
+        
+        if (error) {
+          console.error('Auth error:', error);
+          setAuthStatus('unauthenticated');
+          return;
+        }
+        
+        if (user) {
+          setAuthStatus('authenticated');
+          console.log('User authenticated:', user.id);
+        } else {
+          setAuthStatus('unauthenticated');
+          console.log('No authenticated user found');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setAuthStatus('unauthenticated');
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const acceptedFileTypes = ['.pdf', '.docx'];
   const maxFileSize = 10 * 1024 * 1024; // 10MB
@@ -44,6 +75,8 @@ const UploadResumePage: React.FC = () => {
   }, []);
 
   const handleFileSelection = async (selectedFile: File) => {
+    setUploadError(null);
+    
     if (selectedFile.size > maxFileSize) {
       toast({
         title: "File too large",
@@ -68,11 +101,14 @@ const UploadResumePage: React.FC = () => {
     // Parse document immediately for preview
     try {
       setIsUploading(true);
+      console.log('Starting document parsing for:', selectedFile.name);
       const parsedText = await parseDocument(selectedFile);
+      console.log('Document parsed successfully, length:', parsedText.length);
       setParsedContent(parsedText);
       setShowPreview(true);
     } catch (error) {
       console.error('Error parsing document:', error);
+      setUploadError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast({
         title: "Parse Error",
         description: "Could not parse the document. Please try a different file.",
@@ -90,32 +126,76 @@ const UploadResumePage: React.FC = () => {
     }
   };
 
-  const uploadFileToStorage = async (file: File, userId: string): Promise<string> => {
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `${crypto.randomUUID()}.${fileExtension}`;
-    const filePath = `${userId}/resumes/${fileName}`;
+  const testDatabaseConnection = async () => {
+    try {
+      console.log('Testing database connection...');
+      const { data, error } = await supabase
+        .from('resumes')
+        .select('id')
+        .limit(1);
+      
+      if (error) {
+        console.error('Database test failed:', error);
+        return false;
+      }
+      
+      console.log('Database connection successful');
+      return true;
+    } catch (error) {
+      console.error('Database test error:', error);
+      return false;
+    }
+  };
 
-    const { error } = await supabase.storage
-      .from('user-files')
-      .upload(filePath, file);
+  const uploadFileToStorage = async (file: File, userId: string): Promise<string | null> => {
+    try {
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExtension}`;
+      const filePath = `${userId}/resumes/${fileName}`;
 
-    if (error) throw error;
+      console.log('Attempting file upload to:', filePath);
 
-    const { data } = supabase.storage
-      .from('user-files')
-      .getPublicUrl(filePath);
+      const { error } = await supabase.storage
+        .from('user-files')
+        .upload(filePath, file);
 
-    return data.publicUrl;
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      const { data } = supabase.storage
+        .from('user-files')
+        .getPublicUrl(filePath);
+
+      console.log('File uploaded successfully to:', data.publicUrl);
+      return data.publicUrl;
+    } catch (error) {
+      console.error('File upload failed:', error);
+      return null;
+    }
   };
 
   const handleConfirmUpload = async () => {
     if (!file || !parsedContent) return;
 
+    setUploadError(null);
+    
     try {
       setIsUploading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Test database connection first
+      const dbConnected = await testDatabaseConnection();
+      if (!dbConnected) {
+        throw new Error('Database connection failed');
+      }
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Auth check during upload:', { user: user?.id, authError });
+      
+      if (authError || !user) {
+        console.error('Authentication failed during upload:', authError);
+        setUploadError('Authentication failed. Please log in and try again.');
         toast({
           title: "Authentication Error",
           description: "Please log in to upload files.",
@@ -124,26 +204,45 @@ const UploadResumePage: React.FC = () => {
         return;
       }
 
-      let fileUrl: string | undefined;
+      console.log('Starting upload process for user:', user.id);
 
+      // Try to upload file to storage (optional)
+      let fileUrl: string | null = null;
       try {
         fileUrl = await uploadFileToStorage(file, user.id);
+        if (fileUrl) {
+          console.log('File storage successful');
+        } else {
+          console.log('File storage failed, continuing with parsed content only');
+        }
       } catch (storageError) {
         console.log('Storage upload failed, proceeding without file URL:', storageError);
-        // Continue without file URL - we still have the parsed content
       }
 
-      const { error } = await supabase
-        .from('resumes')
-        .insert({
-          user_id: user.id,
-          original_file_url: fileUrl || null,
-          parsed_text: parsedContent,
-          file_name: file.name,
-          file_size: file.size
-        });
+      // Insert resume data into database
+      console.log('Inserting resume data into database...');
+      const insertData = {
+        user_id: user.id,
+        original_file_url: fileUrl,
+        parsed_text: parsedContent,
+        file_name: file.name,
+        file_size: file.size
+      };
+      
+      console.log('Insert data:', { ...insertData, parsed_text: `${parsedContent.length} characters` });
 
-      if (error) throw error;
+      const { data: insertResult, error: insertError } = await supabase
+        .from('resumes')
+        .insert(insertData)
+        .select();
+
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        setUploadError(`Database error: ${insertError.message}`);
+        throw insertError;
+      }
+
+      console.log('Resume inserted successfully:', insertResult);
 
       toast({
         title: "Upload Successful",
@@ -153,7 +252,9 @@ const UploadResumePage: React.FC = () => {
       navigate('/dashboard');
 
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Upload process error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setUploadError(`Upload failed: ${errorMessage}`);
       toast({
         title: "Upload Failed",
         description: "There was an error uploading your resume. Please try again.",
@@ -168,7 +269,37 @@ const UploadResumePage: React.FC = () => {
     setFile(null);
     setParsedContent('');
     setShowPreview(false);
+    setUploadError(null);
   };
+
+  // Show authentication status
+  if (authStatus === 'checking') {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-600 mb-4" />
+            <p className="text-gray-600">Checking authentication...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (authStatus === 'unauthenticated') {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              You must be logged in to upload resumes. Please log in and try again.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -179,6 +310,16 @@ const UploadResumePage: React.FC = () => {
             Upload your resume in PDF or DOCX format to get started
           </p>
         </div>
+
+        {/* Show upload error if any */}
+        {uploadError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {uploadError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!showPreview ? (
           <Card className="border-2 border-dashed border-gray-300">
@@ -249,7 +390,7 @@ const UploadResumePage: React.FC = () => {
                   {file?.name}
                 </CardTitle>
                 <CardDescription>
-                  Preview of your resume content
+                  Preview of your resume content ({parsedContent.length} characters parsed)
                 </CardDescription>
               </CardHeader>
               <CardContent>
