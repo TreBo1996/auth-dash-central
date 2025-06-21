@@ -154,36 +154,38 @@ const ResumeTemplates: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Template Selector */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">Templates</h3>
+        <div className="grid lg:grid-cols-5 gap-6 min-h-[800px]">
+          {/* Resume Preview - Center (takes 3 columns) */}
+          <div className="lg:col-span-3 flex justify-center">
+            <div className="w-full max-w-4xl">
+              <div className="flex items-center justify-center mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">{templateConfigs[selectedTemplate].name}</h3>
+                  <Badge variant="outline">{templateConfigs[selectedTemplate].category}</Badge>
+                </div>
+              </div>
+              <Card className="shadow-lg">
+                <CardContent className="p-4">
+                  <div className="bg-white border rounded-lg shadow-sm">
+                    <ResumePreview
+                      template={selectedTemplate}
+                      resumeData={optimizedResume.generated_text}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Template Selector - Right Side (takes 2 columns) */}
+          <div className="lg:col-span-2">
+            <Card className="h-fit sticky top-6">
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4 text-center">Resume Templates</h3>
                 <TemplateSelector
                   selectedTemplate={selectedTemplate}
                   onTemplateSelect={setSelectedTemplate}
                 />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Resume Preview */}
-          <div className="lg:col-span-3">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{templateConfigs[selectedTemplate].name}</h3>
-                    <Badge variant="outline">{templateConfigs[selectedTemplate].category}</Badge>
-                  </div>
-                </div>
-                <div className="bg-white border rounded-lg shadow-sm">
-                  <ResumePreview
-                    template={selectedTemplate}
-                    resumeData={optimizedResume.generated_text}
-                  />
-                </div>
               </CardContent>
             </Card>
           </div>
