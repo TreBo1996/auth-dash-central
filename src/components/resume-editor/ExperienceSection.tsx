@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Briefcase, Plus, Trash2, ListOrdered } from 'lucide-react';
+import { Briefcase, Plus, Trash2, ListOrdered, Sparkles } from 'lucide-react';
 
 interface Experience {
   id: string;
@@ -63,21 +63,18 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     }
   };
 
-  const formatBulletPoints = (description: string) => {
-    // Helper function to ensure proper bullet point formatting
-    if (!description) return '';
-    
-    return description
-      .split('\n')
-      .map(line => {
-        const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
-          // Only add bullet if line has content and doesn't already have a bullet
-          return '• ' + trimmed;
-        }
-        return line;
-      })
-      .join('\n');
+  const hasAIOptimizedContent = (description: string) => {
+    // Check if content has AI-optimized characteristics
+    return description.includes('•') && (
+      description.length > 200 || // Longer descriptions are likely AI-optimized
+      description.includes('%') || // Contains metrics
+      description.includes('$') || // Contains financial figures
+      /\d+\+/.test(description) || // Contains numbers with +
+      description.includes('Led') ||
+      description.includes('Managed') ||
+      description.includes('Implemented') ||
+      description.includes('Achieved')
+    );
   };
 
   return (
@@ -98,7 +95,15 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
         {experiences.map((experience, index) => (
           <div key={experience.id} className="p-4 border rounded-lg space-y-4">
             <div className="flex justify-between items-start">
-              <h4 className="font-medium text-gray-900">Experience {index + 1}</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="font-medium text-gray-900">Experience {index + 1}</h4>
+                {hasAIOptimizedContent(experience.description) && (
+                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full">
+                    <Sparkles className="h-3 w-3 text-blue-600" />
+                    <span className="text-xs text-blue-600 font-medium">AI Optimized</span>
+                  </div>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
@@ -173,22 +178,36 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 value={experience.description}
                 onChange={(e) => updateExperience(experience.id, 'description', e.target.value)}
                 placeholder="• Describe your key responsibilities and achievements...&#10;• Use bullet points for better readability&#10;• Include quantifiable results when possible"
-                className="min-h-[150px] font-mono text-sm leading-relaxed"
+                className="min-h-[200px] font-mono text-sm leading-relaxed"
                 style={{ 
                   whiteSpace: 'pre-wrap',
                   fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
                 }}
               />
               <div className="mt-2 space-y-1">
-                <p className="text-xs text-gray-500">
-                  💡 AI-optimized content preserved with bullet points for ATS compatibility
-                </p>
-                <p className="text-xs text-blue-600">
-                  📝 Edit directly above - bullet points (•) are automatically formatted for professional presentation
-                </p>
+                {hasAIOptimizedContent(experience.description) ? (
+                  <div className="space-y-1">
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      AI-optimized content with strategic keywords and metrics detected
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      ✅ Ready for ATS systems with bullet points and quantified achievements
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500">
+                      💡 Use bullet points (•) for better ATS compatibility and readability
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      📝 Include metrics and quantifiable results for maximum impact
+                    </p>
+                  </div>
+                )}
                 {experience.description.includes('•') && (
                   <p className="text-xs text-green-600">
-                    ✅ Bullet points detected - ready for ATS systems
+                    ✅ Bullet points detected - optimized for ATS parsing
                   </p>
                 )}
               </div>
