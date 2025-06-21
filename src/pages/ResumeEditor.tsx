@@ -76,6 +76,12 @@ const ResumeEditor: React.FC = () => {
       if (error) throw error;
       
       setResume(data);
+      console.log('=== DEBUGGING GENERATED TEXT ===');
+      console.log('Full generated_text length:', data.generated_text.length);
+      console.log('First 500 characters:', data.generated_text.substring(0, 500));
+      console.log('Contains bullet points (•):', data.generated_text.includes('•'));
+      console.log('Contains EXPERIENCE section:', data.generated_text.includes('EXPERIENCE'));
+      
       await parseResumeWithAI(data.generated_text);
     } catch (error) {
       console.error('Error fetching resume:', error);
@@ -125,9 +131,14 @@ const ResumeEditor: React.FC = () => {
   };
 
   const parseOptimizedResumeText = (text: string): ParsedResume => {
-    console.log('Enhanced parsing for optimized resume content');
+    console.log('=== ENHANCED PARSING DEBUG ===');
+    console.log('Input text length:', text.length);
+    console.log('Text preview:', text.substring(0, 200));
     
+    // Split by double newlines to get major sections
     const sections = text.split(/\n\n+/);
+    console.log('Number of sections found:', sections.length);
+    
     const parsed: ParsedResume = {
       summary: '',
       experience: [],
@@ -137,115 +148,155 @@ const ResumeEditor: React.FC = () => {
     };
 
     let currentSection = '';
+    let experienceContent = '';
     
     sections.forEach((section, index) => {
-      const lowerSection = section.toLowerCase().trim();
-      const lines = section.split('\n').map(line => line.trim()).filter(line => line);
+      const trimmed = section.trim();
+      const lowerSection = trimmed.toLowerCase();
       
-      if (lowerSection.includes('summary') || lowerSection.includes('profile') || (index === 0 && !lowerSection.includes('experience'))) {
-        parsed.summary = section.replace(/^(summary|profile|professional summary)[\s\n]*/gi, '').trim();
+      console.log(`Processing section ${index}:`, trimmed.substring(0, 100));
+      
+      if (lowerSection.startsWith('summary') || lowerSection.startsWith('professional summary')) {
         currentSection = 'summary';
-      } else if (lowerSection.includes('experience') || lowerSection.includes('work history')) {
+        parsed.summary = trimmed.replace(/^(summary|professional summary)[\s\n]*/gi, '').trim();
+        console.log('Found summary section, length:', parsed.summary.length);
+      } 
+      else if (lowerSection.startsWith('experience') || lowerSection.startsWith('work experience')) {
         currentSection = 'experience';
-        
-        // Parse experience entries - enhanced for optimized content
-        if (lines.length > 1) {
-          let currentExp: any = null;
-          
-          lines.forEach(line => {
-            // Check if this is a job title line (contains company and dates)
-            if (line.includes('|') && (line.includes('20') || line.includes('Present'))) {
-              // Save previous experience if exists
-              if (currentExp) {
-                parsed.experience.push(currentExp);
-              }
-              
-              // Parse new experience header: "Company | Role | Dates"
-              const parts = line.split('|').map(p => p.trim());
-              currentExp = {
-                id: Date.now().toString() + Math.random(),
-                company: parts[0] || 'Company Name',
-                role: parts[1] || 'Job Title',
-                startDate: parts[2]?.split('-')[0]?.trim() || '2023',
-                endDate: parts[2]?.split('-')[1]?.trim() || 'Present',
-                description: ''
-              };
-            } else if (currentExp && (line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))) {
-              // Add bullet points to current experience
-              if (currentExp.description) {
-                currentExp.description += '\n' + line;
-              } else {
-                currentExp.description = line;
-              }
-            } else if (currentExp && line && !line.toLowerCase().includes('experience')) {
-              // Add non-bullet content to description
-              if (currentExp.description) {
-                currentExp.description += '\n' + line;
-              } else {
-                currentExp.description = line;
-              }
-            }
-          });
-          
-          // Add the last experience
-          if (currentExp) {
-            parsed.experience.push(currentExp);
-          }
-        }
-      } else if (lowerSection.includes('skills')) {
+        experienceContent = trimmed.replace(/^(experience|work experience)[\s\n]*/gi, '').trim();
+        console.log('Found experience section, content length:', experienceContent.length);
+        console.log('Experience content preview:', experienceContent.substring(0, 200));
+      }
+      else if (lowerSection.startsWith('skills')) {
         currentSection = 'skills';
-        const skillsText = section.replace(/^skills[\s\n]*/gi, '').trim();
-        // Split by various delimiters and clean up
+        const skillsText = trimmed.replace(/^skills[\s\n]*/gi, '').trim();
         parsed.skills = skillsText
-          .split(/[,•\-\n|]/)
+          .split(/[,\n]/)
           .map(s => s.trim())
-          .filter(s => s && s.length > 1)
-          .slice(0, 50); // Limit to reasonable number
-      } else if (lowerSection.includes('education')) {
+          .filter(s => s && s.length > 1);
+        console.log('Found skills, count:', parsed.skills.length);
+      }
+      else if (lowerSection.startsWith('education')) {
         currentSection = 'education';
-        lines.forEach(line => {
-          if (line && !line.toLowerCase().includes('education')) {
+        const educationLines = trimmed.replace(/^education[\s\n]*/gi, '').split('\n').filter(line => line.trim());
+        educationLines.forEach(line => {
+          if (line.trim()) {
+            const parts = line.split('|').map(p => p.trim());
             parsed.education.push({
               id: Date.now().toString() + Math.random(),
-              institution: line.includes('from') ? line.split('from')[1]?.trim() || 'University' : 'University',
-              degree: line.includes('from') ? line.split('from')[0]?.trim() || 'Degree' : line,
-              year: line.match(/\d{4}/)?.[0] || '2020'
+              institution: parts[0] || 'University',
+              degree: parts[1] || 'Degree',
+              year: parts[2] || line.match(/\d{4}/)?.[0] || '2020'
             });
           }
         });
-      } else if (lowerSection.includes('certification')) {
+        console.log('Found education, count:', parsed.education.length);
+      }
+      else if (lowerSection.startsWith('certifications')) {
         currentSection = 'certifications';
-        lines.forEach(line => {
-          if (line && !line.toLowerCase().includes('certification')) {
+        const certLines = trimmed.replace(/^certifications[\s\n]*/gi, '').split('\n').filter(line => line.trim());
+        certLines.forEach(line => {
+          if (line.trim()) {
+            const parts = line.split('|').map(p => p.trim());
             parsed.certifications.push({
               id: Date.now().toString() + Math.random(),
-              name: line.includes('from') ? line.split('from')[0]?.trim() || 'Certification' : line,
-              issuer: line.includes('from') ? line.split('from')[1]?.trim() || 'Issuer' : 'Issuing Organization',
-              year: line.match(/\d{4}/)?.[0] || '2023'
+              name: parts[0] || line.trim(),
+              issuer: parts[1] || 'Issuing Organization',
+              year: parts[2] || line.match(/\d{4}/)?.[0] || '2023'
             });
           }
         });
+        console.log('Found certifications, count:', parsed.certifications.length);
+      }
+      else if (currentSection === 'experience' && trimmed) {
+        // This might be additional experience content
+        experienceContent += '\n\n' + trimmed;
+        console.log('Added to experience content, new length:', experienceContent.length);
       }
     });
 
-    // Ensure we have at least some content with preserved bullet points
-    if (!parsed.experience.length && text.includes('•')) {
-      // Fallback: treat the entire text as one experience with bullet points
+    // Parse the experience content more carefully
+    if (experienceContent) {
+      console.log('=== PARSING EXPERIENCE CONTENT ===');
+      console.log('Full experience content:', experienceContent);
+      
+      // Split experience content by company/job entries
+      // Look for patterns like "Company | Role | Dates"
+      const experienceBlocks = experienceContent.split(/(?=\n[A-Z][^|\n]*\s*\|\s*[^|\n]*\s*\|\s*[^|\n]*)/);
+      
+      console.log('Experience blocks found:', experienceBlocks.length);
+      
+      experienceBlocks.forEach((block, index) => {
+        const lines = block.split('\n').map(line => line.trim()).filter(line => line);
+        console.log(`Processing experience block ${index}:`, lines[0]?.substring(0, 100));
+        
+        if (lines.length === 0) return;
+        
+        const firstLine = lines[0];
+        
+        // Check if this looks like a job header (Company | Role | Dates)
+        if (firstLine.includes('|')) {
+          const parts = firstLine.split('|').map(p => p.trim());
+          
+          if (parts.length >= 3) {
+            // Extract dates from the third part
+            const datePart = parts[2];
+            const dateMatch = datePart.match(/(.+?)\s*-\s*(.+)/);
+            
+            // Get all remaining lines as description, preserving bullet points
+            const descriptionLines = lines.slice(1);
+            const description = descriptionLines.join('\n');
+            
+            console.log(`Experience ${index}: Company=${parts[0]}, Role=${parts[1]}, Description length=${description.length}`);
+            console.log(`Description preview:`, description.substring(0, 200));
+            console.log(`Contains bullets:`, description.includes('•'));
+            
+            parsed.experience.push({
+              id: Date.now().toString() + index,
+              company: parts[0] || 'Company Name',
+              role: parts[1] || 'Job Title',
+              startDate: dateMatch ? dateMatch[1].trim() : '2023',
+              endDate: dateMatch ? dateMatch[2].trim() : 'Present',
+              description: description || 'Job responsibilities and achievements'
+            });
+          }
+        } else if (parsed.experience.length === 0 && lines.length > 0) {
+          // Fallback: treat entire content as one job if no proper format found
+          console.log('Fallback: treating entire content as single job');
+          parsed.experience.push({
+            id: '1',
+            company: 'Company Name',
+            role: 'Job Title',
+            startDate: '2023',
+            endDate: 'Present',
+            description: experienceContent
+          });
+        }
+      });
+    }
+
+    // Final fallback if no experience was parsed
+    if (parsed.experience.length === 0 && text.includes('•')) {
+      console.log('Final fallback: preserving bullet points in single job entry');
       parsed.experience.push({
         id: '1',
         company: 'Company Name',
         role: 'Job Title',
         startDate: '2023',
-        endDate: '2024',
-        description: text.substring(0, 1000) // Preserve original bullet points
+        endDate: 'Present',
+        description: text.substring(0, 2000) // Preserve original with bullet points
       });
     }
 
-    console.log('Enhanced parsed result:', {
-      summaryLength: parsed.summary.length,
-      experienceCount: parsed.experience.length,
-      experienceDescriptions: parsed.experience.map(exp => exp.description.substring(0, 100))
-    });
+    console.log('=== FINAL PARSED RESULT ===');
+    console.log('Summary length:', parsed.summary.length);
+    console.log('Experience count:', parsed.experience.length);
+    console.log('Experience descriptions with bullets:', parsed.experience.map(exp => ({
+      company: exp.company,
+      hasBullets: exp.description.includes('•'),
+      descLength: exp.description.length,
+      preview: exp.description.substring(0, 100)
+    })));
 
     return parsed;
   };

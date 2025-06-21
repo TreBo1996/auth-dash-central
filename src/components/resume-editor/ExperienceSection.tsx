@@ -46,32 +46,38 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     onChange(experiences.filter(exp => exp.id !== id));
   };
 
-  const formatDescription = (description: string) => {
-    // Ensure bullet points are properly formatted
-    if (!description.includes('•') && !description.includes('-') && !description.includes('*')) {
-      return description;
+  const addBulletPoint = (experienceId: string) => {
+    const experience = experiences.find(exp => exp.id === experienceId);
+    if (experience) {
+      let newDescription = experience.description;
+      
+      // If description doesn't end with a newline, add one
+      if (!newDescription.endsWith('\n')) {
+        newDescription += '\n';
+      }
+      
+      // Add a new bullet point
+      newDescription += '• ';
+      
+      updateExperience(experienceId, 'description', newDescription);
     }
+  };
+
+  const formatBulletPoints = (description: string) => {
+    // Helper function to ensure proper bullet point formatting
+    if (!description) return '';
     
-    // Clean up the description to ensure proper bullet point formatting
     return description
       .split('\n')
       .map(line => {
         const trimmed = line.trim();
         if (trimmed && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
+          // Only add bullet if line has content and doesn't already have a bullet
           return '• ' + trimmed;
         }
-        return trimmed;
+        return line;
       })
-      .filter(line => line)
       .join('\n');
-  };
-
-  const addBulletPoint = (experienceId: string) => {
-    const experience = experiences.find(exp => exp.id === experienceId);
-    if (experience) {
-      const newDescription = experience.description + '\n• ';
-      updateExperience(experienceId, 'description', newDescription);
-    }
   };
 
   return (
@@ -167,15 +173,25 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 value={experience.description}
                 onChange={(e) => updateExperience(experience.id, 'description', e.target.value)}
                 placeholder="• Describe your key responsibilities and achievements...&#10;• Use bullet points for better readability&#10;• Include quantifiable results when possible"
-                className="min-h-[120px] font-mono text-sm"
+                className="min-h-[150px] font-mono text-sm leading-relaxed"
                 style={{ 
                   whiteSpace: 'pre-wrap',
                   fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
                 }}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                💡 Tip: Use bullet points (•) to highlight your achievements. Each line starting with • will be formatted as a bullet point.
-              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-xs text-gray-500">
+                  💡 AI-optimized content preserved with bullet points for ATS compatibility
+                </p>
+                <p className="text-xs text-blue-600">
+                  📝 Edit directly above - bullet points (•) are automatically formatted for professional presentation
+                </p>
+                {experience.description.includes('•') && (
+                  <p className="text-xs text-green-600">
+                    ✅ Bullet points detected - ready for ATS systems
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         ))}
