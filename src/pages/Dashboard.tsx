@@ -276,7 +276,11 @@ const Dashboard: React.FC = () => {
                           <Eye className="h-3 w-3 mr-1" />
                           View
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => navigate(`/resume-editor/initial/${resume.id}`)}
+                        >
                           <Edit className="h-3 w-3 mr-1" />
                           Edit
                         </Button>
