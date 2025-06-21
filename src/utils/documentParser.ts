@@ -1,11 +1,6 @@
 
 import mammoth from 'mammoth';
-
-// Import PDF.js in a browser-compatible way
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Set up PDF.js worker for browser environment
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+import { supabase } from '@/integrations/supabase/client';
 
 export const parseDocument = async (file: File): Promise<string> => {
   const fileType = file.type;
@@ -15,8 +10,8 @@ export const parseDocument = async (file: File): Promise<string> => {
 
   try {
     if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      console.log('Attempting PDF parsing with pdfjs-dist...');
-      return await parsePDF(file);
+      console.log('Processing PDF using server-side edge function...');
+      return await parsePDFServerSide(file);
     } else if (
       fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       fileName.endsWith('.docx')
@@ -48,58 +43,55 @@ export const parseDocument = async (file: File): Promise<string> => {
   }
 };
 
-const parsePDF = async (file: File): Promise<string> => {
+const parsePDFServerSide = async (file: File): Promise<string> => {
   try {
-    console.log('Converting PDF file to array buffer...');
+    console.log('Converting PDF to base64 for server processing...');
+    
+    // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
-    
-    console.log('Loading PDF document with pdfjs-dist...');
-    const pdf = await pdfjsLib.getDocument({
-      data: arrayBuffer,
-      useSystemFonts: true,
-    }).promise;
-    
-    console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
-    
-    let fullText = '';
-    
-    // Extract text from each page
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      console.log(`Processing page ${pageNum}/${pdf.numPages}`);
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      
-      // Combine all text items from the page
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
-      
-      fullText += pageText + '\n';
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
+    const fileBase64 = btoa(binary);
     
-    const trimmedText = fullText.trim();
-    console.log(`PDF parsing completed, extracted ${trimmedText.length} characters from ${pdf.numPages} pages`);
+    console.log('Sending PDF to server-side parser...');
     
-    if (!trimmedText) {
-      throw new Error('No text could be extracted from this PDF. The file may be image-based, scanned, or corrupted. Please try converting to DOCX format.');
+    // Call the edge function
+    const { data, error } = await supabase.functions.invoke('parse-pdf', {
+      body: {
+        fileBase64,
+        fileName: file.name
+      }
+    });
+
+    if (error) {
+      console.error('Edge function error:', error);
+      throw new Error(`Server processing failed: ${error.message}`);
     }
-    
-    return trimmedText;
+
+    if (!data.success) {
+      throw new Error(data.error || 'Server-side PDF parsing failed');
+    }
+
+    console.log(`Server-side PDF parsing successful: ${data.text.length} characters from ${data.pages} pages`);
+    return data.text;
+
   } catch (error) {
-    console.error('PDF parsing failed:', error);
+    console.error('Server-side PDF parsing failed:', error);
     
-    // Re-throw with more specific error message
     if (error instanceof Error) {
-      if (error.message.includes('No text could be extracted')) {
+      if (error.message.includes('Server processing failed') || error.message.includes('Server-side PDF parsing failed')) {
         throw error; // Keep the specific message
-      } else if (error.message.includes('Invalid PDF') || error.message.includes('invalid')) {
-        throw new Error('The PDF file is invalid or corrupted. Please try converting to DOCX format.');
-      } else if (error.message.includes('Password')) {
-        throw new Error('Password-protected PDFs are not supported. Please use an unprotected file or convert to DOCX format.');
+      } else if (error.message.includes('No text could be extracted')) {
+        throw error; // Keep the specific message
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        throw new Error('Network error while processing PDF. Please check your connection and try again.');
       }
     }
     
-    throw new Error('Failed to process PDF file. Please convert to DOCX format for better compatibility.');
+    throw new Error('Failed to process PDF file. Please try converting to DOCX format for better compatibility.');
   }
 };
 
