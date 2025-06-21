@@ -24,14 +24,14 @@ export const parseDocument = async (file: File): Promise<string> => {
   } catch (error) {
     console.error('Document parsing error:', error);
     
-    // Provide more specific error messages
+    // Provide more specific error messages with conversion guidance
     if (error instanceof Error) {
-      if (error.message.includes('No text could be extracted')) {
-        throw new Error('No text could be extracted from this PDF. This may be because:\n• The PDF is image-based or scanned\n• The PDF is password-protected\n• The PDF format is not supported\n\nPlease try converting to DOCX format for better results.');
-      } else if (error.message.includes('Server processing failed')) {
-        throw new Error('PDF processing failed on the server. Please try:\n• Converting your PDF to DOCX format\n• Ensuring your PDF is not password-protected\n• Using a different PDF file');
+      if (error.message.includes('No text could be extracted') || 
+          error.message.includes('Server processing failed') ||
+          error.message.includes('Failed to extract readable text')) {
+        throw new Error(`PDF parsing failed. This PDF may be:\n• Image-based or scanned\n• Password-protected\n• Using complex formatting\n\n✅ RECOMMENDED SOLUTION:\nConvert your PDF to DOCX format using:\n• Microsoft Word (File → Save As → Word Document)\n• Google Docs (Upload PDF → Download as Word)\n• Online converters like SmallPDF or ILovePDF\n\nDOCX format provides much better text extraction results.`);
       } else if (error.message.includes('network') || error.message.includes('fetch')) {
-        throw new Error('Network error while processing PDF. Please check your connection and try again.');
+        throw new Error('Network error while processing PDF. Please check your connection and try again, or convert to DOCX format for better reliability.');
       } else if (error.message.includes('Unsupported file type')) {
         throw error; // Keep the specific message
       } else {
@@ -39,7 +39,7 @@ export const parseDocument = async (file: File): Promise<string> => {
       }
     }
     
-    throw new Error('Failed to parse document. Please try converting to DOCX format for better compatibility.');
+    throw new Error('Failed to parse document. For best results, please convert to DOCX format.');
   }
 };
 
@@ -76,13 +76,22 @@ const parsePDFServerSide = async (file: File): Promise<string> => {
     }
 
     console.log(`Server-side PDF parsing successful: ${data.text.length} characters extracted`);
+    
+    // Check if the extracted text looks like garbage (contains too many random characters)
+    const textQuality = assessTextQuality(data.text);
+    if (textQuality.isLowQuality) {
+      throw new Error('PDF text extraction produced poor quality results. This usually indicates the PDF is image-based or uses complex formatting.');
+    }
+    
     return data.text;
 
   } catch (error) {
     console.error('Server-side PDF parsing failed:', error);
     
     if (error instanceof Error) {
-      if (error.message.includes('Server processing failed') || error.message.includes('Server-side PDF parsing failed')) {
+      if (error.message.includes('Server processing failed') || 
+          error.message.includes('Server-side PDF parsing failed') ||
+          error.message.includes('poor quality results')) {
         throw error; // Keep the specific message
       } else if (error.message.includes('No text could be extracted')) {
         throw error; // Keep the specific message
@@ -115,4 +124,31 @@ const parseDocx = async (file: File): Promise<string> => {
     console.error('DOCX parsing failed:', error);
     throw error;
   }
+};
+
+// Helper function to assess text quality
+const assessTextQuality = (text: string): { isLowQuality: boolean; reason?: string } => {
+  if (!text || text.length < 50) {
+    return { isLowQuality: true, reason: 'Text too short' };
+  }
+  
+  // Check for too many single characters or very short words
+  const words = text.split(/\s+/).filter(word => word.length > 0);
+  const singleCharWords = words.filter(word => word.length === 1).length;
+  const singleCharRatio = singleCharWords / words.length;
+  
+  if (singleCharRatio > 0.3) {
+    return { isLowQuality: true, reason: 'Too many single character fragments' };
+  }
+  
+  // Check for too many non-alphabetic characters
+  const alphabeticChars = text.match(/[a-zA-Z]/g)?.length || 0;
+  const totalChars = text.replace(/\s/g, '').length;
+  const alphabeticRatio = alphabeticChars / totalChars;
+  
+  if (alphabeticRatio < 0.5) {
+    return { isLowQuality: true, reason: 'Too few alphabetic characters' };
+  }
+  
+  return { isLowQuality: false };
 };

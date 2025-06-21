@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,12 +76,23 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       setShowPreview(true);
     } catch (error) {
       console.error('Error parsing document:', error);
-      setUploadError(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      toast({
-        title: "Parse Error",
-        description: "Could not parse the document. Please try a different file.",
-        variant: "destructive"
-      });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setUploadError(`Parse error: ${errorMessage}`);
+      
+      // Show more helpful toast for PDF parsing failures
+      if (errorMessage.includes('PDF parsing failed') || errorMessage.includes('poor quality results')) {
+        toast({
+          title: "PDF Parsing Failed",
+          description: "This PDF couldn't be parsed properly. Please convert to DOCX format for best results.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Parse Error",
+          description: "Could not parse the document. Please try a different file or convert to DOCX format.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -268,7 +278,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         </CardTitle>
         <CardDescription>
           {type === 'resume' 
-            ? 'Upload your resume in PDF or DOCX format'
+            ? 'Upload your resume in PDF or DOCX format (DOCX strongly recommended)'
             : 'Upload a job description file or paste the text directly'
           }
         </CardDescription>
@@ -279,7 +289,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              {uploadError}
+              <div className="whitespace-pre-line">{uploadError}</div>
+              {uploadError.includes('PDF parsing failed') && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-sm font-medium text-blue-800 mb-1">Convert to DOCX:</p>
+                  <p className="text-sm text-blue-700">Use Word, Google Docs, or online converters like SmallPDF</p>
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}
@@ -306,9 +322,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
               onChange={handleFileChange}
               className="cursor-pointer"
             />
-            <p className="text-sm text-muted-foreground">
-              Supported formats: PDF, DOCX (max 10MB)
-            </p>
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-muted-foreground">Supported: PDF, DOCX (max 10MB)</span>
+              <div className="flex items-center gap-2">
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                  ✓ DOCX Best
+                </span>
+                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                  ⚠ PDF Limited
+                </span>
+              </div>
+            </div>
           </div>
 
           {type === 'job-description' && (
