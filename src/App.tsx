@@ -9,6 +9,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import VerifyEmail from "./pages/VerifyEmail";
 import Upload from "./pages/Upload";
 import Dashboard from "./pages/Dashboard";
 import UploadResumePage from "./pages/UploadResumePage";
@@ -31,6 +32,7 @@ const App: React.FC = () => (
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             
             {/* Protected routes */}
             <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />

@@ -58,10 +58,8 @@ const Auth: React.FC = () => {
     if (error) {
       setError(error.message);
     } else {
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
-      });
+      // Redirect to verification screen with email in URL
+      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     }
     
     setIsLoading(false);
