@@ -18,6 +18,7 @@ import Profile from "./pages/Profile";
 import ResumeEditor from "./pages/ResumeEditor";
 import InitialResumeEditor from "./pages/InitialResumeEditor";
 import InterviewPrep from "./pages/InterviewPrep";
+import ResumeTemplates from "./pages/ResumeTemplates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App: React.FC = () => (
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/resume-editor/:id" element={<ProtectedRoute><ResumeEditor /></ProtectedRoute>} />
             <Route path="/resume-editor/initial/:id" element={<ProtectedRoute><InitialResumeEditor /></ProtectedRoute>} />
+            <Route path="/resume-templates/:optimizedResumeId" element={<ProtectedRoute><ResumeTemplates /></ProtectedRoute>} />
             <Route path="/interview-prep" element={<ProtectedRoute><InterviewPrep /></ProtectedRoute>} />
             
             {/* Catch-all route */}

@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight, Sparkles, Palette } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -460,6 +460,15 @@ const Dashboard: React.FC = () => {
                       >
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Palette className="h-3 w-3 mr-1" />
+                        Format
                       </Button>
                       <Button 
                         size="sm" 
