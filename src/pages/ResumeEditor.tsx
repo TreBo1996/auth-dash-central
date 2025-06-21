@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Save, Loader2, Palette, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ResumeSection } from '@/components/resume-editor/ResumeSection';
@@ -12,6 +12,11 @@ import { ExperienceSection } from '@/components/resume-editor/ExperienceSection'
 import { SkillsSection } from '@/components/resume-editor/SkillsSection';
 import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { TemplateGallery } from '@/components/templates/TemplateGallery';
+import { ResumeTemplateRenderer } from '@/components/templates/ResumeTemplateRenderer';
+import { PDFExporter } from '@/components/templates/PDFExporter';
+import { useUserPlan } from '@/hooks/useUserPlan';
+import { useTemplatePreferences } from '@/hooks/useTemplatePreferences';
 
 interface OptimizedResume {
   id: string;
@@ -57,6 +62,14 @@ const ResumeEditor: React.FC = () => {
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('edit');
+
+  const { planLevel } = useUserPlan();
+  const { 
+    selectedTemplateId, 
+    selectedTemplateConfig, 
+    updateTemplatePreference 
+  } = useTemplatePreferences();
 
   useEffect(() => {
     if (id) {
@@ -234,6 +247,10 @@ const ResumeEditor: React.FC = () => {
     return text.trim();
   };
 
+  const handleTemplateSelect = (templateId: string, templateConfig: any) => {
+    updateTemplatePreference(templateId, templateConfig);
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -260,7 +277,7 @@ const ResumeEditor: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -273,51 +290,124 @@ const ResumeEditor: React.FC = () => {
               Back to Dashboard
             </Button>
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
-            <p className="text-gray-600">Edit your AI-optimized resume</p>
+            <p className="text-gray-600">Edit and customize your AI-optimized resume</p>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Changes
-          </Button>
+          <div className="flex gap-2">
+            <PDFExporter
+              resumeId={resume.id}
+              resumeContent={
+                selectedTemplateConfig && (
+                  <ResumeTemplateRenderer
+                    resume={parsedResume}
+                    templateConfig={selectedTemplateConfig}
+                    templateName="Selected Template"
+                  />
+                )
+              }
+              templateId={selectedTemplateId || undefined}
+              userName="User"
+            />
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </div>
         </div>
 
-        {/* Resume Sections */}
-        <div className="space-y-6">
-          {/* Summary Section */}
-          <ResumeSection
-            title="Professional Summary"
-            value={parsedResume.summary}
-            onChange={(value) => setParsedResume(prev => prev ? { ...prev, summary: value } : null)}
-          />
+        {/* Tabs for Edit/Template/Preview */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="edit">Edit Content</TabsTrigger>
+            <TabsTrigger value="template">
+              <Palette className="h-4 w-4 mr-2" />
+              Choose Template
+            </TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
 
-          {/* Experience Section */}
-          <ExperienceSection
-            experiences={parsedResume.experience}
-            onChange={(experiences) => setParsedResume(prev => prev ? { ...prev, experience: experiences } : null)}
-          />
+          <TabsContent value="edit" className="space-y-6">
+            {/* Resume Sections */}
+            <div className="space-y-6">
+              {/* Summary Section */}
+              <ResumeSection
+                title="Professional Summary"
+                value={parsedResume.summary}
+                onChange={(value) => setParsedResume(prev => prev ? { ...prev, summary: value } : null)}
+              />
 
-          {/* Skills Section */}
-          <SkillsSection
-            skills={parsedResume.skills}
-            onChange={(skills) => setParsedResume(prev => prev ? { ...prev, skills } : null)}
-          />
+              {/* Experience Section */}
+              <ExperienceSection
+                experiences={parsedResume.experience}
+                onChange={(experiences) => setParsedResume(prev => prev ? { ...prev, experience: experiences } : null)}
+              />
 
-          {/* Education Section */}
-          <EducationSection
-            education={parsedResume.education}
-            onChange={(education) => setParsedResume(prev => prev ? { ...prev, education } : null)}
-          />
+              {/* Skills Section */}
+              <SkillsSection
+                skills={parsedResume.skills}
+                onChange={(skills) => setParsedResume(prev => prev ? { ...prev, skills } : null)}
+              />
 
-          {/* Certifications Section */}
-          <CertificationsSection
-            certifications={parsedResume.certifications}
-            onChange={(certifications) => setParsedResume(prev => prev ? { ...prev, certifications } : null)}
-          />
-        </div>
+              {/* Education Section */}
+              <EducationSection
+                education={parsedResume.education}
+                onChange={(education) => setParsedResume(prev => prev ? { ...prev, education } : null)}
+              />
+
+              {/* Certifications Section */}
+              <CertificationsSection
+                certifications={parsedResume.certifications}
+                onChange={(certifications) => setParsedResume(prev => prev ? { ...prev, certifications } : null)}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="template">
+            <TemplateGallery
+              resume={parsedResume}
+              onTemplateSelect={handleTemplateSelect}
+              selectedTemplateId={selectedTemplateId || undefined}
+              userPlanLevel={planLevel}
+            />
+          </TabsContent>
+
+          <TabsContent value="preview">
+            <Card>
+              <CardHeader>
+                <CardTitle>Resume Preview</CardTitle>
+                <p className="text-sm text-gray-600">
+                  This is how your resume will look when exported to PDF
+                </p>
+              </CardHeader>
+              <CardContent>
+                {selectedTemplateConfig ? (
+                  <div className="border rounded-lg p-4 bg-white">
+                    <ResumeTemplateRenderer
+                      resume={parsedResume}
+                      templateConfig={selectedTemplateConfig}
+                      templateName="Preview"
+                    />
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Palette className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Select a template to see the preview</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setActiveTab('template')}
+                    >
+                      Choose Template
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Bottom Actions */}
         <div className="flex justify-between items-center pt-6 border-t">
@@ -328,14 +418,30 @@ const ResumeEditor: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Changes
-          </Button>
+          <div className="flex gap-2">
+            <PDFExporter
+              resumeId={resume.id}
+              resumeContent={
+                selectedTemplateConfig && (
+                  <ResumeTemplateRenderer
+                    resume={parsedResume}
+                    templateConfig={selectedTemplateConfig}
+                    templateName="Selected Template"
+                  />
+                )
+              }
+              templateId={selectedTemplateId || undefined}
+              userName="User"
+            />
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </div>
         </div>
       </div>
     </DashboardLayout>
