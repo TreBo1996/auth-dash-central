@@ -1,6 +1,11 @@
 
 import mammoth from 'mammoth';
-import pdf from 'pdf-parse';
+
+// Import PDF.js in a browser-compatible way
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Set up PDF.js worker for browser environment
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 export const parseDocument = async (file: File): Promise<string> => {
   const fileType = file.type;
@@ -10,7 +15,7 @@ export const parseDocument = async (file: File): Promise<string> => {
 
   try {
     if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      console.log('Attempting PDF parsing with pdf-parse...');
+      console.log('Attempting PDF parsing with pdfjs-dist...');
       return await parsePDF(file);
     } else if (
       fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
@@ -45,15 +50,35 @@ export const parseDocument = async (file: File): Promise<string> => {
 
 const parsePDF = async (file: File): Promise<string> => {
   try {
-    console.log('Converting PDF file to buffer...');
+    console.log('Converting PDF file to array buffer...');
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
     
-    console.log('Parsing PDF with pdf-parse...');
-    const data = await pdf(buffer);
+    console.log('Loading PDF document with pdfjs-dist...');
+    const pdf = await pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useSystemFonts: true,
+    }).promise;
     
-    const trimmedText = data.text.trim();
-    console.log(`PDF parsing completed, extracted ${trimmedText.length} characters from ${data.numpages} pages`);
+    console.log(`PDF loaded successfully with ${pdf.numPages} pages`);
+    
+    let fullText = '';
+    
+    // Extract text from each page
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      console.log(`Processing page ${pageNum}/${pdf.numPages}`);
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      
+      // Combine all text items from the page
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      
+      fullText += pageText + '\n';
+    }
+    
+    const trimmedText = fullText.trim();
+    console.log(`PDF parsing completed, extracted ${trimmedText.length} characters from ${pdf.numPages} pages`);
     
     if (!trimmedText) {
       throw new Error('No text could be extracted from this PDF. The file may be image-based, scanned, or corrupted. Please try converting to DOCX format.');
