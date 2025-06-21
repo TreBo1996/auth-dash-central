@@ -28,11 +28,11 @@ export const templateConfigs: Record<string, TemplateConfig> = {
     category: 'Professional',
     description: 'Two-column layout with gray sidebar for contact and skills',
     colors: {
-      primary: '#4a5568',
-      secondary: '#718096',
-      accent: '#2d3748',
-      text: '#2d3748',
-      background: '#f7fafc'
+      primary: '#495057',
+      secondary: '#6c757d',
+      accent: '#212529',
+      text: '#212529',
+      background: '#f8f9fa'
     },
     fonts: {
       heading: 'Inter, sans-serif',
@@ -49,10 +49,10 @@ export const templateConfigs: Record<string, TemplateConfig> = {
     category: 'Professional',
     description: 'Clean single-column design with skill tags and modern typography',
     colors: {
-      primary: '#1a202c',
-      secondary: '#4a5568',
-      accent: '#3182ce',
-      text: '#2d3748',
+      primary: '#212529',
+      secondary: '#495057',
+      accent: '#6c757d',
+      text: '#212529',
       background: '#ffffff'
     },
     fonts: {
@@ -70,10 +70,10 @@ export const templateConfigs: Record<string, TemplateConfig> = {
     category: 'Corporate',
     description: 'Professional header banner with sophisticated single-column layout',
     colors: {
-      primary: '#2b6cb0',
-      secondary: '#4299e1',
-      accent: '#1a365d',
-      text: '#2d3748',
+      primary: '#212529',
+      secondary: '#495057',
+      accent: '#6c757d',
+      text: '#212529',
       background: '#ffffff'
     },
     fonts: {
@@ -92,9 +92,9 @@ export const templateConfigs: Record<string, TemplateConfig> = {
     description: 'Traditional layout with horizontal line separators between sections',
     colors: {
       primary: '#000000',
-      secondary: '#4a5568',
-      accent: '#2d3748',
-      text: '#2d3748',
+      secondary: '#495057',
+      accent: '#212529',
+      text: '#212529',
       background: '#ffffff'
     },
     fonts: {

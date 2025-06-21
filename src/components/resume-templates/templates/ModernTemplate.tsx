@@ -52,7 +52,7 @@ export const ModernTemplate: React.FC<ModernTemplateProps> = ({ resumeData }) =>
                   {skillGroup.items.map((skill, skillIndex) => (
                     <span 
                       key={skillIndex} 
-                      className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium"
+                      className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium border border-gray-200"
                     >
                       {skill}
                     </span>
@@ -74,7 +74,7 @@ export const ModernTemplate: React.FC<ModernTemplateProps> = ({ resumeData }) =>
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{exp.title}</h3>
-                    <p className="text-lg font-semibold text-blue-600">{exp.company}</p>
+                    <p className="text-lg font-semibold text-gray-600">{exp.company}</p>
                   </div>
                   <span className="text-sm font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded">
                     {exp.duration}
@@ -84,7 +84,7 @@ export const ModernTemplate: React.FC<ModernTemplateProps> = ({ resumeData }) =>
                   <ul className="space-y-2">
                     {exp.bullets.map((bullet, bulletIndex) => (
                       <li key={bulletIndex} className="flex items-start gap-3 text-gray-700">
-                        <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
+                        <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 flex-shrink-0"></span>
                         <span className="leading-relaxed">{bullet}</span>
                       </li>
                     ))}

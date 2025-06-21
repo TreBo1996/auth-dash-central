@@ -13,10 +13,10 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
   return (
     <div className="min-h-[800px] bg-white" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8">
+      <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold mb-3">{parsedData.name || 'Your Name'}</h1>
-          <div className="flex flex-wrap gap-6 text-blue-100 mb-4">
+          <div className="flex flex-wrap gap-6 text-gray-300 mb-4">
             {parsedData.email && (
               <div className="flex items-center gap-2">
                 <Mail size={16} />
@@ -36,7 +36,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
               </div>
             )}
           </div>
-          <p className="text-lg text-blue-50 leading-relaxed max-w-3xl">
+          <p className="text-lg text-gray-100 leading-relaxed max-w-3xl">
             {parsedData.summary || 'Executive-level professional with proven track record of leadership and strategic vision'}
           </p>
         </div>
@@ -46,7 +46,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
         {/* Experience */}
         {parsedData.experience.length > 0 && (
           <div className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-blue-600">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-800">
               Professional Experience
             </h2>
             <div className="space-y-8">
@@ -55,7 +55,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{exp.title}</h3>
-                      <p className="text-lg font-semibold text-blue-600">{exp.company}</p>
+                      <p className="text-lg font-semibold text-gray-600">{exp.company}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded">
@@ -67,7 +67,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
                     <ul className="space-y-2 ml-4">
                       {exp.bullets.map((bullet, bulletIndex) => (
                         <li key={bulletIndex} className="flex items-start gap-3 text-gray-700">
-                          <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2.5 flex-shrink-0"></span>
+                          <span className="w-1.5 h-1.5 bg-gray-800 rounded-full mt-2.5 flex-shrink-0"></span>
                           <span className="leading-relaxed">{bullet}</span>
                         </li>
                       ))}
@@ -84,7 +84,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
           {/* Skills */}
           {parsedData.skills.length > 0 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-gray-800">
                 Core Competencies
               </h2>
               <div className="space-y-4">
@@ -94,7 +94,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
                     <ul className="space-y-1">
                       {skillGroup.items.map((skill, skillIndex) => (
                         <li key={skillIndex} className="text-gray-700 flex items-center gap-2">
-                          <span className="w-1 h-1 bg-blue-600 rounded-full"></span>
+                          <span className="w-1 h-1 bg-gray-800 rounded-full"></span>
                           {skill}
                         </li>
                       ))}
@@ -108,7 +108,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
           {/* Education */}
           {parsedData.education.length > 0 && (
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-blue-600">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b-2 border-gray-800">
                 Education
               </h2>
               <div className="space-y-4">
