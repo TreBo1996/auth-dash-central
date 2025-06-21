@@ -1,4 +1,3 @@
-
 interface ParsedResume {
   name: string;
   email: string;
@@ -111,7 +110,7 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     }
   }
 
-  // Enhanced experience extraction with multiple strategies
+  // Enhanced experience extraction - specifically for the actual data format
   const experiencePatterns = [
     /(?:PROFESSIONAL\s+EXPERIENCE|WORK\s+EXPERIENCE|EXPERIENCE)(?:\s*:?)?\s*\n((?:(?!\n(?:EDUCATION|SKILLS|CERTIFICATIONS|SUMMARY)).+\n?)*)/i
   ];
@@ -126,126 +125,108 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
   }
 
   if (experienceText) {
-    console.log('Found experience text:', experienceText.substring(0, 300) + '...');
+    console.log('Found experience text:', experienceText.substring(0, 500) + '...');
     
-    // Strategy 1: Look for ALL CAPS job titles followed by company and dates
-    const jobTitlePattern = /^([A-Z][A-Z\s&,-]+(?:[A-Z]|[IVX]+))\s*\n?([A-Za-z][^|\n]*?)\s*[|\-–]\s*([^|\n]*?)(?:\n|$)/gm;
-    let match;
-    const tempExperience = [];
+    // Split experience text into blocks separated by double newlines or company entries
+    const experienceBlocks = experienceText.split(/\n\s*\n/).filter(block => block.trim());
     
-    while ((match = jobTitlePattern.exec(experienceText)) !== null) {
-      const title = match[1].trim();
-      const company = match[2].trim();
-      const duration = match[3].trim();
+    console.log('Experience blocks found:', experienceBlocks.length);
+    
+    for (const block of experienceBlocks) {
+      const blockLines = block.split('\n').filter(line => line.trim());
+      if (blockLines.length === 0) continue;
       
-      if (title.length > 2 && company.length > 2) {
-        tempExperience.push({
-          title,
-          company,
-          duration,
-          bullets: [],
-          startIndex: match.index,
-          endIndex: match.index + match[0].length
-        });
-      }
-    }
-
-    // Strategy 2: Look for pipe-separated format
-    if (tempExperience.length === 0) {
-      const pipePattern = /([^|\n]+)\s*\|\s*([^|\n]+)\s*\|\s*([^|\n]+)/g;
-      while ((match = pipePattern.exec(experienceText)) !== null) {
-        const parts = [match[1].trim(), match[2].trim(), match[3].trim()];
-        
-        // Determine which part is title, company, duration
-        let title = parts[0];
-        let company = parts[1];
-        let duration = parts[2];
-        
-        // If last part looks like a job title, reorder
-        if (parts[2].match(/^[A-Z][A-Za-z\s]+$/)) {
-          title = parts[2];
-          company = parts[0];
-          duration = parts[1];
-        }
-        
-        if (title.length > 2 && company.length > 2) {
-          tempExperience.push({
-            title,
-            company,
-            duration,
-            bullets: [],
-            startIndex: match.index,
-            endIndex: match.index + match[0].length
-          });
-        }
-      }
-    }
-
-    // Strategy 3: Look for any pattern with job-like keywords
-    if (tempExperience.length === 0) {
-      const jobKeywords = /(?:MANAGER|ANALYST|DEVELOPER|ENGINEER|DIRECTOR|COORDINATOR|SPECIALIST|ASSISTANT|LEAD|SENIOR|JUNIOR)/i;
-      const lineBlocks = experienceText.split('\n\n');
+      // Look for the first line that contains pipe separators (Company | Title | Date format)
+      const headerLine = blockLines.find(line => line.includes('|') && line.split('|').length >= 2);
       
-      for (const block of lineBlocks) {
-        const blockLines = block.split('\n').filter(line => line.trim());
-        if (blockLines.length > 0 && jobKeywords.test(blockLines[0])) {
-          const firstLine = blockLines[0];
-          const parts = firstLine.split(/[|\-–]/);
+      if (headerLine) {
+        const parts = headerLine.split('|').map(part => part.trim());
+        
+        if (parts.length >= 2) {
+          // Format: Company | Job Title | Date (or just Company | Job Title)
+          const company = parts[0];
+          const title = parts[1];
+          const duration = parts[2] || 'Date Range';
           
-          if (parts.length >= 2) {
-            tempExperience.push({
-              title: parts[0].trim(),
-              company: parts[1].trim(),
-              duration: parts[2] ? parts[2].trim() : 'Date Range',
-              bullets: [],
-              startIndex: 0,
-              endIndex: block.length
+          // Extract bullets from the remaining lines in the block
+          const bullets = [];
+          const bulletLines = blockLines.slice(blockLines.indexOf(headerLine) + 1);
+          
+          for (const line of bulletLines) {
+            const trimmedLine = line.trim();
+            // Look for bullet points starting with •, -, *, or just regular text
+            if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+              const bullet = trimmedLine.replace(/^[•\-\*]\s*/, '').trim();
+              if (bullet && bullet.length > 5) {
+                bullets.push(bullet);
+              }
+            } else if (trimmedLine.length > 10 && !trimmedLine.includes('|')) {
+              // Regular text that might be a bullet point without a marker
+              bullets.push(trimmedLine);
+            }
+          }
+          
+          if (company && title && company.length > 1 && title.length > 1) {
+            result.experience.push({
+              title,
+              company,
+              duration,
+              bullets
             });
+            
+            console.log(`Added experience: ${title} at ${company} (${bullets.length} bullets)`);
           }
         }
       }
     }
-
-    console.log('Found temp experience entries:', tempExperience.length);
-
-    // Extract bullets for each experience
-    for (let i = 0; i < tempExperience.length; i++) {
-      const exp = tempExperience[i];
-      const nextExp = tempExperience[i + 1];
+    
+    // Fallback: If no experiences found with the above method, try line-by-line parsing
+    if (result.experience.length === 0) {
+      console.log('Fallback parsing method...');
       
-      const startPos = exp.endIndex;
-      const endPos = nextExp ? nextExp.startIndex : experienceText.length;
-      const sectionText = experienceText.substring(startPos, endPos);
+      const allLines = experienceText.split('\n').filter(line => line.trim());
+      let currentExp = null;
       
-      // Extract bullet points
-      const bulletPatterns = [
-        /^[•\-\*]\s*(.+)$/gm,
-        /^\s*[•\-\*]\s*(.+)$/gm,
-        /^(?:\d+\.|\w\))\s*(.+)$/gm
-      ];
-      
-      const bullets = [];
-      for (const pattern of bulletPatterns) {
-        let bulletMatch;
-        while ((bulletMatch = pattern.exec(sectionText)) !== null) {
-          const bullet = bulletMatch[1].trim();
-          if (bullet.length > 10 && !bullets.includes(bullet)) {
-            bullets.push(bullet);
+      for (const line of allLines) {
+        const trimmedLine = line.trim();
+        
+        // Check if this line looks like a header (contains |)
+        if (trimmedLine.includes('|')) {
+          // Save previous experience if exists
+          if (currentExp && currentExp.company && currentExp.title) {
+            result.experience.push(currentExp);
+          }
+          
+          // Start new experience
+          const parts = trimmedLine.split('|').map(part => part.trim());
+          if (parts.length >= 2) {
+            currentExp = {
+              company: parts[0],
+              title: parts[1],
+              duration: parts[2] || 'Date Range',
+              bullets: []
+            };
+          }
+        } else if (currentExp && (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*'))) {
+          // Add bullet to current experience
+          const bullet = trimmedLine.replace(/^[•\-\*]\s*/, '').trim();
+          if (bullet && bullet.length > 5) {
+            currentExp.bullets.push(bullet);
           }
         }
-        if (bullets.length > 0) break;
       }
       
-      result.experience.push({
-        title: exp.title,
-        company: exp.company,
-        duration: exp.duration,
-        bullets
-      });
+      // Don't forget the last experience
+      if (currentExp && currentExp.company && currentExp.title) {
+        result.experience.push(currentExp);
+      }
     }
   }
 
   console.log('Final parsed experience count:', result.experience.length);
+  result.experience.forEach((exp, index) => {
+    console.log(`Experience ${index + 1}: ${exp.title} at ${exp.company} (${exp.bullets.length} bullets)`);
+  });
 
   // Enhanced education extraction
   const educationPatterns = [
