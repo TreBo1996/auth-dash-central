@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,30 +136,25 @@ const Dashboard: React.FC = () => {
 
   const handleDelete = async (id: string, type: 'resume' | 'job-description' | 'optimized-resume') => {
     try {
-      let table: string;
+      let error;
       let itemName: string;
 
       switch (type) {
         case 'resume':
-          table = 'resumes';
+          ({ error } = await supabase.from('resumes').delete().eq('id', id));
           itemName = 'Resume';
           break;
         case 'job-description':
-          table = 'job_descriptions';
+          ({ error } = await supabase.from('job_descriptions').delete().eq('id', id));
           itemName = 'Job description';
           break;
         case 'optimized-resume':
-          table = 'optimized_resumes';
+          ({ error } = await supabase.from('optimized_resumes').delete().eq('id', id));
           itemName = 'Optimized resume';
           break;
         default:
           throw new Error('Invalid item type');
       }
-
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq('id', id);
 
       if (error) throw error;
 
