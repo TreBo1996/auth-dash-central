@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Briefcase, Plus, Trash2 } from 'lucide-react';
+import { Briefcase, Plus, Trash2, ListOrdered } from 'lucide-react';
 
 interface Experience {
   id: string;
@@ -31,7 +31,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       role: '',
       startDate: '',
       endDate: '',
-      description: ''
+      description: '• \n• \n• '
     };
     onChange([...experiences, newExperience]);
   };
@@ -44,6 +44,34 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
 
   const removeExperience = (id: string) => {
     onChange(experiences.filter(exp => exp.id !== id));
+  };
+
+  const formatDescription = (description: string) => {
+    // Ensure bullet points are properly formatted
+    if (!description.includes('•') && !description.includes('-') && !description.includes('*')) {
+      return description;
+    }
+    
+    // Clean up the description to ensure proper bullet point formatting
+    return description
+      .split('\n')
+      .map(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('•') && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
+          return '• ' + trimmed;
+        }
+        return trimmed;
+      })
+      .filter(line => line)
+      .join('\n');
+  };
+
+  const addBulletPoint = (experienceId: string) => {
+    const experience = experiences.find(exp => exp.id === experienceId);
+    if (experience) {
+      const newDescription = experience.description + '\n• ';
+      updateExperience(experienceId, 'description', newDescription);
+    }
   };
 
   return (
@@ -121,15 +149,33 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">
-                Job Description
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-sm font-medium text-gray-700">
+                  Job Description & Achievements
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addBulletPoint(experience.id)}
+                  className="text-xs"
+                >
+                  <ListOrdered className="h-3 w-3 mr-1" />
+                  Add Bullet
+                </Button>
+              </div>
               <Textarea
                 value={experience.description}
                 onChange={(e) => updateExperience(experience.id, 'description', e.target.value)}
-                placeholder="Describe your responsibilities and achievements..."
-                className="min-h-[100px]"
+                placeholder="• Describe your key responsibilities and achievements...&#10;• Use bullet points for better readability&#10;• Include quantifiable results when possible"
+                className="min-h-[120px] font-mono text-sm"
+                style={{ 
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
+                }}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Tip: Use bullet points (•) to highlight your achievements. Each line starting with • will be formatted as a bullet point.
+              </p>
             </div>
           </div>
         ))}

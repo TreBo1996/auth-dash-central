@@ -108,15 +108,15 @@ const ResumeEditor: React.FC = () => {
       setParsedResume(data);
     } catch (error) {
       console.error('Error parsing resume with AI:', error);
-      console.log('Falling back to basic parsing...');
+      console.log('Falling back to enhanced parsing for optimized content...');
       
-      // Fallback to basic parsing
-      const basicParsed = parseResumeTextBasic(text);
-      setParsedResume(basicParsed);
+      // Enhanced fallback parsing specifically for optimized resumes
+      const enhancedParsed = parseOptimizedResumeText(text);
+      setParsedResume(enhancedParsed);
       
       toast({
         title: "Parsing Notice",
-        description: "Using basic parsing as AI parsing failed.",
+        description: "Using enhanced parsing for optimized content.",
         variant: "default"
       });
     } finally {
@@ -124,9 +124,10 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
-  const parseResumeTextBasic = (text: string): ParsedResume => {
-    // Simple parsing logic - in production, you might want more sophisticated parsing
-    const sections = text.split('\n\n');
+  const parseOptimizedResumeText = (text: string): ParsedResume => {
+    console.log('Enhanced parsing for optimized resume content');
+    
+    const sections = text.split(/\n\n+/);
     const parsed: ParsedResume = {
       summary: '',
       experience: [],
@@ -135,64 +136,116 @@ const ResumeEditor: React.FC = () => {
       certifications: []
     };
 
-    // Basic parsing - this is a simplified version
-    // You might want to implement more sophisticated parsing based on your AI output format
     let currentSection = '';
     
     sections.forEach((section, index) => {
-      const lowerSection = section.toLowerCase();
+      const lowerSection = section.toLowerCase().trim();
+      const lines = section.split('\n').map(line => line.trim()).filter(line => line);
       
-      if (lowerSection.includes('summary') || lowerSection.includes('profile') || index === 0) {
-        parsed.summary = section.replace(/summary|profile/gi, '').trim();
+      if (lowerSection.includes('summary') || lowerSection.includes('profile') || (index === 0 && !lowerSection.includes('experience'))) {
+        parsed.summary = section.replace(/^(summary|profile|professional summary)[\s\n]*/gi, '').trim();
         currentSection = 'summary';
-      } else if (lowerSection.includes('experience') || lowerSection.includes('work')) {
+      } else if (lowerSection.includes('experience') || lowerSection.includes('work history')) {
         currentSection = 'experience';
-        // Parse experience entries - simplified
-        if (section.includes('•') || section.includes('-')) {
-          parsed.experience.push({
-            id: Date.now().toString() + Math.random(),
-            company: 'Company Name',
-            role: 'Job Title',
-            startDate: '2023',
-            endDate: '2024',
-            description: section
+        
+        // Parse experience entries - enhanced for optimized content
+        if (lines.length > 1) {
+          let currentExp: any = null;
+          
+          lines.forEach(line => {
+            // Check if this is a job title line (contains company and dates)
+            if (line.includes('|') && (line.includes('20') || line.includes('Present'))) {
+              // Save previous experience if exists
+              if (currentExp) {
+                parsed.experience.push(currentExp);
+              }
+              
+              // Parse new experience header: "Company | Role | Dates"
+              const parts = line.split('|').map(p => p.trim());
+              currentExp = {
+                id: Date.now().toString() + Math.random(),
+                company: parts[0] || 'Company Name',
+                role: parts[1] || 'Job Title',
+                startDate: parts[2]?.split('-')[0]?.trim() || '2023',
+                endDate: parts[2]?.split('-')[1]?.trim() || 'Present',
+                description: ''
+              };
+            } else if (currentExp && (line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))) {
+              // Add bullet points to current experience
+              if (currentExp.description) {
+                currentExp.description += '\n' + line;
+              } else {
+                currentExp.description = line;
+              }
+            } else if (currentExp && line && !line.toLowerCase().includes('experience')) {
+              // Add non-bullet content to description
+              if (currentExp.description) {
+                currentExp.description += '\n' + line;
+              } else {
+                currentExp.description = line;
+              }
+            }
           });
+          
+          // Add the last experience
+          if (currentExp) {
+            parsed.experience.push(currentExp);
+          }
         }
       } else if (lowerSection.includes('skills')) {
         currentSection = 'skills';
-        const skillsText = section.replace(/skills/gi, '').trim();
-        parsed.skills = skillsText.split(/[,•\-\n]/).map(s => s.trim()).filter(s => s);
+        const skillsText = section.replace(/^skills[\s\n]*/gi, '').trim();
+        // Split by various delimiters and clean up
+        parsed.skills = skillsText
+          .split(/[,•\-\n|]/)
+          .map(s => s.trim())
+          .filter(s => s && s.length > 1)
+          .slice(0, 50); // Limit to reasonable number
       } else if (lowerSection.includes('education')) {
         currentSection = 'education';
-        parsed.education.push({
-          id: Date.now().toString() + Math.random(),
-          institution: 'University Name',
-          degree: 'Degree',
-          year: '2020'
+        lines.forEach(line => {
+          if (line && !line.toLowerCase().includes('education')) {
+            parsed.education.push({
+              id: Date.now().toString() + Math.random(),
+              institution: line.includes('from') ? line.split('from')[1]?.trim() || 'University' : 'University',
+              degree: line.includes('from') ? line.split('from')[0]?.trim() || 'Degree' : line,
+              year: line.match(/\d{4}/)?.[0] || '2020'
+            });
+          }
         });
       } else if (lowerSection.includes('certification')) {
         currentSection = 'certifications';
-        parsed.certifications.push({
-          id: Date.now().toString() + Math.random(),
-          name: 'Certification Name',
-          issuer: 'Issuing Organization',
-          year: '2023'
+        lines.forEach(line => {
+          if (line && !line.toLowerCase().includes('certification')) {
+            parsed.certifications.push({
+              id: Date.now().toString() + Math.random(),
+              name: line.includes('from') ? line.split('from')[0]?.trim() || 'Certification' : line,
+              issuer: line.includes('from') ? line.split('from')[1]?.trim() || 'Issuer' : 'Issuing Organization',
+              year: line.match(/\d{4}/)?.[0] || '2023'
+            });
+          }
         });
       }
     });
 
-    // If we don't have any parsed content, create a basic structure
-    if (!parsed.summary && !parsed.experience.length) {
-      parsed.summary = text.substring(0, 200) + '...';
+    // Ensure we have at least some content with preserved bullet points
+    if (!parsed.experience.length && text.includes('•')) {
+      // Fallback: treat the entire text as one experience with bullet points
       parsed.experience.push({
         id: '1',
         company: 'Company Name',
         role: 'Job Title',
         startDate: '2023',
         endDate: '2024',
-        description: 'Job description and achievements...'
+        description: text.substring(0, 1000) // Preserve original bullet points
       });
     }
+
+    console.log('Enhanced parsed result:', {
+      summaryLength: parsed.summary.length,
+      experienceCount: parsed.experience.length,
+      experienceDescriptions: parsed.experience.map(exp => exp.description.substring(0, 100))
+    });
 
     return parsed;
   };
@@ -203,7 +256,7 @@ const ResumeEditor: React.FC = () => {
     try {
       setSaving(true);
       
-      // Convert parsed resume back to text format
+      // Convert parsed resume back to text format with preserved bullet points
       const updatedText = generateResumeText(parsedResume);
       
       const { error } = await supabase
@@ -242,7 +295,7 @@ const ResumeEditor: React.FC = () => {
     if (parsed.experience.length > 0) {
       text += `EXPERIENCE\n`;
       parsed.experience.forEach(exp => {
-        text += `${exp.role} at ${exp.company} (${exp.startDate} - ${exp.endDate})\n${exp.description}\n\n`;
+        text += `${exp.company} | ${exp.role} | ${exp.startDate} - ${exp.endDate}\n${exp.description}\n\n`;
       });
     }
     
