@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -55,6 +54,7 @@ const InitialResumeEditor: React.FC = () => {
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [parsing, setParsing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -74,7 +74,7 @@ const InitialResumeEditor: React.FC = () => {
       if (error) throw error;
       
       setResume(data);
-      parseResumeText(data.parsed_text || '');
+      await parseResumeWithAI(data.parsed_text || '');
     } catch (error) {
       console.error('Error fetching resume:', error);
       toast({
@@ -88,7 +88,50 @@ const InitialResumeEditor: React.FC = () => {
     }
   };
 
-  const parseResumeText = (text: string) => {
+  const parseResumeWithAI = async (text: string) => {
+    try {
+      setParsing(true);
+      console.log('Starting AI parsing for resume text:', text.substring(0, 200));
+      
+      const { data, error } = await supabase.functions.invoke('parse-resume-sections', {
+        body: { resume_text: text }
+      });
+
+      if (error) {
+        console.error('AI parsing error:', error);
+        toast({
+          title: "AI Parsing Failed",
+          description: "Using basic parsing instead. You can still edit the sections manually.",
+          variant: "destructive"
+        });
+        // Fall back to basic parsing
+        parseResumeTextBasic(text);
+        return;
+      }
+
+      console.log('AI parsing successful:', data);
+      setParsedResume(data);
+      
+      toast({
+        title: "Resume Parsed",
+        description: "Your resume has been automatically organized into sections.",
+      });
+    } catch (error) {
+      console.error('Error during AI parsing:', error);
+      toast({
+        title: "Parsing Error", 
+        description: "Using basic parsing instead.",
+        variant: "destructive"
+      });
+      // Fall back to basic parsing
+      parseResumeTextBasic(text);
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  // Fallback basic parsing method
+  const parseResumeTextBasic = (text: string) => {
     const sections = text.split('\n\n').filter(section => section.trim());
     const parsed: ParsedResume = {
       summary: '',
@@ -106,18 +149,14 @@ const InitialResumeEditor: React.FC = () => {
       
       if (lowerSection.includes('summary') || lowerSection.includes('profile') || lowerSection.includes('objective')) {
         currentSection = 'summary';
-        // Extract summary text (skip header line)
         parsed.summary = lines.slice(1).join('\n').trim() || lines[0];
       } else if (lowerSection.includes('experience') || lowerSection.includes('work') || lowerSection.includes('employment')) {
         currentSection = 'experience';
-        // Parse experience entries
-        const experienceLines = lines.slice(1); // Skip header
+        const experienceLines = lines.slice(1);
         let currentJob = null;
         
         experienceLines.forEach(line => {
-          // Look for job titles, companies, and dates patterns
           if (line.includes('|') || line.match(/\d{4}\s*-\s*\d{4}/) || line.match(/\d{4}\s*-\s*(present|current)/i)) {
-            // This looks like a job header
             if (currentJob) {
               parsed.experience.push(currentJob);
             }
@@ -132,7 +171,6 @@ const InitialResumeEditor: React.FC = () => {
               description: ''
             };
           } else if (currentJob && line.trim()) {
-            // Add to current job description
             currentJob.description += (currentJob.description ? '\n' : '') + line.trim();
           }
         });
@@ -141,7 +179,6 @@ const InitialResumeEditor: React.FC = () => {
           parsed.experience.push(currentJob);
         }
         
-        // If no structured experience found, create a basic one
         if (parsed.experience.length === 0 && experienceLines.length > 0) {
           parsed.experience.push({
             id: '1',
@@ -185,7 +222,6 @@ const InitialResumeEditor: React.FC = () => {
       }
     });
 
-    // If no structured content found, create basic structure
     if (!parsed.summary && !parsed.experience.length && text.trim()) {
       const firstLines = text.split('\n').slice(0, 3).join('\n');
       parsed.summary = firstLines || 'Professional Summary';
@@ -211,7 +247,6 @@ const InitialResumeEditor: React.FC = () => {
     try {
       setSaving(true);
       
-      // Convert parsed resume back to text format
       const updatedText = generateResumeText(parsedResume);
       
       const { error } = await supabase
@@ -316,8 +351,14 @@ const InitialResumeEditor: React.FC = () => {
             </Button>
             <h1 className="text-2xl font-bold text-gray-900">Edit Resume</h1>
             <p className="text-gray-600">Structure your resume for better AI optimization</p>
+            {parsing && (
+              <p className="text-sm text-blue-600 mt-1">
+                <Loader2 className="h-4 w-4 inline mr-1 animate-spin" />
+                AI is parsing your resume...
+              </p>
+            )}
           </div>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || parsing}>
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
@@ -370,7 +411,7 @@ const InitialResumeEditor: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving || parsing}>
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
