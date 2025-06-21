@@ -3,11 +3,12 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { User } from '@supabase/supabase-js';
+import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 
 interface Resume {
   id: string;
@@ -26,10 +27,25 @@ interface JobDescription {
   created_at: string;
 }
 
+interface OptimizedResume {
+  id: string;
+  original_resume_id: string;
+  job_description_id: string;
+  generated_text: string;
+  created_at: string;
+  resumes?: {
+    file_name: string | null;
+  };
+  job_descriptions?: {
+    title: string;
+  };
+}
+
 const Dashboard: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
+  const [optimizedResumes, setOptimizedResumes] = useState<OptimizedResume[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -38,6 +54,7 @@ const Dashboard: React.FC = () => {
     fetchUserData();
     fetchResumes();
     fetchJobDescriptions();
+    fetchOptimizedResumes();
   }, []);
 
   const fetchUserData = async () => {
@@ -89,9 +106,55 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string, type: 'resume' | 'job-description') => {
+  const fetchOptimizedResumes = async () => {
     try {
-      const table = type === 'resume' ? 'resumes' : 'job_descriptions';
+      const { data, error } = await supabase
+        .from('optimized_resumes')
+        .select(`
+          *,
+          resumes(file_name),
+          job_descriptions(title)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOptimizedResumes(data || []);
+    } catch (error) {
+      console.error('Error fetching optimized resumes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load optimized resumes.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleOptimizationComplete = () => {
+    fetchOptimizedResumes();
+  };
+
+  const handleDelete = async (id: string, type: 'resume' | 'job-description' | 'optimized-resume') => {
+    try {
+      let table: string;
+      let itemName: string;
+
+      switch (type) {
+        case 'resume':
+          table = 'resumes';
+          itemName = 'Resume';
+          break;
+        case 'job-description':
+          table = 'job_descriptions';
+          itemName = 'Job description';
+          break;
+        case 'optimized-resume':
+          table = 'optimized_resumes';
+          itemName = 'Optimized resume';
+          break;
+        default:
+          throw new Error('Invalid item type');
+      }
+
       const { error } = await supabase
         .from(table)
         .delete()
@@ -99,15 +162,18 @@ const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
+      // Update state based on type
       if (type === 'resume') {
         setResumes(prev => prev.filter(item => item.id !== id));
-      } else {
+      } else if (type === 'job-description') {
         setJobDescriptions(prev => prev.filter(item => item.id !== id));
+      } else if (type === 'optimized-resume') {
+        setOptimizedResumes(prev => prev.filter(item => item.id !== id));
       }
 
       toast({
         title: "Deleted",
-        description: `${type === 'resume' ? 'Resume' : 'Job description'} deleted successfully.`,
+        description: `${itemName} deleted successfully.`,
       });
     } catch (error) {
       console.error('Delete error:', error);
@@ -158,6 +224,16 @@ const Dashboard: React.FC = () => {
           <p className="text-gray-600">
             Manage your resumes and job descriptions from your dashboard.
           </p>
+        </div>
+
+        {/* AI Resume Optimizer Section */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">AI Resume Optimizer</h2>
+          <ResumeOptimizer 
+            resumes={resumes}
+            jobDescriptions={jobDescriptions}
+            onOptimizationComplete={handleOptimizationComplete}
+          />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -341,6 +417,86 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Optimized Resumes Section */}
+        {optimizedResumes.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Optimized Resumes</h2>
+              <Badge variant="secondary">{optimizedResumes.length}</Badge>
+            </div>
+            
+            <div className="grid lg:grid-cols-2 gap-4">
+              {optimizedResumes.map((optimizedResume) => (
+                <Card key={optimizedResume.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-purple-500" />
+                          {optimizedResume.resumes?.file_name || 'Untitled Resume'} → {optimizedResume.job_descriptions?.title}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(optimizedResume.created_at)}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="default" className="bg-purple-100 text-purple-700">
+                        AI Optimized
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                    
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start p-0 h-auto"
+                          onClick={() => toggleExpanded(optimizedResume.id)}
+                        >
+                          {expandedItems.has(optimizedResume.id) ? (
+                            <ChevronDown className="h-4 w-4 mr-1" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 mr-1" />
+                          )}
+                          <span className="text-sm text-gray-600">Preview optimized content</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="mt-2">
+                        <div className="bg-purple-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {optimizedResume.generated_text.substring(0, 300)}
+                            {optimizedResume.generated_text.length > 300 && '...'}
+                          </p>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

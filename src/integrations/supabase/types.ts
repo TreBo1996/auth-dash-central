@@ -45,6 +45,51 @@ export type Database = {
         }
         Relationships: []
       }
+      optimized_resumes: {
+        Row: {
+          created_at: string
+          generated_text: string
+          id: string
+          job_description_id: string
+          original_resume_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_text: string
+          id?: string
+          job_description_id: string
+          original_resume_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_text?: string
+          id?: string
+          job_description_id?: string
+          original_resume_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimized_resumes_job_description_id_fkey"
+            columns: ["job_description_id"]
+            isOneToOne: false
+            referencedRelation: "job_descriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "optimized_resumes_original_resume_id_fkey"
+            columns: ["original_resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumes: {
         Row: {
           created_at: string
