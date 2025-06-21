@@ -107,15 +107,30 @@ serve(async (req) => {
 
     console.log('Calling OpenAI API for resume optimization...');
 
-    const prompt = `Compare this resume to the job description below. Rewrite the resume to better align with the responsibilities and required qualifications. Use a clear, modern structure with emphasis on relevant experience, action verbs, and key metrics. Make the resume compelling and targeted to this specific role.
+    const prompt = `You are an expert resume optimizer. Your task is to take the original resume below and optimize it for the specific job description provided, while maintaining the exact structure and ALL original jobs/positions.
 
-Resume:
+CRITICAL REQUIREMENTS:
+1. PRESERVE ALL ORIGINAL JOBS: Keep every single job title, company name, and employment dates exactly as they appear in the original resume
+2. REWRITE DESCRIPTIONS ONLY: Focus solely on rewriting the job descriptions/responsibilities for each position
+3. USE BULLET POINTS: Format each job description as 3-5 compelling bullet points starting with strong action verbs
+4. TAILOR TO JOB: Incorporate keywords and requirements from the target job description into the bullet points
+5. QUANTIFY ACHIEVEMENTS: Include specific metrics, numbers, and measurable results where possible
+6. MAINTAIN SECTIONS: Keep all original sections (Summary, Experience, Skills, Education, etc.) in the same order
+
+FORMATTING GUIDELINES:
+- Use clear section headers (SUMMARY, EXPERIENCE, SKILLS, EDUCATION, CERTIFICATIONS)
+- For each job: Company Name | Job Title | Start Date - End Date
+- Follow each job header with 3-5 bullet points using "•" symbol
+- Use strong action verbs (Led, Developed, Implemented, Managed, Created, etc.)
+- Keep the same overall structure and flow as the original resume
+
+Original Resume:
 ${resume.parsed_text}
 
-Job Description:
+Target Job Description:
 ${jobDescription.parsed_text}
 
-Please provide a complete, optimized resume that maintains the candidate's authentic experience while strategically positioning them for this role.`;
+Please provide the complete optimized resume that maintains all original jobs while strategically tailoring each job description to align with the target role requirements.`;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -128,7 +143,7 @@ Please provide a complete, optimized resume that maintains the candidate's authe
         messages: [
           {
             role: 'system',
-            content: 'You are an expert resume writer and career coach. Create professional, ATS-friendly resumes that highlight relevant skills and experience for specific job opportunities.'
+            content: 'You are an expert resume writer and career coach. You specialize in preserving candidate authenticity while strategically optimizing job descriptions to match target opportunities. Always maintain the original structure and job history while enhancing descriptions with relevant keywords and achievements.'
           },
           {
             role: 'user',
