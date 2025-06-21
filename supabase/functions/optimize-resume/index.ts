@@ -21,31 +21,37 @@ serve(async (req) => {
       throw new Error('Resume ID and Job Description ID are required');
     }
 
+    console.log('Starting resume optimization with resumeId:', resumeId, 'jobDescriptionId:', jobDescriptionId);
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
-
-    // Get the authorization header
+    
+    // Get the authorization header and create authenticated client
     const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      supabase.auth.setAuth(authHeader.replace('Bearer ', ''));
+    if (!authHeader) {
+      throw new Error('Authorization header is required');
     }
+
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
+      console.error('User authentication error:', userError);
       throw new Error('User not authenticated');
     }
 
-    console.log('Fetching resume and job description for user:', user.id);
+    console.log('Authenticated user:', user.id);
 
     // Fetch resume and job description
+    console.log('Fetching resume and job description...');
     const [resumeResult, jobDescResult] = await Promise.all([
       supabase
         .from('resumes')
@@ -78,13 +84,20 @@ serve(async (req) => {
       throw new Error('Resume has no parsed text content');
     }
 
-    console.log('Calling OpenAI API for resume optimization');
+    if (!jobDescription.parsed_text) {
+      throw new Error('Job description has no parsed text content');
+    }
+
+    console.log('Successfully fetched resume and job description');
 
     // Call OpenAI API
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+      console.error('OpenAI API key not configured');
+      throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase secrets.');
     }
+
+    console.log('Calling OpenAI API for resume optimization...');
 
     const prompt = `Compare this resume to the job description below. Rewrite the resume to better align with the responsibilities and required qualifications. Use a clear, modern structure with emphasis on relevant experience, action verbs, and key metrics. Make the resume compelling and targeted to this specific role.
 
@@ -122,15 +135,16 @@ Please provide a complete, optimized resume that maintains the candidate's authe
     if (!openAIResponse.ok) {
       const error = await openAIResponse.text();
       console.error('OpenAI API error:', error);
-      throw new Error('Failed to generate optimized resume');
+      throw new Error(`Failed to generate optimized resume: ${openAIResponse.status} ${openAIResponse.statusText}`);
     }
 
     const openAIData = await openAIResponse.json();
     const generatedText = openAIData.choices[0].message.content;
 
-    console.log('Saving optimized resume to database');
+    console.log('Successfully generated optimized resume content');
 
     // Save optimized resume to database
+    console.log('Saving optimized resume to database...');
     const { data: optimizedResume, error: saveError } = await supabase
       .from('optimized_resumes')
       .insert({
@@ -144,7 +158,7 @@ Please provide a complete, optimized resume that maintains the candidate's authe
 
     if (saveError) {
       console.error('Database save error:', saveError);
-      throw new Error('Failed to save optimized resume');
+      throw new Error(`Failed to save optimized resume: ${saveError.message}`);
     }
 
     console.log('Successfully created optimized resume:', optimizedResume.id);
