@@ -97,7 +97,6 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
-          plan_level: string | null
           updated_at: string
         }
         Insert: {
@@ -106,7 +105,6 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
-          plan_level?: string | null
           updated_at?: string
         }
         Update: {
@@ -115,88 +113,6 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
-          plan_level?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      resume_exports: {
-        Row: {
-          created_at: string
-          export_format: string | null
-          file_name: string
-          file_path: string | null
-          id: string
-          optimized_resume_id: string
-          template_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          export_format?: string | null
-          file_name: string
-          file_path?: string | null
-          id?: string
-          optimized_resume_id: string
-          template_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          export_format?: string | null
-          file_name?: string
-          file_path?: string | null
-          id?: string
-          optimized_resume_id?: string
-          template_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "resume_exports_optimized_resume_id_fkey"
-            columns: ["optimized_resume_id"]
-            isOneToOne: false
-            referencedRelation: "optimized_resumes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "resume_exports_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "resume_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      resume_templates: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          premium_required: boolean | null
-          preview_image_url: string | null
-          template_config: Json
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          premium_required?: boolean | null
-          preview_image_url?: string | null
-          template_config: Json
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          premium_required?: boolean | null
-          preview_image_url?: string | null
-          template_config?: Json
           updated_at?: string
         }
         Relationships: []
@@ -233,38 +149,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      user_template_preferences: {
-        Row: {
-          created_at: string
-          id: string
-          selected_template_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          selected_template_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          selected_template_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_template_preferences_selected_template_id_fkey"
-            columns: ["selected_template_id"]
-            isOneToOne: false
-            referencedRelation: "resume_templates"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
