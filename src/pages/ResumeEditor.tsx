@@ -39,6 +39,7 @@ const ResumeEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('edit');
+  const [error, setError] = useState<string | null>(null);
 
   const { planLevel } = useUserPlan();
   const { 
@@ -50,106 +51,158 @@ const ResumeEditor: React.FC = () => {
   useEffect(() => {
     if (id) {
       fetchResume();
+    } else {
+      setError('No resume ID provided');
+      setLoading(false);
     }
   }, [id]);
 
   const fetchResume = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('optimized_resumes')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          setError('Resume not found');
+        } else {
+          throw error;
+        }
+        return;
+      }
       
       setResume(data);
-      parseResumeText(data.generated_text);
+      parseResumeText(data.generated_text || '');
     } catch (error) {
       console.error('Error fetching resume:', error);
+      setError('Failed to load resume for editing');
       toast({
         title: "Error",
         description: "Failed to load resume for editing.",
         variant: "destructive"
       });
-      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
   };
 
   const parseResumeText = (text: string) => {
-    // Simple parsing logic - in production, you might want more sophisticated parsing
-    const sections = text.split('\n\n');
-    const parsed: ParsedResume = {
-      summary: '',
-      experience: [],
-      skills: [],
-      education: [],
-      certifications: []
-    };
+    try {
+      if (!text || text.trim().length === 0) {
+        // Create a minimal default structure if no text provided
+        const defaultParsed: ParsedResume = {
+          summary: '',
+          experience: [],
+          skills: [],
+          education: [],
+          certifications: []
+        };
+        setParsedResume(defaultParsed);
+        return;
+      }
 
-    // Basic parsing - this is a simplified version
-    // You might want to implement more sophisticated parsing based on your AI output format
-    let currentSection = '';
-    
-    sections.forEach((section, index) => {
-      const lowerSection = section.toLowerCase();
+      // Simple parsing logic - in production, you might want more sophisticated parsing
+      const sections = text.split('\n\n');
+      const parsed: ParsedResume = {
+        summary: '',
+        experience: [],
+        skills: [],
+        education: [],
+        certifications: []
+      };
+
+      // Basic parsing - this is a simplified version
+      // You might want to implement more sophisticated parsing based on your AI output format
+      let currentSection = '';
       
-      if (lowerSection.includes('summary') || lowerSection.includes('profile') || index === 0) {
-        parsed.summary = section.replace(/summary|profile/gi, '').trim();
-        currentSection = 'summary';
-      } else if (lowerSection.includes('experience') || lowerSection.includes('work')) {
-        currentSection = 'experience';
-        // Parse experience entries - simplified
-        if (section.includes('•') || section.includes('-')) {
-          parsed.experience.push({
+      sections.forEach((section, index) => {
+        const lowerSection = section.toLowerCase();
+        
+        if (lowerSection.includes('summary') || lowerSection.includes('profile') || index === 0) {
+          parsed.summary = section.replace(/summary|profile/gi, '').trim();
+          currentSection = 'summary';
+        } else if (lowerSection.includes('experience') || lowerSection.includes('work')) {
+          currentSection = 'experience';
+          // Parse experience entries - simplified
+          if (section.includes('•') || section.includes('-')) {
+            parsed.experience.push({
+              id: Date.now().toString() + Math.random(),
+              company: 'Company Name',
+              role: 'Job Title',
+              startDate: '2023',
+              endDate: '2024',
+              description: section
+            });
+          }
+        } else if (lowerSection.includes('skills')) {
+          currentSection = 'skills';
+          const skillsText = section.replace(/skills/gi, '').trim();
+          parsed.skills = skillsText.split(/[,•\-\n]/).map(s => s.trim()).filter(s => s);
+        } else if (lowerSection.includes('education')) {
+          currentSection = 'education';
+          parsed.education.push({
             id: Date.now().toString() + Math.random(),
+            institution: 'University Name',
+            degree: 'Degree',
+            year: '2020'
+          });
+        } else if (lowerSection.includes('certification')) {
+          currentSection = 'certifications';
+          parsed.certifications.push({
+            id: Date.now().toString() + Math.random(),
+            name: 'Certification Name',
+            issuer: 'Issuing Organization',
+            year: '2023'
+          });
+        }
+      });
+
+      // If we don't have any parsed content, create a basic structure
+      if (!parsed.summary && !parsed.experience.length) {
+        parsed.summary = text.substring(0, 200) + (text.length > 200 ? '...' : '');
+        if (parsed.experience.length === 0) {
+          parsed.experience.push({
+            id: '1',
             company: 'Company Name',
             role: 'Job Title',
             startDate: '2023',
             endDate: '2024',
-            description: section
+            description: 'Job description and achievements...'
           });
         }
-      } else if (lowerSection.includes('skills')) {
-        currentSection = 'skills';
-        const skillsText = section.replace(/skills/gi, '').trim();
-        parsed.skills = skillsText.split(/[,•\-\n]/).map(s => s.trim()).filter(s => s);
-      } else if (lowerSection.includes('education')) {
-        currentSection = 'education';
-        parsed.education.push({
-          id: Date.now().toString() + Math.random(),
+      }
+
+      setParsedResume(parsed);
+    } catch (error) {
+      console.error('Error parsing resume text:', error);
+      // Create fallback structure on parsing error
+      const fallbackParsed: ParsedResume = {
+        summary: text || 'Resume content...',
+        experience: [{
+          id: '1',
+          company: 'Company Name',
+          role: 'Job Title',
+          startDate: '2023',
+          endDate: '2024',
+          description: 'Job description and achievements...'
+        }],
+        skills: ['Skill 1', 'Skill 2'],
+        education: [{
+          id: '1',
           institution: 'University Name',
           degree: 'Degree',
           year: '2020'
-        });
-      } else if (lowerSection.includes('certification')) {
-        currentSection = 'certifications';
-        parsed.certifications.push({
-          id: Date.now().toString() + Math.random(),
-          name: 'Certification Name',
-          issuer: 'Issuing Organization',
-          year: '2023'
-        });
-      }
-    });
-
-    // If we don't have any parsed content, create a basic structure
-    if (!parsed.summary && !parsed.experience.length) {
-      parsed.summary = text.substring(0, 200) + '...';
-      parsed.experience.push({
-        id: '1',
-        company: 'Company Name',
-        role: 'Job Title',
-        startDate: '2023',
-        endDate: '2024',
-        description: 'Job description and achievements...'
-      });
+        }],
+        certifications: []
+      };
+      setParsedResume(fallbackParsed);
     }
-
-    setParsedResume(parsed);
   };
 
   const handleSave = async () => {
@@ -158,7 +211,6 @@ const ResumeEditor: React.FC = () => {
     try {
       setSaving(true);
       
-      // Convert parsed resume back to text format
       const updatedText = generateResumeText(parsedResume);
       
       const { error } = await supabase
@@ -232,6 +284,20 @@ const ResumeEditor: React.FC = () => {
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => navigate('/dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
         </div>
       </DashboardLayout>
     );
