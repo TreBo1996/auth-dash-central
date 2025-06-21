@@ -7,6 +7,7 @@ export const useTemplatePreferences = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateConfig, setSelectedTemplateConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -15,13 +16,16 @@ export const useTemplatePreferences = () => {
 
   const fetchUserPreferences = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('user_template_preferences')
         .select(`
           selected_template_id,
@@ -32,16 +36,18 @@ export const useTemplatePreferences = () => {
           )
         `)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      if (data && data.resume_templates) {
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching user preferences:', fetchError);
+        setError(fetchError.message);
+      } else if (data && data.resume_templates) {
         setSelectedTemplateId(data.selected_template_id);
         setSelectedTemplateConfig(data.resume_templates.template_config);
       }
     } catch (error) {
       console.error('Error fetching user preferences:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch template preferences');
     } finally {
       setLoading(false);
     }
@@ -49,10 +55,11 @@ export const useTemplatePreferences = () => {
 
   const updateTemplatePreference = async (templateId: string, templateConfig: any) => {
     try {
+      setError(null);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('user_template_preferences')
         .upsert({
           user_id: user.id,
@@ -60,7 +67,16 @@ export const useTemplatePreferences = () => {
           updated_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating template preference:', updateError);
+        setError(updateError.message);
+        toast({
+          title: "Error",
+          description: "Failed to save template preference.",
+          variant: "destructive"
+        });
+        return;
+      }
 
       setSelectedTemplateId(templateId);
       setSelectedTemplateConfig(templateConfig);
@@ -71,9 +87,11 @@ export const useTemplatePreferences = () => {
       });
     } catch (error) {
       console.error('Error updating template preference:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update template preference';
+      setError(errorMessage);
       toast({
         title: "Error",
-        description: "Failed to save template preference.",
+        description: errorMessage,
         variant: "destructive"
       });
     }
@@ -83,6 +101,7 @@ export const useTemplatePreferences = () => {
     selectedTemplateId,
     selectedTemplateConfig,
     loading,
+    error,
     updateTemplatePreference,
     refetch: fetchUserPreferences
   };

@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { FileText, Calendar, Eye, Edit, Trash2, ChevronDown, ChevronRight, Sparkles, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -49,33 +49,62 @@ const Dashboard: React.FC = () => {
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [optimizedResumes, setOptimizedResumes] = useState<OptimizedResume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUserData();
-    fetchResumes();
-    fetchJobDescriptions();
-    fetchOptimizedResumes();
+    console.log('Dashboard mounted, initializing data...');
+    initializeDashboard();
   }, []);
+
+  const initializeDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching user data...');
+      await fetchUserData();
+      
+      console.log('Fetching dashboard data in parallel...');
+      await Promise.all([
+        fetchResumes(),
+        fetchJobDescriptions(),
+        fetchOptimizedResumes()
+      ]);
+      
+      console.log('Dashboard initialization complete');
+    } catch (err) {
+      console.error('Dashboard initialization error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchUserData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
+      console.log('User data fetched:', user?.email || 'No user');
       setUser(user);
     } catch (error) {
       console.error('Error fetching user:', error);
+      throw error;
     }
   };
 
   const fetchResumes = async () => {
     try {
+      console.log('Fetching resumes...');
       const { data, error } = await supabase
         .from('resumes')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Resumes fetched:', data?.length || 0);
       setResumes(data || []);
     } catch (error) {
       console.error('Error fetching resumes:', error);
@@ -84,17 +113,20 @@ const Dashboard: React.FC = () => {
         description: "Failed to load resumes.",
         variant: "destructive"
       });
+      throw error;
     }
   };
 
   const fetchJobDescriptions = async () => {
     try {
+      console.log('Fetching job descriptions...');
       const { data, error } = await supabase
         .from('job_descriptions')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Job descriptions fetched:', data?.length || 0);
       setJobDescriptions(data || []);
     } catch (error) {
       console.error('Error fetching job descriptions:', error);
@@ -103,13 +135,13 @@ const Dashboard: React.FC = () => {
         description: "Failed to load job descriptions.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 
   const fetchOptimizedResumes = async () => {
     try {
+      console.log('Fetching optimized resumes...');
       const { data, error } = await supabase
         .from('optimized_resumes')
         .select(`
@@ -120,6 +152,7 @@ const Dashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Optimized resumes fetched:', data?.length || 0);
       setOptimizedResumes(data || []);
     } catch (error) {
       console.error('Error fetching optimized resumes:', error);
@@ -128,6 +161,7 @@ const Dashboard: React.FC = () => {
         description: "Failed to load optimized resumes.",
         variant: "destructive"
       });
+      throw error;
     }
   };
 
@@ -205,6 +239,22 @@ const Dashboard: React.FC = () => {
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="ml-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <AlertTriangle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Failed to Load Dashboard</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={initializeDashboard}>
+            Try Again
+          </Button>
         </div>
       </DashboardLayout>
     );
@@ -216,7 +266,7 @@ const Dashboard: React.FC = () => {
         {/* Welcome Header */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.user_metadata?.full_name || user?.email}!
+            Welcome back, {user?.user_metadata?.full_name || user?.email || 'User'}!
           </h1>
           <p className="text-gray-600">
             Manage your resumes and job descriptions from your dashboard.
