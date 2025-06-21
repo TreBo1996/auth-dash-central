@@ -1,9 +1,9 @@
-
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker with CDN URL for better reliability
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+// Configure PDF.js to work without web workers for better compatibility
+// This approach is more reliable in environments with restricted worker access
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
 export const parseDocument = async (file: File): Promise<string> => {
   const fileType = file.type;
@@ -29,18 +29,20 @@ export const parseDocument = async (file: File): Promise<string> => {
     
     // Provide more specific error messages
     if (error instanceof Error) {
-      if (error.message.includes('worker')) {
-        throw new Error('PDF processing failed. Please try again or use a different file.');
-      } else if (error.message.includes('Invalid PDF')) {
-        throw new Error('The PDF file appears to be corrupted. Please try a different file.');
-      } else if (error.message.includes('password')) {
-        throw new Error('Password-protected PDFs are not supported. Please use an unprotected file.');
+      if (error.message.includes('worker') || error.message.includes('Worker')) {
+        throw new Error('PDF processing failed due to browser restrictions. Please try again or use a DOCX file instead.');
+      } else if (error.message.includes('Invalid PDF') || error.message.includes('invalid')) {
+        throw new Error('The PDF file appears to be corrupted or invalid. Please try a different file.');
+      } else if (error.message.includes('password') || error.message.includes('encrypted')) {
+        throw new Error('Password-protected or encrypted PDFs are not supported. Please use an unprotected file.');
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        throw new Error('Network error while processing PDF. Please check your connection and try again.');
       } else {
         throw error;
       }
     }
     
-    throw new Error('Failed to parse document. Please try a different file format.');
+    throw new Error('Failed to parse document. Please try a different file or format.');
   }
 };
 
@@ -49,13 +51,18 @@ const parsePDF = async (file: File): Promise<string> => {
     console.log('Converting file to array buffer...');
     const arrayBuffer = await file.arrayBuffer();
     
-    console.log('Loading PDF document...');
+    console.log('Loading PDF document without worker...');
+    
+    // Configure PDF.js to work without web workers for better compatibility
     const pdf = await pdfjsLib.getDocument({ 
       data: arrayBuffer,
-      // Add options for better compatibility
       verbosity: 0, // Reduce console noise
       isEvalSupported: false,
-      isOffscreenCanvasSupported: false
+      isOffscreenCanvasSupported: false,
+      useWorkerFetch: false,
+      disableAutoFetch: false,
+      disableStream: false,
+      useSystemFonts: true
     }).promise;
     
     console.log(`PDF loaded successfully, ${pdf.numPages} pages`);
@@ -64,25 +71,44 @@ const parsePDF = async (file: File): Promise<string> => {
     
     for (let i = 1; i <= pdf.numPages; i++) {
       console.log(`Processing page ${i}/${pdf.numPages}...`);
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
-      fullText += pageText + '\n';
+      try {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str || '')
+          .filter(text => text.trim())
+          .join(' ');
+        
+        if (pageText.trim()) {
+          fullText += pageText + '\n';
+        }
+      } catch (pageError) {
+        console.warn(`Failed to process page ${i}:`, pageError);
+        // Continue with other pages even if one fails
+      }
     }
     
     const trimmedText = fullText.trim();
     console.log(`PDF parsing completed, extracted ${trimmedText.length} characters`);
     
     if (!trimmedText) {
-      throw new Error('No text could be extracted from this PDF. The file may be image-based or corrupted.');
+      throw new Error('No text could be extracted from this PDF. The file may be image-based, scanned, or corrupted.');
     }
     
     return trimmedText;
   } catch (error) {
     console.error('PDF parsing failed:', error);
-    throw error;
+    
+    // Re-throw with more specific error message
+    if (error instanceof Error) {
+      if (error.message.includes('No text could be extracted')) {
+        throw error; // Keep the specific message
+      } else if (error.message.includes('Invalid PDF')) {
+        throw new Error('The PDF file is invalid or corrupted. Please try a different file.');
+      }
+    }
+    
+    throw new Error('Failed to process PDF file. Please try a different file or convert to DOCX format.');
   }
 };
 
