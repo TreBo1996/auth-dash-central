@@ -15,7 +15,7 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-3">{parsedData.name || 'Your Name'}</h1>
+          <h1 className="text-4xl font-bold mb-3">{parsedData.name}</h1>
           <div className="flex flex-wrap gap-6 text-gray-300 mb-4">
             {parsedData.email && (
               <div className="flex items-center gap-2">
@@ -36,9 +36,11 @@ export const ExecutiveTemplate: React.FC<ExecutiveTemplateProps> = ({ resumeData
               </div>
             )}
           </div>
-          <p className="text-lg text-gray-100 leading-relaxed max-w-3xl">
-            {parsedData.summary || 'Executive-level professional with proven track record of leadership and strategic vision'}
-          </p>
+          {parsedData.summary && (
+            <p className="text-lg text-gray-100 leading-relaxed max-w-3xl">
+              {parsedData.summary}
+            </p>
+          )}
         </div>
       </div>
 

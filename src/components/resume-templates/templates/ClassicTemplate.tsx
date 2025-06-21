@@ -13,7 +13,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
     <div className="min-h-[800px] bg-white p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
       {/* Header */}
       <div className="text-center mb-8 pb-6">
-        <h1 className="text-4xl font-bold text-black mb-4">{parsedData.name || 'Your Name'}</h1>
+        <h1 className="text-4xl font-bold text-black mb-4">{parsedData.name}</h1>
         <div className="text-sm text-gray-700 space-y-1">
           {parsedData.email && <p>{parsedData.email}</p>}
           {parsedData.phone && <p>{parsedData.phone}</p>}

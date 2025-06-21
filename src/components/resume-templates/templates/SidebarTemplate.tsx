@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { parseResumeContent } from '../utils/parseResumeContent';
-import { Mail, Phone, MapPin, Globe } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 interface SidebarTemplateProps {
   resumeData: string;
@@ -21,7 +21,7 @@ export const SidebarTemplate: React.FC<SidebarTemplateProps> = ({ resumeData }) 
             {parsedData.email && (
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <Mail size={14} />
-                <span>{parsedData.email}</span>
+                <span className="break-all">{parsedData.email}</span>
               </div>
             )}
             {parsedData.phone && (
@@ -81,8 +81,10 @@ export const SidebarTemplate: React.FC<SidebarTemplateProps> = ({ resumeData }) 
       <div className="flex-1 p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{parsedData.name || 'Your Name'}</h1>
-          <p className="text-lg text-gray-600 leading-relaxed">{parsedData.summary || 'Professional summary goes here'}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{parsedData.name}</h1>
+          {parsedData.summary && (
+            <p className="text-lg text-gray-600 leading-relaxed">{parsedData.summary}</p>
+          )}
         </div>
 
         {/* Experience */}

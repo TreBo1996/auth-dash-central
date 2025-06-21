@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { parseResumeContent } from '../utils/parseResumeContent';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Linkedin } from 'lucide-react';
 
 interface ModernTemplateProps {
   resumeData: string;
@@ -14,8 +14,8 @@ export const ModernTemplate: React.FC<ModernTemplateProps> = ({ resumeData }) =>
     <div className="min-h-[800px] bg-white p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Header */}
       <div className="text-center mb-8 pb-6 border-b border-gray-200">
-        <h1 className="text-4xl font-bold text-gray-900 mb-3">{parsedData.name || 'Your Name'}</h1>
-        <div className="flex justify-center items-center gap-6 text-sm text-gray-600 mb-4">
+        <h1 className="text-4xl font-bold text-gray-900 mb-3">{parsedData.name}</h1>
+        <div className="flex justify-center items-center gap-6 text-sm text-gray-600 mb-4 flex-wrap">
           {parsedData.email && (
             <div className="flex items-center gap-1">
               <Mail size={14} />
@@ -35,9 +35,11 @@ export const ModernTemplate: React.FC<ModernTemplateProps> = ({ resumeData }) =>
             </div>
           )}
         </div>
-        <p className="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
-          {parsedData.summary || 'Professional summary highlighting key achievements and expertise'}
-        </p>
+        {parsedData.summary && (
+          <p className="text-lg text-gray-700 leading-relaxed max-w-3xl mx-auto">
+            {parsedData.summary}
+          </p>
+        )}
       </div>
 
       {/* Skills */}

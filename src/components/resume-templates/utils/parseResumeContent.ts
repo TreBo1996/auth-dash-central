@@ -23,8 +23,6 @@ interface ParsedResume {
 }
 
 export const parseResumeContent = (resumeText: string): ParsedResume => {
-  const lines = resumeText.split('\n').filter(line => line.trim());
-  
   const result: ParsedResume = {
     name: '',
     email: '',
@@ -36,83 +34,146 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     skills: []
   };
 
-  // Extract contact information
-  const emailMatch = resumeText.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+  // Try to parse as JSON first (in case it's structured data)
+  try {
+    const jsonData = JSON.parse(resumeText);
+    if (jsonData && typeof jsonData === 'object') {
+      return {
+        name: jsonData.name || jsonData.fullName || '',
+        email: jsonData.email || '',
+        phone: jsonData.phone || jsonData.phoneNumber || '',
+        location: jsonData.location || jsonData.address || '',
+        summary: jsonData.summary || jsonData.professionalSummary || jsonData.objective || '',
+        experience: jsonData.experience || jsonData.workExperience || [],
+        education: jsonData.education || [],
+        skills: jsonData.skills || []
+      };
+    }
+  } catch (e) {
+    // Not JSON, continue with text parsing
+  }
+
+  const lines = resumeText.split('\n').filter(line => line.trim());
+  
+  // Enhanced contact information extraction
+  const emailMatch = resumeText.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
   if (emailMatch) result.email = emailMatch[0];
 
-  const phoneMatch = resumeText.match(/(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/);
+  const phoneMatch = resumeText.match(/(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/);
   if (phoneMatch) result.phone = phoneMatch[0];
 
-  // Extract name (usually first line or before email)
-  const namePattern = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+/gm;
-  const nameMatch = resumeText.match(namePattern);
-  if (nameMatch) result.name = nameMatch[0];
+  // Extract location (look for city, state patterns)
+  const locationMatch = resumeText.match(/([A-Z][a-z]+,\s*[A-Z]{2})|([A-Z][a-z]+\s*[A-Z][a-z]+,\s*[A-Z]{2})/);
+  if (locationMatch) result.location = locationMatch[0];
 
-  // Extract summary (look for summary/objective sections)
-  const summaryMatch = resumeText.match(/(?:SUMMARY|OBJECTIVE|PROFILE)[\s\S]*?(?=\n[A-Z]|\n\n|$)/i);
-  if (summaryMatch) {
-    result.summary = summaryMatch[0].replace(/(?:SUMMARY|OBJECTIVE|PROFILE)[:\s]*/i, '').trim();
+  // Extract name (first non-empty line that looks like a name)
+  const namePattern = /^[A-Z][a-z]+(?:\s+[A-Z][a-z]*){1,3}$/;
+  for (const line of lines.slice(0, 5)) {
+    if (namePattern.test(line.trim()) && !line.includes('@') && !line.includes('|')) {
+      result.name = line.trim();
+      break;
+    }
   }
 
-  // Extract experience entries
-  const experiencePattern = /([A-Z][^|\n]*?)\s*\|\s*([^|\n]*?)\s*\|\s*([^|\n]*?)(?:\n((?:•[^\n]*\n?)*)|$)/g;
-  let expMatch;
-  while ((expMatch = experiencePattern.exec(resumeText)) !== null) {
-    const bullets = expMatch[4] ? expMatch[4].split('\n').filter(b => b.trim().startsWith('•')).map(b => b.replace('•', '').trim()) : [];
-    result.experience.push({
-      title: expMatch[1].trim(),
-      company: expMatch[2].trim(),
-      duration: expMatch[3].trim(),
-      bullets
-    });
+  // Enhanced summary extraction
+  const summaryPatterns = [
+    /(?:PROFESSIONAL\s+SUMMARY|SUMMARY|OBJECTIVE|PROFILE)(?:\s*:)?\s*\n((?:(?!\n(?:[A-Z\s]{2,}|EXPERIENCE|EDUCATION|SKILLS)).+\n?)*)/i,
+    /(?:SUMMARY|OBJECTIVE)(?:\s*:)?\s*((?:(?!\n[A-Z]{2,}).+\n?)*)/i
+  ];
+  
+  for (const pattern of summaryPatterns) {
+    const summaryMatch = resumeText.match(pattern);
+    if (summaryMatch && summaryMatch[1]) {
+      result.summary = summaryMatch[1].trim().replace(/\n+/g, ' ');
+      break;
+    }
   }
 
-  // Extract education
-  const educationPattern = /([A-Z][^,\n]*?)\s*,\s*([^,\n]*?)\s*,?\s*(\d{4}|\d{4}-\d{4})/g;
-  let eduMatch;
-  while ((eduMatch = educationPattern.exec(resumeText)) !== null) {
-    result.education.push({
-      degree: eduMatch[1].trim(),
-      school: eduMatch[2].trim(),
-      year: eduMatch[3].trim()
-    });
-  }
-
-  // Extract skills (look for sections with lists)
-  const skillsPattern = /(?:SKILLS|TECHNICAL SKILLS|TECHNOLOGIES)[\s:]*\n((?:[A-Za-z\s]+:[^\n]+\n?)*)/i;
-  const skillsMatch = resumeText.match(skillsPattern);
-  if (skillsMatch) {
-    const skillLines = skillsMatch[1].split('\n').filter(line => line.includes(':'));
-    skillLines.forEach(line => {
-      const [category, items] = line.split(':');
-      if (category && items) {
-        result.skills.push({
-          category: category.trim(),
-          items: items.split(',').map(item => item.trim()).filter(item => item)
+  // Enhanced experience extraction
+  const experienceSection = resumeText.match(/(?:PROFESSIONAL\s+EXPERIENCE|WORK\s+EXPERIENCE|EXPERIENCE)(?:\s*:)?\s*\n((?:(?!\n(?:EDUCATION|SKILLS|CERTIFICATIONS)).+\n?)*)/i);
+  if (experienceSection) {
+    const expText = experienceSection[1];
+    const jobBlocks = expText.split(/\n(?=[A-Z][^|\n]*\s*\|\s*[^|\n]*\s*\|\s*[^|\n]*)/);
+    
+    for (const block of jobBlocks) {
+      const jobMatch = block.match(/([A-Z][^|\n]*?)\s*\|\s*([^|\n]*?)\s*\|\s*([^|\n]*?)(?:\n((?:•[^\n]*\n?)*)|$)/);
+      if (jobMatch) {
+        const bullets = jobMatch[4] 
+          ? jobMatch[4].split('\n').filter(b => b.trim().startsWith('•')).map(b => b.replace('•', '').trim())
+          : [];
+        
+        result.experience.push({
+          title: jobMatch[1].trim(),
+          company: jobMatch[2].trim(),
+          duration: jobMatch[3].trim(),
+          bullets
         });
       }
-    });
+    }
   }
 
-  // Fallback parsing for simpler formats
-  if (result.experience.length === 0) {
-    // Try to extract any job titles and companies
-    const simpleExpPattern = /([A-Z][a-zA-Z\s]+(?:Manager|Developer|Engineer|Analyst|Specialist|Director|Lead))[^\n]*\n?([A-Z][a-zA-Z\s&,]+)(?:\n|$)/g;
-    let simpleMatch;
-    while ((simpleMatch = simpleExpPattern.exec(resumeText)) !== null) {
-      result.experience.push({
-        title: simpleMatch[1].trim(),
-        company: simpleMatch[2].trim(),
-        duration: 'Present',
-        bullets: ['Experience details from optimized resume']
+  // Enhanced education extraction
+  const educationMatch = resumeText.match(/(?:EDUCATION)(?:\s*:)?\s*\n((?:(?!\n(?:SKILLS|CERTIFICATIONS|EXPERIENCE)).+\n?)*)/i);
+  if (educationMatch) {
+    const eduText = educationMatch[1];
+    const eduPattern = /([^,\n]+),\s*([^,\n]+)(?:,\s*(\d{4}|\d{4}-\d{4}))?/g;
+    let eduMatch;
+    while ((eduMatch = eduPattern.exec(eduText)) !== null) {
+      result.education.push({
+        degree: eduMatch[1].trim(),
+        school: eduMatch[2].trim(),
+        year: eduMatch[3] || 'N/A'
       });
     }
   }
 
-  // If no structured data found, create basic structure from the text
-  if (!result.name && !result.summary && result.experience.length === 0) {
+  // Enhanced skills extraction
+  const skillsMatch = resumeText.match(/(?:TECHNICAL\s+SKILLS|SKILLS|CORE\s+COMPETENCIES)(?:\s*:)?\s*\n((?:(?!\n(?:EDUCATION|CERTIFICATIONS|EXPERIENCE)).+\n?)*)/i);
+  if (skillsMatch) {
+    const skillsText = skillsMatch[1];
+    const skillLines = skillsText.split('\n').filter(line => line.includes(':') || line.includes('•'));
+    
+    for (const line of skillLines) {
+      if (line.includes(':')) {
+        const [category, items] = line.split(':');
+        if (category && items) {
+          result.skills.push({
+            category: category.trim().replace('•', ''),
+            items: items.split(',').map(item => item.trim()).filter(item => item)
+          });
+        }
+      } else if (line.includes('•')) {
+        const skillItem = line.replace('•', '').trim();
+        if (skillItem) {
+          const existingGeneral = result.skills.find(s => s.category === 'Technical Skills');
+          if (existingGeneral) {
+            existingGeneral.items.push(skillItem);
+          } else {
+            result.skills.push({
+              category: 'Technical Skills',
+              items: [skillItem]
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback data if parsing fails
+  if (!result.name) {
     result.name = 'Professional Name';
-    result.summary = resumeText.substring(0, 200) + '...';
+  }
+  
+  if (!result.summary && resumeText.length > 50) {
+    // Take first meaningful paragraph as summary
+    const paragraphs = resumeText.split('\n\n').filter(p => p.length > 50);
+    if (paragraphs.length > 0) {
+      result.summary = paragraphs[0].substring(0, 300) + '...';
+    }
+  }
+
+  if (result.experience.length === 0 && resumeText.length > 100) {
+    // Create a basic experience entry from available text
     result.experience.push({
       title: 'Professional Role',
       company: 'Company Name',
