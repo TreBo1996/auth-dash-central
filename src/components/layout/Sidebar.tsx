@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, FileText, User, LogOut } from 'lucide-react';
+import { Home, Upload, FileText, User, LogOut, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Upload Resume', href: '/upload-resume', icon: Upload },
   { name: 'Upload Job Description', href: '/upload-job', icon: FileText },
+  { name: 'Mock Interview Prep', href: '/interview-prep', icon: MessageSquare },
   { name: 'Profile', href: '/profile', icon: User },
 ];
 
