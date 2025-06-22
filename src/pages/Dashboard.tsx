@@ -200,20 +200,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
         {/* Welcome Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-6">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
             Welcome back, {user?.user_metadata?.full_name || user?.email}!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">
             Manage your resumes and job descriptions from your dashboard.
           </p>
         </div>
 
         {/* AI Resume Optimizer Section */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">AI Resume Optimizer</h2>
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900">AI Resume Optimizer</h2>
           <ResumeOptimizer 
             resumes={resumes}
             jobDescriptions={jobDescriptions}
@@ -221,20 +221,20 @@ const Dashboard: React.FC = () => {
           />
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* My Resumes Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">My Resumes</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">My Resumes</h2>
               <Badge variant="secondary">{resumes.length}</Badge>
             </div>
             
             {resumes.length === 0 ? (
               <Card className="border-2 border-dashed border-gray-300">
-                <CardContent className="py-12 text-center">
-                  <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-4">No resumes uploaded yet</p>
-                  <Button asChild>
+                <CardContent className="py-8 md:py-12 text-center px-4">
+                  <FileText className="h-10 w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500 mb-4 text-sm md:text-base">No resumes uploaded yet</p>
+                  <Button asChild className="h-10 md:h-auto">
                     <a href="/upload-resume">Upload Your First Resume</a>
                   </Button>
                 </CardContent>
@@ -243,38 +243,40 @@ const Dashboard: React.FC = () => {
               <div className="space-y-4">
                 {resumes.map((resume) => (
                   <Card key={resume.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <FileText className="h-4 w-4" />
-                            {resume.file_name || 'Untitled Resume'}
+                    <CardHeader className="pb-3 p-4 md:p-6">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm md:text-base flex items-center gap-2 truncate">
+                            <FileText className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{resume.file_name || 'Untitled Resume'}</span>
                           </CardTitle>
-                          <CardDescription className="flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3" />
+                          <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm">
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
                             {formatDate(resume.created_at)}
                           </CardDescription>
                         </div>
-                        <Badge variant="outline">Original</Badge>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">Original</Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex gap-2">
+                    <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button 
                           size="sm" 
                           variant="outline"
                           onClick={() => navigate(`/resume-editor/initial/${resume.id}`)}
+                          className="h-9 flex-1 sm:flex-none"
                         >
                           <Edit className="h-3 w-3 mr-1" />
-                          Edit
+                          <span className="sm:inline">Edit</span>
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => handleDelete(resume.id, 'resume')}
+                          className="h-9 flex-1 sm:flex-none"
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
-                          Delete
+                          <span className="sm:inline">Delete</span>
                         </Button>
                       </div>
                     </CardContent>
@@ -287,16 +289,16 @@ const Dashboard: React.FC = () => {
           {/* My Job Descriptions Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">My Job Descriptions</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">My Job Descriptions</h2>
               <Badge variant="secondary">{jobDescriptions.length}</Badge>
             </div>
             
             {jobDescriptions.length === 0 ? (
               <Card className="border-2 border-dashed border-gray-300">
-                <CardContent className="py-12 text-center">
-                  <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-4">No job descriptions added yet</p>
-                  <Button asChild>
+                <CardContent className="py-8 md:py-12 text-center px-4">
+                  <FileText className="h-10 w-10 md:h-12 md:w-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500 mb-4 text-sm md:text-base">No job descriptions added yet</p>
+                  <Button asChild className="h-10 md:h-auto">
                     <a href="/upload-job">Add Your First Job Description</a>
                   </Button>
                 </CardContent>
@@ -305,36 +307,37 @@ const Dashboard: React.FC = () => {
               <div className="space-y-4">
                 {jobDescriptions.map((jobDesc) => (
                   <Card key={jobDesc.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <FileText className="h-4 w-4" />
-                            {jobDesc.title}
+                    <CardHeader className="pb-3 p-4 md:p-6">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                            <FileText className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{jobDesc.title}</span>
                           </CardTitle>
-                          <CardDescription className="flex items-center gap-2 mt-1">
-                            <Calendar className="h-3 w-3" />
+                          <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm">
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
                             {formatDate(jobDesc.created_at)}
                           </CardDescription>
                         </div>
-                        <Badge variant={jobDesc.source_file_url ? 'default' : 'outline'}>
+                        <Badge variant={jobDesc.source_file_url ? 'default' : 'outline'} className="text-xs flex-shrink-0">
                           {jobDesc.source_file_url ? 'File' : 'Text'}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                    <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button size="sm" variant="outline" className="h-9 flex-1 sm:flex-none">
                           <Edit className="h-3 w-3 mr-1" />
-                          Edit
+                          <span className="sm:inline">Edit</span>
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => handleDelete(jobDesc.id, 'job-description')}
+                          className="h-9 flex-1 sm:flex-none"
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
-                          Delete
+                          <span className="sm:inline">Delete</span>
                         </Button>
                       </div>
                     </CardContent>
@@ -349,56 +352,65 @@ const Dashboard: React.FC = () => {
         {optimizedResumes.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Optimized Resumes</h2>
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Optimized Resumes</h2>
               <Badge variant="secondary">{optimizedResumes.length}</Badge>
             </div>
             
-            <div className="grid lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {optimizedResumes.map((optimizedResume) => (
                 <Card key={optimizedResume.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-purple-500" />
-                          {optimizedResume.resumes?.file_name || 'Untitled Resume'} → {optimizedResume.job_descriptions?.title}
+                  <CardHeader className="pb-3 p-4 md:p-6">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm md:text-base flex items-start gap-2">
+                          <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate">
+                              {optimizedResume.resumes?.file_name || 'Untitled Resume'}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center">
+                              <span className="truncate">for {optimizedResume.job_descriptions?.title}</span>
+                            </div>
+                          </div>
                         </CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
-                          <Calendar className="h-3 w-3" />
+                        <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm">
+                          <Calendar className="h-3 w-3 flex-shrink-0" />
                           {formatDate(optimizedResume.created_at)}
                         </CardDescription>
                       </div>
-                      <Badge variant="default" className="bg-purple-100 text-purple-700">
+                      <Badge variant="default" className="bg-purple-100 text-purple-700 text-xs flex-shrink-0">
                         AI Optimized
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex gap-2">
+                  <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button 
                         size="sm" 
                         variant="outline"
                         onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)}
+                        className="h-9 flex-1 sm:flex-none"
                       >
                         <Edit className="h-3 w-3 mr-1" />
-                        Edit
+                        <span className="sm:inline">Edit</span>
                       </Button>
                       <Button 
                         size="sm" 
                         variant="default"
                         onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-blue-600 hover:bg-blue-700 h-9 flex-1 sm:flex-none"
                       >
                         <Palette className="h-3 w-3 mr-1" />
-                        Format
+                        <span className="sm:inline">Format</span>
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline" 
                         onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')}
+                        className="h-9 flex-1 sm:flex-none"
                       >
                         <Trash2 className="h-3 w-3 mr-1" />
-                        Delete
+                        <span className="sm:inline">Delete</span>
                       </Button>
                     </div>
                   </CardContent>

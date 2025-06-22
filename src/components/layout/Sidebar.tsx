@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, FileText, User, LogOut, MessageSquare } from 'lucide-react';
+import { Home, Upload, FileText, User, LogOut, MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -14,9 +15,14 @@ const navigation = [
   { name: 'Profile', href: '/profile', icon: User },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const location = useLocation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
@@ -34,10 +40,26 @@ export const Sidebar: React.FC = () => {
     }
   };
 
+  const handleLinkClick = () => {
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <div className="flex h-screen w-64 flex-col bg-white border-r border-gray-200">
-      <div className="flex h-16 items-center px-6 border-b border-gray-200">
+      <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-900">Best Hire</h1>
+        {isMobile && onClose && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="p-2"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       <nav className="flex-1 px-4 py-6 space-y-2">
@@ -47,6 +69,7 @@ export const Sidebar: React.FC = () => {
             <Link
               key={item.name}
               to={item.href}
+              onClick={handleLinkClick}
               className={`
                 flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                 ${isActive 
@@ -56,7 +79,7 @@ export const Sidebar: React.FC = () => {
               `}
             >
               <item.icon className="mr-3 h-5 w-5" />
-              {item.name}
+              <span className={isMobile ? 'text-base' : ''}>{item.name}</span>
             </Link>
           );
         })}
@@ -66,7 +89,7 @@ export const Sidebar: React.FC = () => {
         <Button
           onClick={handleLogout}
           variant="outline"
-          className="w-full justify-start"
+          className="w-full justify-start h-10"
         >
           <LogOut className="mr-3 h-4 w-4" />
           Log Out
