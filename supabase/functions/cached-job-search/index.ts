@@ -200,41 +200,72 @@ async function fetchJobsFromSerpAPI(query: string, location: string, datePosted:
     num: '10'
   });
 
-  if (location && location.trim()) {
-    const cleanLocation = location.trim().toLowerCase();
-    
-    if (cleanLocation === 'remote' || cleanLocation.includes('remote')) {
-      const remoteQuery = `${query} remote`;
-      baseParams.set('q', remoteQuery);
-      baseParams.append('location', 'United States');
-    } else {
-      baseParams.append('location', location.trim());
-    }
+  // Handle location and remote jobs properly
+  const isRemoteSearch = location && (location.toLowerCase().includes('remote') || location.toLowerCase() === 'remote');
+  
+  if (isRemoteSearch) {
+    // For remote jobs, use ltype=1 and don't set geographic location
+    baseParams.set('ltype', '1'); // Remote jobs only
+    console.log('Setting remote job filter (ltype=1)');
+  } else if (location && location.trim()) {
+    // For location-based searches, set the location parameter
+    baseParams.set('location', location.trim());
+    console.log('Setting location filter:', location.trim());
   }
 
-  // Add filters to query
-  let enhancedQuery = query;
+  // Handle date posted filter using SerpAPI's date_posted parameter
   if (datePosted) {
-    const dateFilters: Record<string, string> = {
-      'day': 'since yesterday',
-      '3days': 'in the last 3 days', 
-      'week': 'in the last week',
-      'month': 'in the last month'
+    const dateFilterMap: Record<string, string> = {
+      'day': 'today',
+      '3days': '3days', 
+      'week': 'week',
+      'month': 'month'
     };
-    if (dateFilters[datePosted]) {
-      enhancedQuery += ` ${dateFilters[datePosted]}`;
+    
+    if (dateFilterMap[datePosted]) {
+      baseParams.set('date_posted', dateFilterMap[datePosted]);
+      console.log('Setting date filter:', dateFilterMap[datePosted]);
     }
   }
 
-  if (jobType) enhancedQuery += ` ${jobType}`;
-  if (experienceLevel) enhancedQuery += ` ${experienceLevel}`;
+  // Handle job type filter using chips parameter
+  if (jobType && jobType !== 'any') {
+    const jobTypeChips: Record<string, string> = {
+      'full-time': 'date_posted:today,employment_type:FULLTIME',
+      'part-time': 'date_posted:today,employment_type:PARTTIME', 
+      'contract': 'date_posted:today,employment_type:CONTRACT',
+      'internship': 'date_posted:today,employment_type:INTERN',
+      'temporary': 'date_posted:today,employment_type:TEMPORARY'
+    };
+    
+    if (jobTypeChips[jobType]) {
+      baseParams.set('chips', jobTypeChips[jobType]);
+      console.log('Setting job type chips:', jobTypeChips[jobType]);
+    }
+  }
+
+  // Add experience level to query if specified
+  let enhancedQuery = query;
+  if (experienceLevel && experienceLevel !== 'any') {
+    const experienceLevelMap: Record<string, string> = {
+      'entry-level': 'entry level',
+      'mid-level': 'mid level', 
+      'senior-level': 'senior level',
+      'executive': 'executive'
+    };
+    
+    if (experienceLevelMap[experienceLevel]) {
+      enhancedQuery += ` ${experienceLevelMap[experienceLevel]}`;
+      console.log('Adding experience level to query:', experienceLevelMap[experienceLevel]);
+    }
+  }
 
   baseParams.set('q', enhancedQuery);
 
   const allJobs = [];
   const maxCalls = 5; // Fetch up to 50 jobs (5 calls × 10 jobs each)
   
-  console.log(`Making ${maxCalls} SerpAPI calls...`);
+  console.log(`Making ${maxCalls} SerpAPI calls with enhanced filters...`);
 
   for (let callIndex = 0; callIndex < maxCalls; callIndex++) {
     const start = callIndex * 10;
@@ -245,7 +276,7 @@ async function fetchJobsFromSerpAPI(query: string, location: string, datePosted:
     }
 
     const apiUrl = `https://serpapi.com/search?${callParams}`;
-    console.log(`SerpAPI call ${callIndex + 1}/${maxCalls} - start: ${start}`);
+    console.log(`SerpAPI call ${callIndex + 1}/${maxCalls} - URL: ${apiUrl}`);
 
     try {
       const response = await fetch(apiUrl, { method: 'GET' });
@@ -275,8 +306,26 @@ async function fetchJobsFromSerpAPI(query: string, location: string, datePosted:
           experience_level: null
         }));
 
-        allJobs.push(...transformedJobs);
-        console.log(`Call ${callIndex + 1}: Got ${jobsData.length} jobs, total so far: ${allJobs.length}`);
+        // Filter results to match search criteria more accurately
+        const filteredJobs = transformedJobs.filter(job => {
+          // For remote searches, filter out jobs that don't mention remote
+          if (isRemoteSearch) {
+            const jobText = `${job.title} ${job.location} ${job.description}`.toLowerCase();
+            return jobText.includes('remote') || jobText.includes('work from home') || jobText.includes('wfh');
+          }
+          
+          // For location-based searches, ensure job location matches or is close
+          if (location && !isRemoteSearch && job.location) {
+            const searchLocation = location.toLowerCase();
+            const jobLocation = job.location.toLowerCase();
+            return jobLocation.includes(searchLocation) || searchLocation.includes(jobLocation);
+          }
+          
+          return true; // Keep all jobs if no specific location filter
+        });
+
+        allJobs.push(...filteredJobs);
+        console.log(`Call ${callIndex + 1}: Got ${jobsData.length} jobs, filtered to ${filteredJobs.length}, total so far: ${allJobs.length}`);
       } else {
         console.log(`Call ${callIndex + 1}: No jobs found`);
         if (callIndex > 0) break; // Stop if no results in subsequent calls
@@ -293,7 +342,7 @@ async function fetchJobsFromSerpAPI(query: string, location: string, datePosted:
     }
   }
 
-  console.log(`SerpAPI fetch completed: ${allJobs.length} total jobs`);
+  console.log(`SerpAPI fetch completed: ${allJobs.length} total filtered jobs`);
   return allJobs;
 }
 
