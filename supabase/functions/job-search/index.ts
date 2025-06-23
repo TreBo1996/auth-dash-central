@@ -27,26 +27,38 @@ serve(async (req) => {
     const searchParams = new URLSearchParams({
       engine: 'google_jobs',
       q: query,
-      location: location,
       api_key: serpApiKey,
       start: start.toString(),
-      num: '10'
+      num: '10',
+      gl: 'us',
+      hl: 'en'
     });
+
+    // Only add location if it's not empty
+    if (location && location.trim()) {
+      searchParams.append('location', location.trim());
+    }
+
+    console.log('API request URL:', `https://serpapi.com/search?${searchParams}`);
 
     const response = await fetch(`https://serpapi.com/search?${searchParams}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {
-      throw new Error(`Serp API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('SerpAPI error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`Serp API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
     
     console.log('Job search successful, found jobs:', data.jobs_results?.length || 0);
+    console.log('API response structure:', Object.keys(data));
 
     // Transform the data to match our expected format
     const transformedJobs = data.jobs_results?.map((job: any) => ({
@@ -61,6 +73,8 @@ serve(async (req) => {
       via: job.via,
       thumbnail: job.thumbnail
     })) || [];
+
+    console.log('Transformed jobs count:', transformedJobs.length);
 
     return new Response(JSON.stringify({ 
       jobs: transformedJobs,
