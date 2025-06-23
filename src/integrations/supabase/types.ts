@@ -123,33 +123,48 @@ export type Database = {
       }
       job_descriptions: {
         Row: {
+          company: string | null
           created_at: string
           file_name: string | null
           file_size: number | null
           id: string
+          job_url: string | null
+          location: string | null
           parsed_text: string
+          salary_range: string | null
+          source: string | null
           source_file_url: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          company?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
           id?: string
+          job_url?: string | null
+          location?: string | null
           parsed_text: string
+          salary_range?: string | null
+          source?: string | null
           source_file_url?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          company?: string | null
           created_at?: string
           file_name?: string | null
           file_size?: number | null
           id?: string
+          job_url?: string | null
+          location?: string | null
           parsed_text?: string
+          salary_range?: string | null
+          source?: string | null
           source_file_url?: string | null
           title?: string
           updated_at?: string

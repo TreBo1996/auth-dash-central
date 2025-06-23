@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, FileText, User, LogOut, MessageSquare, X } from 'lucide-react';
+import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +8,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Job Search', href: '/job-search', icon: Search },
   { name: 'Upload Resume', href: '/upload-resume', icon: Upload },
   { name: 'Upload Job Description', href: '/upload-job', icon: FileText },
   { name: 'Mock Interview Prep', href: '/interview-prep', icon: MessageSquare },
