@@ -18,6 +18,10 @@ interface Job {
   source: string;
   via: string;
   thumbnail?: string;
+  job_highlights?: string;
+  requirements?: string;
+  responsibilities?: string;
+  benefits?: string;
 }
 
 interface JobCardProps {
@@ -82,12 +86,85 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
     setExpanded(!expanded);
   };
 
-  const truncateDescription = (text: string, maxLength: number = 300) => {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '...';
+  const formatTextWithBreaks = (text: string) => {
+    return text.split('\n').map((line, index) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < text.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
   };
 
-  const shouldShowToggle = job.description.length > 300;
+  const parseStructuredData = (jsonString: string) => {
+    try {
+      return JSON.parse(jsonString || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  const renderStructuredSection = (title: string, items: string[]) => {
+    if (!items || items.length === 0) return null;
+    
+    return (
+      <div className="mb-4">
+        <h4 className="font-semibold text-sm mb-2 text-gray-800">{title}</h4>
+        <ul className="list-disc list-inside space-y-1">
+          {items.map((item, index) => (
+            <li key={index} className="text-sm text-gray-700 leading-relaxed">{item}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  const renderJobDescription = () => {
+    const requirements = parseStructuredData(job.requirements || '');
+    const responsibilities = parseStructuredData(job.responsibilities || '');
+    const benefits = parseStructuredData(job.benefits || '');
+    
+    const hasStructuredData = requirements.length > 0 || responsibilities.length > 0 || benefits.length > 0;
+    
+    if (!expanded) {
+      const truncatedText = job.description.length > 300 
+        ? job.description.slice(0, 300) + '...' 
+        : job.description;
+      return (
+        <div className="text-sm text-gray-700 leading-relaxed">
+          {formatTextWithBreaks(truncatedText)}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {hasStructuredData ? (
+          <>
+            {renderStructuredSection("Requirements", requirements)}
+            {renderStructuredSection("Responsibilities", responsibilities)}
+            {renderStructuredSection("Benefits", benefits)}
+            {job.description && (
+              <div>
+                <h4 className="font-semibold text-sm mb-2 text-gray-800">Additional Details</h4>
+                <div className="text-sm text-gray-700 leading-relaxed">
+                  {formatTextWithBreaks(job.description)}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-sm text-gray-700 leading-relaxed">
+            {formatTextWithBreaks(job.description)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const shouldShowToggle = job.description.length > 300 || 
+    parseStructuredData(job.requirements || '').length > 0 ||
+    parseStructuredData(job.responsibilities || '').length > 0 ||
+    parseStructuredData(job.benefits || '').length > 0;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -148,9 +225,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <div className="text-sm text-gray-700">
-            {expanded ? job.description : truncateDescription(job.description)}
-          </div>
+          {renderJobDescription()}
           
           {shouldShowToggle && (
             <Button

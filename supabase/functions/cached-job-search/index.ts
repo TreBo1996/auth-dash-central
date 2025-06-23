@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -176,7 +175,10 @@ async function getCachedJobs(searchId: string, limit: number) {
         via,
         thumbnail,
         job_type,
-        experience_level
+        experience_level,
+        job_highlights,
+        requirements,
+        responsibilities
       )
     `)
     .eq('job_search_id', searchId)
@@ -291,20 +293,32 @@ async function fetchJobsFromSerpAPI(query: string, location: string, datePosted:
       const jobsData = data.jobs_results || data.job_results || data.jobs || data.results;
 
       if (jobsData && Array.isArray(jobsData) && jobsData.length > 0) {
-        const transformedJobs = jobsData.map((job: any) => ({
-          title: job.title,
-          company: job.company_name,
-          location: job.location,
-          description: job.description || job.snippet || '',
-          salary: job.salary_info?.salary || job.salary_info?.range || null,
-          posted_at: job.detected_extensions?.posted_at || job.posted_at,
-          job_url: job.share_link || job.apply_link,
-          source: 'Google Jobs',
-          via: job.via,
-          thumbnail: job.thumbnail,
-          job_type: job.detected_extensions?.schedule_type || null,
-          experience_level: null
-        }));
+        const transformedJobs = jobsData.map((job: any) => {
+          // Extract structured data from job highlights
+          const highlights = job.job_highlights || [];
+          const qualifications = highlights.find((h: any) => h.title?.toLowerCase().includes('qualifications') || h.title?.toLowerCase().includes('requirements'))?.items || [];
+          const responsibilities = highlights.find((h: any) => h.title?.toLowerCase().includes('responsibilities') || h.title?.toLowerCase().includes('duties'))?.items || [];
+          const benefits = highlights.find((h: any) => h.title?.toLowerCase().includes('benefits'))?.items || [];
+          
+          return {
+            title: job.title,
+            company: job.company_name,
+            location: job.location,
+            description: job.description || job.snippet || '',
+            salary: job.salary_info?.salary || job.salary_info?.range || null,
+            posted_at: job.detected_extensions?.posted_at || job.posted_at,
+            job_url: job.share_link || job.apply_link,
+            source: 'Google Jobs',
+            via: job.via,
+            thumbnail: job.thumbnail,
+            job_type: job.detected_extensions?.schedule_type || null,
+            experience_level: null,
+            job_highlights: highlights,
+            requirements: qualifications,
+            responsibilities: responsibilities,
+            benefits: benefits
+          };
+        });
 
         // Filter results to match search criteria more accurately
         const filteredJobs = transformedJobs.filter(job => {
@@ -373,7 +387,7 @@ async function storeSearchResults(searchKey: string, normalizedQuery: string, lo
 
     console.log('Created search record:', searchRecord.id);
 
-    // Store jobs in cached_jobs table
+    // Store jobs in cached_jobs table with structured data
     const jobsToInsert = jobs.map(job => ({
       job_url: job.job_url,
       title: job.title,
@@ -387,6 +401,10 @@ async function storeSearchResults(searchKey: string, normalizedQuery: string, lo
       thumbnail: job.thumbnail,
       job_type: job.job_type,
       experience_level: job.experience_level,
+      job_highlights: JSON.stringify(job.job_highlights || []),
+      requirements: JSON.stringify(job.requirements || []),
+      responsibilities: JSON.stringify(job.responsibilities || []),
+      benefits: JSON.stringify(job.benefits || []),
       last_seen_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }));

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
@@ -18,6 +17,10 @@ interface Job {
   thumbnail?: string;
   job_type?: string | null;
   experience_level?: string | null;
+  job_highlights?: string;
+  requirements?: string;
+  responsibilities?: string;
+  benefits?: string;
 }
 
 interface SearchParams {
