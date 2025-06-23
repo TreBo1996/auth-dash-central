@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Wrench, MessageSquare, Star, Target, Eye, Lightbulb } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Brain, Wrench, MessageSquare, Star, Target, Eye, Lightbulb, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface InterviewResponse {
   id: string;
@@ -25,6 +28,11 @@ interface InterviewSessionDetailProps {
 }
 
 export const InterviewSessionDetail: React.FC<InterviewSessionDetailProps> = ({ sessionId }) => {
+  const { toast } = useToast();
+  const [exampleResponses, setExampleResponses] = useState<Record<string, string>>({});
+  const [loadingExamples, setLoadingExamples] = useState<Record<string, boolean>>({});
+  const [expandedExamples, setExpandedExamples] = useState<Record<string, boolean>>({});
+
   const { data: responses, isLoading, error } = useQuery({
     queryKey: ['interview-responses', sessionId],
     queryFn: async () => {
@@ -39,6 +47,68 @@ export const InterviewSessionDetail: React.FC<InterviewSessionDetailProps> = ({ 
     },
     enabled: !!sessionId,
   });
+
+  // Get job title for context
+  const { data: sessionData } = useQuery({
+    queryKey: ['interview-session', sessionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('interview_sessions')
+        .select(`
+          job_descriptions(title)
+        `)
+        .eq('id', sessionId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sessionId,
+  });
+
+  const generateExampleResponse = async (response: InterviewResponse) => {
+    setLoadingExamples(prev => ({ ...prev, [response.id]: true }));
+    
+    try {
+      const result = await supabase.functions.invoke('generate-example-response', {
+        body: {
+          question: response.question_text,
+          questionType: response.question_type,
+          feedback: response.feedback,
+          jobTitle: sessionData?.job_descriptions?.title || 'Software Engineer'
+        }
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      setExampleResponses(prev => ({
+        ...prev,
+        [response.id]: result.data.exampleResponse
+      }));
+
+      setExpandedExamples(prev => ({
+        ...prev,
+        [response.id]: true
+      }));
+
+      toast({
+        title: "Example Generated!",
+        description: "AI has created a perfect 10/10 example response for this question.",
+      });
+
+    } catch (error) {
+      console.error('Error generating example response:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate example response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingExamples(prev => ({ ...prev, [response.id]: false }));
+    }
+  };
 
   if (isLoading) {
     return (
@@ -195,12 +265,62 @@ export const InterviewSessionDetail: React.FC<InterviewSessionDetailProps> = ({ 
 
               {/* AI Feedback */}
               <div className="bg-green-50 p-3 rounded-lg">
-                <h4 className="font-medium text-sm mb-2 flex items-center gap-1">
-                  <Lightbulb className="h-3 w-3" />
-                  AI Feedback:
-                </h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-sm flex items-center gap-1">
+                    <Lightbulb className="h-3 w-3" />
+                    AI Feedback:
+                  </h4>
+                  {!exampleResponses[response.id] && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generateExampleResponse(response)}
+                      disabled={loadingExamples[response.id]}
+                      className="text-xs"
+                    >
+                      {loadingExamples[response.id] ? (
+                        <>
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Generate 10/10 Example
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
                 <p className="text-sm text-gray-700">{response.feedback}</p>
               </div>
+
+              {/* AI Example Response */}
+              {exampleResponses[response.id] && (
+                <Collapsible 
+                  open={expandedExamples[response.id]} 
+                  onOpenChange={(open) => setExpandedExamples(prev => ({ ...prev, [response.id]: open }))}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between bg-amber-50 hover:bg-amber-100 border border-amber-200">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-amber-600" />
+                        <span className="font-medium text-amber-800">AI-Generated Perfect Response Example</span>
+                      </div>
+                      {expandedExamples[response.id] ? 
+                        <ChevronUp className="h-4 w-4 text-amber-600" /> : 
+                        <ChevronDown className="h-4 w-4 text-amber-600" />
+                      }
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="bg-amber-50 border border-amber-200 border-t-0 rounded-b-lg p-3">
+                    <p className="text-xs text-amber-700 mb-2 italic">
+                      This is an AI-generated example of what a perfect 10/10 response might look like. Use it as a reference for improvement.
+                    </p>
+                    <p className="text-sm text-gray-800">{exampleResponses[response.id]}</p>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
 
               {/* Score Breakdown */}
               {(response.job_relevance_score || response.clarity_score || response.examples_score) && (
