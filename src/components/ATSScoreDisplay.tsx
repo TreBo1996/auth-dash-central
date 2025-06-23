@@ -44,15 +44,15 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
   const { toast } = useToast();
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500 text-white border-green-500';
-    if (score >= 60) return 'bg-yellow-500 text-white border-yellow-500';
-    return 'bg-red-500 text-white border-red-500';
+    if (score >= 80) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (score >= 60) return 'bg-amber-50 text-amber-700 border-amber-200';
+    return 'bg-rose-50 text-rose-700 border-rose-200';
   };
 
   const getScoreTextColor = (score: number) => {
-    if (score >= 80) return 'text-green-700';
-    if (score >= 60) return 'text-yellow-700';
-    return 'text-red-700';
+    if (score >= 80) return 'text-emerald-600';
+    if (score >= 60) return 'text-amber-600';
+    return 'text-rose-600';
   };
 
   const getScoreLabel = (score: number) => {
@@ -115,7 +115,7 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
           <span className="text-sm font-medium">ATS Score:</span>
           <div className="flex items-center gap-2">
             <div className={cn(
-              "inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold transition-colors",
+              "inline-flex items-center rounded-full border px-2.5 py-1 text-sm font-medium transition-colors",
               getScoreColor(atsScore)
             )}>
               {atsScore}/100
