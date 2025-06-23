@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
@@ -15,21 +16,45 @@ interface Job {
   source: string;
   via: string;
   thumbnail?: string;
+  job_type?: string | null;
+  experience_level?: string | null;
+}
+
+interface SearchParams {
+  query: string;
+  location: string;
+  page?: number;
+  resultsPerPage?: number;
+  datePosted?: string;
+  jobType?: string;
+  experienceLevel?: string;
 }
 
 export const JobSearch: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const [currentSearchParams, setCurrentSearchParams] = useState<SearchParams | null>(null);
+  const [pagination, setPagination] = useState<{
+    currentPage: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    totalResults: number;
+    resultsPerPage: number;
+  } | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
-  const handleSearch = async (searchData: { query: string; location: string }) => {
+  const performSearch = async (searchParams: SearchParams) => {
     setLoading(true);
-    setJobs([]);
-    setSearchPerformed(true);
+    if (searchParams.page === 1) {
+      setJobs([]);
+      setSearchPerformed(true);
+    }
 
     try {
       const { data, error } = await supabase.functions.invoke('job-search', {
-        body: searchData
+        body: searchParams
       });
 
       if (error) {
@@ -37,11 +62,26 @@ export const JobSearch: React.FC = () => {
       }
 
       setJobs(data.jobs || []);
+      setPagination(data.pagination || null);
+      setWarnings(data.warnings || []);
+      setCurrentSearchParams(searchParams);
     } catch (error) {
       console.error('Job search error:', error);
       setJobs([]);
+      setPagination(null);
+      setWarnings(['Search failed. Please try again.']);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSearch = async (searchData: SearchParams) => {
+    await performSearch({ ...searchData, page: 1 });
+  };
+
+  const handlePageChange = async (page: number) => {
+    if (currentSearchParams) {
+      await performSearch({ ...currentSearchParams, page });
     }
   };
 
@@ -61,6 +101,9 @@ export const JobSearch: React.FC = () => {
           jobs={jobs} 
           loading={loading} 
           searchPerformed={searchPerformed}
+          pagination={pagination}
+          warnings={warnings}
+          onPageChange={handlePageChange}
         />
       </div>
     </DashboardLayout>
