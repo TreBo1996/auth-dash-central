@@ -16,9 +16,9 @@ serve(async (req) => {
   }
 
   try {
-    const { query, location = '', start = 0 } = await req.json();
+    const { query, location = '' } = await req.json();
 
-    console.log('Searching jobs for:', { query, location, start });
+    console.log('Searching jobs for:', { query, location });
 
     if (!serpApiKey) {
       throw new Error('SERP_API_KEY not configured');
@@ -28,7 +28,6 @@ serve(async (req) => {
       engine: 'google_jobs',
       q: query,
       api_key: serpApiKey,
-      start: start.toString(),
       num: '10',
       gl: 'us',
       hl: 'en'
