@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ChevronDown, RefreshCw, Target, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface ATSFeedback {
   overall_score: number;
@@ -44,15 +44,21 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
   const { toast } = useToast();
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 80) return 'bg-green-500 text-white border-green-500';
+    if (score >= 60) return 'bg-yellow-500 text-white border-yellow-500';
+    return 'bg-red-500 text-white border-red-500';
   };
 
-  const getScoreVariant = (score: number) => {
-    if (score >= 80) return 'default';
-    if (score >= 60) return 'secondary';
-    return 'destructive';
+  const getScoreTextColor = (score: number) => {
+    if (score >= 80) return 'text-green-700';
+    if (score >= 60) return 'text-yellow-700';
+    return 'text-red-700';
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    return 'Needs Improvement';
   };
 
   const handleRescore = async () => {
@@ -104,12 +110,20 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Target className="h-4 w-4" />
           <span className="text-sm font-medium">ATS Score:</span>
-          <Badge variant={getScoreVariant(atsScore)} className="text-xs">
-            {atsScore}/100
-          </Badge>
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold transition-colors",
+              getScoreColor(atsScore)
+            )}>
+              {atsScore}/100
+            </div>
+            <span className={cn("text-xs font-medium", getScoreTextColor(atsScore))}>
+              {getScoreLabel(atsScore)}
+            </span>
+          </div>
         </div>
         <Button 
           size="sm" 
@@ -141,7 +155,7 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
                     <div key={category} className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="capitalize">{category.replace('_', ' ')}</span>
-                        <span>{score}/100</span>
+                        <span className={getScoreTextColor(score)}>{score}/100</span>
                       </div>
                       <Progress value={score} className="h-1" />
                     </div>
