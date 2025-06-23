@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cached_jobs: {
+        Row: {
+          company: string
+          created_at: string
+          description: string | null
+          experience_level: string | null
+          first_seen_at: string
+          id: string
+          is_expired: boolean | null
+          job_type: string | null
+          job_url: string
+          last_seen_at: string
+          location: string | null
+          posted_at: string | null
+          salary: string | null
+          source: string
+          thumbnail: string | null
+          title: string
+          updated_at: string
+          via: string | null
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          description?: string | null
+          experience_level?: string | null
+          first_seen_at?: string
+          id?: string
+          is_expired?: boolean | null
+          job_type?: string | null
+          job_url: string
+          last_seen_at?: string
+          location?: string | null
+          posted_at?: string | null
+          salary?: string | null
+          source?: string
+          thumbnail?: string | null
+          title: string
+          updated_at?: string
+          via?: string | null
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string | null
+          experience_level?: string | null
+          first_seen_at?: string
+          id?: string
+          is_expired?: boolean | null
+          job_type?: string | null
+          job_url?: string
+          last_seen_at?: string
+          location?: string | null
+          posted_at?: string | null
+          salary?: string | null
+          source?: string
+          thumbnail?: string | null
+          title?: string
+          updated_at?: string
+          via?: string | null
+        }
+        Relationships: []
+      }
       interview_responses: {
         Row: {
           audio_file_url: string | null
@@ -169,6 +232,84 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      job_search_results: {
+        Row: {
+          cached_job_id: string | null
+          created_at: string
+          id: string
+          job_search_id: string | null
+          relevance_score: number | null
+        }
+        Insert: {
+          cached_job_id?: string | null
+          created_at?: string
+          id?: string
+          job_search_id?: string | null
+          relevance_score?: number | null
+        }
+        Update: {
+          cached_job_id?: string | null
+          created_at?: string
+          id?: string
+          job_search_id?: string | null
+          relevance_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_search_results_cached_job_id_fkey"
+            columns: ["cached_job_id"]
+            isOneToOne: false
+            referencedRelation: "cached_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_search_results_job_search_id_fkey"
+            columns: ["job_search_id"]
+            isOneToOne: false
+            referencedRelation: "job_searches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_searches: {
+        Row: {
+          created_at: string
+          date_posted: string | null
+          experience_level: string | null
+          id: string
+          job_type: string | null
+          last_updated_at: string
+          location: string | null
+          search_query: string
+          total_results: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_posted?: string | null
+          experience_level?: string | null
+          id?: string
+          job_type?: string | null
+          last_updated_at?: string
+          location?: string | null
+          search_query: string
+          total_results?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_posted?: string | null
+          experience_level?: string | null
+          id?: string
+          job_type?: string | null
+          last_updated_at?: string
+          location?: string | null
+          search_query?: string
+          total_results?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -597,7 +738,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_old_jobs: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      normalize_search_query: {
+        Args: { input_query: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

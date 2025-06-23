@@ -34,68 +34,31 @@ export const JobSearch: React.FC = () => {
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [originalSearchParams, setOriginalSearchParams] = useState<SearchParams | null>(null);
-  const [searchVariationsUsed, setSearchVariationsUsed] = useState<string[]>([]);
-  const [canLoadMore, setCanLoadMore] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const JOBS_PER_PAGE = 10;
 
-  // Generate search variations based on the original query
-  const generateSearchVariations = (originalQuery: string): string[] => {
-    const variations = [];
-    const query = originalQuery.toLowerCase();
-    
-    // Common job title synonyms and variations
-    const jobTitleMappings: Record<string, string[]> = {
-      'project manager': ['PM', 'project management', 'program manager', 'project coordinator', 'project lead'],
-      'software engineer': ['software developer', 'developer', 'programmer', 'software dev', 'engineer'],
-      'data scientist': ['data analyst', 'data engineer', 'ML engineer', 'analytics'],
-      'marketing manager': ['marketing director', 'marketing lead', 'digital marketing', 'marketing specialist'],
-      'sales manager': ['sales director', 'sales lead', 'account manager', 'business development'],
-      'product manager': ['product owner', 'PM', 'product lead', 'product coordinator'],
-    };
-
-    // Add exact variations for known job titles
-    for (const [key, synonyms] of Object.entries(jobTitleMappings)) {
-      if (query.includes(key)) {
-        variations.push(...synonyms);
-      }
-    }
-
-    // Add generic variations
-    variations.push(
-      `${originalQuery} specialist`,
-      `${originalQuery} lead`,
-      `${originalQuery} coordinator`,
-      `senior ${originalQuery}`,
-      `junior ${originalQuery}`
-    );
-
-    // Remove duplicates and filter out already used variations
-    return [...new Set(variations)].filter(v => !searchVariationsUsed.includes(v));
-  };
-
-  const performSearch = async (searchParams: SearchParams, isLoadMore = false) => {
-    if (isLoadMore) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-      setCurrentPage(1);
-      setAllJobs([]);
-      setSearchPerformed(true);
-      setDebugInfo(null);
-      setOriginalSearchParams(searchParams);
-      setSearchVariationsUsed([]);
-      setCanLoadMore(false);
-    }
+  const performSearch = async (searchParams: SearchParams, forceRefresh = false) => {
+    setLoading(true);
+    setCurrentPage(1);
+    setAllJobs([]);
+    setSearchPerformed(true);
+    setDebugInfo(null);
+    setWarnings([]);
 
     try {
-      const { data, error } = await supabase.functions.invoke('job-search', {
-        body: { ...searchParams, resultsPerPage: 100 }
+      console.log('Performing cached search:', searchParams);
+
+      const { data, error } = await supabase.functions.invoke('cached-job-search', {
+        body: { 
+          ...searchParams, 
+          resultsPerPage: 50,
+          forceRefresh 
+        }
       });
 
       if (error) {
@@ -103,45 +66,28 @@ export const JobSearch: React.FC = () => {
       }
 
       const newJobs = data.jobs || [];
-      
-      if (isLoadMore) {
-        // Filter out duplicates by job_url
-        const existingUrls = new Set(allJobs.map(job => job.job_url));
-        const uniqueNewJobs = newJobs.filter((job: Job) => !existingUrls.has(job.job_url));
-        setAllJobs(prev => [...prev, ...uniqueNewJobs]);
-        
-        console.log('Load more completed:', {
-          newJobsFound: newJobs.length,
-          uniqueNewJobs: uniqueNewJobs.length,
-          totalJobs: allJobs.length + uniqueNewJobs.length
-        });
-      } else {
-        setAllJobs(newJobs);
-        setCanLoadMore(newJobs.length >= 10); // Enable load more if we got decent results
-      }
-      
-      setWarnings(data.warnings || []);
+      setAllJobs(newJobs);
+      setFromCache(data.fromCache || false);
+      setLastUpdated(data.lastUpdated);
       setDebugInfo(data.debug_info);
+      
+      if (newJobs.length === 0) {
+        setWarnings(['No jobs found. Try adjusting your search terms or filters.']);
+      } else if (data.fromCache) {
+        setWarnings([`Showing cached results (last updated: ${new Date(data.lastUpdated).toLocaleString()})`]);
+      }
       
       console.log('Search completed:', {
         totalJobsReceived: newJobs.length,
-        debugInfo: data.debug_info,
-        warnings: data.warnings,
-        isLoadMore
+        fromCache: data.fromCache,
+        debugInfo: data.debug_info
       });
     } catch (error) {
       console.error('Job search error:', error);
-      if (!isLoadMore) {
-        setAllJobs([]);
-        setCanLoadMore(false);
-      }
+      setAllJobs([]);
       setWarnings(['Search failed. Please try again.']);
     } finally {
-      if (isLoadMore) {
-        setLoadingMore(false);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -149,32 +95,9 @@ export const JobSearch: React.FC = () => {
     await performSearch(searchData);
   };
 
-  const handleLoadMore = async () => {
-    if (!originalSearchParams) return;
-
-    const variations = generateSearchVariations(originalSearchParams.query);
-    
-    if (variations.length === 0) {
-      setWarnings(prev => [...prev, 'No more search variations available.']);
-      setCanLoadMore(false);
-      return;
-    }
-
-    // Use the first available variation
-    const nextVariation = variations[0];
-    setSearchVariationsUsed(prev => [...prev, nextVariation]);
-
-    const searchWithVariation = {
-      ...originalSearchParams,
-      query: nextVariation
-    };
-
-    console.log(`Loading more with variation: "${nextVariation}"`);
-    await performSearch(searchWithVariation, true);
-
-    // Disable load more if we've used too many variations
-    if (searchVariationsUsed.length >= 4) {
-      setCanLoadMore(false);
+  const handleRefresh = async () => {
+    if (debugInfo?.search_params) {
+      await performSearch(debugInfo.search_params, true);
     }
   };
 
@@ -210,10 +133,15 @@ export const JobSearch: React.FC = () => {
             Find and save job opportunities from across the web
           </p>
           {debugInfo && (
-            <p className="text-xs text-muted-foreground mt-2">
-              Found {debugInfo.unique_jobs_after_dedup} unique jobs from {debugInfo.api_calls_made} API calls
-              {searchVariationsUsed.length > 0 && ` • Used ${searchVariationsUsed.length} search variations`}
-            </p>
+            <div className="text-xs text-muted-foreground mt-2 space-y-1">
+              <p>
+                {fromCache ? 'Cached results' : 'Fresh results'} • {allJobs.length} jobs
+                {debugInfo.cache_hit && ` • Last updated: ${new Date(lastUpdated!).toLocaleString()}`}
+              </p>
+              {!fromCache && debugInfo.jobs_fetched && (
+                <p>Fetched {debugInfo.jobs_fetched} jobs from SerpAPI</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -226,11 +154,23 @@ export const JobSearch: React.FC = () => {
           pagination={searchPerformed ? getPaginationData() : undefined}
           warnings={warnings}
           onPageChange={handlePageChange}
-          canLoadMore={canLoadMore && !loading}
-          onLoadMore={handleLoadMore}
-          loadingMore={loadingMore}
-          searchVariationsUsed={searchVariationsUsed}
+          canLoadMore={false}
+          onLoadMore={undefined}
+          loadingMore={false}
+          searchVariationsUsed={[]}
         />
+
+        {searchPerformed && fromCache && (
+          <div className="flex justify-center">
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {loading ? 'Refreshing...' : 'Refresh with Latest Results'}
+            </button>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
