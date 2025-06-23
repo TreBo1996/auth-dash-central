@@ -9,6 +9,118 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      interview_responses: {
+        Row: {
+          audio_file_url: string | null
+          clarity_score: number | null
+          created_at: string
+          examples_score: number | null
+          feedback: string
+          id: string
+          job_relevance_score: number | null
+          question_index: number
+          question_text: string
+          question_type: string
+          response_duration_seconds: number | null
+          score: number
+          session_id: string
+          updated_at: string
+          user_response_text: string
+        }
+        Insert: {
+          audio_file_url?: string | null
+          clarity_score?: number | null
+          created_at?: string
+          examples_score?: number | null
+          feedback: string
+          id?: string
+          job_relevance_score?: number | null
+          question_index: number
+          question_text: string
+          question_type: string
+          response_duration_seconds?: number | null
+          score: number
+          session_id: string
+          updated_at?: string
+          user_response_text: string
+        }
+        Update: {
+          audio_file_url?: string | null
+          clarity_score?: number | null
+          created_at?: string
+          examples_score?: number | null
+          feedback?: string
+          id?: string
+          job_relevance_score?: number | null
+          question_index?: number
+          question_text?: string
+          question_type?: string
+          response_duration_seconds?: number | null
+          score?: number
+          session_id?: string
+          updated_at?: string
+          user_response_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_responses_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_question_index: number
+          id: string
+          job_description_id: string
+          overall_score: number | null
+          session_status: string
+          started_at: string
+          total_questions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          job_description_id: string
+          overall_score?: number | null
+          session_status?: string
+          started_at?: string
+          total_questions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          job_description_id?: string
+          overall_score?: number | null
+          session_status?: string
+          started_at?: string
+          total_questions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_sessions_job_description_id_fkey"
+            columns: ["job_description_id"]
+            isOneToOne: false
+            referencedRelation: "job_descriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_descriptions: {
         Row: {
           created_at: string
