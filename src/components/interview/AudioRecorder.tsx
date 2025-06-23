@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Square } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { transcribeAudio } from '@/lib/api';
 
 interface AudioRecorderProps {
   onTranscription: (text: string) => void;
@@ -25,25 +25,54 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      console.log('Starting audio recording...');
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      // Use webm format which is better supported by browsers and OpenAI
+      const mimeType = 'audio/webm';
+      const recorder = new MediaRecorder(stream, { 
+        mimeType: mimeType
+      });
+      
+      console.log(`MediaRecorder created with mimeType: ${mimeType}`);
       
       recorder.ondataavailable = (event) => {
+        console.log('Audio data available, size:', event.data.size);
         if (event.data.size > 0) {
           setAudioChunks(prev => [...prev, event.data]);
         }
       };
 
       recorder.onstop = async () => {
+        console.log('Recording stopped, processing audio...');
         setIsProcessing(true);
         try {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-          await transcribeAudio(audioBlob);
+          if (audioChunks.length === 0) {
+            throw new Error('No audio data recorded');
+          }
+          
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          console.log('Created audio blob, size:', audioBlob.size, 'type:', audioBlob.type);
+          
+          if (audioBlob.size === 0) {
+            throw new Error('Audio recording is empty');
+          }
+          
+          const transcription = await transcribeAudio(audioBlob);
+          onTranscription(transcription);
         } catch (error) {
           console.error('Transcription error:', error);
           toast({
             title: "Transcription Failed",
-            description: "Failed to process your audio. Please try again.",
+            description: error instanceof Error ? error.message : "Failed to process your audio. Please try again.",
             variant: "destructive"
           });
         } finally {
@@ -52,9 +81,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         }
       };
 
+      recorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event);
+        toast({
+          title: "Recording Error",
+          description: "An error occurred during recording. Please try again.",
+          variant: "destructive"
+        });
+      };
+
       setMediaRecorder(recorder);
-      recorder.start();
+      recorder.start(1000); // Collect data every second
       onRecordingStateChange(true);
+      console.log('Recording started');
     } catch (error) {
       console.error('Error starting recording:', error);
       toast({
@@ -66,26 +105,13 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   };
 
   const stopRecording = () => {
+    console.log('Stopping recording...');
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
       onRecordingStateChange(false);
+      console.log('Recording stopped');
     }
-  };
-
-  const transcribeAudio = async (audioBlob: Blob) => {
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.wav');
-
-    const response = await supabase.functions.invoke('speech-to-text', {
-      body: formData,
-    });
-
-    if (response.error) {
-      throw new Error(response.error.message || 'Failed to transcribe audio');
-    }
-
-    onTranscription(response.data.text);
   };
 
   return (
