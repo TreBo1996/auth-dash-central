@@ -315,29 +315,41 @@ export type Database = {
       }
       optimized_resumes: {
         Row: {
+          ats_feedback: Json | null
+          ats_score: number | null
           created_at: string
           generated_text: string
           id: string
           job_description_id: string
           original_resume_id: string
+          scored_at: string | null
+          scoring_criteria: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          ats_feedback?: Json | null
+          ats_score?: number | null
           created_at?: string
           generated_text: string
           id?: string
           job_description_id: string
           original_resume_id: string
+          scored_at?: string | null
+          scoring_criteria?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          ats_feedback?: Json | null
+          ats_score?: number | null
           created_at?: string
           generated_text?: string
           id?: string
           job_description_id?: string
           original_resume_id?: string
+          scored_at?: string | null
+          scoring_criteria?: Json | null
           updated_at?: string
           user_id?: string
         }

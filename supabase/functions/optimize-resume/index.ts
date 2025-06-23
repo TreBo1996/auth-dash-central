@@ -328,6 +328,106 @@ Provide ONLY the optimized resume as valid JSON in the exact structure specified
 
     console.log('Successfully stored all structured resume data');
 
+    // Now calculate ATS score automatically
+    console.log('Calculating ATS score for optimized resume...');
+    
+    try {
+      const atsPrompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume against the job description and provide a comprehensive ATS compatibility score.
+
+CRITICAL: Return ONLY valid JSON in this exact structure:
+
+{
+  "overall_score": <number between 0-100>,
+  "category_scores": {
+    "keyword_match": <number between 0-100>,
+    "skills_alignment": <number between 0-100>,
+    "experience_relevance": <number between 0-100>,
+    "format_compliance": <number between 0-100>
+  },
+  "recommendations": [
+    "specific actionable recommendation 1",
+    "specific actionable recommendation 2",
+    "specific actionable recommendation 3"
+  ],
+  "keyword_analysis": {
+    "matched_keywords": ["keyword1", "keyword2", "keyword3"],
+    "missing_keywords": ["missing1", "missing2", "missing3"]
+  },
+  "strengths": [
+    "strength 1",
+    "strength 2"
+  ],
+  "areas_for_improvement": [
+    "improvement area 1",
+    "improvement area 2"
+  ]
+}
+
+Job Title: ${jobDescription.title}
+
+Job Description:
+${jobDescription.parsed_text}
+
+Resume Content:
+${generatedText}
+
+Return ONLY the JSON structure above, no additional text.`;
+
+      const atsResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text.'
+            },
+            {
+              role: 'user',
+              content: atsPrompt
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.3,
+        }),
+      });
+
+      if (atsResponse.ok) {
+        const atsData = await atsResponse.json();
+        const atsResult = atsData.choices[0].message.content;
+
+        let atsScoring;
+        try {
+          atsScoring = JSON.parse(atsResult);
+          
+          // Update the optimized resume with ATS scoring
+          await supabase
+            .from('optimized_resumes')
+            .update({
+              ats_score: atsScoring.overall_score,
+              ats_feedback: atsScoring,
+              scoring_criteria: atsScoring.category_scores,
+              scored_at: new Date().toISOString()
+            })
+            .eq('id', optimizedResume.id);
+
+          console.log('Successfully calculated and saved ATS score:', atsScoring.overall_score);
+        } catch (atsParseError) {
+          console.error('Failed to parse ATS scoring JSON:', atsParseError);
+          // Continue without ATS scoring if it fails
+        }
+      } else {
+        console.error('Failed to calculate ATS score, continuing without it');
+      }
+    } catch (atsError) {
+      console.error('Error calculating ATS score:', atsError);
+      // Continue without ATS scoring if it fails
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       optimizedResume: optimizedResume
