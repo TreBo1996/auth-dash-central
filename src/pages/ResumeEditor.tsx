@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -313,8 +314,8 @@ const ResumeEditor: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header with ATS Score */}
-        <div className="flex justify-between items-start">
+        {/* Clean Header */}
+        <div className="flex justify-between items-center">
           <div>
             <Button
               variant="ghost"
@@ -327,28 +328,31 @@ const ResumeEditor: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
             <p className="text-gray-600">Edit your AI-optimized resume</p>
           </div>
-          <div className="flex items-center gap-4">
-            {/* ATS Score Display */}
-            {id && (
-              <div className="bg-white border rounded-lg p-4 shadow-sm min-w-[250px]">
-                <ATSScoreDisplay
-                  optimizedResumeId={id}
-                  atsScore={atsScore}
-                  atsFeedback={atsFeedback}
-                  onScoreUpdate={handleATSScoreUpdate}
-                />
-              </div>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
             )}
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save Changes
-            </Button>
-          </div>
+            Save Changes
+          </Button>
         </div>
+
+        {/* Dedicated ATS Banner */}
+        {id && (
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 shadow-sm">
+            <div className="max-w-full">
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">ATS Performance</h2>
+              <p className="text-sm text-gray-600 mb-4">Monitor how well your resume performs against applicant tracking systems</p>
+              <ATSScoreDisplay
+                optimizedResumeId={id}
+                atsScore={atsScore}
+                atsFeedback={atsFeedback}
+                onScoreUpdate={handleATSScoreUpdate}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Resume Sections */}
         <div className="space-y-6">
