@@ -8,6 +8,7 @@ import { AudioRecorder } from './AudioRecorder';
 import { Brain, Wrench, Star, MessageSquare, Clock, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Question {
   text: string;
@@ -40,6 +41,7 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
   questions,
   onSessionComplete
 }) => {
+  const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
@@ -55,6 +57,15 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
   }, []);
 
   const initializeSession = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to start an interview session.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       // Combine and shuffle questions (3 behavioral, 2 technical)
       const behavioralQuestions = questions.behavioral.slice(0, 3).map(q => ({ text: q, type: 'behavioral' as const }));
@@ -67,6 +78,7 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
       const { data: session, error } = await supabase
         .from('interview_sessions')
         .insert({
+          user_id: user.id,
           job_description_id: jobDescription.id,
           total_questions: combinedQuestions.length,
           current_question_index: 0,
