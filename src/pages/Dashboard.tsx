@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
+import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { useNavigate } from 'react-router-dom';
 
 interface Resume {
@@ -29,12 +29,31 @@ interface JobDescription {
   created_at: string;
 }
 
+interface ATSFeedback {
+  overall_score: number;
+  category_scores: {
+    keyword_match: number;
+    skills_alignment: number;
+    experience_relevance: number;
+    format_compliance: number;
+  };
+  recommendations: string[];
+  keyword_analysis: {
+    matched_keywords: string[];
+    missing_keywords: string[];
+  };
+  strengths: string[];
+  areas_for_improvement: string[];
+}
+
 interface OptimizedResume {
   id: string;
   original_resume_id: string;
   job_description_id: string;
   generated_text: string;
   created_at: string;
+  ats_score?: number;
+  ats_feedback?: ATSFeedback;
   resumes?: {
     file_name: string | null;
   };
@@ -136,6 +155,16 @@ const Dashboard: React.FC = () => {
 
   const handleOptimizationComplete = () => {
     fetchOptimizedResumes();
+  };
+
+  const handleATSScoreUpdate = (resumeId: string, newScore: number, newFeedback: ATSFeedback) => {
+    setOptimizedResumes(prev => 
+      prev.map(resume => 
+        resume.id === resumeId 
+          ? { ...resume, ats_score: newScore, ats_feedback: newFeedback }
+          : resume
+      )
+    );
   };
 
   const handleDelete = async (id: string, type: 'resume' | 'job-description' | 'optimized-resume') => {
@@ -422,6 +451,16 @@ const Dashboard: React.FC = () => {
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                          {/* ATS Score Display */}
+                          <ATSScoreDisplay
+                            optimizedResumeId={optimizedResume.id}
+                            atsScore={optimizedResume.ats_score}
+                            atsFeedback={optimizedResume.ats_feedback}
+                            onScoreUpdate={(newScore, newFeedback) => 
+                              handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)
+                            }
+                          />
+                          
                           <div className="flex flex-col sm:flex-row gap-2">
                             <Button 
                               size="sm" 
