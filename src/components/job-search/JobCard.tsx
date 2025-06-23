@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check } from 'lucide-react';
+import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface Job {
   title: string;
@@ -27,6 +27,7 @@ interface JobCardProps {
 export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { toast } = useToast();
 
   const handleSaveJob = async () => {
@@ -77,10 +78,16 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
     }
   };
 
+  const toggleExpanded = () => {
+    setExpanded(!expanded);
+  };
+
   const truncateDescription = (text: string, maxLength: number = 300) => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + '...';
   };
+
+  const shouldShowToggle = job.description.length > 300;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -128,12 +135,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
             </Button>
             {job.job_url && (
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={() => window.open(job.job_url, '_blank')}
               >
                 <ExternalLink className="h-4 w-4 mr-1" />
-                View Job
+                Apply
               </Button>
             )}
           </div>
@@ -141,9 +148,30 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <p className="text-sm text-gray-700">
-            {truncateDescription(job.description)}
-          </p>
+          <div className="text-sm text-gray-700">
+            {expanded ? job.description : truncateDescription(job.description)}
+          </div>
+          
+          {shouldShowToggle && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleExpanded}
+              className="h-auto p-1 text-blue-600 hover:text-blue-800"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Show Less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Show More
+                </>
+              )}
+            </Button>
+          )}
           
           <div className="flex gap-2">
             <Badge variant="secondary">
