@@ -19,13 +19,17 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   disabled = false
 }) => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const audioChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
 
   const startRecording = async () => {
     try {
       console.log('Starting audio recording...');
+      
+      // Clear previous chunks
+      audioChunksRef.current = [];
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 16000,
@@ -47,23 +51,26 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       recorder.ondataavailable = (event) => {
         console.log('Audio data available, size:', event.data.size);
         if (event.data.size > 0) {
-          setAudioChunks(prev => [...prev, event.data]);
+          audioChunksRef.current.push(event.data);
+          console.log('Total chunks collected:', audioChunksRef.current.length);
         }
       };
 
       recorder.onstop = async () => {
         console.log('Recording stopped, processing audio...');
+        console.log('Chunks available for processing:', audioChunksRef.current.length);
+        
         setIsProcessing(true);
         try {
-          if (audioChunks.length === 0) {
-            throw new Error('No audio data recorded');
+          if (audioChunksRef.current.length === 0) {
+            throw new Error('No audio data recorded - chunks array is empty');
           }
           
-          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
           console.log('Created audio blob, size:', audioBlob.size, 'type:', audioBlob.type);
           
           if (audioBlob.size === 0) {
-            throw new Error('Audio recording is empty');
+            throw new Error('Audio recording is empty - blob size is 0');
           }
           
           const transcription = await transcribeAudio(audioBlob);
@@ -77,7 +84,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
           });
         } finally {
           setIsProcessing(false);
-          setAudioChunks([]);
+          audioChunksRef.current = [];
         }
       };
 
