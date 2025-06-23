@@ -272,19 +272,20 @@ const Dashboard: React.FC = () => {
         {/* Three Column Layout with Collapsible Sections */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* My Resumes Column */}
-          <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <Collapsible open={resumesOpen} onOpenChange={setResumesOpen}>
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-4 transition-colors border-b border-gray-100">
                   <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-blue-600" />
                     <h2 className="text-lg md:text-xl font-semibold text-gray-900">My Resumes</h2>
-                    <Badge variant="secondary">{resumes.length}</Badge>
+                    <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">{resumes.length}</Badge>
                   </div>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${resumesOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${resumesOpen ? 'rotate-180' : ''}`} />
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="space-y-4">
+              <CollapsibleContent className="p-4 space-y-4">
                 {resumes.length === 0 ? (
                   <Card className="border-2 border-dashed border-gray-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
@@ -345,19 +346,20 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* My Job Descriptions Column */}
-          <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <Collapsible open={jobDescriptionsOpen} onOpenChange={setJobDescriptionsOpen}>
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-4 transition-colors border-b border-gray-100">
                   <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-green-600" />
                     <h2 className="text-lg md:text-xl font-semibold text-gray-900">My Job Descriptions</h2>
-                    <Badge variant="secondary">{jobDescriptions.length}</Badge>
+                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">{jobDescriptions.length}</Badge>
                   </div>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${jobDescriptionsOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${jobDescriptionsOpen ? 'rotate-180' : ''}`} />
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="space-y-4">
+              <CollapsibleContent className="p-4 space-y-4">
                 {jobDescriptions.length === 0 ? (
                   <Card className="border-2 border-dashed border-gray-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
@@ -415,19 +417,20 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Optimized Resumes Column */}
-          <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
             <Collapsible open={optimizedResumesOpen} onOpenChange={setOptimizedResumesOpen}>
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-4 transition-colors border-b border-gray-100">
                   <div className="flex items-center gap-3">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
                     <h2 className="text-lg md:text-xl font-semibold text-gray-900">Optimized Resumes</h2>
-                    <Badge variant="secondary">{optimizedResumes.length}</Badge>
+                    <Badge variant="secondary" className="bg-purple-50 text-purple-700 border-purple-200">{optimizedResumes.length}</Badge>
                   </div>
-                  <ChevronDown className={`h-5 w-5 transition-transform ${optimizedResumesOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${optimizedResumesOpen ? 'rotate-180' : ''}`} />
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="space-y-4">
+              <CollapsibleContent className="p-4 space-y-4">
                 {optimizedResumes.length === 0 ? (
                   <Card className="border-2 border-dashed border-gray-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
