@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,7 +132,7 @@ const Home = () => {
                     </Button>
                   </Link>
                   <Link to="/upload-resume">
-                    <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white/10">
+                    <Button size="lg" className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-all">
                       <Upload className="mr-2 h-5 w-5" />
                       Upload Resume
                     </Button>
