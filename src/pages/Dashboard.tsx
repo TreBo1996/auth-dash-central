@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -142,7 +143,21 @@ const Dashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOptimizedResumes(data || []);
+      
+      // Transform the data to match our OptimizedResume interface
+      const transformedData: OptimizedResume[] = (data || []).map(item => ({
+        id: item.id,
+        original_resume_id: item.original_resume_id,
+        job_description_id: item.job_description_id,
+        generated_text: item.generated_text,
+        created_at: item.created_at,
+        ats_score: item.ats_score,
+        ats_feedback: item.ats_feedback as ATSFeedback | undefined,
+        resumes: item.resumes,
+        job_descriptions: item.job_descriptions
+      }));
+      
+      setOptimizedResumes(transformedData);
     } catch (error) {
       console.error('Error fetching optimized resumes:', error);
       toast({
