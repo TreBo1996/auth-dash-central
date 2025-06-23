@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, Loader2, TrendingUp, AlertCircle } from 'lucide-react';
+import { Sparkles, Loader2, TrendingUp, AlertCircle, Target } from 'lucide-react';
 
 interface ATSFeedback {
   overall_score: number;
@@ -59,6 +58,12 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
     return 'destructive';
   };
 
+  const getExpectedImprovement = (currentScore?: number) => {
+    if (!currentScore) return 85;
+    // AI optimization should improve score by 10-15 points minimum
+    return Math.min(95, currentScore + 15);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -68,7 +73,7 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
             Current ATS Score Analysis
           </DialogTitle>
           <DialogDescription>
-            Review how your current resume performs against this job description before optimization
+            Review how your current resume performs against this job description before AI optimization
           </DialogDescription>
         </DialogHeader>
 
@@ -102,33 +107,55 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
             </div>
           ) : atsScore !== undefined && atsFeedback ? (
             <>
-              {/* Overall Score */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Overall ATS Score</span>
-                    <Badge variant={getScoreBadgeVariant(atsScore)}>
-                      {atsScore}/100
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={atsScore} className="h-3 mb-2" />
-                  <p className="text-sm text-gray-600">
-                    {atsScore >= 80 
-                      ? "Excellent! Your resume is well-optimized for this role."
-                      : atsScore >= 60
-                      ? "Good foundation with room for improvement."
-                      : "Significant optimization needed to improve your chances."
-                    }
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Current vs Expected Score Comparison */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>Current ATS Score</span>
+                      <Badge variant={getScoreBadgeVariant(atsScore)}>
+                        {atsScore}/100
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Progress value={atsScore} className="h-3 mb-2" />
+                    <p className="text-sm text-gray-600">
+                      {atsScore >= 80 
+                        ? "Good score, but optimization can still improve it!"
+                        : atsScore >= 60
+                        ? "Decent foundation with significant room for improvement."
+                        : "Major optimization needed to improve your chances."
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between text-green-800">
+                      <span className="flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Expected After AI Optimization
+                      </span>
+                      <Badge className="bg-green-600 text-white">
+                        {getExpectedImprovement(atsScore)}/100
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Progress value={getExpectedImprovement(atsScore)} className="h-3 mb-2" />
+                    <p className="text-sm text-green-700">
+                      Our AI will enhance keywords, improve bullet points, and optimize formatting for ATS systems.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
 
               {/* Category Scores */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Score Breakdown</CardTitle>
+                  <CardTitle>Current Score Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {Object.entries(atsFeedback.category_scores).map(([category, score]) => (
@@ -152,7 +179,7 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                 {atsFeedback.strengths.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm text-green-600">Strengths</CardTitle>
+                      <CardTitle className="text-sm text-green-600">Current Strengths</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="text-sm space-y-1">
@@ -170,7 +197,7 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                 {atsFeedback.areas_for_improvement.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm text-orange-600">Areas for Improvement</CardTitle>
+                      <CardTitle className="text-sm text-orange-600">AI Will Improve</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="text-sm space-y-1">
@@ -207,10 +234,10 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                     )}
                     {atsFeedback.keyword_analysis.missing_keywords.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-medium text-red-600 mb-2">Missing Keywords</h4>
+                        <h4 className="text-sm font-medium text-red-600 mb-2">Missing Keywords (AI Will Add)</h4>
                         <div className="flex flex-wrap gap-1">
                           {atsFeedback.keyword_analysis.missing_keywords.slice(0, 10).map((keyword, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
+                            <Badge key={index} variant="outline" className="text-xs border-red-200">
                               {keyword}
                             </Badge>
                           ))}
@@ -220,6 +247,40 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                   </CardContent>
                 </Card>
               )}
+
+              {/* AI Optimization Promise */}
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="text-sm text-blue-800 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    AI Optimization Will:
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm space-y-1 text-blue-700">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Add 5-7 detailed bullet points per experience</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Integrate all missing keywords naturally</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Include quantifiable metrics and achievements</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Optimize formatting for ATS compatibility</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-500 mt-1">•</span>
+                      <span>Target {getExpectedImprovement(atsScore)}+ ATS score</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
             </>
           ) : (
             <Card>

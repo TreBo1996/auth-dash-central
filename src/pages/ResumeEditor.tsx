@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -12,6 +11,7 @@ import { ExperienceSection } from '@/components/resume-editor/ExperienceSection'
 import { SkillsSection } from '@/components/resume-editor/SkillsSection';
 import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { fetchStructuredResumeData, StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 
 interface ContactInfo {
@@ -65,6 +65,8 @@ const ResumeEditor: React.FC = () => {
   const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [atsScore, setAtsScore] = useState<number | undefined>();
+  const [atsFeedback, setAtsFeedback] = useState<any>();
 
   useEffect(() => {
     if (id) {
@@ -76,16 +78,18 @@ const ResumeEditor: React.FC = () => {
     try {
       setLoading(true);
       
-      // First get the optimized resume to get job_description_id
+      // First get the optimized resume to get job_description_id and ATS score
       const { data: optimizedResume, error: resumeError } = await supabase
         .from('optimized_resumes')
-        .select('job_description_id')
+        .select('job_description_id, ats_score, ats_feedback')
         .eq('id', id)
         .single();
 
       if (resumeError) throw resumeError;
       
       setJobDescriptionId(optimizedResume.job_description_id);
+      setAtsScore(optimizedResume.ats_score);
+      setAtsFeedback(optimizedResume.ats_feedback);
 
       // Fetch structured data
       const structuredData = await fetchStructuredResumeData(id!);
@@ -132,6 +136,11 @@ const ResumeEditor: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleATSScoreUpdate = (newScore: number, newFeedback: any) => {
+    setAtsScore(newScore);
+    setAtsFeedback(newFeedback);
   };
 
   const handleSave = async () => {
@@ -304,8 +313,8 @@ const ResumeEditor: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
+        {/* Header with ATS Score */}
+        <div className="flex justify-between items-start">
           <div>
             <Button
               variant="ghost"
@@ -318,14 +327,27 @@ const ResumeEditor: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
             <p className="text-gray-600">Edit your AI-optimized resume</p>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
+          <div className="flex items-center gap-4">
+            {/* ATS Score Display */}
+            {id && (
+              <div className="bg-white border rounded-lg p-4 shadow-sm min-w-[250px]">
+                <ATSScoreDisplay
+                  optimizedResumeId={id}
+                  atsScore={atsScore}
+                  atsFeedback={atsFeedback}
+                  onScoreUpdate={handleATSScoreUpdate}
+                />
+              </div>
             )}
-            Save Changes
-          </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Save Changes
+            </Button>
+          </div>
         </div>
 
         {/* Resume Sections */}
