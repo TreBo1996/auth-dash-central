@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -152,7 +151,7 @@ const Dashboard: React.FC = () => {
         generated_text: item.generated_text,
         created_at: item.created_at,
         ats_score: item.ats_score,
-        ats_feedback: item.ats_feedback as ATSFeedback | undefined,
+        ats_feedback: item.ats_feedback ? (item.ats_feedback as unknown as ATSFeedback) : undefined,
         resumes: item.resumes,
         job_descriptions: item.job_descriptions
       }));
