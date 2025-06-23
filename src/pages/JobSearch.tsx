@@ -31,13 +31,12 @@ interface SearchParams {
 }
 
 export const JobSearch: React.FC = () => {
-  const [allJobs, setAllJobs] = useState<Job[]>([]); // Store all 100 results
+  const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
-  const [currentSearchParams, setCurrentSearchParams] = useState<SearchParams | null>(null);
-  const [totalResults, setTotalResults] = useState(0);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   const JOBS_PER_PAGE = 10;
 
@@ -46,10 +45,11 @@ export const JobSearch: React.FC = () => {
     setCurrentPage(1);
     setAllJobs([]);
     setSearchPerformed(true);
+    setDebugInfo(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('job-search', {
-        body: { ...searchParams, resultsPerPage: 100 } // Request 100 results
+        body: { ...searchParams, resultsPerPage: 100 }
       });
 
       if (error) {
@@ -57,19 +57,17 @@ export const JobSearch: React.FC = () => {
       }
 
       setAllJobs(data.jobs || []);
-      setTotalResults(data.pagination?.totalResults || data.jobs?.length || 0);
       setWarnings(data.warnings || []);
-      setCurrentSearchParams(searchParams);
+      setDebugInfo(data.debug_info);
       
       console.log('Search completed:', {
         totalJobsReceived: data.jobs?.length || 0,
-        totalResultsAvailable: data.pagination?.totalResults,
-        debugInfo: data.debug_info
+        debugInfo: data.debug_info,
+        warnings: data.warnings
       });
     } catch (error) {
       console.error('Job search error:', error);
       setAllJobs([]);
-      setTotalResults(0);
       setWarnings(['Search failed. Please try again.']);
     } finally {
       setLoading(false);
@@ -82,18 +80,15 @@ export const JobSearch: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top when changing pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Get current page jobs (client-side pagination)
   const getCurrentPageJobs = () => {
     const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
     const endIndex = startIndex + JOBS_PER_PAGE;
     return allJobs.slice(startIndex, endIndex);
   };
 
-  // Create pagination object for current page
   const getPaginationData = () => {
     const totalPages = Math.ceil(allJobs.length / JOBS_PER_PAGE);
     return {
@@ -114,6 +109,11 @@ export const JobSearch: React.FC = () => {
           <p className="text-muted-foreground">
             Find and save job opportunities from across the web
           </p>
+          {debugInfo && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Found {debugInfo.unique_jobs_after_dedup} unique jobs from {debugInfo.api_calls_made} API calls
+            </p>
+          )}
         </div>
 
         <JobSearchForm onSearch={handleSearch} loading={loading} />
@@ -125,7 +125,6 @@ export const JobSearch: React.FC = () => {
           pagination={searchPerformed ? getPaginationData() : undefined}
           warnings={warnings}
           onPageChange={handlePageChange}
-          totalAvailable={totalResults}
         />
       </div>
     </DashboardLayout>
