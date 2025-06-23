@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,9 +22,9 @@ interface JobSearchFormProps {
 export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading }) => {
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
-  const [datePosted, setDatePosted] = useState('');
-  const [jobType, setJobType] = useState('');
-  const [experienceLevel, setExperienceLevel] = useState('');
+  const [datePosted, setDatePosted] = useState('any');
+  const [jobType, setJobType] = useState('any');
+  const [experienceLevel, setExperienceLevel] = useState('any');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +34,9 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
         location: location.trim(),
         page: 1,
         resultsPerPage: 25,
-        datePosted,
-        jobType,
-        experienceLevel
+        datePosted: datePosted === 'any' ? '' : datePosted,
+        jobType: jobType === 'any' ? '' : jobType,
+        experienceLevel: experienceLevel === 'any' ? '' : experienceLevel
       });
     }
   };
@@ -89,7 +88,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                   <SelectValue placeholder="Any time" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any time</SelectItem>
+                  <SelectItem value="any">Any time</SelectItem>
                   <SelectItem value="day">Past 24 hours</SelectItem>
                   <SelectItem value="3days">Past 3 days</SelectItem>
                   <SelectItem value="week">Past week</SelectItem>
@@ -106,7 +105,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                   <SelectValue placeholder="Any type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any type</SelectItem>
+                  <SelectItem value="any">Any type</SelectItem>
                   <SelectItem value="full-time">Full-time</SelectItem>
                   <SelectItem value="part-time">Part-time</SelectItem>
                   <SelectItem value="contract">Contract</SelectItem>
@@ -124,7 +123,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                   <SelectValue placeholder="Any level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any level</SelectItem>
+                  <SelectItem value="any">Any level</SelectItem>
                   <SelectItem value="entry-level">Entry level</SelectItem>
                   <SelectItem value="mid-level">Mid level</SelectItem>
                   <SelectItem value="senior-level">Senior level</SelectItem>
