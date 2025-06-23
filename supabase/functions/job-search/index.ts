@@ -20,7 +20,7 @@ serve(async (req) => {
       query, 
       location = '', 
       page = 1, 
-      resultsPerPage = 25,
+      resultsPerPage = 100, // Changed default to 100
       datePosted = '',
       jobType = '',
       experienceLevel = ''
@@ -42,7 +42,7 @@ serve(async (req) => {
     });
 
     // Calculate start position for pagination
-    const start = (page - 1) * resultsPerPage;
+    const start = (page - 1) * Math.min(resultsPerPage, 100);
     if (start > 0) {
       searchParams.append('start', start.toString());
     }
@@ -141,7 +141,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       error: error.message,
       jobs: [],
-      pagination: { currentPage: 1, totalPages: 0, hasNextPage: false, hasPreviousPage: false }
+      pagination: { currentPage: 1, totalPages: 0, hasNextPage: false, hasPreviousPage: false, totalResults: 0, resultsPerPage: 100 }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -151,6 +151,7 @@ serve(async (req) => {
 
 function processJobResults(data: any, page: number, resultsPerPage: number, isLocationFallback: boolean) {
   console.log('SerpAPI raw response keys:', Object.keys(data));
+  console.log('SerpAPI search_metadata:', data.search_metadata);
   
   // Check different possible field names for jobs
   const possibleJobFields = ['jobs_results', 'job_results', 'jobs', 'results'];
@@ -167,6 +168,7 @@ function processJobResults(data: any, page: number, resultsPerPage: number, isLo
   
   console.log('Jobs found in field:', foundField);
   console.log('Jobs data length:', jobsData?.length || 0);
+  console.log('Requested results per page:', resultsPerPage);
 
   // Transform the data to match our expected format
   const transformedJobs = jobsData?.map((job: any) => ({
@@ -186,28 +188,37 @@ function processJobResults(data: any, page: number, resultsPerPage: number, isLo
 
   console.log('Transformed jobs count:', transformedJobs.length);
 
-  // Calculate pagination info
-  const totalResults = data.search_information?.total_results || transformedJobs.length;
-  const totalPages = Math.ceil(totalResults / resultsPerPage);
-  const hasNextPage = page < totalPages && transformedJobs.length === resultsPerPage;
+  // Get total results from search metadata
+  const totalResults = data.search_metadata?.total_results || 
+                      data.search_information?.total_results || 
+                      transformedJobs.length;
+  
+  console.log('Total results available:', totalResults);
+
+  // For client-side pagination, we return all results
+  // The frontend will handle the pagination display
+  const totalPages = Math.ceil(totalResults / 10); // 10 jobs per page on frontend
+  const hasNextPage = totalResults > transformedJobs.length;
   const hasPreviousPage = page > 1;
 
   return new Response(JSON.stringify({ 
     jobs: transformedJobs,
     pagination: {
-      currentPage: page,
+      currentPage: 1, // Always 1 since we're doing client-side pagination
       totalPages,
       hasNextPage,
-      hasPreviousPage,
+      hasPreviousPage: false, // Always false for first batch
       totalResults,
-      resultsPerPage
+      resultsPerPage: 10 // Display 10 per page
     },
     search_metadata: data.search_metadata,
     warnings: isLocationFallback ? ['Location search failed, showing results from broader search'] : [],
     debug_info: {
       original_response_keys: Object.keys(data),
       jobs_field_used: foundField,
-      raw_jobs_count: jobsData?.length || 0
+      raw_jobs_count: jobsData?.length || 0,
+      api_total_results: totalResults,
+      requested_per_page: resultsPerPage
     }
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },

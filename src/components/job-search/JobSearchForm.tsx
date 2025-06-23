@@ -33,7 +33,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
         query: query.trim(),
         location: location.trim(),
         page: 1,
-        resultsPerPage: 25,
+        resultsPerPage: 100, // Changed to 100
         datePosted: datePosted === 'any' ? '' : datePosted,
         jobType: jobType === 'any' ? '' : jobType,
         experienceLevel: experienceLevel === 'any' ? '' : experienceLevel

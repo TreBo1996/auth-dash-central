@@ -35,6 +35,7 @@ interface JobSearchResultsProps {
   };
   warnings?: string[];
   onPageChange?: (page: number) => void;
+  totalAvailable?: number;
 }
 
 export const JobSearchResults: React.FC<JobSearchResultsProps> = ({ 
@@ -43,7 +44,8 @@ export const JobSearchResults: React.FC<JobSearchResultsProps> = ({
   searchPerformed,
   pagination,
   warnings = [],
-  onPageChange
+  onPageChange,
+  totalAvailable
 }) => {
   if (loading) {
     return (
@@ -96,9 +98,16 @@ export const JobSearchResults: React.FC<JobSearchResultsProps> = ({
       )}
 
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">
-          {pagination ? `${pagination.totalResults} job${pagination.totalResults !== 1 ? 's' : ''} found` : `Found ${jobs.length} job${jobs.length !== 1 ? 's' : ''}`}
-        </h2>
+        <div>
+          <h2 className="text-xl font-semibold">
+            {pagination ? `Showing ${((pagination.currentPage - 1) * pagination.resultsPerPage) + 1}-${Math.min(pagination.currentPage * pagination.resultsPerPage, pagination.totalResults)} of ${pagination.totalResults} jobs` : `Found ${jobs.length} job${jobs.length !== 1 ? 's' : ''}`}
+          </h2>
+          {totalAvailable && totalAvailable > pagination?.totalResults && (
+            <p className="text-sm text-muted-foreground mt-1">
+              ({totalAvailable.toLocaleString()} total results available from search)
+            </p>
+          )}
+        </div>
       </div>
       
       <div className="space-y-4">
