@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,19 +7,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
-
 interface Resume {
   id: string;
   file_name: string | null;
   parsed_text: string | null;
 }
-
 interface JobDescription {
   id: string;
   title: string;
   parsed_text: string;
 }
-
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -37,13 +33,11 @@ interface ATSFeedback {
   strengths: string[];
   areas_for_improvement: string[];
 }
-
 interface ResumeOptimizerProps {
   resumes: Resume[];
   jobDescriptions: JobDescription[];
   onOptimizationComplete: () => void;
 }
-
 export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   resumes,
   jobDescriptions,
@@ -57,8 +51,9 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const [originalATSScore, setOriginalATSScore] = useState<number | undefined>();
   const [originalATSFeedback, setOriginalATSFeedback] = useState<ATSFeedback | undefined>();
   const [isLoadingATS, setIsLoadingATS] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleAnalyzeATS = async () => {
     if (!selectedResumeId || !selectedJobDescId) {
       toast({
@@ -68,24 +63,23 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       });
       return;
     }
-
     try {
       setIsLoadingATS(true);
       setShowATSModal(true);
       console.log('Calculating original ATS score...');
-
-      const { data, error } = await supabase.functions.invoke('calculate-original-ats-score', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('calculate-original-ats-score', {
         body: {
           resumeId: selectedResumeId,
           jobDescriptionId: selectedJobDescId
         }
       });
-
       if (error) throw error;
       if (data.error) {
         throw new Error(data.error);
       }
-
       setOriginalATSScore(data.ats_score);
       setOriginalATSFeedback(data.ats_feedback);
       console.log('Original ATS score calculated:', data.ats_score);
@@ -101,28 +95,26 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       setIsLoadingATS(false);
     }
   };
-
   const handleOptimize = async () => {
     if (!selectedResumeId || !selectedJobDescId) {
       return;
     }
-
     try {
       setIsOptimizing(true);
       console.log('Starting resume optimization...');
-
-      const { data, error } = await supabase.functions.invoke('optimize-resume', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('optimize-resume', {
         body: {
           resumeId: selectedResumeId,
           jobDescriptionId: selectedJobDescId
         }
       });
-
       if (error) throw error;
       if (data.error) {
         throw new Error(data.error);
       }
-
       toast({
         title: "Resume Optimized!",
         description: "Your optimized resume has been created successfully."
@@ -154,29 +146,23 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       setIsOptimizing(false);
     }
   };
-
   const handleResumeSelect = (value: string) => {
     console.log('Resume selected:', value);
     setSelectedResumeId(value);
   };
-
   const handleJobDescSelect = (value: string) => {
     console.log('Job description selected:', value);
     setSelectedJobDescId(value);
   };
-
   const availableResumes = resumes.filter(resume => resume.parsed_text);
   const selectedResume = availableResumes.find(r => r.id === selectedResumeId);
   const selectedJobDesc = jobDescriptions.find(j => j.id === selectedJobDescId);
-
   console.log('Available resumes:', availableResumes.length);
   console.log('Available job descriptions:', jobDescriptions.length);
   console.log('Selected resume ID:', selectedResumeId);
   console.log('Selected job desc ID:', selectedJobDescId);
-
   if (availableResumes.length === 0) {
-    return (
-      <Card className="border-2 border-dashed border-gray-300">
+    return <Card className="border-2 border-dashed border-gray-300">
         <CardContent className="py-12 text-center">
           <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
           <p className="text-gray-500 mb-4">Upload a resume to get started with AI optimization</p>
@@ -184,13 +170,10 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
             <a href="/upload-resume">Upload Resume</a>
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (jobDescriptions.length === 0) {
-    return (
-      <Card className="border-2 border-dashed border-gray-300">
+    return <Card className="border-2 border-dashed border-gray-300">
         <CardContent className="py-12 text-center">
           <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
           <p className="text-gray-500 mb-4">Add a job description to optimize your resume</p>
@@ -198,12 +181,9 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
             <a href="/upload-job">Add Job Description</a>
           </Button>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <>
+  return <>
       <Card>
         <CardHeader>
           <CardDescription>
@@ -219,11 +199,9 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
                   <SelectValue placeholder="Choose a resume to optimize" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableResumes.map((resume) => (
-                    <SelectItem key={resume.id} value={resume.id}>
+                  {availableResumes.map(resume => <SelectItem key={resume.id} value={resume.id}>
                       {resume.file_name || 'Untitled Resume'}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -237,47 +215,26 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
                   <SelectValue placeholder="Choose a job description" />
                 </SelectTrigger>
                 <SelectContent>
-                  {jobDescriptions.map((jobDesc) => (
-                    <SelectItem key={jobDesc.id} value={jobDesc.id}>
+                  {jobDescriptions.map(jobDesc => <SelectItem key={jobDesc.id} value={jobDesc.id}>
                       {jobDesc.title}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <Button 
-            onClick={handleAnalyzeATS} 
-            disabled={!selectedResumeId || !selectedJobDescId || isLoadingATS} 
-            className="w-full"
-          >
-            {isLoadingATS ? (
-              <>
+          <Button onClick={handleAnalyzeATS} disabled={!selectedResumeId || !selectedJobDescId || isLoadingATS} className="w-full bg-indigo-800 hover:bg-indigo-700">
+            {isLoadingATS ? <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Analyzing Current Score...
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Sparkles className="h-4 w-4 mr-2" />
                 Analyze & Optimize Resume
-              </>
-            )}
+              </>}
           </Button>
         </CardContent>
       </Card>
 
-      <ATSPreviewModal
-        isOpen={showATSModal}
-        onClose={() => setShowATSModal(false)}
-        onOptimize={handleOptimize}
-        resumeName={selectedResume?.file_name || 'Untitled Resume'}
-        jobTitle={selectedJobDesc?.title || 'Job Position'}
-        atsScore={originalATSScore}
-        atsFeedback={originalATSFeedback}
-        isLoading={isLoadingATS}
-        isOptimizing={isOptimizing}
-      />
-    </>
-  );
+      <ATSPreviewModal isOpen={showATSModal} onClose={() => setShowATSModal(false)} onOptimize={handleOptimize} resumeName={selectedResume?.file_name || 'Untitled Resume'} jobTitle={selectedJobDesc?.title || 'Job Position'} atsScore={originalATSScore} atsFeedback={originalATSFeedback} isLoading={isLoadingATS} isOptimizing={isOptimizing} />
+    </>;
 };
