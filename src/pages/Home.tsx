@@ -118,7 +118,7 @@ const Home = () => {
                       Start Free Today
                     </Button>
                   </Link>
-                  <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white bg-indigo-950 hover:bg-indigo-800">
+                  <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-white text-white bg-indigo-900 hover:bg-indigo-800">
                     <Play className="mr-2 h-5 w-5" />
                     Watch Demo
                   </Button>
