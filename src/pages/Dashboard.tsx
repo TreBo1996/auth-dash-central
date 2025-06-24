@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown } from 'lucide-react';
+import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
+import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
 
 interface Resume {
@@ -73,6 +73,11 @@ const Dashboard: React.FC = () => {
   const [resumesOpen, setResumesOpen] = useState(true);
   const [jobDescriptionsOpen, setJobDescriptionsOpen] = useState(true);
   const [optimizedResumesOpen, setOptimizedResumesOpen] = useState(true);
+  const [previewContent, setPreviewContent] = useState<{
+    content: string;
+    title: string;
+    type: 'resume' | 'job-description';
+  } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -180,6 +185,14 @@ const Dashboard: React.FC = () => {
           : resume
       )
     );
+  };
+
+  const handleJobDescriptionView = (jobDesc: JobDescription) => {
+    setPreviewContent({
+      content: jobDesc.parsed_text,
+      title: jobDesc.title,
+      type: 'job-description'
+    });
   };
 
   const handleDelete = async (id: string, type: 'resume' | 'job-description' | 'optimized-resume') => {
@@ -431,9 +444,14 @@ const Dashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent className="space-y-3 p-4 md:p-6 pt-0">
                           <div className="flex flex-col sm:flex-row gap-2">
-                            <Button size="sm" variant="outline" className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300">
-                              <Edit className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Edit</span>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleJobDescriptionView(jobDesc)}
+                              className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              <span className="sm:inline">View</span>
                             </Button>
                             <Button 
                               size="sm" 
@@ -563,6 +581,16 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Content Preview Modal */}
+      {previewContent && (
+        <ContentPreview
+          content={previewContent.content}
+          title={previewContent.title}
+          type={previewContent.type}
+          onClose={() => setPreviewContent(null)}
+        />
+      )}
     </DashboardLayout>
   );
 };
