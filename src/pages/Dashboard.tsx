@@ -284,7 +284,7 @@ const Dashboard: React.FC = () => {
               AI Resume Optimizer
             </h2>
           </div>
-          <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg">
+          <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[20]">
             <div className="bg-white rounded-lg">
               <ResumeOptimizer 
                 resumes={resumes}
