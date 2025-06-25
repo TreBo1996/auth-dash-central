@@ -23,19 +23,22 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   const [newSkillCategory, setNewSkillCategory] = useState('');
   const [newSkillItem, setNewSkillItem] = useState('');
 
+  // Ensure skills is always an array
+  const safeSkills = skills || [];
+
   const addSkillGroup = () => {
     if (newSkillCategory.trim()) {
-      onChange([...skills, { category: newSkillCategory.trim(), items: [] }]);
+      onChange([...safeSkills, { category: newSkillCategory.trim(), items: [] }]);
       setNewSkillCategory('');
     }
   };
 
   const removeSkillGroup = (index: number) => {
-    onChange(skills.filter((_, i) => i !== index));
+    onChange(safeSkills.filter((_, i) => i !== index));
   };
 
   const updateSkillCategory = (index: number, category: string) => {
-    const updated = skills.map((skill, i) => 
+    const updated = safeSkills.map((skill, i) => 
       i === index ? { ...skill, category } : skill
     );
     onChange(updated);
@@ -43,9 +46,9 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
   const addSkillItem = (groupIndex: number) => {
     if (newSkillItem.trim()) {
-      const updated = skills.map((skill, i) => 
+      const updated = safeSkills.map((skill, i) => 
         i === groupIndex 
-          ? { ...skill, items: [...skill.items, newSkillItem.trim()] }
+          ? { ...skill, items: [...(skill.items || []), newSkillItem.trim()] }
           : skill
       );
       onChange(updated);
@@ -54,9 +57,9 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
   };
 
   const removeSkillItem = (groupIndex: number, itemIndex: number) => {
-    const updated = skills.map((skill, i) => 
+    const updated = safeSkills.map((skill, i) => 
       i === groupIndex 
-        ? { ...skill, items: skill.items.filter((_, j) => j !== itemIndex) }
+        ? { ...skill, items: (skill.items || []).filter((_, j) => j !== itemIndex) }
         : skill
     );
     onChange(updated);
@@ -93,7 +96,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {skills.map((skillGroup, groupIndex) => (
+        {safeSkills.map((skillGroup, groupIndex) => (
           <div key={groupIndex} className="p-4 border rounded-lg space-y-3">
             <div className="flex justify-between items-center">
               <Input
@@ -125,7 +128,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {skillGroup.items.map((item, itemIndex) => (
+              {(skillGroup.items || []).map((item, itemIndex) => (
                 <Badge key={itemIndex} variant="secondary" className="px-3 py-1">
                   {item}
                   <button
@@ -140,7 +143,7 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           </div>
         ))}
         
-        {skills.length === 0 && (
+        {safeSkills.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <Lightbulb className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p>No skill categories added yet</p>
