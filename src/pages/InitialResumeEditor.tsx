@@ -151,7 +151,7 @@ const InitialResumeEditor: React.FC = () => {
       }
       
       return {
-        title: exp.role || exp.title || 'Job Title',
+        title: exp.role || 'Job Title', // Use role instead of title
         company: exp.company || 'Company Name',
         duration: exp.startDate && exp.endDate 
           ? `${exp.startDate} - ${exp.endDate}`
