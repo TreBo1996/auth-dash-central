@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,7 +61,8 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   const addBulletPoint = (experienceIndex: number) => {
     const experience = experiences[experienceIndex];
     if (experience) {
-      const newBullets = [...experience.bullets, ''];
+      const currentBullets = experience.bullets || [];
+      const newBullets = [...currentBullets, ''];
       updateExperience(experienceIndex, 'bullets', newBullets);
     }
   };
@@ -70,7 +70,8 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   const updateBulletPoint = (experienceIndex: number, bulletIndex: number, value: string) => {
     const experience = experiences[experienceIndex];
     if (experience) {
-      const newBullets = experience.bullets.map((bullet, i) => 
+      const currentBullets = experience.bullets || [];
+      const newBullets = currentBullets.map((bullet, i) => 
         i === bulletIndex ? value : bullet
       );
       updateExperience(experienceIndex, 'bullets', newBullets);
@@ -79,9 +80,12 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
 
   const removeBulletPoint = (experienceIndex: number, bulletIndex: number) => {
     const experience = experiences[experienceIndex];
-    if (experience && experience.bullets.length > 1) {
-      const newBullets = experience.bullets.filter((_, i) => i !== bulletIndex);
-      updateExperience(experienceIndex, 'bullets', newBullets);
+    if (experience) {
+      const currentBullets = experience.bullets || [];
+      if (currentBullets.length > 1) {
+        const newBullets = currentBullets.filter((_, i) => i !== bulletIndex);
+        updateExperience(experienceIndex, 'bullets', newBullets);
+      }
     }
   };
 
@@ -93,7 +97,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
         experienceIndex,
         companyName: experience.company,
         role: experience.title,
-        currentBullets: experience.bullets
+        currentBullets: experience.bullets || []
       });
     }
   };
@@ -101,7 +105,8 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   const handleSelectBullets = (bullets: string[]) => {
     const experience = experiences[modalState.experienceIndex];
     if (experience) {
-      const newBullets = [...experience.bullets, ...bullets];
+      const currentBullets = experience.bullets || [];
+      const newBullets = [...currentBullets, ...bullets];
       updateExperience(modalState.experienceIndex, 'bullets', newBullets);
     }
     
@@ -109,8 +114,10 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   };
 
   const hasOptimizedBullets = (bullets: string[]) => {
-    const content = bullets.join(' ');
-    return bullets.length > 2 && (
+    // Ensure bullets is always an array before processing
+    const safeBullets = bullets || [];
+    const content = safeBullets.join(' ');
+    return safeBullets.length > 2 && (
       content.length > 150 ||
       content.includes('%') ||
       content.includes('$') ||
@@ -121,6 +128,12 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
       content.includes('Achieved')
     );
   };
+
+  // Ensure all experiences have proper bullets arrays
+  const safeExperiences = experiences.map(exp => ({
+    ...exp,
+    bullets: exp.bullets || ['']
+  }));
 
   return (
     <>
@@ -138,7 +151,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {experiences.map((experience, index) => (
+          {safeExperiences.map((experience, index) => (
             <div key={index} className="p-4 border rounded-lg space-y-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
@@ -272,7 +285,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
             </div>
           ))}
           
-          {experiences.length === 0 && (
+          {safeExperiences.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No work experience added yet</p>
