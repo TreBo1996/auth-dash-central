@@ -160,29 +160,15 @@ const InitialResumeEditor: React.FC = () => {
       };
     });
 
-    // Convert skills - handle both flat array and grouped format
+    // Convert skills - create single section with max 10 skills
     let skills: SkillGroup[] = [];
-    if (Array.isArray(aiResponse.skills)) {
-      if (aiResponse.skills.length > 0) {
-        // Group skills into categories of manageable size
-        const chunkSize = 8;
-        const skillChunks: string[][] = [];
-        
-        for (let i = 0; i < aiResponse.skills.length; i += chunkSize) {
-          skillChunks.push(aiResponse.skills.slice(i, i + chunkSize));
-        }
-        
-        skillChunks.forEach((chunk, index) => {
-          const categoryName = index === 0 ? 'Technical Skills' : 
-                              index === 1 ? 'Professional Skills' :
-                              `Additional Skills ${index}`;
-          
-          skills.push({
-            category: categoryName,
-            items: chunk
-          });
-        });
-      }
+    if (Array.isArray(aiResponse.skills) && aiResponse.skills.length > 0) {
+      // Take only first 10 skills and create a single group
+      const limitedSkills = aiResponse.skills.slice(0, 10);
+      skills.push({
+        category: 'Skills',
+        items: limitedSkills
+      });
     }
 
     // Convert education
