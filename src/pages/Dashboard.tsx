@@ -149,18 +149,49 @@ const Dashboard: React.FC = () => {
 
       if (error) throw error;
       
-      // Transform the data to match our OptimizedResume interface
-      const transformedData: OptimizedResume[] = (data || []).map(item => ({
-        id: item.id,
-        original_resume_id: item.original_resume_id,
-        job_description_id: item.job_description_id,
-        generated_text: item.generated_text,
-        created_at: item.created_at,
-        ats_score: item.ats_score,
-        ats_feedback: item.ats_feedback ? (item.ats_feedback as unknown as ATSFeedback) : undefined,
-        resumes: item.resumes,
-        job_descriptions: item.job_descriptions
-      }));
+      // Transform the data to match our OptimizedResume interface with safe array handling
+      const transformedData: OptimizedResume[] = (data || []).map(item => {
+        // Safely handle ATS feedback with proper array defaults
+        let atsFeedback: ATSFeedback | undefined = undefined;
+        
+        if (item.ats_feedback && typeof item.ats_feedback === 'object') {
+          const feedback = item.ats_feedback as any;
+          atsFeedback = {
+            overall_score: feedback.overall_score || 0,
+            category_scores: {
+              keyword_match: feedback.category_scores?.keyword_match || 0,
+              skills_alignment: feedback.category_scores?.skills_alignment || 0,
+              experience_relevance: feedback.category_scores?.experience_relevance || 0,
+              format_compliance: feedback.category_scores?.format_compliance || 0,
+            },
+            recommendations: Array.isArray(feedback.recommendations) ? feedback.recommendations : [],
+            keyword_analysis: {
+              matched_keywords: Array.isArray(feedback.keyword_analysis?.matched_keywords) 
+                ? feedback.keyword_analysis.matched_keywords 
+                : [],
+              missing_keywords: Array.isArray(feedback.keyword_analysis?.missing_keywords) 
+                ? feedback.keyword_analysis.missing_keywords 
+                : [],
+            },
+            strengths: Array.isArray(feedback.strengths) ? feedback.strengths : [],
+            areas_for_improvement: Array.isArray(feedback.areas_for_improvement) 
+              ? feedback.areas_for_improvement 
+              : [],
+          };
+        }
+
+        return {
+          id: item.id,
+          original_resume_id: item.original_resume_id,
+          job_description_id: item.job_description_id,
+          generated_text: item.generated_text,
+          created_at: item.created_at,
+          ats_score: item.ats_score,
+          ats_feedback: atsFeedback,
+          resumes: item.resumes,
+          job_descriptions: item.job_descriptions
+        };
+      });
       
       setOptimizedResumes(transformedData);
     } catch (error) {
@@ -284,7 +315,7 @@ const Dashboard: React.FC = () => {
               AI Resume Optimizer
             </h2>
           </div>
-          <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[20]">
+          <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
             <div className="bg-white rounded-lg">
               <ResumeOptimizer 
                 resumes={resumes}
