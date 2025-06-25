@@ -244,7 +244,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
 
       toast({
         title: "Upload Successful",
-        description: `Your ${type.replace('-', ' ')} has been uploaded successfully.`,
+        description: `Your ${type.replace('-', ' ')} has been uploaded and will be processed with AI parsing.`,
       });
 
       // Reset form
@@ -255,7 +255,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       setShowPreview(false);
       setUploadError(null);
       
-      // Redirect to editor for resumes
+      // Redirect to editor for resumes where AI parsing will happen
       if (type === 'resume' && savedRecord?.id) {
         navigate(`/resume-editor/initial/${savedRecord.id}`);
       } else if (onUploadSuccess) {
@@ -285,7 +285,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         </CardTitle>
         <CardDescription>
           {type === 'resume' 
-            ? 'Upload your resume in PDF or DOCX format (DOCX strongly recommended)'
+            ? 'Upload your resume in PDF or DOCX format (DOCX strongly recommended) - AI will automatically organize it into sections'
             : 'Upload a job description file or paste the text directly'
           }
         </CardDescription>
@@ -340,6 +340,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
                 </span>
               </div>
             </div>
+            {type === 'resume' && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm text-blue-800">
+                  <strong>✨ AI-Powered:</strong> Your resume will be automatically parsed and organized into professional sections for easy editing.
+                </p>
+              </div>
+            )}
           </div>
 
           {type === 'job-description' && (
@@ -385,12 +392,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
                   {isUploading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Uploading...
+                      {type === 'resume' ? 'Uploading & Processing with AI...' : 'Uploading...'}
                     </>
                   ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
-                      Confirm Upload
+                      Confirm Upload {type === 'resume' ? '& Process with AI' : ''}
                     </>
                   )}
                 </Button>

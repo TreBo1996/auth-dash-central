@@ -54,6 +54,38 @@ interface ParsedResume {
   certifications: Certification[];
 }
 
+// AI Response interfaces to handle the different structure
+interface AIExperience {
+  id: string;
+  company: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
+
+interface AIEducation {
+  id: string;
+  institution: string;
+  degree: string;
+  year: string;
+}
+
+interface AICertification {
+  id: string;
+  name: string;
+  issuer: string;
+  year: string;
+}
+
+interface AIParseResponse {
+  summary: string;
+  experience: AIExperience[];
+  skills: string[];
+  education: AIEducation[];
+  certifications: AICertification[];
+}
+
 const InitialResumeEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -97,6 +129,87 @@ const InitialResumeEditor: React.FC = () => {
     }
   };
 
+  const convertAIResponseToEditorFormat = (aiResponse: AIParseResponse): ParsedResume => {
+    console.log('Converting AI response to editor format:', aiResponse);
+    
+    // Convert experience - handle both single description and bullets array
+    const experience: Experience[] = (aiResponse.experience || []).map(exp => {
+      let bullets: string[] = [];
+      
+      if (exp.description) {
+        // Split description by sentence markers or line breaks
+        bullets = exp.description
+          .split(/[.!?]\s+|\n+/)
+          .map(bullet => bullet.trim())
+          .filter(bullet => bullet.length > 10) // Only keep substantial bullets
+          .map(bullet => bullet.endsWith('.') ? bullet : bullet + '.');
+        
+        // If we don't get good bullets from splitting, use the whole description
+        if (bullets.length === 0) {
+          bullets = [exp.description];
+        }
+      }
+      
+      return {
+        title: exp.role || exp.title || 'Job Title',
+        company: exp.company || 'Company Name',
+        duration: exp.startDate && exp.endDate 
+          ? `${exp.startDate} - ${exp.endDate}`
+          : '2023 - 2024',
+        bullets: bullets.length > 0 ? bullets : ['Job responsibility']
+      };
+    });
+
+    // Convert skills - handle both flat array and grouped format
+    let skills: SkillGroup[] = [];
+    if (Array.isArray(aiResponse.skills)) {
+      if (aiResponse.skills.length > 0) {
+        // Group skills into categories of manageable size
+        const chunkSize = 8;
+        const skillChunks: string[][] = [];
+        
+        for (let i = 0; i < aiResponse.skills.length; i += chunkSize) {
+          skillChunks.push(aiResponse.skills.slice(i, i + chunkSize));
+        }
+        
+        skillChunks.forEach((chunk, index) => {
+          const categoryName = index === 0 ? 'Technical Skills' : 
+                              index === 1 ? 'Professional Skills' :
+                              `Additional Skills ${index}`;
+          
+          skills.push({
+            category: categoryName,
+            items: chunk
+          });
+        });
+      }
+    }
+
+    // Convert education
+    const education: Education[] = (aiResponse.education || []).map(edu => ({
+      id: edu.id || `edu_${Date.now()}_${Math.random()}`,
+      institution: edu.institution || 'University Name',
+      degree: edu.degree || 'Degree',
+      year: edu.year || '2020'
+    }));
+
+    // Convert certifications
+    const certifications: Certification[] = (aiResponse.certifications || []).map(cert => ({
+      id: cert.id || `cert_${Date.now()}_${Math.random()}`,
+      name: cert.name || 'Certification Name',
+      issuer: cert.issuer || 'Issuing Organization',
+      year: cert.year || '2023'
+    }));
+
+    return {
+      summary: aiResponse.summary || 'Professional Summary',
+      experience,
+      skills,
+      education,
+      certifications
+    };
+  };
+
   const parseResumeWithAI = async (text: string) => {
     try {
       setParsing(true);
@@ -113,13 +226,15 @@ const InitialResumeEditor: React.FC = () => {
           description: "Using basic parsing instead. You can still edit the sections manually.",
           variant: "destructive"
         });
-        // Fall back to basic parsing
         parseResumeTextBasic(text);
         return;
       }
 
       console.log('AI parsing successful:', data);
-      setParsedResume(data);
+      
+      // Convert AI response to the format expected by editor components
+      const convertedData = convertAIResponseToEditorFormat(data);
+      setParsedResume(convertedData);
       
       toast({
         title: "Resume Parsed",
@@ -132,7 +247,6 @@ const InitialResumeEditor: React.FC = () => {
         description: "Using basic parsing instead.",
         variant: "destructive"
       });
-      // Fall back to basic parsing
       parseResumeTextBasic(text);
     } finally {
       setParsing(false);
