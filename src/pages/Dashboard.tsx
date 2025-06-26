@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -364,13 +363,8 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <ScrollArea className="h-[480px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <style jsx>{`
-                      .scrollbar-hide::-webkit-scrollbar {
-                        display: none;
-                      }
-                    `}</style>
-                    <div className="space-y-4 pr-4 scrollbar-hide">
+                  <ScrollArea className="h-[480px]">
+                    <div className="space-y-4 pr-4">
                       {resumes.map((resume) => (
                         <Card key={resume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-blue-100/50 hover:border-blue-200">
                           <CardHeader className="pb-3 p-4 md:p-6">
@@ -455,8 +449,8 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <ScrollArea className="h-[480px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <div className="space-y-4 pr-4 scrollbar-hide">
+                  <ScrollArea className="h-[480px]">
+                    <div className="space-y-4 pr-4">
                       {jobDescriptions.map((jobDesc) => (
                         <Card key={jobDesc.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-green-100/50 hover:border-green-200">
                           <CardHeader className="pb-3 p-4 md:p-6">
@@ -546,8 +540,8 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <ScrollArea className="h-[520px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <div className="space-y-4 pr-4 scrollbar-hide">
+                  <ScrollArea className="h-[520px]">
+                    <div className="space-y-4 pr-4">
                       {optimizedResumes.map((optimizedResume) => (
                         <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
                           <CardHeader className="pb-3 p-4 md:p-6">
