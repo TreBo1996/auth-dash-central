@@ -148,7 +148,14 @@ const Dashboard: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOptimizedResumes(data || []);
+      
+      // Type cast the data to match our OptimizedResume interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        ats_feedback: item.ats_feedback as ATSFeedback | undefined
+      })) as OptimizedResume[];
+      
+      setOptimizedResumes(typedData);
     } catch (error) {
       console.error('Error fetching optimized resumes:', error);
       toast({
