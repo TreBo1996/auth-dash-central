@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -348,7 +350,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="p-6 space-y-4">
+              <CollapsibleContent className="p-6">
                 {resumes.length === 0 ? (
                   <Card className="border-2 border-dashed border-blue-300/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 hover:border-blue-400/50 transition-colors duration-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
@@ -362,51 +364,58 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
-                    {resumes.map((resume) => (
-                      <Card key={resume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-blue-100/50 hover:border-blue-200">
-                        <CardHeader className="pb-3 p-4 md:p-6">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-sm md:text-base flex items-center gap-2 truncate">
-                                <FileText className="h-4 w-4 flex-shrink-0 text-blue-600" />
-                                <span className="truncate font-semibold text-gray-800">{resume.file_name || 'Untitled Resume'}</span>
-                              </CardTitle>
-                              <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
-                                <Calendar className="h-3 w-3 flex-shrink-0" />
-                                {formatDate(resume.created_at)}
-                              </CardDescription>
+                  <ScrollArea className="h-[480px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <style jsx>{`
+                      .scrollbar-hide::-webkit-scrollbar {
+                        display: none;
+                      }
+                    `}</style>
+                    <div className="space-y-4 pr-4 scrollbar-hide">
+                      {resumes.map((resume) => (
+                        <Card key={resume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-blue-100/50 hover:border-blue-200">
+                          <CardHeader className="pb-3 p-4 md:p-6">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-sm md:text-base flex items-center gap-2 truncate">
+                                  <FileText className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                                  <span className="truncate font-semibold text-gray-800">{resume.file_name || 'Untitled Resume'}</span>
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
+                                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                                  {formatDate(resume.created_at)}
+                                </CardDescription>
+                              </div>
+                              <Badge variant="outline" className="text-xs flex-shrink-0 bg-blue-50 text-blue-700 border-blue-200">
+                                Original
+                              </Badge>
                             </div>
-                            <Badge variant="outline" className="text-xs flex-shrink-0 bg-blue-50 text-blue-700 border-blue-200">
-                              Original
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 p-4 md:p-6 pt-0">
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => navigate(`/resume-editor/initial/${resume.id}`)}
-                              className="h-9 flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-                            >
-                              <Edit className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Edit</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDelete(resume.id, 'resume')}
-                              className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Delete</span>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardHeader>
+                          <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => navigate(`/resume-editor/initial/${resume.id}`)}
+                                className="h-9 flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">Edit</span>
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleDelete(resume.id, 'resume')}
+                                className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">Delete</span>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CollapsibleContent>
             </Collapsible>
@@ -432,7 +441,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="p-6 space-y-4">
+              <CollapsibleContent className="p-6">
                 {jobDescriptions.length === 0 ? (
                   <Card className="border-2 border-dashed border-green-300/50 bg-gradient-to-br from-green-50/50 to-emerald-50/30 hover:border-green-400/50 transition-colors duration-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
@@ -446,58 +455,60 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
-                    {jobDescriptions.map((jobDesc) => (
-                      <Card key={jobDesc.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-green-100/50 hover:border-green-200">
-                        <CardHeader className="pb-3 p-4 md:p-6">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-sm md:text-base flex items-center gap-2">
-                                <FileText className="h-4 w-4 flex-shrink-0 text-green-600" />
-                                <span className="truncate font-semibold text-gray-800">{jobDesc.title}</span>
-                              </CardTitle>
-                              <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
-                                <Calendar className="h-3 w-3 flex-shrink-0" />
-                                {formatDate(jobDesc.created_at)}
-                              </CardDescription>
+                  <ScrollArea className="h-[480px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <div className="space-y-4 pr-4 scrollbar-hide">
+                      {jobDescriptions.map((jobDesc) => (
+                        <Card key={jobDesc.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-green-100/50 hover:border-green-200">
+                          <CardHeader className="pb-3 p-4 md:p-6">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                                  <FileText className="h-4 w-4 flex-shrink-0 text-green-600" />
+                                  <span className="truncate font-semibold text-gray-800">{jobDesc.title}</span>
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
+                                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                                  {formatDate(jobDesc.created_at)}
+                                </CardDescription>
+                              </div>
+                              <Badge 
+                                variant={jobDesc.source_file_url ? 'default' : 'outline'} 
+                                className={`text-xs flex-shrink-0 ${
+                                  jobDesc.source_file_url 
+                                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' 
+                                    : 'bg-green-50 text-green-700 border-green-200'
+                                }`}
+                              >
+                                {jobDesc.source_file_url ? 'File' : 'Text'}
+                              </Badge>
                             </div>
-                            <Badge 
-                              variant={jobDesc.source_file_url ? 'default' : 'outline'} 
-                              className={`text-xs flex-shrink-0 ${
-                                jobDesc.source_file_url 
-                                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' 
-                                  : 'bg-green-50 text-green-700 border-green-200'
-                              }`}
-                            >
-                              {jobDesc.source_file_url ? 'File' : 'Text'}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 p-4 md:p-6 pt-0">
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleJobDescriptionView(jobDesc)}
-                              className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
-                            >
-                              <Eye className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">View</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDelete(jobDesc.id, 'job-description')}
-                              className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Delete</span>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardHeader>
+                          <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleJobDescriptionView(jobDesc)}
+                                className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">View</span>
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleDelete(jobDesc.id, 'job-description')}
+                                className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">Delete</span>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CollapsibleContent>
             </Collapsible>
@@ -523,7 +534,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="p-6 space-y-4">
+              <CollapsibleContent className="p-6">
                 {optimizedResumes.length === 0 ? (
                   <Card className="border-2 border-dashed border-purple-300/50 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 hover:border-purple-400/50 transition-colors duration-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
@@ -535,77 +546,79 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
-                    {optimizedResumes.map((optimizedResume) => (
-                      <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
-                        <CardHeader className="pb-3 p-4 md:p-6">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <CardTitle className="text-sm md:text-base flex items-start gap-2">
-                                <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5" />
-                                <div className="min-w-0 flex-1">
-                                  <div className="truncate font-semibold text-gray-800">
-                                    {optimizedResume.resumes?.file_name || 'Untitled Resume'}
+                  <ScrollArea className="h-[520px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <div className="space-y-4 pr-4 scrollbar-hide">
+                      {optimizedResumes.map((optimizedResume) => (
+                        <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
+                          <CardHeader className="pb-3 p-4 md:p-6">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-sm md:text-base flex items-start gap-2">
+                                  <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="truncate font-semibold text-gray-800">
+                                      {optimizedResume.resumes?.file_name || 'Untitled Resume'}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                      <span className="truncate">for {optimizedResume.job_descriptions?.title}</span>
+                                    </div>
                                   </div>
-                                  <div className="text-xs text-gray-500 mt-1 flex items-center">
-                                    <span className="truncate">for {optimizedResume.job_descriptions?.title}</span>
-                                  </div>
-                                </div>
-                              </CardTitle>
-                              <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
-                                <Calendar className="h-3 w-3 flex-shrink-0" />
-                                {formatDate(optimizedResume.created_at)}
-                              </CardDescription>
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
+                                  <Calendar className="h-3 w-3 flex-shrink-0" />
+                                  {formatDate(optimizedResume.created_at)}
+                                </CardDescription>
+                              </div>
+                              <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs flex-shrink-0 font-semibold">
+                                AI Optimized
+                              </Badge>
                             </div>
-                            <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs flex-shrink-0 font-semibold">
-                              AI Optimized
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3 p-4 md:p-6 pt-0">
-                          {/* ATS Score Display */}
-                          <ATSScoreDisplay
-                            optimizedResumeId={optimizedResume.id}
-                            atsScore={optimizedResume.ats_score}
-                            atsFeedback={optimizedResume.ats_feedback}
-                            onScoreUpdate={(newScore, newFeedback) => 
-                              handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)
-                            }
-                          />
-                          
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)}
-                              className="h-9 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
-                            >
-                              <Edit className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Edit</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="default"
-                              onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)}
-                              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-9 flex-1 sm:flex-none font-semibold"
-                            >
-                              <Palette className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Format</span>
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')}
-                              className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              <span className="sm:inline">Delete</span>
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardHeader>
+                          <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                            {/* ATS Score Display */}
+                            <ATSScoreDisplay
+                              optimizedResumeId={optimizedResume.id}
+                              atsScore={optimizedResume.ats_score}
+                              atsFeedback={optimizedResume.ats_feedback}
+                              onScoreUpdate={(newScore, newFeedback) => 
+                                handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)
+                              }
+                            />
+                            
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)}
+                                className="h-9 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">Edit</span>
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="default"
+                                onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)}
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-9 flex-1 sm:flex-none font-semibold"
+                              >
+                                <Palette className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">Format</span>
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')}
+                                className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                <span className="sm:inline">Delete</span>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CollapsibleContent>
             </Collapsible>
