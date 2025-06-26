@@ -152,7 +152,7 @@ const Dashboard: React.FC = () => {
       // Type cast the data to match our OptimizedResume interface
       const typedData = (data || []).map(item => ({
         ...item,
-        ats_feedback: item.ats_feedback as ATSFeedback | undefined
+        ats_feedback: item.ats_feedback as unknown as ATSFeedback | undefined
       })) as OptimizedResume[];
       
       setOptimizedResumes(typedData);
