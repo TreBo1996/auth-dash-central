@@ -8,7 +8,6 @@ import { User, Save, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-
 interface UserProfile {
   email: string;
   full_name?: string;
@@ -16,21 +15,24 @@ interface UserProfile {
     full_name?: string;
   };
 }
-
 const Profile: React.FC = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     fetchUserProfile();
   }, []);
-
   const fetchUserProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (user) {
         setUser(user);
         setFullName(user.user_metadata?.full_name || '');
@@ -46,19 +48,17 @@ const Profile: React.FC = () => {
       setIsLoading(false);
     }
   };
-
   const handleSaveProfile = async () => {
     if (!user) return;
-
     try {
       setIsSaving(true);
-
-      const { error } = await supabase.auth.updateUser({
+      const {
+        error
+      } = await supabase.auth.updateUser({
         data: {
           full_name: fullName
         }
       });
-
       if (error) throw error;
 
       // Update local state
@@ -69,12 +69,10 @@ const Profile: React.FC = () => {
           full_name: fullName
         }
       } : null);
-
       toast({
         title: "Profile Updated",
-        description: "Your profile has been updated successfully.",
+        description: "Your profile has been updated successfully."
       });
-
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -86,19 +84,14 @@ const Profile: React.FC = () => {
       setIsSaving(false);
     }
   };
-
   if (isLoading) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
@@ -122,13 +115,7 @@ const Profile: React.FC = () => {
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={user?.email || ''}
-                  disabled
-                  className="pl-10 bg-gray-50"
-                />
+                <Input id="email" type="email" value={user?.email || ''} disabled className="pl-10 bg-gray-50" />
               </div>
               <p className="text-sm text-gray-500">
                 Email address cannot be changed
@@ -139,34 +126,19 @@ const Profile: React.FC = () => {
               <Label htmlFor="fullName">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-10"
-                />
+                <Input id="fullName" type="text" placeholder="Enter your full name" value={fullName} onChange={e => setFullName(e.target.value)} className="pl-10" />
               </div>
             </div>
 
             <div className="pt-4">
-              <Button 
-                onClick={handleSaveProfile}
-                disabled={isSaving || !fullName.trim()}
-                className="w-full"
-              >
-                {isSaving ? (
-                  <>
+              <Button onClick={handleSaveProfile} disabled={isSaving || !fullName.trim()} className="w-full bg-indigo-900 hover:bg-indigo-800">
+                {isSaving ? <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Saving...
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Save className="h-4 w-4 mr-2" />
                     Save Profile
-                  </>
-                )}
+                  </>}
               </Button>
             </div>
           </CardContent>
@@ -193,8 +165,6 @@ const Profile: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default Profile;
