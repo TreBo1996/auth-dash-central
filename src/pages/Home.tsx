@@ -329,9 +329,7 @@ const Home = () => {
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
             Ready to Transform Your Career?
           </h2>
-          <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of professionals who've already boosted their job search success with Best Hire.
-          </p>
+          <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">Join thousands of professionals who've already boosted their job search success with RezLit.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {user ? <>
                 <Link to="/dashboard">
