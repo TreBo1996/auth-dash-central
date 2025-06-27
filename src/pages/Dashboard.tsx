@@ -478,7 +478,7 @@ const Dashboard: React.FC = () => {
                   </Card> : <ScrollArea className="h-[520px]">
                     <div className="space-y-4 pr-4">
                       {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
-                          <CardHeader className="pb-3 p-4 md:p-6">
+                          <CardHeader className="pb-3 p-4 md:p-6 py-[5px]">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
                                 <CardTitle className="text-sm md:text-base flex items-start gap-2">
