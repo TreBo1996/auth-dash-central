@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -584,7 +585,7 @@ const Dashboard: React.FC = () => {
                                 size="sm" 
                                 variant="outline"
                                 onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)}
-                                className="h-9 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                                className="h-8 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
                               >
                                 <Edit className="h-3 w-3 mr-1" />
                                 <span className="sm:inline">Edit</span>
@@ -593,16 +594,16 @@ const Dashboard: React.FC = () => {
                                 size="sm" 
                                 variant="default"
                                 onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)}
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-9 flex-1 sm:flex-none font-semibold"
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-8 flex-1 sm:flex-none font-semibold"
                               >
                                 <Palette className="h-3 w-3 mr-1" />
-                                <span className="sm:inline">Format</span>
+                                <span className="sm:inline">Export</span>
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline" 
                                 onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')}
-                                className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+                                className="h-8 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
                               >
                                 <Trash2 className="h-3 w-3 mr-1" />
                                 <span className="sm:inline">Delete</span>
