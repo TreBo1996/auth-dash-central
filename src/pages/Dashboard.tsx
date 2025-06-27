@@ -310,7 +310,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-gradient-to-b from-white to-blue-50/30 rounded-xl border border-blue-200/50 shadow-xl-modern overflow-hidden backdrop-blur-sm">
             <Collapsible open={resumesOpen} onOpenChange={setResumesOpen}>
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 p-6 transition-all duration-300 border-b border-blue-100/50">
+                <div className="flex items-center justify-between cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 p-6 transition-all duration-300 border-b border-blue-100/50 py-[33px]">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg">
                       <FileText className="h-5 w-5 text-white" />
