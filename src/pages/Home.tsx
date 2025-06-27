@@ -224,9 +224,7 @@ const Home = () => {
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
               Success Stories
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              See how Best Hire has helped professionals land their dream jobs
-            </p>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">See how RezLit has helped professionals land their dream jobs</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
