@@ -511,7 +511,7 @@ const Dashboard: React.FC = () => {
                                 <Edit className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Edit</span>
                               </Button>
-                              <Button size="sm" variant="default" onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-7 px-2 flex-1 sm:flex-none font-semibold">
+                              <Button size="sm" variant="default" onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-7 flex-1 sm:flex-none font-semibold px-[3px]">
                                 <Palette className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Export</span>
                               </Button>
