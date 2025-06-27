@@ -13,7 +13,6 @@ import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
-
 interface Resume {
   id: string;
   original_file_url: string | null;
@@ -21,7 +20,6 @@ interface Resume {
   file_name: string | null;
   created_at: string;
 }
-
 interface JobDescription {
   id: string;
   title: string;
@@ -30,7 +28,6 @@ interface JobDescription {
   file_name: string | null;
   created_at: string;
 }
-
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -47,7 +44,6 @@ interface ATSFeedback {
   strengths: string[];
   areas_for_improvement: string[];
 }
-
 interface OptimizedResume {
   id: string;
   original_resume_id: string;
@@ -63,7 +59,6 @@ interface OptimizedResume {
     title: string;
   };
 }
-
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -79,31 +74,35 @@ const Dashboard: React.FC = () => {
     title: string;
     type: 'resume' | 'job-description';
   } | null>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     fetchUserData();
     fetchResumes();
     fetchJobDescriptions();
     fetchOptimizedResumes();
   }, []);
-
   const fetchUserData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       setUser(user);
     } catch (error) {
       console.error('Error fetching user:', error);
     }
   };
-
   const fetchResumes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('resumes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('resumes').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setResumes(data || []);
     } catch (error) {
@@ -115,14 +114,14 @@ const Dashboard: React.FC = () => {
       });
     }
   };
-
   const fetchJobDescriptions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('job_descriptions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('job_descriptions').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setJobDescriptions(data || []);
     } catch (error) {
@@ -136,25 +135,24 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
-
   const fetchOptimizedResumes = async () => {
     try {
-      const { data, error } = await supabase
-        .from('optimized_resumes')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('optimized_resumes').select(`
           *,
           resumes(file_name),
           job_descriptions(title)
-        `)
-        .order('created_at', { ascending: false });
-
+        `).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
-      
+
       // Transform the data to match our OptimizedResume interface with safe array handling
       const transformedData: OptimizedResume[] = (data || []).map(item => {
         // Safely handle ATS feedback with proper array defaults
         let atsFeedback: ATSFeedback | undefined = undefined;
-        
         if (item.ats_feedback && typeof item.ats_feedback === 'object') {
           const feedback = item.ats_feedback as any;
           atsFeedback = {
@@ -163,24 +161,17 @@ const Dashboard: React.FC = () => {
               keyword_match: feedback.category_scores?.keyword_match || 0,
               skills_alignment: feedback.category_scores?.skills_alignment || 0,
               experience_relevance: feedback.category_scores?.experience_relevance || 0,
-              format_compliance: feedback.category_scores?.format_compliance || 0,
+              format_compliance: feedback.category_scores?.format_compliance || 0
             },
             recommendations: Array.isArray(feedback.recommendations) ? feedback.recommendations : [],
             keyword_analysis: {
-              matched_keywords: Array.isArray(feedback.keyword_analysis?.matched_keywords) 
-                ? feedback.keyword_analysis.matched_keywords 
-                : [],
-              missing_keywords: Array.isArray(feedback.keyword_analysis?.missing_keywords) 
-                ? feedback.keyword_analysis.missing_keywords 
-                : [],
+              matched_keywords: Array.isArray(feedback.keyword_analysis?.matched_keywords) ? feedback.keyword_analysis.matched_keywords : [],
+              missing_keywords: Array.isArray(feedback.keyword_analysis?.missing_keywords) ? feedback.keyword_analysis.missing_keywords : []
             },
             strengths: Array.isArray(feedback.strengths) ? feedback.strengths : [],
-            areas_for_improvement: Array.isArray(feedback.areas_for_improvement) 
-              ? feedback.areas_for_improvement 
-              : [],
+            areas_for_improvement: Array.isArray(feedback.areas_for_improvement) ? feedback.areas_for_improvement : []
           };
         }
-
         return {
           id: item.id,
           original_resume_id: item.original_resume_id,
@@ -193,7 +184,6 @@ const Dashboard: React.FC = () => {
           job_descriptions: item.job_descriptions
         };
       });
-      
       setOptimizedResumes(transformedData);
     } catch (error) {
       console.error('Error fetching optimized resumes:', error);
@@ -204,21 +194,16 @@ const Dashboard: React.FC = () => {
       });
     }
   };
-
   const handleOptimizationComplete = () => {
     fetchOptimizedResumes();
   };
-
   const handleATSScoreUpdate = (resumeId: string, newScore: number, newFeedback: ATSFeedback) => {
-    setOptimizedResumes(prev => 
-      prev.map(resume => 
-        resume.id === resumeId 
-          ? { ...resume, ats_score: newScore, ats_feedback: newFeedback }
-          : resume
-      )
-    );
+    setOptimizedResumes(prev => prev.map(resume => resume.id === resumeId ? {
+      ...resume,
+      ats_score: newScore,
+      ats_feedback: newFeedback
+    } : resume));
   };
-
   const handleJobDescriptionView = (jobDesc: JobDescription) => {
     setPreviewContent({
       content: jobDesc.parsed_text,
@@ -226,29 +211,32 @@ const Dashboard: React.FC = () => {
       type: 'job-description'
     });
   };
-
   const handleDelete = async (id: string, type: 'resume' | 'job-description' | 'optimized-resume') => {
     try {
       let error;
       let itemName: string;
-
       switch (type) {
         case 'resume':
-          ({ error } = await supabase.from('resumes').delete().eq('id', id));
+          ({
+            error
+          } = await supabase.from('resumes').delete().eq('id', id));
           itemName = 'Resume';
           break;
         case 'job-description':
-          ({ error } = await supabase.from('job_descriptions').delete().eq('id', id));
+          ({
+            error
+          } = await supabase.from('job_descriptions').delete().eq('id', id));
           itemName = 'Job description';
           break;
         case 'optimized-resume':
-          ({ error } = await supabase.from('optimized_resumes').delete().eq('id', id));
+          ({
+            error
+          } = await supabase.from('optimized_resumes').delete().eq('id', id));
           itemName = 'Optimized resume';
           break;
         default:
           throw new Error('Invalid item type');
       }
-
       if (error) throw error;
 
       // Update state based on type
@@ -259,10 +247,9 @@ const Dashboard: React.FC = () => {
       } else if (type === 'optimized-resume') {
         setOptimizedResumes(prev => prev.filter(item => item.id !== id));
       }
-
       toast({
         title: "Deleted",
-        description: `${itemName} deleted successfully.`,
+        description: `${itemName} deleted successfully.`
       });
     } catch (error) {
       console.error('Delete error:', error);
@@ -273,7 +260,6 @@ const Dashboard: React.FC = () => {
       });
     }
   };
-
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -281,19 +267,14 @@ const Dashboard: React.FC = () => {
       day: 'numeric'
     });
   };
-
   if (loading) {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="space-y-6 md:space-y-8">
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-white via-blue-50/50 to-indigo-50/80 backdrop-blur-sm rounded-2xl shadow-xl-modern border border-indigo-100/50 p-6 md:p-8 relative overflow-hidden">
@@ -318,11 +299,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
             <div className="bg-white rounded-lg">
-              <ResumeOptimizer 
-                resumes={resumes}
-                jobDescriptions={jobDescriptions}
-                onOptimizationComplete={handleOptimizationComplete}
-              />
+              <ResumeOptimizer resumes={resumes} jobDescriptions={jobDescriptions} onOptimizationComplete={handleOptimizationComplete} />
             </div>
           </div>
         </div>
@@ -350,8 +327,7 @@ const Dashboard: React.FC = () => {
               </CollapsibleTrigger>
               
               <CollapsibleContent className="p-6">
-                {resumes.length === 0 ? (
-                  <Card className="border-2 border-dashed border-blue-300/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 hover:border-blue-400/50 transition-colors duration-300">
+                {resumes.length === 0 ? <Card className="border-2 border-dashed border-blue-300/50 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 hover:border-blue-400/50 transition-colors duration-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
                       <div className="p-3 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full w-fit mx-auto mb-4">
                         <FileText className="h-10 w-10 md:h-12 md:w-12 text-blue-600" />
@@ -361,12 +337,9 @@ const Dashboard: React.FC = () => {
                         <a href="/upload-resume">Upload Your First Resume</a>
                       </Button>
                     </CardContent>
-                  </Card>
-                ) : (
-                  <ScrollArea className="h-[480px]">
+                  </Card> : <ScrollArea className="h-[480px]">
                     <div className="space-y-4 pr-4">
-                      {resumes.map((resume) => (
-                        <Card key={resume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-blue-100/50 hover:border-blue-200">
+                      {resumes.map(resume => <Card key={resume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-blue-100/50 hover:border-blue-200">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -386,31 +359,19 @@ const Dashboard: React.FC = () => {
                           </CardHeader>
                           <CardContent className="space-y-3 p-4 md:p-6 pt-0">
                             <div className="flex flex-col sm:flex-row gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => navigate(`/resume-editor/initial/${resume.id}`)}
-                                className="h-9 flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/initial/${resume.id}`)} className="h-9 flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300">
                                 <Edit className="h-3 w-3 mr-1" />
                                 <span className="sm:inline">Edit</span>
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => handleDelete(resume.id, 'resume')}
-                                className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(resume.id, 'resume')} className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
                                 <Trash2 className="h-3 w-3 mr-1" />
                                 <span className="sm:inline">Delete</span>
                               </Button>
                             </div>
                           </CardContent>
-                        </Card>
-                      ))}
+                        </Card>)}
                     </div>
-                  </ScrollArea>
-                )}
+                  </ScrollArea>}
               </CollapsibleContent>
             </Collapsible>
           </div>
@@ -436,8 +397,7 @@ const Dashboard: React.FC = () => {
               </CollapsibleTrigger>
               
               <CollapsibleContent className="p-6">
-                {jobDescriptions.length === 0 ? (
-                  <Card className="border-2 border-dashed border-green-300/50 bg-gradient-to-br from-green-50/50 to-emerald-50/30 hover:border-green-400/50 transition-colors duration-300">
+                {jobDescriptions.length === 0 ? <Card className="border-2 border-dashed border-green-300/50 bg-gradient-to-br from-green-50/50 to-emerald-50/30 hover:border-green-400/50 transition-colors duration-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
                       <div className="p-3 bg-gradient-to-r from-green-100 to-emerald-100 rounded-full w-fit mx-auto mb-4">
                         <FileText className="h-10 w-10 md:h-12 md:w-12 text-green-600" />
@@ -447,12 +407,9 @@ const Dashboard: React.FC = () => {
                         <a href="/upload-job">Add Your First Job Description</a>
                       </Button>
                     </CardContent>
-                  </Card>
-                ) : (
-                  <ScrollArea className="h-[480px]">
+                  </Card> : <ScrollArea className="h-[480px]">
                     <div className="space-y-4 pr-4">
-                      {jobDescriptions.map((jobDesc) => (
-                        <Card key={jobDesc.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-green-100/50 hover:border-green-200">
+                      {jobDescriptions.map(jobDesc => <Card key={jobDesc.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-green-100/50 hover:border-green-200">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -465,45 +422,26 @@ const Dashboard: React.FC = () => {
                                   {formatDate(jobDesc.created_at)}
                                 </CardDescription>
                               </div>
-                              <Badge 
-                                variant={jobDesc.source_file_url ? 'default' : 'outline'} 
-                                className={`text-xs flex-shrink-0 ${
-                                  jobDesc.source_file_url 
-                                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' 
-                                    : 'bg-green-50 text-green-700 border-green-200'
-                                }`}
-                              >
+                              <Badge variant={jobDesc.source_file_url ? 'default' : 'outline'} className={`text-xs flex-shrink-0 ${jobDesc.source_file_url ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' : 'bg-green-50 text-green-700 border-green-200'}`}>
                                 {jobDesc.source_file_url ? 'File' : 'Text'}
                               </Badge>
                             </div>
                           </CardHeader>
                           <CardContent className="space-y-3 p-4 md:p-6 pt-0">
                             <div className="flex flex-col sm:flex-row gap-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => handleJobDescriptionView(jobDesc)}
-                                className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => handleJobDescriptionView(jobDesc)} className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300">
                                 <Eye className="h-3 w-3 mr-1" />
                                 <span className="sm:inline">View</span>
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => handleDelete(jobDesc.id, 'job-description')}
-                                className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(jobDesc.id, 'job-description')} className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
                                 <Trash2 className="h-3 w-3 mr-1" />
                                 <span className="sm:inline">Delete</span>
                               </Button>
                             </div>
                           </CardContent>
-                        </Card>
-                      ))}
+                        </Card>)}
                     </div>
-                  </ScrollArea>
-                )}
+                  </ScrollArea>}
               </CollapsibleContent>
             </Collapsible>
           </div>
@@ -529,8 +467,7 @@ const Dashboard: React.FC = () => {
               </CollapsibleTrigger>
               
               <CollapsibleContent className="p-6">
-                {optimizedResumes.length === 0 ? (
-                  <Card className="border-2 border-dashed border-purple-300/50 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 hover:border-purple-400/50 transition-colors duration-300">
+                {optimizedResumes.length === 0 ? <Card className="border-2 border-dashed border-purple-300/50 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 hover:border-purple-400/50 transition-colors duration-300">
                     <CardContent className="py-8 md:py-12 text-center px-4">
                       <div className="p-3 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full w-fit mx-auto mb-4">
                         <Sparkles className="h-10 w-10 md:h-12 md:w-12 text-purple-600" />
@@ -538,12 +475,9 @@ const Dashboard: React.FC = () => {
                       <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No optimized resumes yet</p>
                       <p className="text-xs text-gray-500">Use the AI Resume Optimizer above to create your first optimized resume</p>
                     </CardContent>
-                  </Card>
-                ) : (
-                  <ScrollArea className="h-[520px]">
+                  </Card> : <ScrollArea className="h-[520px]">
                     <div className="space-y-4 pr-4">
-                      {optimizedResumes.map((optimizedResume) => (
-                        <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
+                      {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -570,50 +504,26 @@ const Dashboard: React.FC = () => {
                           </CardHeader>
                           <CardContent className="space-y-3 p-4 md:p-6 pt-0">
                             {/* ATS Score Display */}
-                            <ATSScoreDisplay
-                              optimizedResumeId={optimizedResume.id}
-                              atsScore={optimizedResume.ats_score}
-                              atsFeedback={optimizedResume.ats_feedback}
-                              onScoreUpdate={(newScore, newFeedback) => 
-                                handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)
-                              }
-                            />
+                            <ATSScoreDisplay optimizedResumeId={optimizedResume.id} atsScore={optimizedResume.ats_score} atsFeedback={optimizedResume.ats_feedback} onScoreUpdate={(newScore, newFeedback) => handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)} />
                             
                             <div className="flex flex-col sm:flex-row gap-1">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)}
-                                className="h-7 px-2 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)} className="h-7 px-2 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300">
                                 <Edit className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Edit</span>
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="default"
-                                onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)}
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-7 px-2 flex-1 sm:flex-none font-semibold"
-                              >
+                              <Button size="sm" variant="default" onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-7 px-2 flex-1 sm:flex-none font-semibold">
                                 <Palette className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Export</span>
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')}
-                                className="h-7 px-2 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
-                              >
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')} className="h-7 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 px-px">
                                 <Trash2 className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Delete</span>
                               </Button>
                             </div>
                           </CardContent>
-                        </Card>
-                      ))}
+                        </Card>)}
                     </div>
-                  </ScrollArea>
-                )}
+                  </ScrollArea>}
               </CollapsibleContent>
             </Collapsible>
           </div>
@@ -621,16 +531,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Content Preview Modal */}
-      {previewContent && (
-        <ContentPreview
-          content={previewContent.content}
-          title={previewContent.title}
-          type={previewContent.type}
-          onClose={() => setPreviewContent(null)}
-        />
-      )}
-    </DashboardLayout>
-  );
+      {previewContent && <ContentPreview content={previewContent.content} title={previewContent.title} type={previewContent.type} onClose={() => setPreviewContent(null)} />}
+    </DashboardLayout>;
 };
-
 export default Dashboard;
