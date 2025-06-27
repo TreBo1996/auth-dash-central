@@ -507,7 +507,7 @@ const Dashboard: React.FC = () => {
                             <ATSScoreDisplay optimizedResumeId={optimizedResume.id} atsScore={optimizedResume.ats_score} atsFeedback={optimizedResume.ats_feedback} onScoreUpdate={(newScore, newFeedback) => handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)} />
                             
                             <div className="flex flex-col sm:flex-row gap-1">
-                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)} className="h-7 px-2 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300">
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)} className="h-7 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 px-px">
                                 <Edit className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Edit</span>
                               </Button>
