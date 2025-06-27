@@ -513,7 +513,7 @@ const Dashboard: React.FC = () => {
                               </Button>
                               <Button size="sm" variant="default" onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-7 flex-1 sm:flex-none font-semibold mx-[5px] px-[5px]">
                                 <Palette className="h-3 w-3 mr-0.5" />
-                                <span className="sm:inline text-right mx- px-2">Export</span>
+                                <span className="sm:inline text-right mx- px-[2px]">Export</span>
                               </Button>
                               <Button size="sm" variant="outline" onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')} className="h-7 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 px-[4px] mx-[5px]">
                                 <Trash2 className="h-3 w-3 mr-0.5" />
