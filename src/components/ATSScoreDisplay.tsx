@@ -109,14 +109,12 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
             </span>
           </div>
         </div>
-        <Button size="sm" variant="ghost" onClick={handleRescore} disabled={isRescoring} className="h-7 px-[2px]">
-          {isRescoring ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-        </Button>
+        
       </div>
 
       {atsFeedback && <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="w-full justify-between h-7 px-2">
+            <Button variant="ghost" size="sm" className="w-full justify-between h-7 px-[15px]">
               <span className="text-xs">View Details</span>
               <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </Button>

@@ -502,7 +502,7 @@ const Dashboard: React.FC = () => {
                               </Badge>
                             </div>
                           </CardHeader>
-                          <CardContent className="space-y-3 p-4 md:p-6 pt-0">
+                          <CardContent className="space-y-3 p-4 md:p-6 pt-0 px-[10px]">
                             {/* ATS Score Display */}
                             <ATSScoreDisplay optimizedResumeId={optimizedResume.id} atsScore={optimizedResume.ats_score} atsFeedback={optimizedResume.ats_feedback} onScoreUpdate={(newScore, newFeedback) => handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)} />
                             
