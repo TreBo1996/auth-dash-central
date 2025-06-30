@@ -5,31 +5,40 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-const navigation = [{
-  name: 'Dashboard',
-  href: '/dashboard',
-  icon: Home
-}, {
-  name: 'Job Search',
-  href: '/job-search',
-  icon: Search
-}, {
-  name: 'Upload Resume',
-  href: '/upload-resume',
-  icon: Upload
-}, {
-  name: 'Upload Job Description',
-  href: '/upload-job',
-  icon: FileText
-}, {
-  name: 'Mock Interview Prep',
-  href: '/interview-prep',
-  icon: MessageSquare
-}, {
-  name: 'Profile',
-  href: '/profile',
-  icon: User
-}];
+
+const navigation = [
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: Home
+  },
+  {
+    name: 'Mock Interview Prep',
+    href: '/interview-prep',
+    icon: MessageSquare
+  },
+  {
+    name: 'Job Search',
+    href: '/job-search',
+    icon: Search
+  },
+  {
+    name: 'Upload Resume',
+    href: '/upload-resume',
+    icon: Upload
+  },
+  {
+    name: 'Upload Job Description',
+    href: '/upload-job',
+    icon: FileText
+  },
+  {
+    name: 'Profile',
+    href: '/profile',
+    icon: User
+  }
+];
+
 interface SidebarProps {
   onClose?: () => void;
 }
