@@ -52,11 +52,6 @@ serve(async (req) => {
       throw new Error('Query parameter is required');
     }
 
-    const apifyApiKey = Deno.env.get('APIFY_API_KEY');
-    if (!apifyApiKey) {
-      throw new Error('APIFY_API_KEY not configured');
-    }
-
     // Check if we need to scrape new jobs or return cached results
     if (!forceRefresh) {
       const { data: existingJobs } = await supabaseClient
@@ -79,9 +74,11 @@ serve(async (req) => {
       }
     }
 
-    // Use Apify Google Jobs Scraper
-    const apifyActorId = 'apify/google-jobs-scraper';
+    // Extract token from your endpoint
+    const apifyToken = 'apify_api_FFh2jcXqfLXqRtENBhbiXg7DjYGLpT1PMyQA';
+    const actorId = 'hZ7jrmnGci5b4D9Fv';
     
+    // Use Google Jobs Scraper with your specific configuration
     const runInput = {
       queries: [`${query} ${location}`.trim()],
       maxPagesPerQuery: Math.ceil(maxJobs / 10),
@@ -92,18 +89,20 @@ serve(async (req) => {
 
     console.log('Starting Apify actor run...');
     
-    // Start the actor run
-    const runResponse = await fetch(`https://api.apify.com/v2/acts/${apifyActorId}/runs`, {
+    // Start the actor run using your specific actor
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/apify~google-jobs-scraper/runs`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apifyApiKey}`,
+        'Authorization': `Bearer ${apifyToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(runInput)
     });
 
     if (!runResponse.ok) {
-      throw new Error(`Apify run failed: ${runResponse.status}`);
+      const errorText = await runResponse.text();
+      console.error('Apify run failed:', runResponse.status, errorText);
+      throw new Error(`Apify run failed: ${runResponse.status} - ${errorText}`);
     }
 
     const runData = await runResponse.json();
@@ -119,9 +118,9 @@ serve(async (req) => {
     while (runStatus === 'RUNNING' && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
       
-      const statusResponse = await fetch(`https://api.apify.com/v2/acts/${apifyActorId}/runs/${runId}`, {
+      const statusResponse = await fetch(`https://api.apify.com/v2/acts/apify~google-jobs-scraper/runs/${runId}`, {
         headers: {
-          'Authorization': `Bearer ${apifyApiKey}`
+          'Authorization': `Bearer ${apifyToken}`
         }
       });
       
@@ -133,13 +132,14 @@ serve(async (req) => {
     }
 
     if (runStatus !== 'SUCCEEDED') {
+      console.error(`Apify run did not succeed. Status: ${runStatus}`);
       throw new Error(`Apify run did not succeed. Status: ${runStatus}`);
     }
 
     // Get the results
     const resultsResponse = await fetch(`https://api.apify.com/v2/datasets/${runData.data.defaultDatasetId}/items`, {
       headers: {
-        'Authorization': `Bearer ${apifyApiKey}`
+        'Authorization': `Bearer ${apifyToken}`
       }
     });
 

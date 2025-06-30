@@ -35,9 +35,9 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
       onSearch({
         query: query.trim(),
         location: location.trim(),
-        remoteType: remoteType || undefined,
-        employmentType: employmentType || undefined,
-        seniorityLevel: seniorityLevel || undefined,
+        remoteType: remoteType === 'all' ? undefined : remoteType || undefined,
+        employmentType: employmentType === 'all' ? undefined : employmentType || undefined,
+        seniorityLevel: seniorityLevel === 'all' ? undefined : seniorityLevel || undefined,
         company: company.trim() || undefined,
         maxAge: parseInt(maxAge) || 30
       });
@@ -124,7 +124,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                   <SelectValue placeholder="Any remote type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any remote type</SelectItem>
+                  <SelectItem value="all">Any remote type</SelectItem>
                   <SelectItem value="remote">Remote</SelectItem>
                   <SelectItem value="hybrid">Hybrid</SelectItem>
                   <SelectItem value="onsite">On-site</SelectItem>
@@ -140,7 +140,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                   <SelectValue placeholder="Any type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any type</SelectItem>
+                  <SelectItem value="all">Any type</SelectItem>
                   <SelectItem value="Full-time">Full-time</SelectItem>
                   <SelectItem value="Part-time">Part-time</SelectItem>
                   <SelectItem value="Contract">Contract</SelectItem>
@@ -158,7 +158,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                   <SelectValue placeholder="Any level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any level</SelectItem>
+                  <SelectItem value="all">Any level</SelectItem>
                   <SelectItem value="Entry level">Entry level</SelectItem>
                   <SelectItem value="Associate">Associate</SelectItem>
                   <SelectItem value="Mid-Senior level">Mid-Senior level</SelectItem>

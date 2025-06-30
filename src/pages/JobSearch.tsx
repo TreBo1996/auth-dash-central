@@ -68,8 +68,11 @@ export const JobSearch: React.FC = () => {
       });
 
       if (error) {
+        console.error('Database search function error:', error);
         throw error;
       }
+
+      console.log('Database search response:', data);
 
       const searchResults = data.jobs || [];
       setJobs(searchResults);
@@ -84,16 +87,11 @@ export const JobSearch: React.FC = () => {
         totalResults: data.totalResults
       });
 
-      // If we have very few results, suggest scraping new jobs
-      if (searchResults.length < 5) {
-        setWarnings(prev => [...prev, 'Few jobs found in database. Consider scraping fresh jobs for more results.']);
-      }
-
     } catch (error) {
       console.error('Database search error:', error);
       setJobs([]);
       setPagination(null);
-      setWarnings(['Search failed. Please try again.']);
+      setWarnings([error.message || 'Search failed. Please try again.']);
     } finally {
       setLoading(false);
     }
@@ -116,10 +114,11 @@ export const JobSearch: React.FC = () => {
       });
 
       if (error) {
+        console.error('Apify scraper error:', error);
         throw error;
       }
 
-      console.log('Scraping completed:', data.debug_info);
+      console.log('Scraping completed:', data);
       
       // Refresh the search results
       performDatabaseSearch(lastSearchParams);
@@ -133,6 +132,7 @@ export const JobSearch: React.FC = () => {
   };
 
   const handleSearch = async (searchData: SearchParams) => {
+    console.log('HandleSearch called with:', searchData);
     setLastSearchParams(searchData);
     await performDatabaseSearch({
       ...searchData,
