@@ -13,6 +13,7 @@ import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
+
 interface Resume {
   id: string;
   original_file_url: string | null;
@@ -59,6 +60,7 @@ interface OptimizedResume {
     title: string;
   };
 }
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -339,7 +341,7 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card> : <ScrollArea className="h-[480px]">
                     <div className="space-y-4 pr-4">
-                      {resumes.map(resume => <Card key={resume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-blue-100/50 hover:border-blue-200">
+                      {resumes.map(resume => <Card key={resume.id} className="bg-white shadow-sm border border-blue-200 hover:shadow-card-hover hover:border-blue-300 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -409,7 +411,7 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card> : <ScrollArea className="h-[480px]">
                     <div className="space-y-4 pr-4">
-                      {jobDescriptions.map(jobDesc => <Card key={jobDesc.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-green-100/50 hover:border-green-200">
+                      {jobDescriptions.map(jobDesc => <Card key={jobDesc.id} className="bg-white shadow-sm border border-green-200 hover:shadow-card-hover hover:border-green-300 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -477,7 +479,7 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card> : <ScrollArea className="h-[520px]">
                     <div className="space-y-4 pr-4">
-                      {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="hover:shadow-card-hover transition-all duration-300 bg-white/80 backdrop-blur-sm border border-purple-100/50 hover:border-purple-200">
+                      {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="bg-white shadow-sm border border-purple-200 hover:shadow-card-hover hover:border-purple-300 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6 py-[5px]">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -503,19 +505,18 @@ const Dashboard: React.FC = () => {
                             </div>
                           </CardHeader>
                           <CardContent className="space-y-3 p-4 md:p-6 pt-0 px-[10px]">
-                            {/* ATS Score Display */}
                             <ATSScoreDisplay optimizedResumeId={optimizedResume.id} atsScore={optimizedResume.ats_score} atsFeedback={optimizedResume.ats_feedback} onScoreUpdate={(newScore, newFeedback) => handleATSScoreUpdate(optimizedResume.id, newScore, newFeedback)} />
                             
-                            <div className="flex flex-col sm:flex-row gap-1">
-                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)} className="h-7 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 mx-[5px] px-[6px]">
+                            <div className="flex flex-col sm:flex-row gap-0.5">
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/${optimizedResume.id}`)} className="h-6 flex-1 sm:flex-none border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300 mx-[5px] px-1.5 text-xs">
                                 <Edit className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Edit</span>
                               </Button>
-                              <Button size="sm" variant="default" onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-7 flex-1 sm:flex-none font-semibold mx-[5px] px-[6px]">
+                              <Button size="sm" variant="default" onClick={() => navigate(`/resume-templates/${optimizedResume.id}`)} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-6 flex-1 sm:flex-none font-semibold mx-[5px] px-1.5 text-xs">
                                 <Palette className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline text-right mx- px-[2px]">Export</span>
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')} className="h-7 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 mx-[5px] px-[6px]">
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(optimizedResume.id, 'optimized-resume')} className="h-6 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 mx-[5px] px-1.5 text-xs">
                                 <Trash2 className="h-3 w-3 mr-0.5" />
                                 <span className="sm:inline">Delete</span>
                               </Button>
@@ -534,4 +535,5 @@ const Dashboard: React.FC = () => {
       {previewContent && <ContentPreview content={previewContent.content} title={previewContent.title} type={previewContent.type} onClose={() => setPreviewContent(null)} />}
     </DashboardLayout>;
 };
+
 export default Dashboard;
