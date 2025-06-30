@@ -13,6 +13,7 @@ import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
+
 interface Resume {
   id: string;
   original_file_url: string | null;
@@ -59,6 +60,7 @@ interface OptimizedResume {
     title: string;
   };
 }
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -339,7 +341,7 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card> : <ScrollArea className="h-[480px]">
                     <div className="space-y-4 pr-4">
-                      {resumes.map(resume => <Card key={resume.id} className="bg-white shadow-sm border border-blue-200 hover:shadow-card-hover hover:border-blue-300 transition-all duration-300">
+                      {resumes.map(resume => <Card key={resume.id} className="bg-slate-50 shadow-md border border-gray-200/60 hover:shadow-card-hover hover:border-blue-300 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -409,7 +411,7 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card> : <ScrollArea className="h-[480px]">
                     <div className="space-y-4 pr-4">
-                      {jobDescriptions.map(jobDesc => <Card key={jobDesc.id} className="bg-white shadow-sm border border-green-200 hover:shadow-card-hover hover:border-green-300 transition-all duration-300">
+                      {jobDescriptions.map(jobDesc => <Card key={jobDesc.id} className="bg-slate-50 shadow-md border border-gray-200/60 hover:shadow-card-hover hover:border-green-300 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -477,7 +479,7 @@ const Dashboard: React.FC = () => {
                     </CardContent>
                   </Card> : <ScrollArea className="h-[520px]">
                     <div className="space-y-4 pr-4">
-                      {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="bg-white shadow-sm border border-purple-200 hover:shadow-card-hover hover:border-purple-300 transition-all duration-300">
+                      {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="bg-slate-50 shadow-md border border-gray-200/60 hover:shadow-card-hover hover:border-purple-300 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6 py-[5px]">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
@@ -533,4 +535,5 @@ const Dashboard: React.FC = () => {
       {previewContent && <ContentPreview content={previewContent.content} title={previewContent.title} type={previewContent.type} onClose={() => setPreviewContent(null)} />}
     </DashboardLayout>;
 };
+
 export default Dashboard;
