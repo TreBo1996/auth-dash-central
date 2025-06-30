@@ -1,20 +1,21 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, MapPin, Calendar, Briefcase, User } from 'lucide-react';
+import { Search, MapPin, Calendar, Briefcase, User, Building } from 'lucide-react';
 
 interface JobSearchFormProps {
   onSearch: (data: {
     query: string;
     location: string;
-    page?: number;
-    resultsPerPage?: number;
-    datePosted?: string;
-    jobType?: string;
-    experienceLevel?: string;
+    remoteType?: string;
+    employmentType?: string;
+    seniorityLevel?: string;
+    company?: string;
+    maxAge?: number;
   }) => void;
   loading: boolean;
 }
@@ -22,9 +23,11 @@ interface JobSearchFormProps {
 export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading }) => {
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
-  const [datePosted, setDatePosted] = useState('any');
-  const [jobType, setJobType] = useState('any');
-  const [experienceLevel, setExperienceLevel] = useState('any');
+  const [remoteType, setRemoteType] = useState('');
+  const [employmentType, setEmploymentType] = useState('');
+  const [seniorityLevel, setSeniorityLevel] = useState('');
+  const [company, setCompany] = useState('');
+  const [maxAge, setMaxAge] = useState('30');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,11 +35,11 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
       onSearch({
         query: query.trim(),
         location: location.trim(),
-        page: 1,
-        resultsPerPage: 100, // Changed to 100
-        datePosted: datePosted === 'any' ? '' : datePosted,
-        jobType: jobType === 'any' ? '' : jobType,
-        experienceLevel: experienceLevel === 'any' ? '' : experienceLevel
+        remoteType: remoteType || undefined,
+        employmentType: employmentType || undefined,
+        seniorityLevel: seniorityLevel || undefined,
+        company: company.trim() || undefined,
+        maxAge: parseInt(maxAge) || 30
       });
     }
   };
@@ -46,7 +49,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Search className="h-5 w-5" />
-          Search for Jobs
+          Search Jobs in Database
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -70,7 +73,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
                 <Input
                   id="job-location"
                   type="text"
-                  placeholder="e.g., New York, Remote, San Francisco"
+                  placeholder="e.g., New York, San Francisco"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="pl-10"
@@ -79,55 +82,88 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({ onSearch, loading 
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="date-posted">Date Posted</Label>
-              <Select value={datePosted} onValueChange={setDatePosted}>
+              <Label htmlFor="company">Company</Label>
+              <div className="relative">
+                <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="company"
+                  type="text"
+                  placeholder="e.g., Google, Microsoft"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="max-age">Job Age (Days)</Label>
+              <Select value={maxAge} onValueChange={setMaxAge}>
                 <SelectTrigger>
                   <Calendar className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Any time" />
+                  <SelectValue placeholder="Any age" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="any">Any time</SelectItem>
-                  <SelectItem value="day">Past 24 hours</SelectItem>
-                  <SelectItem value="3days">Past 3 days</SelectItem>
-                  <SelectItem value="week">Past week</SelectItem>
-                  <SelectItem value="month">Past month</SelectItem>
+                  <SelectItem value="1">Today</SelectItem>
+                  <SelectItem value="3">Past 3 days</SelectItem>
+                  <SelectItem value="7">Past week</SelectItem>
+                  <SelectItem value="14">Past 2 weeks</SelectItem>
+                  <SelectItem value="30">Past month</SelectItem>
+                  <SelectItem value="90">Past 3 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="remote-type">Remote Type</Label>
+              <Select value={remoteType} onValueChange={setRemoteType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Any remote type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any remote type</SelectItem>
+                  <SelectItem value="remote">Remote</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                  <SelectItem value="onsite">On-site</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="job-type">Job Type</Label>
-              <Select value={jobType} onValueChange={setJobType}>
+              <Label htmlFor="employment-type">Employment Type</Label>
+              <Select value={employmentType} onValueChange={setEmploymentType}>
                 <SelectTrigger>
                   <Briefcase className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Any type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="any">Any type</SelectItem>
-                  <SelectItem value="full-time">Full-time</SelectItem>
-                  <SelectItem value="part-time">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="internship">Internship</SelectItem>
-                  <SelectItem value="temporary">Temporary</SelectItem>
+                  <SelectItem value="">Any type</SelectItem>
+                  <SelectItem value="Full-time">Full-time</SelectItem>
+                  <SelectItem value="Part-time">Part-time</SelectItem>
+                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Internship">Internship</SelectItem>
+                  <SelectItem value="Temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="experience-level">Experience Level</Label>
-              <Select value={experienceLevel} onValueChange={setExperienceLevel}>
+              <Label htmlFor="seniority-level">Seniority Level</Label>
+              <Select value={seniorityLevel} onValueChange={setSeniorityLevel}>
                 <SelectTrigger>
                   <User className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Any level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="any">Any level</SelectItem>
-                  <SelectItem value="entry-level">Entry level</SelectItem>
-                  <SelectItem value="mid-level">Mid level</SelectItem>
-                  <SelectItem value="senior-level">Senior level</SelectItem>
-                  <SelectItem value="executive">Executive</SelectItem>
+                  <SelectItem value="">Any level</SelectItem>
+                  <SelectItem value="Entry level">Entry level</SelectItem>
+                  <SelectItem value="Associate">Associate</SelectItem>
+                  <SelectItem value="Mid-Senior level">Mid-Senior level</SelectItem>
+                  <SelectItem value="Director">Director</SelectItem>
+                  <SelectItem value="Executive">Executive</SelectItem>
                 </SelectContent>
               </Select>
             </div>

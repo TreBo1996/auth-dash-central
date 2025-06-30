@@ -1,10 +1,14 @@
+
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 interface Job {
+  id: string;
   title: string;
   company: string;
   location: string;
@@ -12,55 +16,102 @@ interface Job {
   salary: string | null;
   posted_at: string;
   job_url: string;
+  apply_url: string;
   source: string;
   via: string;
   thumbnail?: string;
+  logo_url?: string;
   job_type?: string | null;
+  employment_type?: string | null;
   experience_level?: string | null;
-  job_highlights?: string;
-  requirements?: string;
-  responsibilities?: string;
-  benefits?: string;
+  seniority_level?: string | null;
+  remote_type?: string | null;
+  company_size?: string | null;
+  industry?: string | null;
+  job_function?: string | null;
+  scraped_at: string;
+  quality_score: number;
+  relevance_score: number;
 }
 
 interface SearchParams {
   query: string;
   location: string;
-  page?: number;
-  resultsPerPage?: number;
-  datePosted?: string;
-  jobType?: string;
-  experienceLevel?: string;
+  remoteType?: string;
+  employmentType?: string;
+  seniorityLevel?: string;
+  company?: string;
+  maxAge?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export const JobSearch: React.FC = () => {
-  const [allJobs, setAllJobs] = useState<Job[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const [pagination, setPagination] = useState<any>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [fromCache, setFromCache] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null);
+  const [scrapingJobs, setScrapingJobs] = useState(false);
 
-  const JOBS_PER_PAGE = 10;
-
-  const performSearch = async (searchParams: SearchParams, forceRefresh = false) => {
+  const performDatabaseSearch = async (searchParams: SearchParams) => {
     setLoading(true);
-    setCurrentPage(1);
-    setAllJobs([]);
     setSearchPerformed(true);
-    setDebugInfo(null);
     setWarnings([]);
 
     try {
-      console.log('Performing cached search:', searchParams);
+      console.log('Searching database for jobs:', searchParams);
 
-      const { data, error } = await supabase.functions.invoke('cached-job-search', {
-        body: { 
-          ...searchParams, 
-          resultsPerPage: 50,
-          forceRefresh 
+      const { data, error } = await supabase.functions.invoke('database-job-search', {
+        body: searchParams
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const searchResults = data.jobs || [];
+      setJobs(searchResults);
+      setPagination(data.pagination);
+      
+      if (data.warnings && data.warnings.length > 0) {
+        setWarnings(data.warnings);
+      }
+
+      console.log('Database search completed:', {
+        totalJobsFound: searchResults.length,
+        totalResults: data.totalResults
+      });
+
+      // If we have very few results, suggest scraping new jobs
+      if (searchResults.length < 5) {
+        setWarnings(prev => [...prev, 'Few jobs found in database. Consider scraping fresh jobs for more results.']);
+      }
+
+    } catch (error) {
+      console.error('Database search error:', error);
+      setJobs([]);
+      setPagination(null);
+      setWarnings(['Search failed. Please try again.']);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scrapeNewJobs = async () => {
+    if (!lastSearchParams) return;
+
+    setScrapingJobs(true);
+    try {
+      console.log('Scraping new jobs from Apify...');
+
+      const { data, error } = await supabase.functions.invoke('apify-job-scraper', {
+        body: {
+          query: lastSearchParams.query,
+          location: lastSearchParams.location,
+          maxJobs: 100,
+          forceRefresh: true
         }
       });
 
@@ -68,63 +119,38 @@ export const JobSearch: React.FC = () => {
         throw error;
       }
 
-      const newJobs = data.jobs || [];
-      setAllJobs(newJobs);
-      setFromCache(data.fromCache || false);
-      setLastUpdated(data.lastUpdated);
-      setDebugInfo(data.debug_info);
+      console.log('Scraping completed:', data.debug_info);
       
-      if (newJobs.length === 0) {
-        setWarnings(['No jobs found. Try adjusting your search terms or filters.']);
-      } else if (data.fromCache) {
-        setWarnings([`Showing cached results (last updated: ${new Date(data.lastUpdated).toLocaleString()})`]);
-      }
+      // Refresh the search results
+      performDatabaseSearch(lastSearchParams);
       
-      console.log('Search completed:', {
-        totalJobsReceived: newJobs.length,
-        fromCache: data.fromCache,
-        debugInfo: data.debug_info
-      });
     } catch (error) {
-      console.error('Job search error:', error);
-      setAllJobs([]);
-      setWarnings(['Search failed. Please try again.']);
+      console.error('Scraping error:', error);
+      setWarnings(prev => [...prev, 'Failed to scrape new jobs. Please try again later.']);
     } finally {
-      setLoading(false);
+      setScrapingJobs(false);
     }
   };
 
   const handleSearch = async (searchData: SearchParams) => {
-    await performSearch(searchData);
-  };
-
-  const handleRefresh = async () => {
-    if (debugInfo?.search_params) {
-      await performSearch(debugInfo.search_params, true);
-    }
+    setLastSearchParams(searchData);
+    await performDatabaseSearch({
+      ...searchData,
+      limit: 50,
+      offset: 0
+    });
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    if (!lastSearchParams || !pagination) return;
+    
+    const offset = (page - 1) * pagination.resultsPerPage;
+    performDatabaseSearch({
+      ...lastSearchParams,
+      offset
+    });
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const getCurrentPageJobs = () => {
-    const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
-    const endIndex = startIndex + JOBS_PER_PAGE;
-    return allJobs.slice(startIndex, endIndex);
-  };
-
-  const getPaginationData = () => {
-    const totalPages = Math.ceil(allJobs.length / JOBS_PER_PAGE);
-    return {
-      currentPage,
-      totalPages,
-      hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1,
-      totalResults: allJobs.length,
-      resultsPerPage: JOBS_PER_PAGE
-    };
   };
 
   return (
@@ -133,28 +159,31 @@ export const JobSearch: React.FC = () => {
         <div className="text-center">
           <h1 className="text-3xl font-bold">Job Search</h1>
           <p className="text-muted-foreground">
-            Find and save job opportunities from across the web
+            Search our database of job opportunities
           </p>
-          {debugInfo && (
-            <div className="text-xs text-muted-foreground mt-2 space-y-1">
-              <p>
-                {fromCache ? 'Cached results' : 'Fresh results'} • {allJobs.length} jobs
-                {debugInfo.cache_hit && ` • Last updated: ${new Date(lastUpdated!).toLocaleString()}`}
-              </p>
-              {!fromCache && debugInfo.jobs_fetched && (
-                <p>Fetched {debugInfo.jobs_fetched} jobs from SerpAPI</p>
-              )}
-            </div>
-          )}
         </div>
 
         <JobSearchForm onSearch={handleSearch} loading={loading} />
         
+        {searchPerformed && jobs.length < 10 && !loading && (
+          <div className="flex justify-center">
+            <Button 
+              onClick={scrapeNewJobs} 
+              disabled={scrapingJobs}
+              variant="outline"
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${scrapingJobs ? 'animate-spin' : ''}`} />
+              {scrapingJobs ? 'Scraping Fresh Jobs...' : 'Get Fresh Jobs'}
+            </Button>
+          </div>
+        )}
+        
         <JobSearchResults 
-          jobs={getCurrentPageJobs()} 
+          jobs={jobs} 
           loading={loading} 
           searchPerformed={searchPerformed}
-          pagination={searchPerformed ? getPaginationData() : undefined}
+          pagination={pagination}
           warnings={warnings}
           onPageChange={handlePageChange}
           canLoadMore={false}
@@ -162,18 +191,6 @@ export const JobSearch: React.FC = () => {
           loadingMore={false}
           searchVariationsUsed={[]}
         />
-
-        {searchPerformed && fromCache && (
-          <div className="flex justify-center">
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-            >
-              {loading ? 'Refreshing...' : 'Refresh with Latest Results'}
-            </button>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

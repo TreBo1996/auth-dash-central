@@ -11,19 +11,33 @@ export type Database = {
     Tables: {
       cached_jobs: {
         Row: {
+          apify_job_id: string | null
+          apply_url: string | null
           company: string
+          company_size: string | null
           created_at: string
+          data_source: string | null
           description: string | null
+          employment_type: string | null
           experience_level: string | null
           first_seen_at: string
           id: string
+          industry: string | null
           is_expired: boolean | null
+          job_board: string | null
+          job_function: string | null
           job_type: string | null
           job_url: string
           last_seen_at: string
           location: string | null
+          logo_url: string | null
           posted_at: string | null
+          quality_score: number | null
+          remote_type: string | null
           salary: string | null
+          scraped_at: string | null
+          search_vector: unknown | null
+          seniority_level: string | null
           source: string
           thumbnail: string | null
           title: string
@@ -31,19 +45,33 @@ export type Database = {
           via: string | null
         }
         Insert: {
+          apify_job_id?: string | null
+          apply_url?: string | null
           company: string
+          company_size?: string | null
           created_at?: string
+          data_source?: string | null
           description?: string | null
+          employment_type?: string | null
           experience_level?: string | null
           first_seen_at?: string
           id?: string
+          industry?: string | null
           is_expired?: boolean | null
+          job_board?: string | null
+          job_function?: string | null
           job_type?: string | null
           job_url: string
           last_seen_at?: string
           location?: string | null
+          logo_url?: string | null
           posted_at?: string | null
+          quality_score?: number | null
+          remote_type?: string | null
           salary?: string | null
+          scraped_at?: string | null
+          search_vector?: unknown | null
+          seniority_level?: string | null
           source?: string
           thumbnail?: string | null
           title: string
@@ -51,19 +79,33 @@ export type Database = {
           via?: string | null
         }
         Update: {
+          apify_job_id?: string | null
+          apply_url?: string | null
           company?: string
+          company_size?: string | null
           created_at?: string
+          data_source?: string | null
           description?: string | null
+          employment_type?: string | null
           experience_level?: string | null
           first_seen_at?: string
           id?: string
+          industry?: string | null
           is_expired?: boolean | null
+          job_board?: string | null
+          job_function?: string | null
           job_type?: string | null
           job_url?: string
           last_seen_at?: string
           location?: string | null
+          logo_url?: string | null
           posted_at?: string | null
+          quality_score?: number | null
+          remote_type?: string | null
           salary?: string | null
+          scraped_at?: string | null
+          search_vector?: unknown | null
+          seniority_level?: string | null
           source?: string
           thumbnail?: string | null
           title?: string
@@ -757,6 +799,45 @@ export type Database = {
       normalize_search_query: {
         Args: { input_query: string }
         Returns: string
+      }
+      search_jobs: {
+        Args: {
+          search_query?: string
+          location_filter?: string
+          remote_filter?: string
+          employment_type_filter?: string
+          seniority_filter?: string
+          company_filter?: string
+          max_age_days?: number
+          result_limit?: number
+          result_offset?: number
+        }
+        Returns: {
+          id: string
+          title: string
+          company: string
+          location: string
+          description: string
+          salary: string
+          posted_at: string
+          job_url: string
+          apply_url: string
+          source: string
+          via: string
+          thumbnail: string
+          logo_url: string
+          job_type: string
+          employment_type: string
+          experience_level: string
+          seniority_level: string
+          remote_type: string
+          company_size: string
+          industry: string
+          job_function: string
+          scraped_at: string
+          quality_score: number
+          relevance_score: number
+        }[]
       }
     }
     Enums: {
