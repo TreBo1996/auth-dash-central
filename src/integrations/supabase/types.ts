@@ -114,6 +114,63 @@ export type Database = {
         }
         Relationships: []
       }
+      employer_profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_description: string | null
+          company_name: string
+          company_size: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          country: string | null
+          created_at: string
+          id: string
+          industry: string | null
+          logo_url: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_description?: string | null
+          company_name: string
+          company_size?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_description?: string | null
+          company_name?: string
+          company_size?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       interview_responses: {
         Row: {
           audio_file_url: string | null
@@ -226,6 +283,57 @@ export type Database = {
           },
         ]
       }
+      job_applications: {
+        Row: {
+          applicant_id: string
+          applied_at: string
+          cover_letter: string | null
+          id: string
+          job_posting_id: string
+          notes: string | null
+          resume_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          applied_at?: string
+          cover_letter?: string | null
+          id?: string
+          job_posting_id: string
+          notes?: string | null
+          resume_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          applied_at?: string
+          cover_letter?: string | null
+          id?: string
+          job_posting_id?: string
+          notes?: string | null
+          resume_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_posting_id_fkey"
+            columns: ["job_posting_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_applications_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_descriptions: {
         Row: {
           company: string | null
@@ -276,6 +384,92 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      job_postings: {
+        Row: {
+          application_count: number | null
+          benefits: string[] | null
+          created_at: string
+          description: string
+          employer_id: string
+          employment_type: string | null
+          experience_level: string | null
+          expires_at: string | null
+          id: string
+          industry: string | null
+          is_active: boolean | null
+          job_function: string | null
+          location: string | null
+          remote_type: string | null
+          requirements: string[] | null
+          responsibilities: string[] | null
+          salary_currency: string | null
+          salary_max: number | null
+          salary_min: number | null
+          seniority_level: string | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          application_count?: number | null
+          benefits?: string[] | null
+          created_at?: string
+          description: string
+          employer_id: string
+          employment_type?: string | null
+          experience_level?: string | null
+          expires_at?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          job_function?: string | null
+          location?: string | null
+          remote_type?: string | null
+          requirements?: string[] | null
+          responsibilities?: string[] | null
+          salary_currency?: string | null
+          salary_max?: number | null
+          salary_min?: number | null
+          seniority_level?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          application_count?: number | null
+          benefits?: string[] | null
+          created_at?: string
+          description?: string
+          employer_id?: string
+          employment_type?: string | null
+          experience_level?: string | null
+          expires_at?: string | null
+          id?: string
+          industry?: string | null
+          is_active?: boolean | null
+          job_function?: string | null
+          location?: string | null
+          remote_type?: string | null
+          requirements?: string[] | null
+          responsibilities?: string[] | null
+          salary_currency?: string | null
+          salary_max?: number | null
+          salary_min?: number | null
+          seniority_level?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_postings_employer_id_fkey"
+            columns: ["employer_id"]
+            isOneToOne: false
+            referencedRelation: "employer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_search_results: {
         Row: {
@@ -755,6 +949,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_role_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          preferred_role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preferred_role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preferred_role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_template_preferences: {
         Row: {
           created_at: string
@@ -795,6 +1037,13 @@ export type Database = {
       cleanup_old_jobs: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
       }
       normalize_search_query: {
         Args: { input_query: string }
@@ -841,7 +1090,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "job_seeker" | "employer" | "both"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -956,6 +1205,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["job_seeker", "employer", "both"],
+    },
   },
 } as const

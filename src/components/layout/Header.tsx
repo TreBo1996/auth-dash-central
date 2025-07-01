@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { LogOut, User, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { RoleSwitcher } from './RoleSwitcher';
+
 export const Header: React.FC = () => {
   const {
     user,
@@ -19,15 +21,17 @@ export const Header: React.FC = () => {
       description: "You have been signed out successfully."
     });
   };
-  return <header className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 border-b border-indigo-300/20 sticky top-0 z-50 backdrop-blur-sm">
-      <div className="container mx-auto px-4 py-4">
+  return (
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/home" className="flex items-center space-x-2 text-white">
-            <Sparkles className="h-8 w-8 text-yellow-300" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">RezLit</span>
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-900">AI Job Tools</h1>
           </Link>
           
-          <nav className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
+            <RoleSwitcher />
+            
             {user ? <>
                 <Link to="/dashboard">
                   <Button variant="ghost" className="text-white hover:bg-white/20 hover:text-white border-0">
@@ -54,8 +58,9 @@ export const Header: React.FC = () => {
                   </Button>
                 </Link>
               </>}
-          </nav>
+          </div>
         </div>
       </div>
-    </header>;
+    </header>
+  );
 };
