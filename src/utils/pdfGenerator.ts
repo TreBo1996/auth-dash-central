@@ -38,7 +38,7 @@ const getPDFOptions = () => {
   };
 };
 
-// Simplified HTML cleaning with focused page break controls
+// Simplified HTML cleaning with focused page break controls and inline style overrides
 const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
@@ -46,12 +46,12 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Simplified page break styles - following the user's specified approach
+  // Enhanced page break styles with inline style overrides
   const pageBreakStyles = `
     <style>
       @page {
         size: 8.5in 11in;
-        margin: 0.5in; /* Keep existing 0.5in margins */
+        margin: 0.5in;
       }
       
       /* Force proper text rendering and sizing */
@@ -81,6 +81,32 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
 
       /* Keep at least two lines together in any paragraph or list item */
       p, li, div { orphans:2 !important; widows:2 !important; }
+      
+      /* ---- INLINE STYLE AND MARGIN OVERRIDES ---- */
+      /* Target h2 elements with marginTop inline style and reduce spacing */
+      h2[style*="marginTop"] { 
+        margin-top: 2px !important; 
+      }
+      
+      /* Reduce section container margins */
+      .mb-6 { 
+        margin-bottom: 8px !important; 
+      }
+      
+      /* Prevent excessive spacing between consecutive sections */
+      .mb-6 + .mb-6 {
+        margin-top: -8px !important;
+      }
+      
+      /* Additional spacing control for section transitions */
+      .mb-2 {
+        margin-bottom: 4px !important;
+      }
+      
+      /* Ensure section headings are close to their content */
+      h2 + div {
+        margin-top: 2px !important;
+      }
     </style>
   `;
   
