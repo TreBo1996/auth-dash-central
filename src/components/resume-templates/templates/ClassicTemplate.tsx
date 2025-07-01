@@ -206,7 +206,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           
           <div className="space-y-4 mt-2">
             {parsedData.experience.map((exp, index) => (
-              <div key={index} className="mb-4">
+              <div key={index} className="mb-4 job-entry">
                 {/* Job Title and Date */}
                 <div className="flex justify-between items-baseline mb-0">
                   <h3 
