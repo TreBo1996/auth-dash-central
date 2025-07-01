@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, TestTube } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Job {
   id: string;
@@ -54,6 +54,8 @@ export const JobSearch: React.FC = () => {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [lastSearchParams, setLastSearchParams] = useState<SearchParams | null>(null);
   const [scrapingJobs, setScrapingJobs] = useState(false);
+  const [testingBatchScraper, setTestingBatchScraper] = useState(false);
+  const [batchScraperResults, setBatchScraperResults] = useState<any>(null);
 
   const performDatabaseSearch = async (searchParams: SearchParams) => {
     setLoading(true);
@@ -131,6 +133,37 @@ export const JobSearch: React.FC = () => {
     }
   };
 
+  const testBatchScraper = async () => {
+    setTestingBatchScraper(true);
+    setBatchScraperResults(null);
+    
+    try {
+      console.log('Testing batch job scraper...');
+
+      const { data, error } = await supabase.functions.invoke('scheduled-job-scraper', {
+        body: {
+          jobTitles: ['Business Analyst', 'Project Manager', 'Software Engineer'], // Test with 3 titles first
+          maxJobsPerTitle: 20, // Limit to 20 jobs per title for testing
+          locations: ['United States', 'Remote']
+        }
+      });
+
+      if (error) {
+        console.error('Batch scraper test error:', error);
+        throw error;
+      }
+
+      console.log('Batch scraper test results:', data);
+      setBatchScraperResults(data);
+      
+    } catch (error) {
+      console.error('Batch scraper test failed:', error);
+      setWarnings(prev => [...prev, `Batch scraper test failed: ${error.message}`]);
+    } finally {
+      setTestingBatchScraper(false);
+    }
+  };
+
   const handleSearch = async (searchData: SearchParams) => {
     console.log('HandleSearch called with:', searchData);
     setLastSearchParams(searchData);
@@ -161,6 +194,49 @@ export const JobSearch: React.FC = () => {
           <p className="text-muted-foreground">
             Search our database of job opportunities
           </p>
+        </div>
+
+        {/* Test Batch Scraper Section */}
+        <div className="border rounded-lg p-4 bg-blue-50">
+          <h3 className="font-semibold mb-2">Test Batch Job Scraper</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Test the batch scraper with 3 job titles to verify it's working correctly.
+          </p>
+          <Button 
+            onClick={testBatchScraper} 
+            disabled={testingBatchScraper}
+            variant="outline"
+            className="gap-2"
+          >
+            <TestTube className={`h-4 w-4 ${testingBatchScraper ? 'animate-spin' : ''}`} />
+            {testingBatchScraper ? 'Testing Batch Scraper...' : 'Test Batch Scraper'}
+          </Button>
+          
+          {batchScraperResults && (
+            <Alert className="mt-4">
+              <AlertDescription>
+                <div className="space-y-2">
+                  <div><strong>Batch Scraper Test Results:</strong></div>
+                  <div>Total Job Titles: {batchScraperResults.summary?.totalJobTitles || 0}</div>
+                  <div>Successful: {batchScraperResults.summary?.successfulJobs || 0}</div>
+                  <div>Failed: {batchScraperResults.summary?.failedJobs || 0}</div>
+                  <div>Total Jobs Scraped: {batchScraperResults.summary?.totalJobsScraped || 0}</div>
+                  <div>Total Jobs Inserted: {batchScraperResults.summary?.totalJobsInserted || 0}</div>
+                  
+                  {batchScraperResults.results && (
+                    <div className="mt-3">
+                      <div className="text-sm font-medium">Results by Job Title:</div>
+                      {batchScraperResults.results.map((result: any, index: number) => (
+                        <div key={index} className="text-xs ml-2">
+                          • {result.jobTitle}: {result.success ? `${result.jobsInserted}/${result.jobsScraped} inserted` : `Failed - ${result.error}`}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <JobSearchForm onSearch={handleSearch} loading={loading} />
