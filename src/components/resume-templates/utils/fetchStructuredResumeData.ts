@@ -53,10 +53,15 @@ const isSummaryData = (data: any): data is SummaryData => {
 export const fetchStructuredResumeData = async (optimizedResumeId: string): Promise<StructuredResumeData> => {
   console.log('fetchStructuredResumeData: Starting fetch for ID:', optimizedResumeId);
 
+  if (!optimizedResumeId) {
+    console.error('fetchStructuredResumeData: No optimizedResumeId provided');
+    throw new Error('Resume ID is required');
+  }
+
   try {
     // Add timeout for the entire operation
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Database query timed out')), 25000);
+      setTimeout(() => reject(new Error('Database query timed out after 15 seconds')), 15000);
     });
 
     // Fetch all resume data in parallel with individual error handling
@@ -70,6 +75,10 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .then(result => {
           console.log('fetchStructuredResumeData: Sections query result:', result);
           return { type: 'sections', ...result };
+        })
+        .catch(error => {
+          console.error('fetchStructuredResumeData: Sections query failed:', error);
+          return { type: 'sections', data: [], error };
         }),
       supabase
         .from('resume_experiences')
@@ -79,6 +88,10 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .then(result => {
           console.log('fetchStructuredResumeData: Experiences query result:', result);
           return { type: 'experiences', ...result };
+        })
+        .catch(error => {
+          console.error('fetchStructuredResumeData: Experiences query failed:', error);
+          return { type: 'experiences', data: [], error };
         }),
       supabase
         .from('resume_skills')
@@ -88,6 +101,10 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .then(result => {
           console.log('fetchStructuredResumeData: Skills query result:', result);
           return { type: 'skills', ...result };
+        })
+        .catch(error => {
+          console.error('fetchStructuredResumeData: Skills query failed:', error);
+          return { type: 'skills', data: [], error };
         }),
       supabase
         .from('resume_education')
@@ -97,6 +114,10 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .then(result => {
           console.log('fetchStructuredResumeData: Education query result:', result);
           return { type: 'education', ...result };
+        })
+        .catch(error => {
+          console.error('fetchStructuredResumeData: Education query failed:', error);
+          return { type: 'education', data: [], error };
         }),
       supabase
         .from('resume_certifications')
@@ -106,6 +127,10 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .then(result => {
           console.log('fetchStructuredResumeData: Certifications query result:', result);
           return { type: 'certifications', ...result };
+        })
+        .catch(error => {
+          console.error('fetchStructuredResumeData: Certifications query failed:', error);
+          return { type: 'certifications', data: [], error };
         })
     ];
 
@@ -123,30 +148,14 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
     const educationResult = results.find(r => r.type === 'education');
     const certificationsResult = results.find(r => r.type === 'certifications');
 
-    // Handle individual query errors with fallbacks
-    if (sectionsResult?.error) {
-      console.error('fetchStructuredResumeData: Sections query error:', sectionsResult.error);
-      console.log('fetchStructuredResumeData: Using fallback for sections');
-    }
+    // Check for critical errors
+    const criticalErrors = [sectionsResult, experiencesResult, skillsResult, educationResult]
+      .filter(result => result?.error && (!result?.data || result.data.length === 0))
+      .map(result => result.error);
 
-    if (experiencesResult?.error) {
-      console.error('fetchStructuredResumeData: Experiences query error:', experiencesResult.error);
-      console.log('fetchStructuredResumeData: Using fallback for experiences');
-    }
-
-    if (skillsResult?.error) {
-      console.error('fetchStructuredResumeData: Skills query error:', skillsResult.error);
-      console.log('fetchStructuredResumeData: Using fallback for skills');
-    }
-
-    if (educationResult?.error) {
-      console.error('fetchStructuredResumeData: Education query error:', educationResult.error);
-      console.log('fetchStructuredResumeData: Using fallback for education');
-    }
-
-    if (certificationsResult?.error) {
-      console.error('fetchStructuredResumeData: Certifications query error:', certificationsResult.error);
-      console.log('fetchStructuredResumeData: Using fallback for certifications');
+    if (criticalErrors.length > 2) {
+      console.error('fetchStructuredResumeData: Too many critical errors:', criticalErrors);
+      throw new Error('Multiple database queries failed - unable to load structured data');
     }
 
     // Extract data from sections with fallbacks
@@ -175,7 +184,7 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         title: exp.title || 'Job Title',
         company: exp.company || 'Company Name',
         duration: exp.duration || '2023 - 2024',
-        bullets: exp.bullets || ['Job responsibility']
+        bullets: Array.isArray(exp.bullets) ? exp.bullets : ['Job responsibility']
       })),
       education: (educationResult?.data || []).map(edu => ({
         degree: edu.degree || 'Degree',
@@ -184,7 +193,7 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
       })),
       skills: (skillsResult?.data || []).map(skill => ({
         category: skill.category || 'Skills',
-        items: skill.items || []
+        items: Array.isArray(skill.items) ? skill.items : []
       })),
       certifications: (certificationsResult?.data || []).map(cert => ({
         name: cert.name || 'Certification Name',
@@ -192,6 +201,17 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         year: cert.year || '2023'
       }))
     };
+
+    // Validate that we have meaningful data
+    const hasValidData = structuredData.name !== 'Professional Name' || 
+                        structuredData.experience.length > 0 || 
+                        structuredData.skills.length > 0 || 
+                        structuredData.education.length > 0;
+
+    if (!hasValidData) {
+      console.warn('fetchStructuredResumeData: No meaningful structured data found');
+      throw new Error('No structured resume data available');
+    }
 
     console.log('fetchStructuredResumeData: Successfully built structured data:', {
       name: structuredData.name,
@@ -206,32 +226,17 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
   } catch (error) {
     console.error('fetchStructuredResumeData: Critical error:', error);
     
-    // Provide fallback data structure
-    const fallbackData: StructuredResumeData = {
-      name: 'Professional Name',
-      email: '',
-      phone: '',
-      location: '',
-      summary: '',
-      experience: [{
-        title: 'Job Title',
-        company: 'Company Name',
-        duration: '2023 - 2024',
-        bullets: ['Job responsibility']
-      }],
-      education: [{
-        degree: 'Degree',
-        school: 'University Name',
-        year: '2020'
-      }],
-      skills: [{
-        category: 'Skills',
-        items: ['Skill 1', 'Skill 2']
-      }],
-      certifications: []
-    };
+    // More specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('timed out')) {
+        throw new Error('Request timed out - please try again');
+      }
+      if (error.message.includes('No structured resume data')) {
+        throw new Error('Structured resume data not available - will use text parsing');
+      }
+      throw error;
+    }
 
-    console.log('fetchStructuredResumeData: Returning fallback data due to error');
-    throw new Error(`Failed to fetch resume data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error('Failed to fetch resume data - please try again');
   }
 };

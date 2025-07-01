@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,39 +24,86 @@ interface OptimizedResume {
 }
 
 const ResumeTemplates: React.FC = () => {
-  const { optimizedResumeId } = useParams<{ optimizedResumeId: string }>();
+  const { resumeId } = useParams<{ resumeId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [optimizedResume, setOptimizedResume] = useState<OptimizedResume | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState('sidebar');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (optimizedResumeId) {
-      fetchOptimizedResume();
+    console.log('ResumeTemplates: Component mounted with resumeId:', resumeId);
+    
+    if (!resumeId) {
+      console.error('ResumeTemplates: No resumeId provided in URL params');
+      setError('No resume ID provided');
+      setLoading(false);
+      return;
     }
-  }, [optimizedResumeId]);
+
+    fetchOptimizedResume();
+  }, [resumeId]);
 
   const fetchOptimizedResume = async () => {
+    if (!resumeId) {
+      console.error('ResumeTemplates: Cannot fetch - resumeId is undefined');
+      setError('Resume ID is required');
+      setLoading(false);
+      return;
+    }
+
+    console.log('ResumeTemplates: Starting fetch for resumeId:', resumeId);
+    setLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
+      // Add timeout for the query
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 10000);
+      });
+
+      const fetchPromise = supabase
         .from('optimized_resumes')
         .select(`
           *,
           resumes(file_name),
           job_descriptions(title)
         `)
-        .eq('id', optimizedResumeId)
+        .eq('id', resumeId)
         .single();
 
-      if (error) throw error;
+      console.log('ResumeTemplates: Executing database query...');
+      const { data, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+      if (fetchError) {
+        console.error('ResumeTemplates: Database error:', fetchError);
+        throw new Error(`Failed to load resume: ${fetchError.message}`);
+      }
+
+      if (!data) {
+        console.error('ResumeTemplates: No data returned for resumeId:', resumeId);
+        throw new Error('Resume not found');
+      }
+
+      console.log('ResumeTemplates: Successfully fetched resume data:', {
+        id: data.id,
+        hasGeneratedText: !!data.generated_text,
+        textLength: data.generated_text?.length || 0,
+        fileName: data.resumes?.file_name,
+        jobTitle: data.job_descriptions?.title
+      });
+
       setOptimizedResume(data);
     } catch (error) {
-      console.error('Error fetching optimized resume:', error);
+      console.error('ResumeTemplates: Error in fetchOptimizedResume:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load resume data';
+      setError(errorMessage);
+      
       toast({
         title: "Error",
-        description: "Failed to load resume data.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -64,16 +112,28 @@ const ResumeTemplates: React.FC = () => {
   };
 
   const handlePrint = () => {
+    console.log('ResumeTemplates: Print initiated');
     window.print();
   };
 
   const handleDownloadPDF = () => {
     const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(' ', '-')}.pdf`;
+    console.log('ResumeTemplates: PDF download initiated:', fileName);
     
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       const resumeContent = document.getElementById('resume-preview')?.innerHTML;
+      if (!resumeContent) {
+        console.error('ResumeTemplates: No resume content found for PDF generation');
+        toast({
+          title: "Error",
+          description: "Unable to generate PDF - resume content not found",
+          variant: "destructive"
+        });
+        return;
+      }
+
       printWindow.document.write(`
         <html>
           <head>
@@ -97,10 +157,18 @@ const ResumeTemplates: React.FC = () => {
         printWindow.print();
         printWindow.close();
       }, 250);
+    } else {
+      console.error('ResumeTemplates: Unable to open print window');
+      toast({
+        title: "Error",
+        description: "Unable to open print window",
+        variant: "destructive"
+      });
     }
   };
 
   if (loading) {
+    console.log('ResumeTemplates: Rendering loading state');
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
@@ -110,11 +178,15 @@ const ResumeTemplates: React.FC = () => {
     );
   }
 
-  if (!optimizedResume) {
+  if (error || !optimizedResume) {
+    console.log('ResumeTemplates: Rendering error state:', { error, hasResume: !!optimizedResume });
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">Resume not found</p>
+          <p className="text-red-600 mb-2">Error: {error || 'Resume not found'}</p>
+          <p className="text-gray-500 mb-4">
+            {error ? 'Please try again or contact support if the issue persists.' : 'The requested resume could not be found.'}
+          </p>
           <Button onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
@@ -123,6 +195,8 @@ const ResumeTemplates: React.FC = () => {
       </DashboardLayout>
     );
   }
+
+  console.log('ResumeTemplates: Rendering main component with resume:', optimizedResume.id);
 
   return (
     <DashboardLayout>
@@ -137,7 +211,7 @@ const ResumeTemplates: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Choose Resume Template</h1>
               <p className="text-gray-600">
-                {optimizedResume.resumes?.file_name} → {optimizedResume.job_descriptions?.title}
+                {optimizedResume.resumes?.file_name || 'Resume'} → {optimizedResume.job_descriptions?.title || 'Job Position'}
               </p>
             </div>
           </div>
@@ -169,7 +243,7 @@ const ResumeTemplates: React.FC = () => {
                     <ResumePreview
                       template={selectedTemplate}
                       resumeData={optimizedResume.generated_text}
-                      optimizedResumeId={optimizedResumeId}
+                      optimizedResumeId={resumeId}
                     />
                   </div>
                 </CardContent>
