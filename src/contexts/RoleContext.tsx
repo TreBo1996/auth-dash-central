@@ -59,7 +59,27 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
         if (rolesError) throw rolesError;
 
-        const roles = rolesData?.map(r => r.role) || [];
+        let roles = rolesData?.map(r => r.role) || [];
+
+        // If user has no roles, create a default job_seeker role
+        if (roles.length === 0) {
+          console.log('User has no roles, creating default job_seeker role');
+          
+          const { error: insertRoleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: user.id,
+              role: 'job_seeker'
+            });
+
+          if (insertRoleError) {
+            console.error('Error creating default role:', insertRoleError);
+          } else {
+            roles = ['job_seeker'];
+            console.log('Successfully created default job_seeker role');
+          }
+        }
+
         setUserRoles(roles);
 
         // Get preferred role
@@ -95,7 +115,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
       } catch (error) {
         console.error('Error loading user roles:', error);
-        setUserRoles(['job_seeker']); // Default fallback
+        // Fallback to job_seeker role if there's an error
+        setUserRoles(['job_seeker']);
         setActiveRole('job_seeker');
         setPreferredRole('job_seeker');
       } finally {
