@@ -12,46 +12,59 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
   const parsedData = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
 
   return (
-    <div className="min-h-[800px] bg-white p-8 max-w-4xl mx-auto" style={{ fontFamily: 'Georgia, serif' }}>
-      {/* Header */}
-      <div className="text-center mb-8 pb-6">
-        <h1 className="text-4xl font-bold text-black mb-4">{parsedData.name}</h1>
-        <div className="text-sm text-gray-700 space-y-1">
-          {parsedData.email && <p>{parsedData.email}</p>}
-          {parsedData.phone && <p>{parsedData.phone}</p>}
-          {parsedData.location && <p>{parsedData.location}</p>}
+    <div className="min-h-[800px] bg-white p-6 max-w-4xl mx-auto text-sm leading-tight" style={{ fontFamily: 'Arial, sans-serif' }}>
+      {/* Header - Left aligned with contact info on one line */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-black mb-2">{parsedData.name}</h1>
+        <div className="text-sm text-gray-800">
+          {[parsedData.phone, parsedData.email, parsedData.location].filter(Boolean).join(' | ')}
         </div>
-        <hr className="border-t-2 border-black mt-4" />
       </div>
 
       {/* Summary */}
       {parsedData.summary && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-black mb-3 uppercase tracking-wide">Professional Summary</h2>
-          <hr className="border-t border-gray-400 mb-4" />
-          <p className="text-gray-800 leading-relaxed">{parsedData.summary}</p>
+        <div className="mb-5">
+          <h2 className="text-sm font-bold text-black mb-2 uppercase tracking-wide">SUMMARY</h2>
+          <hr className="border-t border-black mb-3" />
+          <p className="text-gray-800 leading-relaxed text-sm">{parsedData.summary}</p>
+        </div>
+      )}
+
+      {/* Skills */}
+      {parsedData.skills.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-sm font-bold text-black mb-2 uppercase tracking-wide">SKILLS</h2>
+          <hr className="border-t border-black mb-3" />
+          <div className="space-y-2">
+            {parsedData.skills.map((skillGroup, index) => (
+              <div key={index}>
+                <span className="font-semibold text-black">{skillGroup.category}: </span>
+                <span className="text-gray-800">{skillGroup.items.join(', ')}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Experience */}
       {parsedData.experience.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-black mb-3 uppercase tracking-wide">Professional Experience</h2>
-          <hr className="border-t border-gray-400 mb-4" />
-          <div className="space-y-6">
+        <div className="mb-5">
+          <h2 className="text-sm font-bold text-black mb-2 uppercase tracking-wide">EXPERIENCE</h2>
+          <hr className="border-t border-black mb-3" />
+          <div className="space-y-4">
             {parsedData.experience.map((exp, index) => (
               <div key={index}>
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-1">
                   <div>
-                    <h3 className="text-lg font-bold text-black">{exp.title}</h3>
-                    <p className="text-md font-semibold text-gray-700">{exp.company}</p>
+                    <h3 className="font-bold text-black text-sm">{exp.title}</h3>
+                    <p className="text-sm text-gray-800">{exp.company}</p>
                   </div>
-                  <span className="text-sm text-gray-600 font-medium">{exp.duration}</span>
+                  <span className="text-sm text-gray-700">{exp.duration}</span>
                 </div>
                 {exp.bullets.length > 0 && (
-                  <ul className="ml-4 space-y-1">
+                  <ul className="ml-4 space-y-1 mt-2">
                     {exp.bullets.map((bullet, bulletIndex) => (
-                      <li key={bulletIndex} className="text-gray-800 leading-relaxed list-disc">
+                      <li key={bulletIndex} className="text-gray-800 leading-relaxed text-sm" style={{ listStyleType: 'disc' }}>
                         {bullet}
                       </li>
                     ))}
@@ -63,35 +76,38 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
         </div>
       )}
 
-      {/* Skills */}
-      {parsedData.skills.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-black mb-3 uppercase tracking-wide">Core Competencies</h2>
-          <hr className="border-t border-gray-400 mb-4" />
-          <div className="space-y-3">
-            {parsedData.skills.map((skillGroup, index) => (
-              <div key={index}>
-                <h3 className="font-bold text-black mb-1">{skillGroup.category}:</h3>
-                <p className="text-gray-800 ml-4">{skillGroup.items.join(', ')}</p>
+      {/* Education */}
+      {parsedData.education.length > 0 && (
+        <div>
+          <h2 className="text-sm font-bold text-black mb-2 uppercase tracking-wide">EDUCATION</h2>
+          <hr className="border-t border-black mb-3" />
+          <div className="space-y-2">
+            {parsedData.education.map((edu, index) => (
+              <div key={index} className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-black text-sm">{edu.degree}</h3>
+                  <p className="text-gray-800 text-sm">{edu.school}</p>
+                </div>
+                <span className="text-sm text-gray-700">{edu.year}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Education */}
-      {parsedData.education.length > 0 && (
-        <div>
-          <h2 className="text-xl font-bold text-black mb-3 uppercase tracking-wide">Education</h2>
-          <hr className="border-t border-gray-400 mb-4" />
-          <div className="space-y-3">
-            {parsedData.education.map((edu, index) => (
+      {/* Certifications */}
+      {parsedData.certifications && parsedData.certifications.length > 0 && (
+        <div className="mt-5">
+          <h2 className="text-sm font-bold text-black mb-2 uppercase tracking-wide">CERTIFICATIONS</h2>
+          <hr className="border-t border-black mb-3" />
+          <div className="space-y-2">
+            {parsedData.certifications.map((cert, index) => (
               <div key={index} className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-bold text-black">{edu.degree}</h3>
-                  <p className="text-gray-700">{edu.school}</p>
+                  <h3 className="font-semibold text-black text-sm">{cert.name}</h3>
+                  <p className="text-gray-800 text-sm">{cert.issuer}</p>
                 </div>
-                <span className="text-sm text-gray-600">{edu.year}</span>
+                <span className="text-sm text-gray-700">{cert.year}</span>
               </div>
             ))}
           </div>

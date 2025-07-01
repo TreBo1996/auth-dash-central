@@ -113,14 +113,89 @@ const ResumeTemplates: React.FC = () => {
 
   const handlePrint = () => {
     console.log('ResumeTemplates: Print initiated');
-    window.print();
+    
+    // Add print styles to ensure clean output
+    const printStyles = `
+      <style>
+        @media print {
+          body { margin: 0; padding: 0; }
+          @page { 
+            size: A4; 
+            margin: 0.5in; 
+          }
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
+        }
+        @page :first { 
+          margin-top: 0.5in; 
+        }
+        body {
+          font-family: Arial, sans-serif;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+        }
+      </style>
+    `;
+    
+    const resumeContent = document.getElementById('resume-preview')?.innerHTML;
+    if (!resumeContent) {
+      toast({
+        title: "Error",
+        description: "Unable to print - resume content not found",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Resume</title>
+            ${printStyles}
+          </head>
+          <body>
+            ${resumeContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
   };
 
   const handleDownloadPDF = () => {
     const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(' ', '-')}.pdf`;
     console.log('ResumeTemplates: PDF download initiated:', fileName);
     
-    // Create a new window for printing
+    // Create clean print styles for PDF
+    const printStyles = `
+      <style>
+        body { 
+          margin: 0; 
+          padding: 0; 
+          font-family: Arial, sans-serif;
+          font-size: 12px;
+          line-height: 1.4;
+          color: #000;
+        }
+        @page { 
+          size: A4; 
+          margin: 0.5in;
+        }
+        @media print { 
+          body { margin: 0; padding: 0; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    `;
+    
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       const resumeContent = document.getElementById('resume-preview')?.innerHTML;
@@ -137,14 +212,8 @@ const ResumeTemplates: React.FC = () => {
       printWindow.document.write(`
         <html>
           <head>
-            <title>${fileName}</title>
-            <style>
-              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-              @media print { 
-                body { margin: 0; padding: 0; }
-                @page { size: A4; margin: 0.5in; }
-              }
-            </style>
+            <title>Resume</title>
+            ${printStyles}
           </head>
           <body>
             ${resumeContent}
