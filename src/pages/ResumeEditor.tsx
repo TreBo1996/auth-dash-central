@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -59,7 +60,7 @@ interface EditableResumeData {
 }
 
 const ResumeEditor: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { resumeId } = useParams<{ resumeId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -73,19 +74,19 @@ const ResumeEditor: React.FC = () => {
   const [loadingStep, setLoadingStep] = useState<string>('');
 
   useEffect(() => {
-    console.log('ResumeEditor: Component mounted with ID:', id);
-    if (id) {
+    console.log('ResumeEditor: Component mounted with resumeId:', resumeId);
+    if (resumeId) {
       fetchResumeData();
     } else {
       console.error('ResumeEditor: No resume ID provided');
       setError('No resume ID provided');
       setLoading(false);
     }
-  }, [id]);
+  }, [resumeId]);
 
   const fetchResumeData = async () => {
     try {
-      console.log('ResumeEditor: Starting to fetch resume data for ID:', id);
+      console.log('ResumeEditor: Starting to fetch resume data for resumeId:', resumeId);
       setLoading(true);
       setError(null);
       setLoadingStep('Fetching resume metadata...');
@@ -102,7 +103,7 @@ const ResumeEditor: React.FC = () => {
       const { data: optimizedResume, error: resumeError } = await supabase
         .from('optimized_resumes')
         .select('job_description_id, ats_score, ats_feedback')
-        .eq('id', id)
+        .eq('id', resumeId)
         .single();
 
       console.log('ResumeEditor: Optimized resume query result:', { 
@@ -133,7 +134,7 @@ const ResumeEditor: React.FC = () => {
       setLoadingStep('Fetching structured resume data...');
       console.log('ResumeEditor: Fetching structured resume data...');
       
-      const structuredData = await fetchStructuredResumeData(id!);
+      const structuredData = await fetchStructuredResumeData(resumeId!);
       console.log('ResumeEditor: Successfully fetched structured data:', {
         name: structuredData.name,
         experienceCount: structuredData.experience.length,
@@ -204,8 +205,8 @@ const ResumeEditor: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!resumeData || !id) {
-      console.error('ResumeEditor: Cannot save - missing resume data or ID');
+    if (!resumeData || !resumeId) {
+      console.error('ResumeEditor: Cannot save - missing resume data or resumeId');
       return;
     }
 
@@ -217,7 +218,7 @@ const ResumeEditor: React.FC = () => {
       const { error: contactError } = await supabase
         .from('resume_sections')
         .upsert({
-          optimized_resume_id: id,
+          optimized_resume_id: resumeId,
           section_type: 'contact',
           content: {
             name: resumeData.contactInfo.name,
@@ -235,7 +236,7 @@ const ResumeEditor: React.FC = () => {
       const { error: summaryError } = await supabase
         .from('resume_sections')
         .upsert({
-          optimized_resume_id: id,
+          optimized_resume_id: resumeId,
           section_type: 'summary',
           content: {
             summary: resumeData.summary
@@ -250,14 +251,14 @@ const ResumeEditor: React.FC = () => {
       await supabase
         .from('resume_experiences')
         .delete()
-        .eq('optimized_resume_id', id);
+        .eq('optimized_resume_id', resumeId);
 
       if (resumeData.experience.length > 0) {
         const { error: expError } = await supabase
           .from('resume_experiences')
           .insert(
             resumeData.experience.map((exp, index) => ({
-              optimized_resume_id: id,
+              optimized_resume_id: resumeId,
               title: exp.title,
               company: exp.company,
               duration: exp.duration,
@@ -273,14 +274,14 @@ const ResumeEditor: React.FC = () => {
       await supabase
         .from('resume_skills')
         .delete()
-        .eq('optimized_resume_id', id);
+        .eq('optimized_resume_id', resumeId);
 
       if (resumeData.skills.length > 0) {
         const { error: skillsError } = await supabase
           .from('resume_skills')
           .insert(
             resumeData.skills.map((skill, index) => ({
-              optimized_resume_id: id,
+              optimized_resume_id: resumeId,
               category: skill.category,
               items: skill.items,
               display_order: index
@@ -294,14 +295,14 @@ const ResumeEditor: React.FC = () => {
       await supabase
         .from('resume_education')
         .delete()
-        .eq('optimized_resume_id', id);
+        .eq('optimized_resume_id', resumeId);
 
       if (resumeData.education.length > 0) {
         const { error: eduError } = await supabase
           .from('resume_education')
           .insert(
             resumeData.education.map((edu, index) => ({
-              optimized_resume_id: id,
+              optimized_resume_id: resumeId,
               degree: edu.degree,
               school: edu.institution,
               year: edu.year,
@@ -316,14 +317,14 @@ const ResumeEditor: React.FC = () => {
       await supabase
         .from('resume_certifications')
         .delete()
-        .eq('optimized_resume_id', id);
+        .eq('optimized_resume_id', resumeId);
 
       if (resumeData.certifications.length > 0) {
         const { error: certError } = await supabase
           .from('resume_certifications')
           .insert(
             resumeData.certifications.map((cert, index) => ({
-              optimized_resume_id: id,
+              optimized_resume_id: resumeId,
               name: cert.name,
               issuer: cert.issuer,
               year: cert.year,
@@ -449,13 +450,13 @@ const ResumeEditor: React.FC = () => {
         </div>
 
         {/* Dedicated ATS Banner */}
-        {id && (
+        {resumeId && (
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 shadow-sm">
             <div className="max-w-full">
               <h2 className="text-lg font-semibold text-gray-900 mb-2">ATS Performance</h2>
               <p className="text-sm text-gray-600 mb-4">Monitor how well your resume performs against applicant tracking systems</p>
               <ATSScoreDisplay
-                optimizedResumeId={id}
+                optimizedResumeId={resumeId}
                 atsScore={atsScore}
                 atsFeedback={atsFeedback}
                 onScoreUpdate={handleATSScoreUpdate}
