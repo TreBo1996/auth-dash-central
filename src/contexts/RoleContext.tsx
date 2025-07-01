@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { Database } from '@/integrations/supabase/types';
@@ -32,6 +33,7 @@ interface RoleProviderProps {
 
 export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
   const [activeRole, setActiveRole] = useState<AppRole | null>(null);
   const [preferredRole, setPreferredRole] = useState<AppRole | null>(null);
@@ -72,44 +74,23 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         const preferred = prefData?.preferred_role || roles[0] || 'job_seeker';
         setPreferredRole(preferred);
 
-        // Set active role primarily based on preferred role, not URL
-        const currentPath = window.location.pathname;
-        let determinedRole: AppRole;
-
-        // Priority 1: If user has preferred role and it's in their roles, use it
-        if (preferred && roles.includes(preferred)) {
-          determinedRole = preferred;
-        } 
-        // Priority 2: Check current URL context for manual navigation
-        else if (currentPath.startsWith('/employer') && (roles.includes('employer') || roles.includes('both'))) {
-          determinedRole = 'employer';
-        }
-        // Priority 3: Fallback to first available role
-        else {
-          determinedRole = roles[0] || 'job_seeker';
-        }
-
+        // Set active role based on preferred role
+        const determinedRole = preferred && roles.includes(preferred) ? preferred : roles[0] || 'job_seeker';
         setActiveRole(determinedRole);
 
-        // Auto-redirect logic based on preferred role
-        const shouldRedirectToEmployer = preferred === 'employer' && 
-          (roles.includes('employer') || roles.includes('both')) && 
-          !currentPath.startsWith('/employer') &&
-          currentPath !== '/verify-email' &&
-          currentPath !== '/auth' &&
-          currentPath !== '/employer/auth';
-
-        const shouldRedirectToJobSeeker = preferred === 'job_seeker' && 
-          currentPath.startsWith('/employer') &&
-          !roles.includes('employer') &&
-          !roles.includes('both');
-
-        if (shouldRedirectToEmployer) {
-          console.log('Auto-redirecting employer to employer dashboard');
-          window.location.href = '/employer/dashboard';
-        } else if (shouldRedirectToJobSeeker) {
-          console.log('Auto-redirecting job seeker to job seeker dashboard');
-          window.location.href = '/dashboard';
+        // Simple redirect logic after role determination
+        const currentPath = window.location.pathname;
+        
+        // If employer is on job seeker pages, redirect to employer dashboard
+        if (determinedRole === 'employer' && !currentPath.startsWith('/employer') && 
+            currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth') {
+          console.log('Redirecting employer to employer dashboard');
+          navigate('/employer/dashboard');
+        }
+        // If job seeker is on employer pages, redirect to job seeker dashboard
+        else if (determinedRole === 'job_seeker' && currentPath.startsWith('/employer')) {
+          console.log('Redirecting job seeker to job seeker dashboard');
+          navigate('/dashboard');
         }
 
       } catch (error) {
@@ -123,7 +104,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     };
 
     loadUserRoles();
-  }, [user]);
+  }, [user, navigate]);
 
   const switchRole = async (role: AppRole) => {
     if (!user || !userRoles.includes(role)) return;
@@ -144,9 +125,9 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
       // Navigate to appropriate dashboard
       if (role === 'employer') {
-        window.location.href = '/employer/dashboard';
+        navigate('/employer/dashboard');
       } else {
-        window.location.href = '/dashboard';
+        navigate('/dashboard');
       }
 
     } catch (error) {

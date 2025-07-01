@@ -18,7 +18,7 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   requiredRole,
   fallbackPath
 }) => {
-  const { hasRole, isLoadingRoles, activeRole, userRoles } = useRole();
+  const { hasRole, isLoadingRoles, userRoles } = useRole();
   const location = useLocation();
 
   if (isLoadingRoles) {
@@ -29,11 +29,13 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
     );
   }
 
+  // Check if user has the required role
   if (!hasRole(requiredRole)) {
-    // Smart fallback: redirect to appropriate dashboard based on user's roles
+    // Determine the appropriate redirect path
     let redirectPath = fallbackPath;
     
     if (!redirectPath) {
+      // Smart fallback based on user's actual roles
       if (userRoles.includes('employer') || userRoles.includes('both')) {
         redirectPath = '/employer/dashboard';
       } else {
@@ -41,28 +43,10 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
       }
     }
     
+    console.log(`User does not have required role ${requiredRole}, redirecting to ${redirectPath}`);
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // Additional check for active role mismatch
-  if (activeRole !== requiredRole && requiredRole !== 'both') {
-    // If user has the required role but it's not active, redirect to switch
-    if (hasRole(requiredRole)) {
-      const redirectPath = requiredRole === 'employer' ? '/employer/dashboard' : '/dashboard';
-      return <Navigate to={redirectPath} replace />;
-    }
-    
-    // User doesn't have the required role, use smart fallback
-    let redirectPath = fallbackPath;
-    if (!redirectPath) {
-      if (userRoles.includes('employer') || userRoles.includes('both')) {
-        redirectPath = '/employer/dashboard';
-      } else {
-        redirectPath = '/dashboard';
-      }
-    }
-    return <Navigate to={redirectPath} state={{ from: location }} replace />;
-  }
-
+  // User has the required role, render the protected content
   return <>{children}</>;
 };
