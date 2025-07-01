@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,32 +27,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Memoize auth state handler to prevent unnecessary re-renders
+  const handleAuthStateChange = useCallback((event: string, session: Session | null) => {
+    console.log('Auth state change:', event, session?.user?.id);
+    
+    setSession(session);
+    setUser(session?.user ?? null);
+    
+    // Only set loading to false after initial session check
+    if (loading) {
+      setLoading(false);
+    }
+  }, [loading]);
+
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        // Handle email verification completion
-        if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          console.log('User verified and signed in');
-          // Let RoleContext handle the redirect logic based on user's preferred role
+        if (mounted) {
+          handleAuthStateChange(event, session);
         }
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []); // Remove handleAuthStateChange from dependencies to prevent re-runs
 
   const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string) => {
     const redirectUrl = redirectTo || `${window.location.origin}/dashboard`;
