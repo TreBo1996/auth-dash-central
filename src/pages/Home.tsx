@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, Zap, ArrowRight, Users, Award, CheckCircle, Star, BarChart3, Clock, Shield, Target, ChevronRight, Play } from "lucide-react";
+import { Upload, FileText, Zap, ArrowRight, Users, Award, CheckCircle, Star, BarChart3, Clock, Shield, Target, ChevronRight, Play, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -97,8 +97,9 @@ const Home = () => {
               Join thousands who've landed their dream jobs.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              {user ? <>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              {user ? (
+                <>
                   <Link to="/dashboard">
                     <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 shadow-xl">
                       <ArrowRight className="mr-2 h-5 w-5" />
@@ -111,7 +112,9 @@ const Home = () => {
                       Upload Resume
                     </Button>
                   </Link>
-                </> : <>
+                </>
+              ) : (
+                <>
                   <Link to="/auth">
                     <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 shadow-xl">
                       <ArrowRight className="mr-2 h-5 w-5" />
@@ -122,7 +125,21 @@ const Home = () => {
                     <Play className="mr-2 h-5 w-5" />
                     Watch Demo
                   </Button>
-                </>}
+                </>
+              )}
+            </div>
+
+            {/* Add For Employers Button */}
+            <div className="mb-8">
+              <Link to="/employer/auth">
+                <Button 
+                  size="lg" 
+                  className="text-lg px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-xl border-2 border-white/20"
+                >
+                  <Briefcase className="mr-2 h-5 w-5" />
+                  For Employers - Post Jobs
+                </Button>
+              </Link>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
@@ -20,6 +19,8 @@ import ResumeEditor from '@/pages/ResumeEditor';
 import InitialResumeEditor from '@/pages/InitialResumeEditor';
 import ResumeTemplates from '@/pages/ResumeTemplates';
 import NotFound from '@/pages/NotFound';
+import EmployerAuth from '@/pages/EmployerAuth';
+import EmployerProfile from '@/pages/employer/EmployerProfile';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/employer/auth" element={<EmployerAuth />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             
             {/* Job Seeker Routes */}
@@ -120,6 +122,16 @@ function App() {
                 <ProtectedRoute>
                   <RoleProtectedRoute requiredRole="employer">
                     <EmployerDashboard />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/employer/profile" 
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute requiredRole="employer">
+                    <EmployerProfile />
                   </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
