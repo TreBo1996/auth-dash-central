@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ResumeSection } from '@/components/resume-editor/ResumeSection';
@@ -14,6 +13,8 @@ import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { fetchStructuredResumeData, StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ContactInfo {
   name: string;
@@ -68,75 +69,133 @@ const ResumeEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [atsScore, setAtsScore] = useState<number | undefined>();
   const [atsFeedback, setAtsFeedback] = useState<any>();
+  const [error, setError] = useState<string | null>(null);
+  const [loadingStep, setLoadingStep] = useState<string>('');
 
   useEffect(() => {
+    console.log('ResumeEditor: Component mounted with ID:', id);
     if (id) {
       fetchResumeData();
+    } else {
+      console.error('ResumeEditor: No resume ID provided');
+      setError('No resume ID provided');
+      setLoading(false);
     }
   }, [id]);
 
   const fetchResumeData = async () => {
     try {
+      console.log('ResumeEditor: Starting to fetch resume data for ID:', id);
       setLoading(true);
-      
+      setError(null);
+      setLoadingStep('Fetching resume metadata...');
+
+      // Add timeout for the entire operation
+      const timeoutId = setTimeout(() => {
+        console.error('ResumeEditor: Fetch operation timed out after 30 seconds');
+        setError('Request timed out. Please try again.');
+        setLoading(false);
+      }, 30000);
+
       // First get the optimized resume to get job_description_id and ATS score
+      console.log('ResumeEditor: Fetching optimized resume metadata...');
       const { data: optimizedResume, error: resumeError } = await supabase
         .from('optimized_resumes')
         .select('job_description_id, ats_score, ats_feedback')
         .eq('id', id)
         .single();
 
-      if (resumeError) throw resumeError;
+      console.log('ResumeEditor: Optimized resume query result:', { 
+        data: optimizedResume, 
+        error: resumeError 
+      });
+
+      if (resumeError) {
+        console.error('ResumeEditor: Error fetching optimized resume:', resumeError);
+        throw new Error(`Failed to fetch resume metadata: ${resumeError.message}`);
+      }
+
+      if (!optimizedResume) {
+        console.error('ResumeEditor: No optimized resume found');
+        throw new Error('Resume not found');
+      }
       
+      console.log('ResumeEditor: Successfully fetched resume metadata:', {
+        jobDescriptionId: optimizedResume.job_description_id,
+        atsScore: optimizedResume.ats_score
+      });
+
       setJobDescriptionId(optimizedResume.job_description_id);
       setAtsScore(optimizedResume.ats_score);
       setAtsFeedback(optimizedResume.ats_feedback);
 
       // Fetch structured data
+      setLoadingStep('Fetching structured resume data...');
+      console.log('ResumeEditor: Fetching structured resume data...');
+      
       const structuredData = await fetchStructuredResumeData(id!);
+      console.log('ResumeEditor: Successfully fetched structured data:', {
+        name: structuredData.name,
+        experienceCount: structuredData.experience.length,
+        skillsCount: structuredData.skills.length
+      });
       
       // Convert to editable format
+      setLoadingStep('Processing resume data...');
+      console.log('ResumeEditor: Converting to editable format...');
+      
       const editableData: EditableResumeData = {
         contactInfo: {
-          name: structuredData.name,
-          email: structuredData.email,
-          phone: structuredData.phone,
-          location: structuredData.location
+          name: structuredData.name || 'Professional Name',
+          email: structuredData.email || '',
+          phone: structuredData.phone || '',
+          location: structuredData.location || ''
         },
-        summary: structuredData.summary,
+        summary: structuredData.summary || '',
         experience: structuredData.experience.map(exp => ({
-          title: exp.title,
-          company: exp.company,
-          duration: exp.duration,
-          bullets: exp.bullets
+          title: exp.title || 'Job Title',
+          company: exp.company || 'Company Name',
+          duration: exp.duration || '2023 - 2024',
+          bullets: exp.bullets || ['Job responsibility']
         })),
-        skills: structuredData.skills,
+        skills: structuredData.skills || [],
         education: structuredData.education.map(edu => ({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          institution: edu.school,
-          degree: edu.degree,
-          year: edu.year
+          institution: edu.school || 'University Name',
+          degree: edu.degree || 'Degree',
+          year: edu.year || '2020'
         })),
         certifications: structuredData.certifications?.map(cert => ({
           id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: cert.name,
-          issuer: cert.issuer,
-          year: cert.year
+          name: cert.name || 'Certification Name',
+          issuer: cert.issuer || 'Issuing Organization',
+          year: cert.year || '2023'
         })) || []
       };
 
+      console.log('ResumeEditor: Successfully converted to editable format');
       setResumeData(editableData);
+      clearTimeout(timeoutId);
+      
     } catch (error) {
-      console.error('Error fetching resume data:', error);
+      console.error('ResumeEditor: Error in fetchResumeData:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load resume for editing';
+      setError(errorMessage);
+      
       toast({
         title: "Error",
-        description: "Failed to load resume for editing.",
+        description: errorMessage,
         variant: "destructive"
       });
-      navigate('/dashboard');
     } finally {
       setLoading(false);
+      setLoadingStep('');
     }
+  };
+
+  const handleRetry = () => {
+    console.log('ResumeEditor: Retrying data fetch...');
+    fetchResumeData();
   };
 
   const handleATSScoreUpdate = (newScore: number, newFeedback: any) => {
@@ -145,9 +204,13 @@ const ResumeEditor: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!resumeData || !id) return;
+    if (!resumeData || !id) {
+      console.error('ResumeEditor: Cannot save - missing resume data or ID');
+      return;
+    }
 
     try {
+      console.log('ResumeEditor: Starting save operation...');
       setSaving(true);
 
       // Save contact info to resume_sections
@@ -276,7 +339,7 @@ const ResumeEditor: React.FC = () => {
         description: "Resume changes saved successfully.",
       });
     } catch (error) {
-      console.error('Error saving resume:', error);
+      console.error('ResumeEditor: Error saving resume:', error);
       toast({
         title: "Error",
         description: "Failed to save resume changes.",
@@ -287,11 +350,58 @@ const ResumeEditor: React.FC = () => {
     }
   };
 
+  console.log('ResumeEditor: Render state:', {
+    loading,
+    error,
+    hasResumeData: !!resumeData,
+    loadingStep
+  });
+
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading resume editor...</p>
+              {loadingStep && (
+                <p className="mt-2 text-sm text-blue-600">{loadingStep}</p>
+              )}
+            </div>
+          </div>
+          
+          {/* Loading Skeletons */}
+          <div className="space-y-6">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-2xl mx-auto py-12">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+          <div className="text-center">
+            <Button onClick={() => navigate('/dashboard')} className="mr-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <Button onClick={handleRetry} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
         </div>
       </DashboardLayout>
     );
