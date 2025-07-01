@@ -26,21 +26,41 @@ const getComprehensiveCSS = () => {
         height: 100% !important;
       }
       
+      /* Aggressive page setup to remove all headers and footers */
       @page {
         size: 8.5in 11in;
-        margin: 0.5in 0.75in; /* Reduced margins for better space utilization */
+        margin: 0 !important;
+        padding: 0 !important;
+        
+        /* Remove all headers and footers */
+        @top-left { content: none !important; }
+        @top-center { content: none !important; }
+        @top-right { content: none !important; }
+        @bottom-left { content: none !important; }
+        @bottom-center { content: none !important; }
+        @bottom-right { content: none !important; }
+        
+        /* Ensure no page info is displayed */
+        @top-left-corner { content: none !important; }
+        @top-right-corner { content: none !important; }
+        @bottom-left-corner { content: none !important; }
+        @bottom-right-corner { content: none !important; }
       }
       
       /* Hide all browser print elements */
       @media print {
         @page {
-          margin: 0.5in 0.75in;
+          margin: 0 !important;
+          size: 8.5in 11in;
         }
         
-        /* Hide browser headers and footers */
+        /* Completely hide browser UI elements */
         body::before,
-        body::after {
+        body::after,
+        html::before,
+        html::after {
           display: none !important;
+          content: none !important;
         }
         
         /* Remove any URL, date, or page info */
@@ -55,23 +75,23 @@ const getComprehensiveCSS = () => {
         }
       }
       
-      /* Main container - full page utilization */
+      /* Main container - full page utilization with proper margins */
       #resume-content {
         width: 100% !important;
         max-width: none !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0.5in 0.75in !important; /* Professional margins */
         min-height: 100vh !important;
+        box-sizing: border-box !important;
       }
       
-      /* Resume container scaling */
+      /* Resume container - no additional scaling */
       #resume-content > div {
         width: 100% !important;
         max-width: none !important;
         margin: 0 !important;
-        padding: 1rem !important; /* Consistent padding for content */
-        transform: scale(1.1); /* Slightly scale up to better utilize space */
-        transform-origin: top left;
+        padding: 0 !important;
+        transform: none !important; /* Remove scaling that was causing issues */
       }
       
       /* Tailwind-like utilities for PDF */
@@ -96,8 +116,13 @@ const getComprehensiveCSS = () => {
       .space-y-4 > * + * { margin-top: 16px !important; }
       .pl-4 { padding-left: 16px !important; }
       .grid { display: grid !important; }
-      .grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
-      .gap-12 { gap: 48px !important; }
+      .grid-cols-2 { 
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 2rem !important;
+        width: 100% !important;
+      }
+      .gap-12 { gap: 2rem !important; }
       
       /* SELECTIVE CENTERING - Only for intended elements */
       
@@ -206,19 +231,41 @@ const getComprehensiveCSS = () => {
         text-align: right !important;
       }
       
-      /* Skills grid - ensure proper layout and LEFT alignment */
+      /* SKILLS GRID - Proper layout for bottom section */
       .grid-cols-2 {
         width: 100% !important;
         max-width: none !important;
-        margin: 0 auto !important;
+        margin: 0 auto 24px auto !important;
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        gap: 3rem !important;
+        gap: 2rem !important;
+      }
+      
+      /* Skills columns - ensure proper alignment */
+      .grid-cols-2 > div {
+        text-align: left !important;
+        margin: 0 !important;
       }
       
       .grid-cols-2 .space-y-1,
-      .grid-cols-2 .flex.items-start {
+      .grid-cols-2 .flex.items-start,
+      .grid-cols-2 div {
         text-align: left !important;
+        align-items: flex-start !important;
+      }
+      
+      /* Skills list items - proper bullet alignment */
+      .grid-cols-2 .flex.items-start {
+        display: flex !important;
+        align-items: flex-start !important;
+        margin-bottom: 4px !important;
+      }
+      
+      /* Skills bullets */
+      .grid-cols-2 .flex.items-start::before {
+        content: "•" !important;
+        margin-right: 8px !important;
+        flex-shrink: 0 !important;
       }
       
       /* Container centering - only for header elements */
@@ -242,7 +289,7 @@ const getComprehensiveCSS = () => {
         color: #000 !important;
       }
       
-      /* Page break controls */
+      /* Page break controls for better content flow */
       .page-break {
         page-break-before: always;
       }
@@ -251,8 +298,20 @@ const getComprehensiveCSS = () => {
         page-break-inside: avoid;
       }
       
+      /* Prevent content overflow */
+      .space-y-4,
+      .space-y-3,
+      .mb-6 {
+        page-break-inside: avoid;
+      }
+      
       /* Ensure proper spacing for sections */
       .mb-6:last-child {
+        margin-bottom: 0 !important;
+      }
+      
+      /* Bottom section improvements */
+      .grid-cols-2:last-child {
         margin-bottom: 0 !important;
       }
     </style>
@@ -277,14 +336,14 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
     throw new Error('Unable to open print window');
   }
 
-  // Create complete HTML document with all styles and proper structure
+  // Create complete HTML document with aggressive header suppression
   const completeHTML = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${fileName}</title>
+      <title></title>
       ${comprehensiveCSS}
     </head>
     <body>
@@ -292,14 +351,32 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
         ${resumeHTML}
       </div>
       <script>
-        // Remove any browser-generated headers/footers
+        // Aggressively remove browser-generated headers/footers
+        document.title = '';
+        
+        // Clear any potential URL display
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', 'data:text/html,');
+        }
+        
+        // Remove any browser UI elements
         window.addEventListener('beforeprint', function() {
           document.title = '';
+          
+          // Hide any remaining browser elements
+          const style = document.createElement('style');
+          style.textContent = \`
+            @page { margin: 0 !important; }
+            @media print {
+              html, body { margin: 0 !important; padding: 0 !important; }
+            }
+          \`;
+          document.head.appendChild(style);
         });
         
-        // Additional cleanup for print
+        // Clean up after print
         window.addEventListener('afterprint', function() {
-          window.close();
+          setTimeout(() => window.close(), 100);
         });
       </script>
     </body>
@@ -310,17 +387,12 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
   printWindow.document.write(completeHTML);
   printWindow.document.close();
 
-  // Allow styles to load and apply before printing
+  // Allow styles to load before printing
   setTimeout(() => {
     console.log('PDF Generation: Initiating print');
     
-    // Additional print settings to remove headers/footers
-    const printSettings = {
-      silent: true,
-      printBackground: true,
-      marginsType: 0, // no margins
-      pageSize: 'Letter'
-    };
+    // Final attempt to clear title and URL
+    printWindow.document.title = '';
     
     printWindow.print();
     
@@ -328,7 +400,7 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
     setTimeout(() => {
       printWindow.close();
     }, 1000);
-  }, 750); // Increased timeout to ensure styles are fully applied
+  }, 1000); // Increased timeout for better style application
 };
 
 export const printResume = (templateId: string, resumeContent: string) => {
