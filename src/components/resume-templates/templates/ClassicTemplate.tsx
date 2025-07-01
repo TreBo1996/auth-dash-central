@@ -39,14 +39,18 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
 
   return (
     <div 
-      className="bg-white font-helvetica text-black leading-normal max-w-none mx-auto"
+      className="bg-white font-helvetica text-black leading-normal w-full mx-auto"
       style={{ 
-        width: '8.5in',
+        maxWidth: '8.5in',
         minHeight: '11in',
         padding: '1in',
         fontSize: '10px',
         lineHeight: '14px',
-        fontFamily: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif'
+        fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+        aspectRatio: '8.5 / 11',
+        transform: 'scale(0.85)',
+        transformOrigin: 'top center',
+        margin: '0 auto'
       }}
     >
       {/* Header */}
@@ -102,7 +106,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
         </div>
       </div>
 
-      {/* Professional Summary - 10pt Regular, 14pt leading, no heading */}
+      {/* Professional Summary - 10pt Italic, 14pt leading, no heading */}
       {parsedData.summary && (
         <div 
           className="mb-3"
@@ -112,7 +116,8 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             lineHeight: '14px',
             maxWidth: '6.25in',
             margin: '12px auto 12px auto',
-            textAlign: 'justify'
+            textAlign: 'justify',
+            fontStyle: 'italic'
           }}
         >
           {parsedData.summary}
