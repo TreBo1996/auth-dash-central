@@ -14,7 +14,12 @@ interface IndeedJobData {
   location: string;
   description: string;
   salary?: string;
-  jobUrl: string;
+  jobUrl?: string;
+  url?: string;
+  link?: string;
+  jobLink?: string;
+  permalink?: string;
+  href?: string;
   applyUrl?: string;
   postedDate?: string;
   jobType?: string;
@@ -27,6 +32,7 @@ interface JobTitleResult {
   success: boolean;
   jobsScraped: number;
   jobsInserted: number;
+  jobsSkipped: number;
   error?: string;
   runId?: string;
 }
@@ -40,6 +46,28 @@ const JOB_TITLES = [
   'Account Executive',
   'Manager'
 ];
+
+// Helper function to extract job URL from various possible fields
+function extractJobUrl(job: IndeedJobData): string | null {
+  // Try different possible URL field names
+  const urlFields = ['jobUrl', 'url', 'link', 'jobLink', 'permalink', 'href'];
+  
+  for (const field of urlFields) {
+    const url = job[field as keyof IndeedJobData] as string;
+    if (url && typeof url === 'string' && url.trim()) {
+      // Ensure it's a proper URL
+      if (url.startsWith('http') || url.startsWith('//')) {
+        return url.trim();
+      }
+      // If it's a relative URL, make it absolute
+      if (url.startsWith('/')) {
+        return `https://www.indeed.com${url}`;
+      }
+    }
+  }
+  
+  return null;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -64,6 +92,7 @@ serve(async (req) => {
     const results: JobTitleResult[] = [];
     let totalJobsScraped = 0;
     let totalJobsInserted = 0;
+    let totalJobsSkipped = 0;
 
     // Process each job title
     for (const jobTitle of jobTitles) {
@@ -101,6 +130,7 @@ serve(async (req) => {
             success: false,
             jobsScraped: 0,
             jobsInserted: 0,
+            jobsSkipped: 0,
             error: `Apify run failed: ${runResponse.status}`
           });
           continue;
@@ -139,6 +169,7 @@ serve(async (req) => {
             success: false,
             jobsScraped: 0,
             jobsInserted: 0,
+            jobsSkipped: 0,
             error: `Run did not succeed. Status: ${runStatus}`,
             runId
           });
@@ -159,46 +190,64 @@ serve(async (req) => {
         const indeedJobs: IndeedJobData[] = await resultsResponse.json();
         console.log(`Retrieved ${indeedJobs.length} jobs for ${jobTitle}`);
 
-        // Transform and insert jobs into Supabase
-        const transformedJobs = indeedJobs.map((job, index) => ({
-          apify_job_id: job.id || `${job.jobUrl}-${index}`, // Use job ID or create unique identifier
-          title: job.title || jobTitle,
-          company: job.company || 'Unknown Company',
-          location: job.location || location || 'Remote',
-          description: job.description || '',
-          salary: job.salary || null,
-          posted_at: job.postedDate || null,
-          job_url: job.jobUrl,
-          apply_url: job.applyUrl || job.jobUrl,
-          source: 'Apify',
-          via: 'Indeed',
-          logo_url: null,
-          employment_type: job.jobType || null,
-          seniority_level: null,
-          job_function: null,
-          industry: null,
-          company_size: null,
-          remote_type: job.remote ? 'remote' : null,
-          data_source: 'apify',
-          job_board: 'Indeed',
-          quality_score: 7, // Default quality score for Apify jobs
-          scraped_at: new Date().toISOString()
-        }));
+        // Log a sample job to understand the data structure
+        if (indeedJobs.length > 0) {
+          console.log(`Sample job data for ${jobTitle}:`, JSON.stringify(indeedJobs[0], null, 2));
+        }
 
-        // Insert jobs with conflict resolution using apify_job_id
+        // Transform and insert jobs into Supabase
         let insertedCount = 0;
-        for (const job of transformedJobs) {
+        let skippedCount = 0;
+
+        for (let index = 0; index < indeedJobs.length; index++) {
+          const job = indeedJobs[index];
+          
+          // Extract job URL from various possible fields
+          const jobUrl = extractJobUrl(job);
+          
+          if (!jobUrl) {
+            console.log(`Skipping job ${index} for ${jobTitle}: No valid URL found`);
+            skippedCount++;
+            continue;
+          }
+
+          const transformedJob = {
+            apify_job_id: job.id || `${jobTitle}-${index}-${Date.now()}`, // Create unique identifier
+            title: job.title || jobTitle,
+            company: job.company || 'Unknown Company',
+            location: job.location || location || 'Remote',
+            description: job.description || '',
+            salary: job.salary || null,
+            posted_at: job.postedDate || null,
+            job_url: jobUrl,
+            apply_url: job.applyUrl || jobUrl,
+            source: 'Apify',
+            via: 'Indeed',
+            logo_url: null,
+            employment_type: job.jobType || null,
+            seniority_level: null,
+            job_function: null,
+            industry: null,
+            company_size: null,
+            remote_type: job.remote ? 'remote' : null,
+            data_source: 'apify',
+            job_board: 'Indeed',
+            quality_score: 7, // Default quality score for Apify jobs
+            scraped_at: new Date().toISOString()
+          };
+
           try {
             const { data, error } = await supabaseClient
               .from('cached_jobs')
-              .upsert(job, { 
+              .upsert(transformedJob, { 
                 onConflict: 'apify_job_id',
                 ignoreDuplicates: false 
               })
               .select();
 
             if (error) {
-              console.error(`Error inserting job for ${jobTitle}:`, error);
+              console.error(`Error inserting job ${index} for ${jobTitle}:`, error);
+              skippedCount++;
               continue;
             }
 
@@ -206,7 +255,8 @@ serve(async (req) => {
               insertedCount++;
             }
           } catch (error) {
-            console.error(`Error processing job for ${jobTitle}:`, error);
+            console.error(`Error processing job ${index} for ${jobTitle}:`, error);
+            skippedCount++;
             continue;
           }
         }
@@ -216,13 +266,15 @@ serve(async (req) => {
           success: true,
           jobsScraped: indeedJobs.length,
           jobsInserted: insertedCount,
+          jobsSkipped: skippedCount,
           runId
         });
 
         totalJobsScraped += indeedJobs.length;
         totalJobsInserted += insertedCount;
+        totalJobsSkipped += skippedCount;
 
-        console.log(`Completed ${jobTitle}: ${insertedCount}/${indeedJobs.length} jobs inserted`);
+        console.log(`Completed ${jobTitle}: ${insertedCount}/${indeedJobs.length} jobs inserted, ${skippedCount} skipped`);
 
         // Add a small delay between job titles to be respectful to Apify
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -234,6 +286,7 @@ serve(async (req) => {
           success: false,
           jobsScraped: 0,
           jobsInserted: 0,
+          jobsSkipped: 0,
           error: error.message
         });
       }
@@ -242,7 +295,7 @@ serve(async (req) => {
     const successfulJobs = results.filter(r => r.success).length;
     const failedJobs = results.filter(r => !r.success).length;
 
-    console.log(`Batch scraping completed: ${successfulJobs}/${jobTitles.length} successful, ${totalJobsInserted} total jobs inserted`);
+    console.log(`Batch scraping completed: ${successfulJobs}/${jobTitles.length} successful, ${totalJobsInserted} total jobs inserted, ${totalJobsSkipped} skipped`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -251,7 +304,8 @@ serve(async (req) => {
         successfulJobs,
         failedJobs,
         totalJobsScraped,
-        totalJobsInserted
+        totalJobsInserted,
+        totalJobsSkipped
       },
       results,
       timestamp: new Date().toISOString()
