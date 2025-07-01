@@ -55,7 +55,7 @@ serve(async (req) => {
     const { 
       jobTitles = JOB_TITLES,
       maxJobsPerTitle = 50,
-      locations = ['United States', 'Remote']
+      location = 'United States' // Default to United States, can be overridden
     } = await req.json().catch(() => ({}));
 
     console.log(`Starting batch job scraping for ${jobTitles.length} job titles`);
@@ -70,26 +70,18 @@ serve(async (req) => {
       console.log(`Processing: ${jobTitle}`);
       
       try {
-        // Create search queries combining job title with locations
-        const queries = locations.map(location => `${jobTitle} ${location}`.trim());
-        
+        // Use correct parameters for Indeed scraper
         const runInput = {
-          queries: queries,
+          position: jobTitle,
+          location: location || undefined, // Use provided location or undefined for broadest results
+          country: 'US',
           maxItems: maxJobsPerTitle,
-          location: locations[0], // Use first location as primary
-          extendOutputFunction: `($) => {
-            return {
-              title: $('.jobsearch-SerpJobCard h2 a').text().trim(),
-              company: $('.jobsearch-SerpJobCard .company').text().trim(),
-              location: $('.jobsearch-SerpJobCard .location').text().trim(),
-              description: $('.jobsearch-SerpJobCard .summary').text().trim(),
-              salary: $('.jobsearch-SerpJobCard .salaryText').text().trim() || null,
-              postedDate: $('.jobsearch-SerpJobCard .date').text().trim() || null,
-              jobUrl: $('.jobsearch-SerpJobCard h2 a').attr('href'),
-              remote: $('.jobsearch-SerpJobCard').text().toLowerCase().includes('remote')
-            };
-          }`
+          followApplyRedirects: false,
+          parseCompanyDetails: false,
+          saveOnlyUniqueItems: true
         };
+
+        console.log(`Scraping ${jobTitle} with parameters:`, runInput);
 
         // Start the actor run using Indeed scraper
         const runResponse = await fetch(`https://api.apify.com/v2/acts/misceres~indeed-scraper/runs`, {
@@ -168,11 +160,11 @@ serve(async (req) => {
         console.log(`Retrieved ${indeedJobs.length} jobs for ${jobTitle}`);
 
         // Transform and insert jobs into Supabase
-        const transformedJobs = indeedJobs.map(job => ({
-          apify_job_id: job.id || job.jobUrl,
-          title: job.title,
-          company: job.company,
-          location: job.location,
+        const transformedJobs = indeedJobs.map((job, index) => ({
+          apify_job_id: job.id || `${job.jobUrl}-${index}`, // Use job ID or create unique identifier
+          title: job.title || jobTitle,
+          company: job.company || 'Unknown Company',
+          location: job.location || location || 'Remote',
           description: job.description || '',
           salary: job.salary || null,
           posted_at: job.postedDate || null,
@@ -193,7 +185,7 @@ serve(async (req) => {
           scraped_at: new Date().toISOString()
         }));
 
-        // Insert jobs with conflict resolution
+        // Insert jobs with conflict resolution using apify_job_id
         let insertedCount = 0;
         for (const job of transformedJobs) {
           try {
