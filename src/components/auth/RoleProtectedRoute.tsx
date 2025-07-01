@@ -16,9 +16,9 @@ interface RoleProtectedRouteProps {
 export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   children,
   requiredRole,
-  fallbackPath = '/dashboard'
+  fallbackPath
 }) => {
-  const { hasRole, isLoadingRoles, activeRole } = useRole();
+  const { hasRole, isLoadingRoles, activeRole, userRoles } = useRole();
   const location = useLocation();
 
   if (isLoadingRoles) {
@@ -30,7 +30,18 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   }
 
   if (!hasRole(requiredRole)) {
-    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
+    // Smart fallback: redirect to appropriate dashboard based on user's roles
+    let redirectPath = fallbackPath;
+    
+    if (!redirectPath) {
+      if (userRoles.includes('employer') || userRoles.includes('both')) {
+        redirectPath = '/employer/dashboard';
+      } else {
+        redirectPath = '/dashboard';
+      }
+    }
+    
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   // Additional check for active role mismatch
@@ -40,7 +51,17 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
       const redirectPath = requiredRole === 'employer' ? '/employer/dashboard' : '/dashboard';
       return <Navigate to={redirectPath} replace />;
     }
-    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
+    
+    // User doesn't have the required role, use smart fallback
+    let redirectPath = fallbackPath;
+    if (!redirectPath) {
+      if (userRoles.includes('employer') || userRoles.includes('both')) {
+        redirectPath = '/employer/dashboard';
+      } else {
+        redirectPath = '/dashboard';
+      }
+    }
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

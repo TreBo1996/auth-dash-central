@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
@@ -33,12 +34,14 @@ function App() {
             <Route path="/employer/auth" element={<EmployerAuth />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             
-            {/* Job Seeker Routes */}
+            {/* Job Seeker Routes - Now protected by role */}
             <Route 
               path="/dashboard" 
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <Dashboard />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -46,7 +49,9 @@ function App() {
               path="/job-search" 
               element={
                 <ProtectedRoute>
-                  <JobSearch />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <JobSearch />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -54,7 +59,9 @@ function App() {
               path="/upload-resume" 
               element={
                 <ProtectedRoute>
-                  <UploadResumePage />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <UploadResumePage />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -62,7 +69,9 @@ function App() {
               path="/upload-job" 
               element={
                 <ProtectedRoute>
-                  <UploadJobPage />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <UploadJobPage />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -70,7 +79,9 @@ function App() {
               path="/interview-prep" 
               element={
                 <ProtectedRoute>
-                  <InterviewPrep />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <InterviewPrep />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -78,7 +89,9 @@ function App() {
               path="/profile" 
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <Profile />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -86,7 +99,9 @@ function App() {
               path="/upload" 
               element={
                 <ProtectedRoute>
-                  <Upload />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <Upload />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -94,7 +109,9 @@ function App() {
               path="/resume-editor/:resumeId" 
               element={
                 <ProtectedRoute>
-                  <ResumeEditor />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <ResumeEditor />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -102,7 +119,9 @@ function App() {
               path="/resume-editor/initial/:resumeId" 
               element={
                 <ProtectedRoute>
-                  <InitialResumeEditor />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <InitialResumeEditor />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
@@ -110,7 +129,9 @@ function App() {
               path="/resume-templates/:resumeId" 
               element={
                 <ProtectedRoute>
-                  <ResumeTemplates />
+                  <RoleProtectedRoute requiredRole="job_seeker">
+                    <ResumeTemplates />
+                  </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
