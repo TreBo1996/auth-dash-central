@@ -1,15 +1,14 @@
-
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
 
-// PDF generation options optimized for resumes with better page breaks
+// PDF generation options with more conservative settings
 const getPDFOptions = () => {
   return {
-    margin: [0.4, 0.6, 0.4, 0.6], // Reduced margins for more content space
+    margin: [0.5, 0.6, 0.5, 0.6],
     filename: 'resume.pdf',
-    image: { type: 'jpeg', quality: 0.95 },
+    image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { 
-      scale: 1.2, // Further reduced scale to prevent layout issues
+      scale: 1.5,
       useCORS: true,
       letterRendering: true,
       allowTaint: false,
@@ -30,15 +29,15 @@ const getPDFOptions = () => {
       precision: 16
     },
     pagebreak: { 
-      mode: ['css', 'legacy'],
+      mode: ['css'],
       before: '.page-break-before',
       after: '.page-break-after',
-      avoid: ['.avoid-page-break', 'li', '.bullet-item', '.job-entry', '.experience-section']
+      avoid: ['.avoid-page-break']
     }
   };
 };
 
-// Clean the HTML content and add comprehensive page break controls
+// Clean the HTML content with selective page break controls
 const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
@@ -46,64 +45,38 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Add comprehensive page break styles with enhanced controls
+  // Add selective page break styles - only where really needed
   const pageBreakStyles = `
     <style>
       @page {
         size: 8.5in 11in;
-        margin: 0.4in 0.6in;
+        margin: 0.5in 0.6in;
       }
       
-      /* Critical page break controls */
-      li, .bullet-point, .bullet-item {
+      /* Only apply page break controls to specific elements that need it */
+      
+      /* Keep bullet points together */
+      li {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        display: block !important;
-        margin-bottom: 2px !important;
-        padding-bottom: 1px !important;
-        line-height: 1.3 !important;
+        margin-bottom: 3px !important;
       }
       
-      /* Enhanced list handling */
-      ul, ol {
+      /* Keep job sections together when possible */
+      .job-entry, .experience-item {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+      }
+      
+      /* Prevent headers from being orphaned */
+      h1, h2, h3 {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
         margin-bottom: 8px !important;
       }
       
-      /* Job sections and experience items - keep together */
-      .job-entry, .experience-item, .experience-section,
-      .mb-4, .space-y-4 > div, .space-y-3 > div {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 6px !important;
-      }
-      
-      /* Section headers - prevent orphaning */
-      h1, h2, h3, h4, h5, h6 {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 4px !important;
-      }
-      
-      /* Paragraph and text controls */
-      p, div, span {
-        widows: 3 !important;
-        orphans: 3 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      
-      /* Contact info and headers */
-      .text-center, .header-section {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      
-      /* Skills grid sections */
-      .grid, .grid-cols-2, .skills-section {
+      /* Keep unordered lists together when reasonable */
+      ul {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -116,32 +89,22 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
       }
       
-      /* Enhanced line spacing for readability */
-      p, li, div, span {
-        line-height: 1.35 !important;
+      /* Better line spacing */
+      p, li, div {
+        line-height: 1.4 !important;
       }
       
-      /* Better spacing control */
-      .space-y-1 > * + * { margin-top: 0.2rem !important; }
-      .space-y-2 > * + * { margin-top: 0.3rem !important; }
-      .space-y-3 > * + * { margin-top: 0.4rem !important; }
-      .space-y-4 > * + * { margin-top: 0.5rem !important; }
+      /* Margin controls */
+      .space-y-1 > * + * { margin-top: 0.25rem !important; }
+      .space-y-2 > * + * { margin-top: 0.5rem !important; }
+      .space-y-3 > * + * { margin-top: 0.75rem !important; }
+      .space-y-4 > * + * { margin-top: 1rem !important; }
       
-      /* Specific bullet point fixes */
-      li::before {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      
-      /* Flex container fixes for job titles */
-      .flex, .flex.justify-between {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      
-      /* Ensure minimum content on page */
-      .page-content {
-        min-height: 2in !important;
+      /* Grid layouts */
+      .grid-cols-2 {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 1rem !important;
       }
     </style>
   `;
@@ -149,44 +112,19 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   // Insert the styles at the beginning
   clonedElement.insertAdjacentHTML('afterbegin', pageBreakStyles);
   
-  // Add specific classes and attributes to elements
+  // Add specific classes to elements that need page break protection
   const allElements = clonedElement.querySelectorAll('*');
-  allElements.forEach((el, index) => {
+  allElements.forEach((el) => {
     const htmlEl = el as HTMLElement;
     
-    // Handle bullet points specifically
+    // Only target specific elements for page break protection
     if (htmlEl.tagName === 'LI') {
-      htmlEl.classList.add('avoid-page-break', 'bullet-item');
-      htmlEl.style.pageBreakInside = 'avoid';
-      htmlEl.style.breakInside = 'avoid';
-      htmlEl.style.display = 'block';
-      htmlEl.style.marginBottom = '2px';
-    }
-    
-    // Handle unordered/ordered lists
-    if (htmlEl.tagName === 'UL' || htmlEl.tagName === 'OL') {
       htmlEl.classList.add('avoid-page-break');
-      htmlEl.style.pageBreakInside = 'avoid';
-      htmlEl.style.breakInside = 'avoid';
     }
     
-    // Handle job entries and sections
-    if (htmlEl.classList.contains('mb-4') || 
-        htmlEl.classList.contains('space-y-4') ||
-        htmlEl.classList.contains('space-y-3') ||
-        (htmlEl.tagName === 'DIV' && htmlEl.querySelector('h3'))) {
+    // Job entries and experience sections
+    if (htmlEl.classList.contains('mb-4') && htmlEl.querySelector('h3')) {
       htmlEl.classList.add('avoid-page-break', 'job-entry');
-      htmlEl.style.pageBreakInside = 'avoid';
-      htmlEl.style.breakInside = 'avoid';
-    }
-    
-    // Handle headers
-    if (htmlEl.tagName.match(/^H[1-6]$/)) {
-      htmlEl.classList.add('avoid-page-break');
-      htmlEl.style.pageBreakAfter = 'avoid';
-      htmlEl.style.breakAfter = 'avoid';
-      htmlEl.style.pageBreakInside = 'avoid';
-      htmlEl.style.breakInside = 'avoid';
     }
     
     // Force text color to black
@@ -199,12 +137,12 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
 };
 
 // Add a small delay to ensure proper rendering
-const waitForRender = (ms: number = 500) => {
+const waitForRender = (ms: number = 300) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
 export const generatePDF = async (templateId: string, resumeContent: string, fileName: string) => {
-  console.log('PDF Generation: Starting enhanced PDF generation for template:', templateId);
+  console.log('PDF Generation: Starting PDF generation for template:', templateId);
   
   const resumeElement = document.getElementById('resume-preview');
   if (!resumeElement) {
@@ -213,10 +151,10 @@ export const generatePDF = async (templateId: string, resumeContent: string, fil
   }
 
   try {
-    // Wait a moment for any animations to complete
+    // Wait for rendering to complete
     await waitForRender();
     
-    // Clean the HTML content with enhanced page break controls
+    // Clean the HTML content with selective page break controls
     const cleanedElement = cleanHTMLForPDF(resumeElement);
     
     // Configure PDF options with the provided filename
@@ -225,21 +163,16 @@ export const generatePDF = async (templateId: string, resumeContent: string, fil
       filename: fileName || 'resume.pdf'
     };
     
-    console.log('PDF Generation: Generating PDF with enhanced page break options:', options);
+    console.log('PDF Generation: Generating PDF with options:', options);
     
-    // Generate and download the PDF with improved settings
+    // Generate and download the PDF
     const worker = html2pdf()
       .set(options)
       .from(cleanedElement);
     
-    // Add progress logging
-    worker.then(() => {
-      console.log('PDF Generation: Successfully generated PDF');
-    });
-    
     await worker.save();
     
-    console.log('PDF Generation: Successfully downloaded PDF with enhanced page breaks');
+    console.log('PDF Generation: Successfully downloaded PDF');
     
   } catch (error) {
     console.error('PDF Generation: Error generating PDF:', error);
@@ -257,7 +190,7 @@ export const printResume = (templateId: string, resumeContent: string) => {
     throw new Error('Resume content not found');
   }
 
-  // Enhanced print CSS with better page break controls
+  // Simple print CSS without aggressive page break controls
   const printCSS = `
     <style>
       @media print {
@@ -268,7 +201,7 @@ export const printResume = (templateId: string, resumeContent: string) => {
         }
         @page { 
           size: 8.5in 11in; 
-          margin: 0.4in 0.6in; 
+          margin: 0.5in 0.6in; 
         }
         .no-print, nav, .sidebar, button, .btn { 
           display: none !important; 
@@ -278,17 +211,11 @@ export const printResume = (templateId: string, resumeContent: string) => {
           border: none !important; 
           background: white !important;
         }
-        li, ul, ol {
+        li {
           page-break-inside: avoid !important;
-          break-inside: avoid !important;
         }
-        h1, h2, h3, h4, h5, h6 {
+        h1, h2, h3 {
           page-break-after: avoid !important;
-          break-after: avoid !important;
-        }
-        .mb-4, .space-y-4 > div {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
         }
       }
     </style>
