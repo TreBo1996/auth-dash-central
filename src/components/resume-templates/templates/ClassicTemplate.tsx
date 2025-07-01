@@ -100,16 +100,17 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
         </div>
       </div>
 
-      {/* Professional Summary - 10pt Italic, 14pt leading, no heading */}
+      {/* Professional Summary - 10pt Italic, 14pt leading, centered */}
       {parsedData.summary && (
         <div 
-          className="mb-6 text-justify italic"
+          className="mb-6 text-center italic mx-auto"
           style={{ 
             marginTop: '12px',
             fontSize: '10px',
             lineHeight: '14px',
             maxWidth: '100%',
-            margin: '12px auto 24px auto'
+            margin: '12px auto 24px auto',
+            textAlign: 'center'
           }}
         >
           {parsedData.summary}
@@ -122,13 +123,14 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           {/* Section Heading */}
           <div className="mb-2">
             <h2 
-              className="font-bold uppercase"
+              className="font-bold uppercase text-center"
               style={{ 
                 fontSize: '11px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
-                marginBottom: '4px'
+                marginBottom: '4px',
+                textAlign: 'center'
               }}
             >
               SKILLS
@@ -139,35 +141,37 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             ></div>
           </div>
           
-          {/* Two-column bullet list */}
-          <div className="grid grid-cols-2 gap-8 mt-2">
-            <div className="space-y-1">
-              {skillColumns.left.map((skill, index) => (
-                <div 
-                  key={index}
-                  className="flex items-start pl-4"
-                  style={{ 
-                    fontSize: '9px'
-                  }}
-                >
-                  <span className="mr-2 -ml-4">▪</span>
-                  <span>{skill}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-1">
-              {skillColumns.right.map((skill, index) => (
-                <div 
-                  key={index}
-                  className="flex items-start pl-4"
-                  style={{ 
-                    fontSize: '9px'
-                  }}
-                >
-                  <span className="mr-2 -ml-4">▪</span>
-                  <span>{skill}</span>
-                </div>
-              ))}
+          {/* Two-column bullet list - centered container */}
+          <div className="flex justify-center">
+            <div className="grid grid-cols-2 gap-8 mt-2 max-w-2xl">
+              <div className="space-y-1">
+                {skillColumns.left.map((skill, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-start pl-4"
+                    style={{ 
+                      fontSize: '9px'
+                    }}
+                  >
+                    <span className="mr-2 -ml-4">▪</span>
+                    <span>{skill}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1">
+                {skillColumns.right.map((skill, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-start pl-4"
+                    style={{ 
+                      fontSize: '9px'
+                    }}
+                  >
+                    <span className="mr-2 -ml-4">▪</span>
+                    <span>{skill}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -179,13 +183,14 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           {/* Section Heading */}
           <div className="mb-2">
             <h2 
-              className="font-bold uppercase"
+              className="font-bold uppercase text-center"
               style={{ 
                 fontSize: '11px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
-                marginBottom: '4px'
+                marginBottom: '4px',
+                textAlign: 'center'
               }}
             >
               EXPERIENCE
@@ -262,13 +267,14 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           {/* Section Heading */}
           <div className="mb-2">
             <h2 
-              className="font-bold uppercase"
+              className="font-bold uppercase text-center"
               style={{ 
                 fontSize: '11px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
-                marginBottom: '4px'
+                marginBottom: '4px',
+                textAlign: 'center'
               }}
             >
               EDUCATION
@@ -321,13 +327,14 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           {/* Section Heading */}
           <div className="mb-2">
             <h2 
-              className="font-bold uppercase"
+              className="font-bold uppercase text-center"
               style={{ 
                 fontSize: '11px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
-                marginBottom: '4px'
+                marginBottom: '4px',
+                textAlign: 'center'
               }}
             >
               CERTIFICATIONS

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -150,6 +151,30 @@
   /* Ensure black text for print */
   h1, h2, h3, h4, h5, h6 {
     color: #000 !important;
+  }
+  
+  /* Ensure centering is maintained in print */
+  .text-center {
+    text-align: center !important;
+  }
+  
+  /* Force center alignment for specific Classic template elements */
+  #resume-preview h1,
+  #resume-preview h2,
+  #resume-preview .text-center,
+  #resume-preview [style*="text-align: center"] {
+    text-align: center !important;
+  }
+  
+  /* Center the skills grid container */
+  #resume-preview .grid.grid-cols-2 {
+    margin: 0 auto !important;
+    max-width: 500px !important;
+  }
+  
+  /* Ensure professional summary is centered */
+  #resume-preview .italic {
+    text-align: center !important;
   }
   
   /* Page break controls */
