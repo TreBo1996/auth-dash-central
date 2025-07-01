@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
+import { generatePDF, printResume } from '@/utils/pdfGenerator';
 
 interface OptimizedResume {
   id: string;
@@ -114,123 +114,48 @@ const ResumeTemplates: React.FC = () => {
   const handlePrint = () => {
     console.log('ResumeTemplates: Print initiated');
     
-    // Add print styles to ensure clean output
-    const printStyles = `
-      <style>
-        @media print {
-          body { margin: 0; padding: 0; }
-          @page { 
-            size: A4; 
-            margin: 0.5in; 
-          }
-          .no-print { display: none !important; }
-          .print-only { display: block !important; }
-        }
-        @page :first { 
-          margin-top: 0.5in; 
-        }
-        body {
-          font-family: Arial, sans-serif;
-          font-size: 12px;
-          line-height: 1.4;
-          color: #000;
-        }
-      </style>
-    `;
-    
-    const resumeContent = document.getElementById('resume-preview')?.innerHTML;
-    if (!resumeContent) {
+    if (!optimizedResume) {
       toast({
         title: "Error",
-        description: "Unable to print - resume content not found",
+        description: "No resume data available for printing",
         variant: "destructive"
       });
       return;
     }
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Resume</title>
-            ${printStyles}
-          </head>
-          <body>
-            ${resumeContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
+    try {
+      printResume(selectedTemplate, optimizedResume.generated_text);
+    } catch (error) {
+      console.error('ResumeTemplates: Print error:', error);
+      toast({
+        title: "Error",
+        description: "Unable to print resume",
+        variant: "destructive"
+      });
     }
   };
 
   const handleDownloadPDF = () => {
-    const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(' ', '-')}.pdf`;
-    console.log('ResumeTemplates: PDF download initiated:', fileName);
+    console.log('ResumeTemplates: PDF download initiated');
     
-    // Create clean print styles for PDF
-    const printStyles = `
-      <style>
-        body { 
-          margin: 0; 
-          padding: 0; 
-          font-family: Arial, sans-serif;
-          font-size: 12px;
-          line-height: 1.4;
-          color: #000;
-        }
-        @page { 
-          size: A4; 
-          margin: 0.5in;
-        }
-        @media print { 
-          body { margin: 0; padding: 0; }
-          .no-print { display: none !important; }
-        }
-      </style>
-    `;
-    
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const resumeContent = document.getElementById('resume-preview')?.innerHTML;
-      if (!resumeContent) {
-        console.error('ResumeTemplates: No resume content found for PDF generation');
-        toast({
-          title: "Error",
-          description: "Unable to generate PDF - resume content not found",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Resume</title>
-            ${printStyles}
-          </head>
-          <body>
-            ${resumeContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
-    } else {
-      console.error('ResumeTemplates: Unable to open print window');
+    if (!optimizedResume) {
       toast({
         title: "Error",
-        description: "Unable to open print window",
+        description: "No resume data available for download",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(' ', '-')}.pdf`;
+    
+    try {
+      generatePDF(selectedTemplate, optimizedResume.generated_text, fileName);
+    } catch (error) {
+      console.error('ResumeTemplates: PDF generation error:', error);
+      toast({
+        title: "Error",
+        description: "Unable to generate PDF",
         variant: "destructive"
       });
     }
