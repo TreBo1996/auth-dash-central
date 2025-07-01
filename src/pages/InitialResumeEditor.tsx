@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ResumeSection } from '@/components/resume-editor/ResumeSection';
@@ -10,6 +10,7 @@ import { ExperienceSection } from '@/components/resume-editor/ExperienceSection'
 import { SkillsSection } from '@/components/resume-editor/SkillsSection';
 import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Resume {
   id: string;
@@ -96,37 +97,96 @@ const InitialResumeEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [parsing, setParsing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('InitialResumeEditor: Component mounted with ID:', id);
     if (id) {
       fetchResume();
+    } else {
+      console.error('InitialResumeEditor: No resume ID provided');
+      setError('No resume ID provided');
+      setLoading(false);
     }
   }, [id]);
 
   const fetchResume = async () => {
     try {
+      console.log('InitialResumeEditor: Starting to fetch resume with ID:', id);
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('resumes')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      console.log('InitialResumeEditor: Supabase query result:', { data, error });
+
+      if (error) {
+        console.error('InitialResumeEditor: Supabase error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data) {
+        console.error('InitialResumeEditor: No resume data found');
+        throw new Error('Resume not found');
+      }
+      
+      console.log('InitialResumeEditor: Resume data loaded:', {
+        id: data.id,
+        fileName: data.file_name,
+        textLength: data.parsed_text?.length || 0
+      });
       
       setResume(data);
-      await parseResumeWithAI(data.parsed_text || '');
+      
+      // Parse the resume text
+      const resumeText = data.parsed_text || '';
+      if (resumeText.trim()) {
+        console.log('InitialResumeEditor: Starting AI parsing for text:', resumeText.substring(0, 100) + '...');
+        await parseResumeWithAI(resumeText);
+      } else {
+        console.warn('InitialResumeEditor: No resume text to parse, using default structure');
+        setParsedResume(getDefaultResumeStructure());
+      }
     } catch (error) {
-      console.error('Error fetching resume:', error);
+      console.error('InitialResumeEditor: Error in fetchResume:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load resume';
+      setError(errorMessage);
+      
       toast({
         title: "Error",
-        description: "Failed to load resume for editing.",
+        description: errorMessage,
         variant: "destructive"
       });
-      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
+  };
+
+  const getDefaultResumeStructure = (): ParsedResume => {
+    return {
+      summary: 'Professional Summary',
+      experience: [{
+        title: 'Job Title',
+        company: 'Company Name',
+        duration: '2023 - 2024',
+        bullets: ['Key achievement or responsibility']
+      }],
+      skills: [{
+        category: 'Skills',
+        items: ['Skill 1', 'Skill 2', 'Skill 3']
+      }],
+      education: [{
+        id: 'edu_default',
+        institution: 'University Name',
+        degree: 'Degree',
+        year: '2020'
+      }],
+      certifications: []
+    };
   };
 
   const convertAIResponseToEditorFormat = (aiResponse: AIParseResponse): ParsedResume => {
@@ -198,15 +258,17 @@ const InitialResumeEditor: React.FC = () => {
 
   const parseResumeWithAI = async (text: string) => {
     try {
+      console.log('InitialResumeEditor: Starting AI parsing...');
       setParsing(true);
-      console.log('Starting AI parsing for resume text:', text.substring(0, 200));
       
       const { data, error } = await supabase.functions.invoke('parse-resume-sections', {
         body: { resume_text: text }
       });
 
+      console.log('InitialResumeEditor: AI parsing response:', { data, error });
+
       if (error) {
-        console.error('AI parsing error:', error);
+        console.error('InitialResumeEditor: AI parsing error:', error);
         toast({
           title: "AI Parsing Failed",
           description: "Using basic parsing instead. You can still edit the sections manually.",
@@ -216,9 +278,13 @@ const InitialResumeEditor: React.FC = () => {
         return;
       }
 
-      console.log('AI parsing successful:', data);
-      
-      // Convert AI response to the format expected by editor components
+      if (!data) {
+        console.warn('InitialResumeEditor: No data from AI parsing, using basic parsing');
+        parseResumeTextBasic(text);
+        return;
+      }
+
+      console.log('InitialResumeEditor: AI parsing successful, converting data...');
       const convertedData = convertAIResponseToEditorFormat(data);
       setParsedResume(convertedData);
       
@@ -227,7 +293,7 @@ const InitialResumeEditor: React.FC = () => {
         description: "Your resume has been automatically organized into sections.",
       });
     } catch (error) {
-      console.error('Error during AI parsing:', error);
+      console.error('InitialResumeEditor: Error during AI parsing:', error);
       toast({
         title: "Parsing Error", 
         description: "Using basic parsing instead.",
@@ -355,12 +421,17 @@ const InitialResumeEditor: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!resume || !parsedResume) return;
+    if (!resume || !parsedResume) {
+      console.error('InitialResumeEditor: Cannot save - missing resume or parsedResume');
+      return;
+    }
 
     try {
+      console.log('InitialResumeEditor: Starting save operation...');
       setSaving(true);
       
       const updatedText = generateResumeText(parsedResume);
+      console.log('InitialResumeEditor: Generated resume text length:', updatedText.length);
       
       const { error } = await supabase
         .from('resumes')
@@ -370,14 +441,18 @@ const InitialResumeEditor: React.FC = () => {
         })
         .eq('id', resume.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('InitialResumeEditor: Save error:', error);
+        throw error;
+      }
 
+      console.log('InitialResumeEditor: Save successful');
       toast({
         title: "Saved",
         description: "Resume changes saved successfully.",
       });
     } catch (error) {
-      console.error('Error saving resume:', error);
+      console.error('InitialResumeEditor: Error saving resume:', error);
       toast({
         title: "Error",
         description: "Failed to save resume changes.",
@@ -432,17 +507,52 @@ const InitialResumeEditor: React.FC = () => {
     return text.trim();
   };
 
+  console.log('InitialResumeEditor: Render state:', {
+    loading,
+    error,
+    hasResume: !!resume,
+    hasParsedResume: !!parsedResume,
+    parsing
+  });
+
   if (loading) {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading resume for editing...</p>
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  if (!resume || !parsedResume) {
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-2xl mx-auto py-12">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+          <div className="text-center">
+            <Button onClick={() => navigate('/dashboard')} className="mr-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <Button onClick={fetchResume} variant="outline">
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!resume) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
@@ -451,6 +561,24 @@ const InitialResumeEditor: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!parsedResume) {
+    return (
+      <DashboardLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Parsing resume content...</p>
+            {parsing && (
+              <p className="text-sm text-blue-600 mt-2">
+                AI is analyzing your resume structure...
+              </p>
+            )}
+          </div>
         </div>
       </DashboardLayout>
     );

@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import Auth from '@/pages/Auth';
 import VerifyEmail from '@/pages/VerifyEmail';
 import UploadResumePage from '@/pages/UploadResumePage';
@@ -110,17 +111,21 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RoleProtectedRoute requiredRole="job_seeker">
-                    <ResumeEditor />
+                    <ErrorBoundary>
+                      <ResumeEditor />
+                    </ErrorBoundary>
                   </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/resume-editor/initial/:resumeId" 
+              path="/resume-editor/initial/:id" 
               element={
                 <ProtectedRoute>
                   <RoleProtectedRoute requiredRole="job_seeker">
-                    <InitialResumeEditor />
+                    <ErrorBoundary>
+                      <InitialResumeEditor />
+                    </ErrorBoundary>
                   </RoleProtectedRoute>
                 </ProtectedRoute>
               } 
