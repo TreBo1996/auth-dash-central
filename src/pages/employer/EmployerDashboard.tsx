@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { EmployerDashboardLayout } from '@/components/layout/EmployerDashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, Users, Eye, TrendingUp } from 'lucide-react';
+import { Plus, FileText, Users, Eye, TrendingUp, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
