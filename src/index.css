@@ -153,77 +153,127 @@
     color: #000 !important;
   }
   
-  /* COMPREHENSIVE CENTERING RULES FOR CLASSIC TEMPLATE */
+  /* ULTRA-AGGRESSIVE CENTERING RULES FOR PDF EXPORT */
   
-  /* Header elements - Name, Title, Contact */
+  /* Universal centering overrides - highest specificity */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Force center ALL elements with text-center class or inline styles */
   .text-center,
+  [class*="text-center"],
   [style*="text-align: center"],
+  [style*="textAlign: center"],
+  [style*="textAlign: 'center'"],
+  div[style*="text-align: center"],
+  div[style*="textAlign: center"],
   h1[style*="text-align: center"],
-  h2[style*="text-align: center"],
-  div[style*="text-align: center"] {
+  h2[style*="text-align: center"] {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    display: block !important;
   }
   
-  /* Professional Summary - force center alignment */
+  /* Target Professional Summary specifically - multiple approaches */
   .italic,
   div.italic,
   p.italic,
-  [class*="italic"] {
+  span.italic,
+  [class*="italic"],
+  div[class*="mb-6"][class*="text-center"],
+  div[class*="mx-auto"][class*="italic"] {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    display: block !important;
+    width: 100% !important;
   }
   
-  /* Section headings - SKILLS, EXPERIENCE, etc */
-  h2.font-bold.uppercase.text-center,
-  h2[style*="text-align: center"],
-  .font-bold.uppercase.text-center {
+  /* Target all section headers - SKILLS, EXPERIENCE, etc */
+  h2,
+  h2.font-bold,
+  h2.uppercase,
+  h2[class*="font-bold"],
+  h2[class*="uppercase"],
+  h2[class*="text-center"],
+  .font-bold.uppercase,
+  [class*="font-bold"][class*="uppercase"] {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
+    display: block !important;
+    width: 100% !important;
   }
   
-  /* Skills section - full width grid */
-  .grid.grid-cols-2 {
+  /* Skills section grid - ensure full width */
+  .grid,
+  .grid-cols-2,
+  [class*="grid-cols-2"],
+  [class*="grid"][class*="cols-2"] {
     width: 100% !important;
     max-width: none !important;
     margin: 0 auto !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 2rem !important;
+    gap: 3rem !important;
   }
   
-  /* Skills container centering */
-  .flex.justify-center {
+  /* Container centering */
+  .flex,
+  .justify-center,
+  [class*="justify-center"],
+  [class*="flex"] {
     justify-content: center !important;
+    align-items: center !important;
     width: 100% !important;
+    display: flex !important;
   }
   
-  /* Force center alignment for any element with centering classes */
-  .mx-auto {
+  /* Auto margins for centering */
+  .mx-auto,
+  [class*="mx-auto"] {
     margin-left: auto !important;
     margin-right: auto !important;
   }
   
-  .justify-center {
-    justify-content: center !important;
-  }
-  
-  /* Specific targeting for Classic template elements */
-  div[class*="text-center"] {
+  /* Structural selectors for Classic template */
+  div > h1:first-child,
+  div > h2:first-child,
+  div:first-child h1,
+  div:first-child h2 {
     text-align: center !important;
   }
   
-  div[class*="mx-auto"] {
+  /* Target elements by font styling - catch Professional Summary */
+  [style*="fontSize: '10px'"][style*="fontStyle: 'italic'"],
+  [style*="font-size: 10px"][style*="font-style: italic"],
+  div[style*="italic"] {
+    text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
   
-  /* Override any text alignment that might not be centered */
-  div[style*="textAlign: 'center'"],
-  div[style*="text-align: center"] {
+  /* Target elements by font weight - catch section headers */
+  [style*="fontWeight: 'bold'"][style*="letterSpacing"],
+  [style*="font-weight: bold"][style*="letter-spacing"],
+  div[style*="fontWeight: 'bold'"] {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  /* Catch any remaining uncentered elements in header area */
+  div:nth-child(1) div,
+  div:nth-child(2) div,
+  div:first-of-type div {
+    text-align: center !important;
+  }
+  
+  /* Emergency catch-all for any div that should be centered */
+  div[class*="mb-6"]:not([class*="space-y"]) {
     text-align: center !important;
   }
   
