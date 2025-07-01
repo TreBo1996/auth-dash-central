@@ -36,21 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle email verification completion and redirect
+        // Handle email verification completion
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
           console.log('User verified and signed in');
-          
-          // Check if this is an employer based on the current path or user metadata
-          const currentPath = window.location.pathname;
-          const isEmployerFlow = currentPath.includes('/employer') || 
-                                session.user.user_metadata?.intended_role === 'employer';
-          
-          if (isEmployerFlow) {
-            // Small delay to ensure role assignment is complete
-            setTimeout(() => {
-              window.location.href = '/employer/dashboard';
-            }, 100);
-          }
+          // Let RoleContext handle the redirect logic based on user's preferred role
         }
       }
     );

@@ -72,16 +72,44 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         const preferred = prefData?.preferred_role || roles[0] || 'job_seeker';
         setPreferredRole(preferred);
 
-        // Set active role based on current URL or preference
+        // Set active role primarily based on preferred role, not URL
         const currentPath = window.location.pathname;
-        if (currentPath.startsWith('/employer') && roles.includes('employer')) {
-          setActiveRole('employer');
-        } else if (currentPath.startsWith('/employer') && roles.includes('both')) {
-          setActiveRole('employer');
-        } else if (roles.includes(preferred)) {
-          setActiveRole(preferred);
-        } else {
-          setActiveRole(roles[0] || 'job_seeker');
+        let determinedRole: AppRole;
+
+        // Priority 1: If user has preferred role and it's in their roles, use it
+        if (preferred && roles.includes(preferred)) {
+          determinedRole = preferred;
+        } 
+        // Priority 2: Check current URL context for manual navigation
+        else if (currentPath.startsWith('/employer') && (roles.includes('employer') || roles.includes('both'))) {
+          determinedRole = 'employer';
+        }
+        // Priority 3: Fallback to first available role
+        else {
+          determinedRole = roles[0] || 'job_seeker';
+        }
+
+        setActiveRole(determinedRole);
+
+        // Auto-redirect logic based on preferred role
+        const shouldRedirectToEmployer = preferred === 'employer' && 
+          (roles.includes('employer') || roles.includes('both')) && 
+          !currentPath.startsWith('/employer') &&
+          currentPath !== '/verify-email' &&
+          currentPath !== '/auth' &&
+          currentPath !== '/employer/auth';
+
+        const shouldRedirectToJobSeeker = preferred === 'job_seeker' && 
+          currentPath.startsWith('/employer') &&
+          !roles.includes('employer') &&
+          !roles.includes('both');
+
+        if (shouldRedirectToEmployer) {
+          console.log('Auto-redirecting employer to employer dashboard');
+          window.location.href = '/employer/dashboard';
+        } else if (shouldRedirectToJobSeeker) {
+          console.log('Auto-redirecting job seeker to job seeker dashboard');
+          window.location.href = '/dashboard';
         }
 
       } catch (error) {
