@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -22,15 +23,16 @@ export const Header: React.FC = () => {
     });
   };
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 sticky top-0 z-50">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-gray-900">AI Job Tools</h1>
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-yellow-300" />
+            <h1 className="text-xl font-bold text-white">RezLit</h1>
           </Link>
           
           <div className="flex items-center gap-4">
-            <RoleSwitcher />
+            {user && <RoleSwitcher />}
             
             {user ? <>
                 <Link to="/dashboard">
@@ -48,7 +50,7 @@ export const Header: React.FC = () => {
                 </Button>
               </> : <>
                 <Link to="/auth">
-                  <Button variant="ghost" className="text-white hover:bg-white/20 hover:text-white">
+                  <Button variant="ghost" className="text-white hover:bg-white/20 hover:text-white border-0">
                     Sign In
                   </Button>
                 </Link>
