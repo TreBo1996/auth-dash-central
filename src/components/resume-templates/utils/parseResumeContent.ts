@@ -1,4 +1,3 @@
-
 interface ParsedResume {
   name: string;
   email: string;
@@ -19,6 +18,11 @@ interface ParsedResume {
   skills: Array<{
     category: string;
     items: string[];
+  }>;
+  certifications?: Array<{
+    name: string;
+    issuer: string;
+    year: string;
   }>;
 }
 
@@ -71,7 +75,8 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
         summary: structuredData.summary || '',
         experience: structuredData.experience || [],
         education: structuredData.education || [],
-        skills: structuredData.skills || []
+        skills: structuredData.skills || [],
+        certifications: structuredData.certifications || []
       };
     }
   } catch (e) {
@@ -87,7 +92,8 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     summary: '',
     experience: [],
     education: [],
-    skills: []
+    skills: [],
+    certifications: []
   };
 
   const lines = resumeText.split('\n').map(line => line.trim()).filter(line => line);
@@ -286,6 +292,36 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     }
   }
 
+  // Enhanced certifications extraction
+  const certificationsPatterns = [
+    /(?:CERTIFICATIONS|CERTIFICATES)(?:\s*:?)?\s*\n((?:(?!\n(?:EDUCATION|SKILLS|EXPERIENCE)).+\n?)*)/i
+  ];
+  
+  for (const pattern of certificationsPatterns) {
+    const certificationsMatch = resumeText.match(pattern);
+    if (certificationsMatch && certificationsMatch[1]) {
+      const certsText = certificationsMatch[1];
+      const certStrategies = [
+        /([^,\n]+),\s*([^,\n]+)(?:,\s*(\d{4}|\d{4}-\d{4}))?/g,
+        /([^|\n]+)\s*\|\s*([^|\n]+)\s*\|\s*([^|\n]+)/g,
+      ];
+      
+      for (const strategy of certStrategies) {
+        let certMatch;
+        while ((certMatch = strategy.exec(certsText)) !== null) {
+          let name = certMatch[1] ? certMatch[1].trim() : '';
+          let issuer = certMatch[2] ? certMatch[2].trim() : '';
+          let year = certMatch[3] ? certMatch[3].trim() : 'N/A';
+          
+          if (name && issuer && name.length > 2 && issuer.length > 2) {
+            result.certifications!.push({ name, issuer, year });
+          }
+        }
+        if (result.certifications!.length > 0) break;
+      }
+    }
+  }
+
   // Fallback data to ensure templates always have content
   if (!result.name) {
     result.name = 'Professional Name';
@@ -311,7 +347,8 @@ export const parseResumeContent = (resumeText: string): ParsedResume => {
     name: result.name,
     experienceCount: result.experience.length,
     skillsCount: result.skills.length,
-    educationCount: result.education.length
+    educationCount: result.education.length,
+    certificationsCount: result.certifications?.length || 0
   });
 
   return result;
