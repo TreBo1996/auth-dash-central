@@ -74,11 +74,11 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .eq('optimized_resume_id', optimizedResumeId)
         .then(result => {
           console.log('fetchStructuredResumeData: Sections query result:', result);
-          return { type: 'sections', ...result };
-        })
-        .catch(error => {
-          console.error('fetchStructuredResumeData: Sections query failed:', error);
-          return { type: 'sections', data: [], error };
+          if (result.error) {
+            console.error('fetchStructuredResumeData: Sections query failed:', result.error);
+            return { type: 'sections', data: [], error: result.error };
+          }
+          return { type: 'sections', data: result.data || [], error: null };
         }),
       supabase
         .from('resume_experiences')
@@ -87,11 +87,11 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .order('display_order')
         .then(result => {
           console.log('fetchStructuredResumeData: Experiences query result:', result);
-          return { type: 'experiences', ...result };
-        })
-        .catch(error => {
-          console.error('fetchStructuredResumeData: Experiences query failed:', error);
-          return { type: 'experiences', data: [], error };
+          if (result.error) {
+            console.error('fetchStructuredResumeData: Experiences query failed:', result.error);
+            return { type: 'experiences', data: [], error: result.error };
+          }
+          return { type: 'experiences', data: result.data || [], error: null };
         }),
       supabase
         .from('resume_skills')
@@ -100,11 +100,11 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .order('display_order')
         .then(result => {
           console.log('fetchStructuredResumeData: Skills query result:', result);
-          return { type: 'skills', ...result };
-        })
-        .catch(error => {
-          console.error('fetchStructuredResumeData: Skills query failed:', error);
-          return { type: 'skills', data: [], error };
+          if (result.error) {
+            console.error('fetchStructuredResumeData: Skills query failed:', result.error);
+            return { type: 'skills', data: [], error: result.error };
+          }
+          return { type: 'skills', data: result.data || [], error: null };
         }),
       supabase
         .from('resume_education')
@@ -113,11 +113,11 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .order('display_order')
         .then(result => {
           console.log('fetchStructuredResumeData: Education query result:', result);
-          return { type: 'education', ...result };
-        })
-        .catch(error => {
-          console.error('fetchStructuredResumeData: Education query failed:', error);
-          return { type: 'education', data: [], error };
+          if (result.error) {
+            console.error('fetchStructuredResumeData: Education query failed:', result.error);
+            return { type: 'education', data: [], error: result.error };
+          }
+          return { type: 'education', data: result.data || [], error: null };
         }),
       supabase
         .from('resume_certifications')
@@ -126,11 +126,11 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         .order('display_order')
         .then(result => {
           console.log('fetchStructuredResumeData: Certifications query result:', result);
-          return { type: 'certifications', ...result };
-        })
-        .catch(error => {
-          console.error('fetchStructuredResumeData: Certifications query failed:', error);
-          return { type: 'certifications', data: [], error };
+          if (result.error) {
+            console.error('fetchStructuredResumeData: Certifications query failed:', result.error);
+            return { type: 'certifications', data: [], error: result.error };
+          }
+          return { type: 'certifications', data: result.data || [], error: null };
         })
     ];
 
