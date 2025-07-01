@@ -1,3 +1,4 @@
+
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
 
@@ -43,7 +44,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // More balanced page break styles focusing on job content protection
+  // Enhanced page break styles with Classic Template specific fixes
   const pageBreakStyles = `
     <style>
       @page {
@@ -67,6 +68,38 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         padding: 0 !important;
       }
       
+      /* CLASSIC TEMPLATE SPECIFIC FIXES - Target the large gap issue */
+      .mb-6 {
+        margin-bottom: 0.75rem !important; /* Reduce from 24px to 12px */
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+      }
+      
+      .mb-4 {
+        margin-bottom: 0.5rem !important; /* Reduce from 16px to 8px */
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+      }
+      
+      .mb-8 {
+        margin-bottom: 1rem !important; /* Reduce from 32px to 16px */
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+      }
+      
+      /* Override inline marginTop styles for section headers */
+      h2[style*="marginTop"] {
+        margin-top: 0.5rem !important; /* Override the 12px inline style */
+      }
+      
+      /* Prevent forced page breaks between adjacent sections */
+      .mb-6 + div,
+      .mb-4 + div,
+      .mb-8 + div {
+        page-break-before: auto !important;
+        break-before: auto !important;
+      }
+      
       /* NATURAL SECTION FLOW - Allow sections to flow naturally */
       .mb-10, .mb-8, .mb-6, .mb-4 {
         page-break-before: auto !important;
@@ -78,7 +111,8 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
       /* INDIVIDUAL JOB ENTRY PROTECTION - Only protect job entries, not entire sections */
       .space-y-8 > div:has(h3),
       .space-y-6 > div:has(h3),
-      .space-y-4 > div:has(h3) {
+      .space-y-4 > div:has(h3),
+      div:has(h3[style*="fontWeight: 'bold'"]) {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         margin-bottom: 1rem !important;
@@ -87,7 +121,8 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
       /* If job entry is too long, allow breaks between bullet points */
       .space-y-8 > div:has(h3) ul,
       .space-y-6 > div:has(h3) ul,
-      .space-y-4 > div:has(h3) ul {
+      .space-y-4 > div:has(h3) ul,
+      div:has(h3[style*="fontWeight: 'bold'"]) ul {
         page-break-inside: auto !important;
         break-inside: auto !important;
       }
@@ -132,7 +167,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         break-inside: avoid !important;
       }
       
-      /* REMOVE excessive spacing between sections */
+      /* REMOVE excessive spacing between sections for space-y patterns */
       .space-y-8 > * + *:not(:has(h3)) { margin-top: 1rem !important; }
       .space-y-6 > * + *:not(:has(h3)) { margin-top: 0.75rem !important; }
       .space-y-4 > * + *:not(:has(h3)) { margin-top: 0.5rem !important; }
@@ -166,6 +201,18 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
       .grid-cols-2 > div {
         page-break-inside: auto !important;
         break-inside: auto !important;
+      }
+      
+      /* Classic Template - Fix the specific two-column bullet list spacing */
+      .grid.grid-cols-2.gap-12 {
+        gap: 1rem !important; /* Reduce excessive gap */
+        margin-bottom: 0.5rem !important;
+      }
+      
+      /* Classic Template - Ensure section dividers don't create excessive space */
+      div[style*="height: '0.5px'"] {
+        margin-top: 4px !important;
+        margin-bottom: 6px !important;
       }
     </style>
   `;
