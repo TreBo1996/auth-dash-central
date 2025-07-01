@@ -42,7 +42,10 @@ const EmployerAuth = () => {
           navigate('/employer/dashboard');
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        // Use the employer dashboard as redirect URL for sign up
+        const redirectUrl = `${window.location.origin}/employer/dashboard`;
+        const { error } = await signUp(email, password, fullName, redirectUrl);
+        
         if (error) {
           toast({
             title: "Sign up failed",
@@ -61,8 +64,11 @@ const EmployerAuth = () => {
           
           toast({
             title: "Account created!",
-            description: "Please check your email to verify your account.",
+            description: "Please check your email to verify your account. Once verified, you'll be redirected to your employer dashboard.",
           });
+          
+          // Navigate to verification page with employer context
+          navigate(`/verify-email?email=${encodeURIComponent(email)}&type=employer`);
         }
       }
     } catch (error) {

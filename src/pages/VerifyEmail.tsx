@@ -15,6 +15,7 @@ const VerifyEmail: React.FC = () => {
   const { toast } = useToast();
   
   const email = searchParams.get('email') || user?.email || '';
+  const isEmployer = searchParams.get('type') === 'employer';
 
   const handleResendVerification = async () => {
     if (!email) return;
@@ -47,7 +48,10 @@ const VerifyEmail: React.FC = () => {
           </div>
           <CardTitle className="text-2xl">Check Your Email</CardTitle>
           <CardDescription>
-            We've sent a verification link to your email address
+            {isEmployer 
+              ? "We've sent a verification link to complete your employer account setup"
+              : "We've sent a verification link to your email address"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -60,7 +64,10 @@ const VerifyEmail: React.FC = () => {
 
           <div className="text-center space-y-4">
             <p className="text-sm text-gray-600">
-              Click the link in the email to verify your account and access your dashboard.
+              {isEmployer 
+                ? "Click the link in the email to verify your account and access your employer dashboard."
+                : "Click the link in the email to verify your account and access your dashboard."
+              }
             </p>
             
             <div className="space-y-2">
@@ -80,7 +87,7 @@ const VerifyEmail: React.FC = () => {
                 )}
               </Button>
               
-              <Link to="/auth">
+              <Link to={isEmployer ? "/employer/auth" : "/auth"}>
                 <Button variant="ghost" className="w-full">
                   Back to Sign In
                 </Button>
@@ -90,6 +97,11 @@ const VerifyEmail: React.FC = () => {
 
           <div className="text-xs text-gray-500 text-center">
             <p>Didn't receive the email? Check your spam folder or try resending.</p>
+            {isEmployer && (
+              <p className="mt-2 text-blue-600">
+                After verification, you'll be redirected to your employer dashboard to set up your company profile.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

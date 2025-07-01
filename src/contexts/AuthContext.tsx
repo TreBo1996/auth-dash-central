@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName?: string, redirectTo?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -36,11 +36,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle email verification completion
+        // Handle email verification completion and redirect
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
-          // User has verified their email and is now signed in
-          // The redirect will be handled by the protected routes
           console.log('User verified and signed in');
+          
+          // Check if this is an employer based on the current path or user metadata
+          const currentPath = window.location.pathname;
+          const isEmployerFlow = currentPath.includes('/employer') || 
+                                session.user.user_metadata?.intended_role === 'employer';
+          
+          if (isEmployerFlow) {
+            // Small delay to ensure role assignment is complete
+            setTimeout(() => {
+              window.location.href = '/employer/dashboard';
+            }, 100);
+          }
         }
       }
     );
@@ -55,8 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
+  const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string) => {
+    const redirectUrl = redirectTo || `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -64,7 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          full_name: fullName || ''
+          full_name: fullName || '',
+          intended_role: redirectTo?.includes('/employer') ? 'employer' : 'job_seeker'
         }
       }
     });
