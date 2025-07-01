@@ -22,11 +22,56 @@ const getComprehensiveCSS = () => {
         background: white !important;
         margin: 0 !important;
         padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
       }
       
       @page {
         size: 8.5in 11in;
-        margin: 1in;
+        margin: 0.5in 0.75in; /* Reduced margins for better space utilization */
+      }
+      
+      /* Hide all browser print elements */
+      @media print {
+        @page {
+          margin: 0.5in 0.75in;
+        }
+        
+        /* Hide browser headers and footers */
+        body::before,
+        body::after {
+          display: none !important;
+        }
+        
+        /* Remove any URL, date, or page info */
+        .no-print,
+        nav,
+        .sidebar,
+        button,
+        .btn,
+        .header,
+        .footer {
+          display: none !important;
+        }
+      }
+      
+      /* Main container - full page utilization */
+      #resume-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+      }
+      
+      /* Resume container scaling */
+      #resume-content > div {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 1rem !important; /* Consistent padding for content */
+        transform: scale(1.1); /* Slightly scale up to better utilize space */
+        transform-origin: top left;
       }
       
       /* Tailwind-like utilities for PDF */
@@ -54,14 +99,12 @@ const getComprehensiveCSS = () => {
       .grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
       .gap-12 { gap: 48px !important; }
       
-      /* ULTRA-AGGRESSIVE CENTERING FOR CLASSIC TEMPLATE */
+      /* SELECTIVE CENTERING - Only for intended elements */
       
-      /* Force center ALL text-center elements */
-      .text-center,
-      [class*="text-center"],
-      div[class*="text-center"],
+      /* Header section - NAME and ROLE should be centered */
+      .text-center h1,
       h1[class*="text-center"],
-      h2[class*="text-center"] {
+      .text-center > h1 {
         text-align: center !important;
         margin-left: auto !important;
         margin-right: auto !important;
@@ -69,14 +112,11 @@ const getComprehensiveCSS = () => {
         width: 100% !important;
       }
       
-      /* Target Professional Summary specifically */
-      .italic,
-      div.italic,
-      p.italic,
-      span.italic,
-      [class*="italic"],
-      div[class*="mb-6"][class*="text-center"],
-      div[class*="mx-auto"][class*="italic"] {
+      /* Professional Summary - should be centered */
+      .italic[class*="text-center"],
+      div[class*="text-center"][class*="italic"],
+      .text-center .italic,
+      div[class*="mb-6"][class*="text-center"] {
         text-align: center !important;
         margin-left: auto !important;
         margin-right: auto !important;
@@ -84,15 +124,10 @@ const getComprehensiveCSS = () => {
         width: 100% !important;
       }
       
-      /* Target all section headers - SKILLS, EXPERIENCE, etc */
-      h2,
-      h2.font-bold,
-      h2.uppercase,
-      h2[class*="font-bold"],
-      h2[class*="uppercase"],
+      /* Section headers (SKILLS, EXPERIENCE, etc) - should be centered */
       h2[class*="text-center"],
-      .font-bold.uppercase,
-      [class*="font-bold"][class*="uppercase"] {
+      h2[class*="font-bold"][class*="uppercase"],
+      .font-bold.uppercase {
         text-align: center !important;
         margin-left: auto !important;
         margin-right: auto !important;
@@ -100,18 +135,78 @@ const getComprehensiveCSS = () => {
         width: 100% !important;
       }
       
-      /* Catch elements by inline styles */
-      [style*="text-align: center"],
-      [style*="textAlign: center"],
-      [style*="textAlign: 'center'"],
-      [style*="fontSize: '10px'"][style*="fontStyle: 'italic'"],
-      [style*="fontWeight: 'bold'"][style*="letterSpacing"] {
+      /* Contact info row - should be centered */
+      .text-center:not(.mb-6):not(.space-y-4):not(.space-y-3) {
         text-align: center !important;
-        margin-left: auto !important;
+      }
+      
+      /* EXPERIENCE SECTION FIXES - Override centering for content */
+      
+      /* Experience job title and date row - LEFT align title, RIGHT align date */
+      .space-y-4 .flex.justify-between,
+      .space-y-4 div .flex.justify-between,
+      .mb-4 .flex.justify-between {
+        justify-content: space-between !important;
+        align-items: baseline !important;
+        text-align: left !important;
+        display: flex !important;
+        width: 100% !important;
+      }
+      
+      /* Job titles in experience - LEFT aligned */
+      .space-y-4 .flex.justify-between h3,
+      .space-y-4 .flex.justify-between .font-bold,
+      .mb-4 .flex.justify-between h3,
+      .mb-4 .flex.justify-between .font-bold {
+        text-align: left !important;
+        margin: 0 !important;
+        flex: 1 !important;
+      }
+      
+      /* Dates in experience - RIGHT aligned */
+      .space-y-4 .flex.justify-between span,
+      .mb-4 .flex.justify-between span {
+        text-align: right !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+      }
+      
+      /* Company names - LEFT aligned and italic */
+      .space-y-4 .italic:not([class*="text-center"]),
+      .mb-4 .italic:not([class*="text-center"]),
+      .space-y-4 p.italic,
+      .mb-4 p.italic {
+        text-align: left !important;
+        margin-left: 0 !important;
         margin-right: auto !important;
       }
       
-      /* Skills grid - ensure proper layout */
+      /* Bullet points in experience - LEFT aligned */
+      .space-y-4 ul,
+      .space-y-4 li,
+      .mb-4 ul,
+      .mb-4 li {
+        text-align: left !important;
+        margin-left: 0 !important;
+      }
+      
+      /* Education section content - LEFT aligned */
+      .space-y-3 .flex.justify-between,
+      .space-y-3 .flex.justify-between h3,
+      .space-y-3 .flex.justify-between span,
+      .space-y-3 p {
+        text-align: left !important;
+      }
+      
+      .space-y-3 .flex.justify-between {
+        justify-content: space-between !important;
+      }
+      
+      .space-y-3 .flex.justify-between span {
+        text-align: right !important;
+      }
+      
+      /* Skills grid - ensure proper layout and LEFT alignment */
       .grid-cols-2 {
         width: 100% !important;
         max-width: none !important;
@@ -121,36 +216,19 @@ const getComprehensiveCSS = () => {
         gap: 3rem !important;
       }
       
-      /* Container centering */
-      .flex.justify-center {
+      .grid-cols-2 .space-y-1,
+      .grid-cols-2 .flex.items-start {
+        text-align: left !important;
+      }
+      
+      /* Container centering - only for header elements */
+      .flex.justify-center:has(h1),
+      .flex.justify-center:has(h2),
+      .flex.justify-center:has(.font-bold.uppercase) {
         justify-content: center !important;
         align-items: center !important;
         width: 100% !important;
         display: flex !important;
-      }
-      
-      /* Structural selectors for Classic template */
-      div:first-child h1,
-      div:first-child h2,
-      div > h1:first-child,
-      div > h2:first-child {
-        text-align: center !important;
-      }
-      
-      /* Emergency catch-all for any div that should be centered */
-      div[class*="mb-6"]:not([class*="space-y"]) {
-        text-align: center !important;
-      }
-      
-      /* Hide any non-print elements */
-      .no-print,
-      nav,
-      .sidebar,
-      button,
-      .btn,
-      .header,
-      .footer {
-        display: none !important;
       }
       
       /* Remove shadows and borders for print */
@@ -162,6 +240,20 @@ const getComprehensiveCSS = () => {
       /* Ensure black text for print */
       h1, h2, h3, h4, h5, h6 {
         color: #000 !important;
+      }
+      
+      /* Page break controls */
+      .page-break {
+        page-break-before: always;
+      }
+      
+      .avoid-break {
+        page-break-inside: avoid;
+      }
+      
+      /* Ensure proper spacing for sections */
+      .mb-6:last-child {
+        margin-bottom: 0 !important;
       }
     </style>
   `;
@@ -185,7 +277,7 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
     throw new Error('Unable to open print window');
   }
 
-  // Create complete HTML document with all styles
+  // Create complete HTML document with all styles and proper structure
   const completeHTML = `
     <!DOCTYPE html>
     <html lang="en">
@@ -199,6 +291,17 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
       <div id="resume-content">
         ${resumeHTML}
       </div>
+      <script>
+        // Remove any browser-generated headers/footers
+        window.addEventListener('beforeprint', function() {
+          document.title = '';
+        });
+        
+        // Additional cleanup for print
+        window.addEventListener('afterprint', function() {
+          window.close();
+        });
+      </script>
     </body>
     </html>
   `;
@@ -207,16 +310,25 @@ export const generatePDF = (templateId: string, resumeContent: string, fileName:
   printWindow.document.write(completeHTML);
   printWindow.document.close();
 
-  // Allow styles to load before printing
+  // Allow styles to load and apply before printing
   setTimeout(() => {
     console.log('PDF Generation: Initiating print');
+    
+    // Additional print settings to remove headers/footers
+    const printSettings = {
+      silent: true,
+      printBackground: true,
+      marginsType: 0, // no margins
+      pageSize: 'Letter'
+    };
+    
     printWindow.print();
     
     // Close window after print dialog
     setTimeout(() => {
       printWindow.close();
     }, 1000);
-  }, 500);
+  }, 750); // Increased timeout to ensure styles are fully applied
 };
 
 export const printResume = (templateId: string, resumeContent: string) => {

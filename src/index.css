@@ -117,7 +117,7 @@
   
   @page {
     size: 8.5in 11in; /* US Letter */
-    margin: 1in; /* 1 inch margins on all sides */
+    margin: 0.5in 0.75in; /* Optimized margins for better space usage */
   }
   
   /* Hide navigation, buttons, and other UI elements */
@@ -131,7 +131,7 @@
     display: none !important;
   }
   
-  /* Ensure resume content is visible */
+  /* Ensure resume content is visible and properly scaled */
   #resume-preview {
     display: block !important;
     background: white !important;
@@ -140,12 +140,18 @@
     margin: 0 !important;
     padding: 0 !important;
     font-family: Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    width: 100% !important;
+    max-width: none !important;
+    transform: scale(1.05); /* Slightly scale for better page utilization */
+    transform-origin: top left;
   }
   
   /* Remove any shadows or borders */
   * {
     box-shadow: none !important;
     border-radius: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   
   /* Ensure black text for print */
@@ -153,38 +159,25 @@
     color: #000 !important;
   }
   
-  /* ULTRA-AGGRESSIVE CENTERING RULES FOR PDF EXPORT */
+  /* SELECTIVE CENTERING - Only center what should be centered */
   
-  /* Universal centering overrides - highest specificity */
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  
-  /* Force center ALL elements with text-center class or inline styles */
-  .text-center,
-  [class*="text-center"],
-  [style*="text-align: center"],
-  [style*="textAlign: center"],
-  [style*="textAlign: 'center'"],
-  div[style*="text-align: center"],
-  div[style*="textAlign: center"],
-  h1[style*="text-align: center"],
-  h2[style*="text-align: center"] {
+  /* Header elements that should be centered */
+  .text-center h1,
+  h1[class*="text-center"],
+  .text-center > div > h1,
+  .text-center > div[style*="fontSize: '22px'"] {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
     display: block !important;
   }
   
-  /* Target Professional Summary specifically - multiple approaches */
-  .italic,
-  div.italic,
-  p.italic,
-  span.italic,
-  [class*="italic"],
+  /* Professional Summary - should be centered */
+  .italic[class*="text-center"],
+  div[class*="text-center"][class*="italic"],
+  .text-center .italic,
   div[class*="mb-6"][class*="text-center"],
-  div[class*="mx-auto"][class*="italic"] {
+  div[style*="textAlign: center"][style*="fontStyle: 'italic'"] {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -192,15 +185,11 @@
     width: 100% !important;
   }
   
-  /* Target all section headers - SKILLS, EXPERIENCE, etc */
-  h2,
-  h2.font-bold,
-  h2.uppercase,
-  h2[class*="font-bold"],
-  h2[class*="uppercase"],
+  /* Section headers (SKILLS, EXPERIENCE, etc) - should be centered */
   h2[class*="text-center"],
+  h2[class*="font-bold"][class*="uppercase"],
   .font-bold.uppercase,
-  [class*="font-bold"][class*="uppercase"] {
+  div[style*="fontSize: '11px'"][style*="fontWeight: 'bold'"][style*="letterSpacing"] {
     text-align: center !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -208,11 +197,82 @@
     width: 100% !important;
   }
   
-  /* Skills section grid - ensure full width */
-  .grid,
+  /* EXPERIENCE SECTION - Fix alignment issues */
+  
+  /* Job title and date rows - maintain flex layout */
+  .space-y-4 .flex.justify-between,
+  .mb-4 .flex.justify-between,
+  div[class*="space-y-4"] div[class*="flex justify-between"],
+  div[class*="mb-4"] div[class*="flex justify-between"] {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: baseline !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+  
+  /* Job titles - LEFT aligned */
+  .space-y-4 .flex.justify-between h3,
+  .space-y-4 .flex.justify-between .font-bold,
+  .mb-4 .flex.justify-between h3,
+  .mb-4 .flex.justify-between .font-bold,
+  div[class*="space-y-4"] h3[class*="font-bold"],
+  div[class*="mb-4"] h3[class*="font-bold"] {
+    text-align: left !important;
+    margin: 0 !important;
+    flex: 1 !important;
+  }
+  
+  /* Dates - RIGHT aligned */
+  .space-y-4 .flex.justify-between span,
+  .mb-4 .flex.justify-between span,
+  div[class*="flex justify-between"] span:last-child {
+    text-align: right !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Company names - LEFT aligned */
+  .space-y-4 .italic:not([class*="text-center"]),
+  .mb-4 .italic:not([class*="text-center"]),
+  .space-y-4 p.italic,
+  .mb-4 p.italic,
+  div[class*="space-y-4"] p[class*="italic"],
+  div[class*="mb-4"] p[class*="italic"] {
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+  }
+  
+  /* Bullet points - LEFT aligned */
+  .space-y-4 ul,
+  .space-y-4 li,
+  .mb-4 ul,
+  .mb-4 li,
+  ul[class*="space-y-1"],
+  li[class*="flex items-start"] {
+    text-align: left !important;
+    margin-left: 0 !important;
+  }
+  
+  /* Education section - maintain proper alignment */
+  .space-y-3 .flex.justify-between {
+    display: flex !important;
+    justify-content: space-between !important;
+    text-align: left !important;
+  }
+  
+  .space-y-3 .flex.justify-between span {
+    text-align: right !important;
+  }
+  
+  .space-y-3 p {
+    text-align: left !important;
+  }
+  
+  /* Skills grid - proper layout */
   .grid-cols-2,
-  [class*="grid-cols-2"],
-  [class*="grid"][class*="cols-2"] {
+  div[class*="grid grid-cols-2"] {
     width: 100% !important;
     max-width: none !important;
     margin: 0 auto !important;
@@ -221,60 +281,10 @@
     gap: 3rem !important;
   }
   
-  /* Container centering */
-  .flex,
-  .justify-center,
-  [class*="justify-center"],
-  [class*="flex"] {
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    display: flex !important;
-  }
-  
-  /* Auto margins for centering */
-  .mx-auto,
-  [class*="mx-auto"] {
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-  
-  /* Structural selectors for Classic template */
-  div > h1:first-child,
-  div > h2:first-child,
-  div:first-child h1,
-  div:first-child h2 {
-    text-align: center !important;
-  }
-  
-  /* Target elements by font styling - catch Professional Summary */
-  [style*="fontSize: '10px'"][style*="fontStyle: 'italic'"],
-  [style*="font-size: 10px"][style*="font-style: italic"],
-  div[style*="italic"] {
-    text-align: center !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-  
-  /* Target elements by font weight - catch section headers */
-  [style*="fontWeight: 'bold'"][style*="letterSpacing"],
-  [style*="font-weight: bold"][style*="letter-spacing"],
-  div[style*="fontWeight: 'bold'"] {
-    text-align: center !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-  
-  /* Catch any remaining uncentered elements in header area */
-  div:nth-child(1) div,
-  div:nth-child(2) div,
-  div:first-of-type div {
-    text-align: center !important;
-  }
-  
-  /* Emergency catch-all for any div that should be centered */
-  div[class*="mb-6"]:not([class*="space-y"]) {
-    text-align: center !important;
+  .grid-cols-2 .space-y-1,
+  .grid-cols-2 .flex.items-start,
+  div[class*="grid-cols-2"] div[class*="space-y-1"] {
+    text-align: left !important;
   }
   
   /* Page break controls */
