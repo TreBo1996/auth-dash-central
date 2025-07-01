@@ -8,22 +8,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ApifyJobData {
-  positionName: string;
+interface IndeedJobData {
+  title: string;
   company: string;
   location: string;
   description: string;
   salary?: string;
   jobUrl: string;
   applyUrl?: string;
-  postedAt?: string;
-  employmentTypes?: string[];
-  seniorityLevel?: string;
-  jobFunction?: string;
-  industries?: string[];
-  companySize?: string;
-  logoUrl?: string;
-  jobBoard?: string;
+  postedDate?: string;
+  jobType?: string;
   remote?: boolean;
   id?: string;
 }
@@ -80,15 +74,25 @@ serve(async (req) => {
         const queries = locations.map(location => `${jobTitle} ${location}`.trim());
         
         const runInput = {
-          queries,
-          maxPagesPerQuery: Math.ceil(maxJobsPerTitle / 10),
-          saveHtml: false,
-          saveHtmlToKeyValueStore: false,
-          includeUnfilteredResults: false
+          queries: queries,
+          maxItems: maxJobsPerTitle,
+          location: locations[0], // Use first location as primary
+          extendOutputFunction: `($) => {
+            return {
+              title: $('.jobsearch-SerpJobCard h2 a').text().trim(),
+              company: $('.jobsearch-SerpJobCard .company').text().trim(),
+              location: $('.jobsearch-SerpJobCard .location').text().trim(),
+              description: $('.jobsearch-SerpJobCard .summary').text().trim(),
+              salary: $('.jobsearch-SerpJobCard .salaryText').text().trim() || null,
+              postedDate: $('.jobsearch-SerpJobCard .date').text().trim() || null,
+              jobUrl: $('.jobsearch-SerpJobCard h2 a').attr('href'),
+              remote: $('.jobsearch-SerpJobCard').text().toLowerCase().includes('remote')
+            };
+          }`
         };
 
-        // Start the actor run
-        const runResponse = await fetch(`https://api.apify.com/v2/acts/apify~google-jobs-scraper/runs`, {
+        // Start the actor run using Indeed scraper
+        const runResponse = await fetch(`https://api.apify.com/v2/acts/misceres~indeed-scraper/runs`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apifyToken}`,
@@ -123,7 +127,7 @@ serve(async (req) => {
         while (runStatus === 'RUNNING' && attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
           
-          const statusResponse = await fetch(`https://api.apify.com/v2/acts/apify~google-jobs-scraper/runs/${runId}`, {
+          const statusResponse = await fetch(`https://api.apify.com/v2/acts/misceres~indeed-scraper/runs/${runId}`, {
             headers: {
               'Authorization': `Bearer ${apifyToken}`
             }
@@ -160,31 +164,31 @@ serve(async (req) => {
           throw new Error(`Failed to fetch results for ${jobTitle}: ${resultsResponse.status}`);
         }
 
-        const apifyJobs: ApifyJobData[] = await resultsResponse.json();
-        console.log(`Retrieved ${apifyJobs.length} jobs for ${jobTitle}`);
+        const indeedJobs: IndeedJobData[] = await resultsResponse.json();
+        console.log(`Retrieved ${indeedJobs.length} jobs for ${jobTitle}`);
 
         // Transform and insert jobs into Supabase
-        const transformedJobs = apifyJobs.map(job => ({
+        const transformedJobs = indeedJobs.map(job => ({
           apify_job_id: job.id || job.jobUrl,
-          title: job.positionName,
+          title: job.title,
           company: job.company,
           location: job.location,
           description: job.description || '',
           salary: job.salary || null,
-          posted_at: job.postedAt || null,
+          posted_at: job.postedDate || null,
           job_url: job.jobUrl,
           apply_url: job.applyUrl || job.jobUrl,
           source: 'Apify',
-          via: job.jobBoard || 'Google Jobs',
-          logo_url: job.logoUrl || null,
-          employment_type: job.employmentTypes?.[0] || null,
-          seniority_level: job.seniorityLevel || null,
-          job_function: job.jobFunction || null,
-          industry: job.industries?.[0] || null,
-          company_size: job.companySize || null,
+          via: 'Indeed',
+          logo_url: null,
+          employment_type: job.jobType || null,
+          seniority_level: null,
+          job_function: null,
+          industry: null,
+          company_size: null,
           remote_type: job.remote ? 'remote' : null,
           data_source: 'apify',
-          job_board: job.jobBoard || 'Google Jobs',
+          job_board: 'Indeed',
           quality_score: 7, // Default quality score for Apify jobs
           scraped_at: new Date().toISOString()
         }));
@@ -218,15 +222,15 @@ serve(async (req) => {
         results.push({
           jobTitle,
           success: true,
-          jobsScraped: apifyJobs.length,
+          jobsScraped: indeedJobs.length,
           jobsInserted: insertedCount,
           runId
         });
 
-        totalJobsScraped += apifyJobs.length;
+        totalJobsScraped += indeedJobs.length;
         totalJobsInserted += insertedCount;
 
-        console.log(`Completed ${jobTitle}: ${insertedCount}/${apifyJobs.length} jobs inserted`);
+        console.log(`Completed ${jobTitle}: ${insertedCount}/${indeedJobs.length} jobs inserted`);
 
         // Add a small delay between job titles to be respectful to Apify
         await new Promise(resolve => setTimeout(resolve, 2000));
