@@ -9,6 +9,17 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
+import Auth from '@/pages/Auth';
+import VerifyEmail from '@/pages/VerifyEmail';
+import UploadResumePage from '@/pages/UploadResumePage';
+import UploadJobPage from '@/pages/UploadJobPage';
+import InterviewPrep from '@/pages/InterviewPrep';
+import Profile from '@/pages/Profile';
+import Upload from '@/pages/Upload';
+import ResumeEditor from '@/pages/ResumeEditor';
+import InitialResumeEditor from '@/pages/InitialResumeEditor';
+import ResumeTemplates from '@/pages/ResumeTemplates';
+import NotFound from '@/pages/NotFound';
 
 function App() {
   return (
@@ -17,6 +28,10 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            
+            {/* Job Seeker Routes */}
             <Route 
               path="/dashboard" 
               element={
@@ -34,6 +49,72 @@ function App() {
               } 
             />
             <Route 
+              path="/upload-resume" 
+              element={
+                <ProtectedRoute>
+                  <UploadResumePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/upload-job" 
+              element={
+                <ProtectedRoute>
+                  <UploadJobPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/interview-prep" 
+              element={
+                <ProtectedRoute>
+                  <InterviewPrep />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/upload" 
+              element={
+                <ProtectedRoute>
+                  <Upload />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resume-editor/:resumeId" 
+              element={
+                <ProtectedRoute>
+                  <ResumeEditor />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resume-editor/initial/:resumeId" 
+              element={
+                <ProtectedRoute>
+                  <InitialResumeEditor />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resume-templates/:resumeId" 
+              element={
+                <ProtectedRoute>
+                  <ResumeTemplates />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Employer Routes */}
+            <Route 
               path="/employer/dashboard" 
               element={
                 <ProtectedRoute>
@@ -43,6 +124,9 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </RoleProvider>
