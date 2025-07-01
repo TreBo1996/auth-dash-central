@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -68,6 +67,20 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			fontFamily: {
+				'helvetica': ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+				'sans': ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+			},
+			fontSize: {
+				'22': ['22px', '26px'],
+				'11': ['11px', '13px'],
+				'10': ['10px', '14px'],
+				'9': ['9px', '12px'],
+			},
+			letterSpacing: {
+				'wider-2': '2px',
+				'wider-1': '1px',
 			},
 			backgroundImage: {
 				'gradient-primary': 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',

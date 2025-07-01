@@ -1,4 +1,3 @@
-
 export interface TemplateConfig {
   id: string;
   name: string;
@@ -89,21 +88,21 @@ export const templateConfigs: Record<string, TemplateConfig> = {
     id: 'classic',
     name: 'Classic Lines',
     category: 'Traditional',
-    description: 'Traditional layout with horizontal line separators between sections',
+    description: 'US Letter format with Helvetica Neue, precise spacing, and horizontal line separators',
     colors: {
       primary: '#000000',
-      secondary: '#495057',
-      accent: '#212529',
-      text: '#212529',
+      secondary: '#000000',
+      accent: '#000000',
+      text: '#000000',
       background: '#ffffff'
     },
     fonts: {
-      heading: 'Georgia, serif',
-      body: 'Georgia, serif'
+      heading: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif',
+      body: 'Inter, "Helvetica Neue", Helvetica, Arial, sans-serif'
     },
     layout: {
       columns: 1,
-      spacing: 'compact'
+      spacing: 'precise'
     }
   }
 };

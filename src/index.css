@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -103,21 +102,21 @@
   }
 }
 
-/* Print styles for clean resume exports */
+/* Print styles for Classic Lines template - US Letter format */
 @media print {
   body {
     margin: 0 !important;
     padding: 0 !important;
-    font-family: Arial, sans-serif !important;
-    font-size: 12px !important;
+    font-family: Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    font-size: 10px !important;
     line-height: 1.4 !important;
     color: #000 !important;
     background: white !important;
   }
   
   @page {
-    size: A4;
-    margin: 0.5in;
+    size: 8.5in 11in; /* US Letter */
+    margin: 1in; /* 1 inch margins on all sides */
   }
   
   /* Hide navigation, buttons, and other UI elements */
@@ -139,6 +138,7 @@
     border: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    font-family: Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
   }
   
   /* Remove any shadows or borders */
