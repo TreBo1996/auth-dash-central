@@ -32,6 +32,7 @@ const ResumeTemplates: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('sidebar');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     console.log('ResumeTemplates: Component mounted with resumeId:', resumeId);
@@ -135,7 +136,7 @@ const ResumeTemplates: React.FC = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     console.log('ResumeTemplates: PDF download initiated');
     
     if (!optimizedResume) {
@@ -147,17 +148,30 @@ const ResumeTemplates: React.FC = () => {
       return;
     }
 
-    const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(' ', '-')}.pdf`;
+    if (isGeneratingPDF) {
+      return; // Prevent multiple simultaneous downloads
+    }
+
+    const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+    
+    setIsGeneratingPDF(true);
     
     try {
-      generatePDF(selectedTemplate, optimizedResume.generated_text, fileName);
+      await generatePDF(selectedTemplate, optimizedResume.generated_text, fileName);
+      
+      toast({
+        title: "Success",
+        description: "PDF downloaded successfully",
+      });
     } catch (error) {
       console.error('ResumeTemplates: PDF generation error:', error);
       toast({
         title: "Error",
-        description: "Unable to generate PDF",
+        description: error instanceof Error ? error.message : "Unable to generate PDF",
         variant: "destructive"
       });
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -214,9 +228,9 @@ const ResumeTemplates: React.FC = () => {
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
-            <Button onClick={handleDownloadPDF}>
+            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
               <Download className="h-4 w-4 mr-2" />
-              Download PDF
+              {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
             </Button>
           </div>
         </div>
