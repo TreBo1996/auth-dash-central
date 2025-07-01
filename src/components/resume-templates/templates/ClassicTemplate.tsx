@@ -56,7 +56,8 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             fontSize: '22px', 
             lineHeight: '26px',
             fontWeight: 'bold',
-            letterSpacing: '0px'
+            letterSpacing: '0px',
+            textAlign: 'center'
           }}
         >
           {parsedData.name}
@@ -70,7 +71,8 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             fontWeight: 'bold',
             letterSpacing: '2px',
             marginTop: '2px',
-            fontVariant: 'small-caps'
+            fontVariant: 'small-caps',
+            textAlign: 'center'
           }}
         >
           {getDesiredRole()}
@@ -91,7 +93,8 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           className="text-center"
           style={{ 
             fontSize: '9px',
-            fontWeight: 'normal'
+            fontWeight: 'normal',
+            textAlign: 'center'
           }}
         >
           {[parsedData.phone, parsedData.email, parsedData.location]
@@ -141,9 +144,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             ></div>
           </div>
           
-          {/* Two-column bullet list - centered container */}
-          <div className="flex justify-center">
-            <div className="grid grid-cols-2 gap-8 mt-2 max-w-2xl">
+          {/* Two-column bullet list - full width */}
+          <div className="flex justify-center w-full">
+            <div className="grid grid-cols-2 gap-12 mt-2 w-full">
               <div className="space-y-1">
                 {skillColumns.left.map((skill, index) => (
                   <div 
