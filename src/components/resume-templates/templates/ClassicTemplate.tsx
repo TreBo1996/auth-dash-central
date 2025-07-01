@@ -39,22 +39,16 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
 
   return (
     <div 
-      className="bg-white font-helvetica text-black leading-normal w-full mx-auto"
+      className="bg-white font-helvetica text-black leading-normal w-full max-w-4xl mx-auto p-12"
       style={{ 
-        maxWidth: '8.5in',
-        minHeight: '11in',
-        padding: '1in',
         fontSize: '10px',
         lineHeight: '14px',
         fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-        aspectRatio: '8.5 / 11',
-        transform: 'scale(0.85)',
-        transformOrigin: 'top center',
-        margin: '0 auto'
+        minHeight: '800px'
       }}
     >
       {/* Header */}
-      <div className="text-center mb-3">
+      <div className="text-center mb-6">
         {/* Full Name - 22pt, Bold, ALL CAPS, Centered */}
         <h1 
           className="font-bold uppercase text-center mb-0"
@@ -109,15 +103,13 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
       {/* Professional Summary - 10pt Italic, 14pt leading, no heading */}
       {parsedData.summary && (
         <div 
-          className="mb-3"
+          className="mb-6 text-justify italic"
           style={{ 
             marginTop: '12px',
             fontSize: '10px',
             lineHeight: '14px',
-            maxWidth: '6.25in',
-            margin: '12px auto 12px auto',
-            textAlign: 'justify',
-            fontStyle: 'italic'
+            maxWidth: '100%',
+            margin: '12px auto 24px auto'
           }}
         >
           {parsedData.summary}
@@ -126,9 +118,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
 
       {/* Skills Section */}
       {parsedData.skills.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-6">
           {/* Section Heading */}
-          <div className="mb-1">
+          <div className="mb-2">
             <h2 
               className="font-bold uppercase"
               style={{ 
@@ -148,33 +140,31 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           </div>
           
           {/* Two-column bullet list */}
-          <div className="grid grid-cols-2 gap-4" style={{ marginTop: '4px' }}>
-            <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-8 mt-2">
+            <div className="space-y-1">
               {skillColumns.left.map((skill, index) => (
                 <div 
                   key={index}
-                  className="flex items-start"
+                  className="flex items-start pl-4"
                   style={{ 
-                    fontSize: '9px',
-                    paddingLeft: '0.25in'
+                    fontSize: '9px'
                   }}
                 >
-                  <span className="mr-2" style={{ marginLeft: '-0.25in' }}>▪</span>
+                  <span className="mr-2 -ml-4">▪</span>
                   <span>{skill}</span>
                 </div>
               ))}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {skillColumns.right.map((skill, index) => (
                 <div 
                   key={index}
-                  className="flex items-start"
+                  className="flex items-start pl-4"
                   style={{ 
-                    fontSize: '9px',
-                    paddingLeft: '0.25in'
+                    fontSize: '9px'
                   }}
                 >
-                  <span className="mr-2" style={{ marginLeft: '-0.25in' }}>▪</span>
+                  <span className="mr-2 -ml-4">▪</span>
                   <span>{skill}</span>
                 </div>
               ))}
@@ -185,9 +175,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
 
       {/* Experience Section */}
       {parsedData.experience.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-6">
           {/* Section Heading */}
-          <div className="mb-1">
+          <div className="mb-2">
             <h2 
               className="font-bold uppercase"
               style={{ 
@@ -206,9 +196,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             ></div>
           </div>
           
-          <div className="space-y-2" style={{ marginTop: '4px' }}>
+          <div className="space-y-4 mt-2">
             {parsedData.experience.map((exp, index) => (
-              <div key={index} style={{ marginBottom: '10px' }}>
+              <div key={index} className="mb-4">
                 {/* Job Title and Date */}
                 <div className="flex justify-between items-baseline mb-0">
                   <h3 
@@ -244,7 +234,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                 
                 {/* Bullets */}
                 {exp.bullets.length > 0 && (
-                  <ul className="space-y-1" style={{ paddingLeft: '0.25in' }}>
+                  <ul className="space-y-1 pl-4">
                     {exp.bullets.map((bullet, bulletIndex) => (
                       <li 
                         key={bulletIndex}
@@ -254,7 +244,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                           marginBottom: '4px'
                         }}
                       >
-                        <span className="mr-2" style={{ marginLeft: '-0.25in' }}>•</span>
+                        <span className="mr-2 -ml-4">•</span>
                         <span>{bullet}</span>
                       </li>
                     ))}
@@ -268,9 +258,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
 
       {/* Education Section */}
       {parsedData.education.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-6">
           {/* Section Heading */}
-          <div className="mb-1">
+          <div className="mb-2">
             <h2 
               className="font-bold uppercase"
               style={{ 
@@ -289,9 +279,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             ></div>
           </div>
           
-          <div className="space-y-2" style={{ marginTop: '4px' }}>
+          <div className="space-y-3 mt-2">
             {parsedData.education.map((edu, index) => (
-              <div key={index} style={{ marginBottom: '10px' }}>
+              <div key={index} className="mb-4">
                 <div className="flex justify-between items-baseline">
                   <h3 
                     className="font-bold"
@@ -327,9 +317,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
 
       {/* Certifications Section */}
       {parsedData.certifications && parsedData.certifications.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-6">
           {/* Section Heading */}
-          <div className="mb-1">
+          <div className="mb-2">
             <h2 
               className="font-bold uppercase"
               style={{ 
@@ -348,9 +338,9 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
             ></div>
           </div>
           
-          <div className="space-y-2" style={{ marginTop: '4px' }}>
+          <div className="space-y-3 mt-2">
             {parsedData.certifications.map((cert, index) => (
-              <div key={index} style={{ marginBottom: '10px' }}>
+              <div key={index} className="mb-4">
                 <div className="flex justify-between items-baseline">
                   <h3 
                     className="font-bold"
