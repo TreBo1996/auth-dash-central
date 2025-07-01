@@ -1,4 +1,3 @@
-
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
 
@@ -36,7 +35,7 @@ const getPDFOptions = () => {
   };
 };
 
-// Enhanced HTML cleaning with better page break controls for job sections
+// Enhanced HTML cleaning with more natural page breaks
 const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
@@ -44,7 +43,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Enhanced page break styles with job section protection
+  // More balanced page break styles focusing on job content protection
   const pageBreakStyles = `
     <style>
       @page {
@@ -68,26 +67,27 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         padding: 0 !important;
       }
       
-      /* JOB EXPERIENCE SECTION PROTECTION */
-      /* Try to keep entire job entries together */
-      .space-y-8 > div,
-      .space-y-6 > div,
-      .space-y-4 > div:has(h3),
-      .mb-8,
-      .mb-6,
-      .mb-4:has(h3) {
+      /* NATURAL SECTION FLOW - Allow sections to flow naturally */
+      .mb-10, .mb-8, .mb-6, .mb-4 {
+        page-break-before: auto !important;
+        page-break-after: auto !important;
+        break-before: auto !important;
+        break-after: auto !important;
+      }
+      
+      /* INDIVIDUAL JOB ENTRY PROTECTION - Only protect job entries, not entire sections */
+      .space-y-8 > div:has(h3),
+      .space-y-6 > div:has(h3),
+      .space-y-4 > div:has(h3) {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         margin-bottom: 1rem !important;
       }
       
-      /* If job section is too long, allow breaks between bullets */
-      .space-y-8 > div ul,
-      .space-y-6 > div ul,
-      .space-y-4 > div ul,
-      .mb-8 ul,
-      .mb-6 ul,
-      .mb-4 ul {
+      /* If job entry is too long, allow breaks between bullet points */
+      .space-y-8 > div:has(h3) ul,
+      .space-y-6 > div:has(h3) ul,
+      .space-y-4 > div:has(h3) ul {
         page-break-inside: auto !important;
         break-inside: auto !important;
       }
@@ -101,7 +101,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         widows: 2 !important;
       }
       
-      /* Prevent headers from being orphaned */
+      /* Headers should stay with some content but allow natural flow */
       h1, h2, h3 {
         page-break-after: avoid !important;
         break-after: avoid !important;
@@ -132,28 +132,29 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         break-inside: avoid !important;
       }
       
-      /* Allow natural breaks between different job entries */
-      .space-y-8 > div + div,
-      .space-y-6 > div + div,
-      .space-y-4 > div + div {
-        page-break-before: auto !important;
-        break-before: auto !important;
-      }
+      /* REMOVE excessive spacing between sections */
+      .space-y-8 > * + *:not(:has(h3)) { margin-top: 1rem !important; }
+      .space-y-6 > * + *:not(:has(h3)) { margin-top: 0.75rem !important; }
+      .space-y-4 > * + *:not(:has(h3)) { margin-top: 0.5rem !important; }
+      
+      /* Job entries can have normal spacing */
+      .space-y-8 > *:has(h3) + *:has(h3) { margin-top: 2rem !important; }
+      .space-y-6 > *:has(h3) + *:has(h3) { margin-top: 1.5rem !important; }
+      .space-y-4 > *:has(h3) + *:has(h3) { margin-top: 1rem !important; }
       
       /* Maintain grid layouts */
       .grid-cols-2 {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 1rem !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
       }
       
-      /* Better spacing preservation */
+      /* Better spacing preservation for non-job content */
       .space-y-1 > * + * { margin-top: 0.25rem !important; }
       .space-y-2 > * + * { margin-top: 0.5rem !important; }
       .space-y-3 > * + * { margin-top: 0.75rem !important; }
-      .space-y-4 > * + * { margin-top: 1rem !important; }
-      .space-y-6 > * + * { margin-top: 1.5rem !important; }
-      .space-y-8 > * + * { margin-top: 2rem !important; }
       
       /* Executive template specific - keep banner content together */
       .bg-gradient-to-r {
@@ -161,10 +162,10 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         break-inside: avoid !important;
       }
       
-      /* Prevent section breaks that would orphan content */
-      .mb-10, .mb-8, .mb-6 {
-        page-break-after: avoid !important;
-        break-after: avoid !important;
+      /* Skills section - allow natural flow */
+      .grid-cols-2 > div {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
       }
     </style>
   `;
@@ -172,22 +173,12 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   // Insert the styles at the beginning
   clonedElement.insertAdjacentHTML('afterbegin', pageBreakStyles);
   
-  // Add classes to help identify job experience sections
+  // Add classes to help identify job experience entries (not entire sections)
   const allElements = clonedElement.querySelectorAll('*');
   allElements.forEach((el) => {
     const htmlEl = el as HTMLElement;
     
-    // Mark job experience containers
-    if (htmlEl.classList.contains('space-y-8') || 
-        htmlEl.classList.contains('space-y-6') || 
-        htmlEl.classList.contains('space-y-4')) {
-      const hasJobContent = htmlEl.querySelector('h3, .font-bold');
-      if (hasJobContent) {
-        htmlEl.classList.add('job-section');
-      }
-    }
-    
-    // Mark individual job entries
+    // Mark individual job entries (elements that contain h3 for job titles)
     if (htmlEl.tagName === 'DIV' && htmlEl.querySelector('h3')) {
       htmlEl.classList.add('job-entry');
     }
