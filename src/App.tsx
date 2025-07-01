@@ -26,8 +26,8 @@ import EmployerProfile from '@/pages/employer/EmployerProfile';
 function App() {
   return (
     <AuthProvider>
-      <RoleProvider>
-        <Router>
+      <Router>
+        <RoleProvider>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
@@ -161,8 +161,8 @@ function App() {
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </Router>
-      </RoleProvider>
+        </RoleProvider>
+      </Router>
     </AuthProvider>
   );
 }
