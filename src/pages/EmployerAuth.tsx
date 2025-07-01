@@ -21,6 +21,33 @@ const EmployerAuth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Helper function to check user roles and redirect appropriately
+  const checkUserRoleAndRedirect = async (userId: string) => {
+    try {
+      const { data: userRoles, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      
+      const roles = userRoles?.map(r => r.role) || [];
+      console.log('User roles:', roles);
+      
+      if (roles.includes('employer') || roles.includes('both')) {
+        console.log('Redirecting to employer dashboard');
+        navigate('/employer/dashboard');
+      } else {
+        console.log('User is not an employer, redirecting to regular dashboard');
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error checking user roles:', error);
+      // Default redirect to employer dashboard since they're on employer auth page
+      navigate('/employer/dashboard');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -39,7 +66,14 @@ const EmployerAuth = () => {
             title: "Welcome back!",
             description: "Successfully signed in to your employer account.",
           });
-          navigate('/employer/dashboard');
+          
+          // Get current user and check their roles
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await checkUserRoleAndRedirect(user.id);
+          } else {
+            navigate('/employer/dashboard');
+          }
         }
       } else {
         // Use the employer dashboard as redirect URL for sign up
@@ -53,15 +87,6 @@ const EmployerAuth = () => {
             variant: "destructive",
           });
         } else {
-          // Assign employer role after successful signup
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase.from('user_roles').insert({
-              user_id: user.id,
-              role: 'employer'
-            });
-          }
-          
           toast({
             title: "Account created!",
             description: "Please check your email to verify your account. Once verified, you'll be redirected to your employer dashboard.",
