@@ -14,7 +14,6 @@ const getPDFOptions = () => {
       letterRendering: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
-      // Remove window dimensions - let it auto-detect content size
       scrollX: 0,
       scrollY: 0,
       onrendered: (canvas: HTMLCanvasElement) => {
@@ -32,12 +31,12 @@ const getPDFOptions = () => {
       mode: ['css', 'legacy'],
       before: '.page-break-before',
       after: '.page-break-after',
-      avoid: ['.avoid-page-break']
+      avoid: ['.avoid-page-break', '.job-entry', '.experience-item']
     }
   };
 };
 
-// Simplified HTML cleaning with targeted page break controls
+// Enhanced HTML cleaning with better page break controls for job sections
 const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
@@ -45,7 +44,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Simplified page break styles - only target what's absolutely necessary
+  // Enhanced page break styles with job section protection
   const pageBreakStyles = `
     <style>
       @page {
@@ -69,30 +68,76 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         padding: 0 !important;
       }
       
-      /* Only keep bullet points together - remove conflicts */
+      /* JOB EXPERIENCE SECTION PROTECTION */
+      /* Try to keep entire job entries together */
+      .space-y-8 > div,
+      .space-y-6 > div,
+      .space-y-4 > div:has(h3),
+      .mb-8,
+      .mb-6,
+      .mb-4:has(h3) {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 1rem !important;
+      }
+      
+      /* If job section is too long, allow breaks between bullets */
+      .space-y-8 > div ul,
+      .space-y-6 > div ul,
+      .space-y-4 > div ul,
+      .mb-8 ul,
+      .mb-6 ul,
+      .mb-4 ul {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      
+      /* Keep individual bullet points together */
       li {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 3px !important;
+        orphans: 2 !important;
+        widows: 2 !important;
       }
       
       /* Prevent headers from being orphaned */
       h1, h2, h3 {
         page-break-after: avoid !important;
         break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        orphans: 3 !important;
       }
       
-      /* Remove conflicting page break rules from lists */
-      ul {
-        page-break-inside: auto !important;
-        break-inside: auto !important;
-      }
-      
-      /* Better line spacing and text flow */
+      /* Better text flow for paragraphs */
       p, div, span {
         line-height: 1.4 !important;
-        page-break-inside: auto !important;
-        break-inside: auto !important;
+        orphans: 2 !important;
+        widows: 2 !important;
+      }
+      
+      /* Job title and company lines should stay with their content */
+      h3 + p,
+      h3 + div,
+      .font-bold + .italic,
+      .font-bold + p {
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+      }
+      
+      /* Ensure date spans stay with their job titles */
+      .flex.justify-between {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      
+      /* Allow natural breaks between different job entries */
+      .space-y-8 > div + div,
+      .space-y-6 > div + div,
+      .space-y-4 > div + div {
+        page-break-before: auto !important;
+        break-before: auto !important;
       }
       
       /* Maintain grid layouts */
@@ -102,25 +147,49 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         gap: 1rem !important;
       }
       
-      /* Ensure proper spacing */
+      /* Better spacing preservation */
       .space-y-1 > * + * { margin-top: 0.25rem !important; }
       .space-y-2 > * + * { margin-top: 0.5rem !important; }
       .space-y-3 > * + * { margin-top: 0.75rem !important; }
       .space-y-4 > * + * { margin-top: 1rem !important; }
+      .space-y-6 > * + * { margin-top: 1.5rem !important; }
+      .space-y-8 > * + * { margin-top: 2rem !important; }
+      
+      /* Executive template specific - keep banner content together */
+      .bg-gradient-to-r {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      
+      /* Prevent section breaks that would orphan content */
+      .mb-10, .mb-8, .mb-6 {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+      }
     </style>
   `;
   
   // Insert the styles at the beginning
   clonedElement.insertAdjacentHTML('afterbegin', pageBreakStyles);
   
-  // Only add page break protection to specific elements that need it
+  // Add classes to help identify job experience sections
   const allElements = clonedElement.querySelectorAll('*');
   allElements.forEach((el) => {
     const htmlEl = el as HTMLElement;
     
-    // Only protect bullet points from page breaks
-    if (htmlEl.tagName === 'LI') {
-      htmlEl.classList.add('avoid-page-break');
+    // Mark job experience containers
+    if (htmlEl.classList.contains('space-y-8') || 
+        htmlEl.classList.contains('space-y-6') || 
+        htmlEl.classList.contains('space-y-4')) {
+      const hasJobContent = htmlEl.querySelector('h3, .font-bold');
+      if (hasJobContent) {
+        htmlEl.classList.add('job-section');
+      }
+    }
+    
+    // Mark individual job entries
+    if (htmlEl.tagName === 'DIV' && htmlEl.querySelector('h3')) {
+      htmlEl.classList.add('job-entry');
     }
     
     // Force black text color
@@ -163,7 +232,7 @@ export const generatePDF = async (templateId: string, resumeContent: string, fil
     // Wait for rendering to complete
     await waitForRender();
     
-    // Clean the HTML content with simplified page break controls
+    // Clean the HTML content with enhanced page break controls
     const cleanedElement = cleanHTMLForPDF(resumeElement);
     
     // Configure PDF options with the provided filename
