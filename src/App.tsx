@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
@@ -24,6 +23,11 @@ import ResumeTemplates from '@/pages/ResumeTemplates';
 import NotFound from '@/pages/NotFound';
 import EmployerAuth from '@/pages/EmployerAuth';
 import EmployerProfile from '@/pages/employer/EmployerProfile';
+import PostJob from '@/pages/employer/PostJob';
+import JobPostings from '@/pages/employer/JobPostings';
+import Applications from '@/pages/employer/Applications';
+import EmployerAnalytics from '@/pages/employer/EmployerAnalytics';
+import EmployerSettings from '@/pages/employer/EmployerSettings';
 
 function App() {
   return (
@@ -37,7 +41,7 @@ function App() {
               <Route path="/employer/auth" element={<EmployerAuth />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               
-              {/* Job Seeker Routes - Now protected by role */}
+              {/* Job Seeker Routes */}
               <Route 
                 path="/dashboard" 
                 element={
@@ -162,6 +166,56 @@ function App() {
                   <ProtectedRoute>
                     <RoleProtectedRoute requiredRole="employer">
                       <EmployerProfile />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/post-job" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="employer">
+                      <PostJob />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/job-postings" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="employer">
+                      <JobPostings />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/applications" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="employer">
+                      <Applications />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/analytics" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="employer">
+                      <EmployerAnalytics />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/employer/settings" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="employer">
+                      <EmployerSettings />
                     </RoleProtectedRoute>
                   </ProtectedRoute>
                 } 
