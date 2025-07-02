@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, MapPin, Calendar, Briefcase, User, Building } from 'lucide-react';
+
 interface JobSearchFormProps {
   onSearch: (data: {
     query: string;
@@ -17,6 +19,7 @@ interface JobSearchFormProps {
   }) => void;
   loading: boolean;
 }
+
 export const JobSearchForm: React.FC<JobSearchFormProps> = ({
   onSearch,
   loading
@@ -28,9 +31,11 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
   const [seniorityLevel, setSeniorityLevel] = useState('');
   const [company, setCompany] = useState('');
   const [maxAge, setMaxAge] = useState('30');
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
+    // At least one search parameter is required for database search
+    if (query.trim() || location.trim() || company.trim()) {
       onSearch({
         query: query.trim(),
         location: location.trim(),
@@ -42,11 +47,13 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
       });
     }
   };
-  return <Card>
+
+  return (
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Search className="h-5 w-5" />
-          Search Jobs
+          Search Job Database
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -54,13 +61,26 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="job-query">Job Title or Keywords</Label>
-              <Input id="job-query" type="text" placeholder="e.g., Software Engineer, Marketing Manager" value={query} onChange={e => setQuery(e.target.value)} required />
+              <Input 
+                id="job-query" 
+                type="text" 
+                placeholder="e.g., Software Engineer, Marketing Manager" 
+                value={query} 
+                onChange={e => setQuery(e.target.value)} 
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="job-location">Location</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="job-location" type="text" placeholder="e.g., New York, San Francisco" value={location} onChange={e => setLocation(e.target.value)} className="pl-10" />
+                <Input 
+                  id="job-location" 
+                  type="text" 
+                  placeholder="e.g., New York, San Francisco" 
+                  value={location} 
+                  onChange={e => setLocation(e.target.value)} 
+                  className="pl-10" 
+                />
               </div>
             </div>
           </div>
@@ -70,7 +90,14 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
               <Label htmlFor="company">Company</Label>
               <div className="relative">
                 <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="company" type="text" placeholder="e.g., Google, Microsoft" value={company} onChange={e => setCompany(e.target.value)} className="pl-10" />
+                <Input 
+                  id="company" 
+                  type="text" 
+                  placeholder="e.g., Google, Microsoft" 
+                  value={company} 
+                  onChange={e => setCompany(e.target.value)} 
+                  className="pl-10" 
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -121,7 +148,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
                   <SelectItem value="Part-time">Part-time</SelectItem>
                   <SelectItem value="Contract">Contract</SelectItem>
                   <SelectItem value="Internship">Internship</SelectItem>
-                  <SelectItem value="Temporary" className="bg-blue-900 hover:bg-blue-800">Temporary</SelectItem>
+                  <SelectItem value="Temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -145,10 +172,21 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
             </div>
           </div>
 
-          <Button type="submit" disabled={loading || !query.trim()} className="w-full md:w-auto bg-indigo-700 hover:bg-indigo-600">
-            {loading ? 'Searching...' : 'Search Jobs'}
+          <Button 
+            type="submit" 
+            disabled={loading || (!query.trim() && !location.trim() && !company.trim())} 
+            className="w-full md:w-auto bg-indigo-700 hover:bg-indigo-600"
+          >
+            {loading ? 'Searching Database...' : 'Search Jobs'}
           </Button>
+          
+          {!query.trim() && !location.trim() && !company.trim() && (
+            <p className="text-sm text-muted-foreground">
+              Please enter at least one search criteria (job title, location, or company)
+            </p>
+          )}
         </form>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };

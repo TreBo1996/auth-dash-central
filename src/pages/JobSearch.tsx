@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
@@ -7,14 +8,17 @@ import { Separator } from '@/components/ui/separator';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Building, Search } from 'lucide-react';
+
 interface JobSearchFilters {
   query: string;
   location: string;
-  datePosted: string;
-  jobType: string;
-  experienceLevel: string;
-  salaryMin: string;
+  remoteType?: string;
+  employmentType?: string;
+  seniorityLevel?: string;
+  company?: string;
+  maxAge?: number;
 }
+
 interface ExternalJob {
   title: string;
   company: string;
@@ -29,6 +33,7 @@ interface ExternalJob {
   job_type?: string | null;
   experience_level?: string | null;
 }
+
 interface EmployerJob {
   id: string;
   title: string;
@@ -45,24 +50,20 @@ interface EmployerJob {
     logo_url: string;
   } | null;
 }
+
 export const JobSearch: React.FC = () => {
-  const [externalJobs, setExternalJobs] = useState<ExternalJob[]>([]);
+  const [databaseJobs, setDatabaseJobs] = useState<ExternalJob[]>([]);
   const [employerJobs, setEmployerJobs] = useState<EmployerJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
-  const [filters, setFilters] = useState<JobSearchFilters>({
-    query: '',
-    location: '',
-    datePosted: '',
-    jobType: '',
-    experienceLevel: '',
-    salaryMin: ''
-  });
+  const [pagination, setPagination] = useState<any>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   // Load employer jobs on component mount
   useEffect(() => {
     loadEmployerJobs();
   }, []);
+
   const loadEmployerJobs = async (searchFilters?: JobSearchFilters) => {
     try {
       let query = supabase.from('job_postings').select(`
@@ -91,55 +92,64 @@ export const JobSearch: React.FC = () => {
       if (searchFilters?.location) {
         query = query.ilike('location', `%${searchFilters.location}%`);
       }
-      if (searchFilters?.jobType) {
-        query = query.eq('employment_type', searchFilters.jobType);
+      if (searchFilters?.employmentType) {
+        query = query.eq('employment_type', searchFilters.employmentType);
       }
-      if (searchFilters?.experienceLevel) {
-        query = query.eq('experience_level', searchFilters.experienceLevel);
+      if (searchFilters?.seniorityLevel) {
+        query = query.eq('experience_level', searchFilters.seniorityLevel);
       }
-      const {
-        data,
-        error
-      } = await query.limit(20);
+
+      const { data, error } = await query.limit(20);
       if (error) throw error;
       setEmployerJobs(data || []);
     } catch (error) {
       console.error('Error loading employer jobs:', error);
     }
   };
+
   const handleSearch = async (searchFilters: JobSearchFilters) => {
     setLoading(true);
-    setFilters(searchFilters);
     try {
       // Load employer jobs with filters
       await loadEmployerJobs(searchFilters);
 
-      // Search external jobs if query is provided
-      if (searchFilters.query.trim()) {
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('job-search', {
-          body: searchFilters
-        });
-        if (error) throw error;
-        setExternalJobs(data.jobs || []);
-      } else {
-        setExternalJobs([]);
-      }
+      // Search database jobs using the database-job-search function
+      const { data, error } = await supabase.functions.invoke('database-job-search', {
+        body: {
+          query: searchFilters.query || '',
+          location: searchFilters.location || '',
+          remoteType: searchFilters.remoteType || '',
+          employmentType: searchFilters.employmentType || '',
+          seniorityLevel: searchFilters.seniorityLevel || '',
+          company: searchFilters.company || '',
+          maxAge: searchFilters.maxAge || 30,
+          limit: 50,
+          offset: 0
+        }
+      });
+
+      if (error) throw error;
+
+      setDatabaseJobs(data.jobs || []);
+      setPagination(data.pagination || null);
+      setWarnings(data.warnings || []);
       setSearchPerformed(true);
     } catch (error) {
-      console.error('Job search error:', error);
-      setExternalJobs([]);
+      console.error('Database job search error:', error);
+      setDatabaseJobs([]);
+      setPagination(null);
+      setWarnings(['Failed to search jobs. Please try again.']);
     } finally {
       setLoading(false);
     }
   };
-  return <DashboardLayout>
+
+  return (
+    <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Find Your Next Job</h1>
-          <p className="text-muted-foreground">Search from thousands of job opportunities</p>
+          <p className="text-muted-foreground">Search from our curated job database</p>
         </div>
 
         <div className="mb-8">
@@ -148,7 +158,8 @@ export const JobSearch: React.FC = () => {
 
         <div className="space-y-8">
           {/* Employer Jobs Section */}
-          {employerJobs.length > 0 && <div>
+          {employerJobs.length > 0 && (
+            <div>
               <Card className="mb-4">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">
@@ -160,51 +171,69 @@ export const JobSearch: React.FC = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  
+                  <p className="text-sm text-muted-foreground">
+                    Direct job postings from employers on our platform.
+                  </p>
                 </CardContent>
               </Card>
               
               <div className="space-y-4">
-                {employerJobs.map(job => <EmployerJobCard key={job.id} job={job} />)}
+                {employerJobs.map(job => (
+                  <EmployerJobCard key={job.id} job={job} />
+                ))}
               </div>
-            </div>}
+            </div>
+          )}
 
-          {/* External Jobs Section */}
-          {(searchPerformed || externalJobs.length > 0) && <>
+          {/* Database Jobs Section */}
+          {(searchPerformed || databaseJobs.length > 0) && (
+            <>
               {employerJobs.length > 0 && <Separator className="my-8" />}
               
               <div>
-                {externalJobs.length > 0 && <Card className="mb-4">
+                {databaseJobs.length > 0 && (
+                  <Card className="mb-4">
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2">
                         <Search className="h-5 w-5 text-gray-600" />
-                        External Job Listings
+                        Job Database Results
                         <span className="text-sm font-normal text-muted-foreground">
-                          ({externalJobs.length} jobs)
+                          ({databaseJobs.length} jobs)
                         </span>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground">
-                        Job listings from across the web. Click to apply on the original job board.
+                        Jobs from our curated database, sourced from various job boards.
                       </p>
                     </CardContent>
-                  </Card>}
+                  </Card>
+                )}
                 
-                <JobSearchResults jobs={externalJobs} loading={loading} searchPerformed={searchPerformed} />
+                <JobSearchResults 
+                  jobs={databaseJobs} 
+                  loading={loading} 
+                  searchPerformed={searchPerformed}
+                  pagination={pagination}
+                  warnings={warnings}
+                />
               </div>
-            </>}
+            </>
+          )}
 
           {/* No results state */}
-          {searchPerformed && employerJobs.length === 0 && externalJobs.length === 0 && !loading && <Card>
+          {searchPerformed && employerJobs.length === 0 && databaseJobs.length === 0 && !loading && (
+            <Card>
               <CardContent className="py-12 text-center">
                 <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
-                  No jobs found. Try adjusting your search criteria.
+                  No jobs found in our database. Try adjusting your search criteria or contact support to add more jobs.
                 </p>
               </CardContent>
-            </Card>}
+            </Card>
+          )}
         </div>
       </div>
-    </DashboardLayout>;
+    </DashboardLayout>
+  );
 };
