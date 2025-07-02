@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, ChevronDown, ChevronUp, Star, Briefcase } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
+import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
 
 interface JobCardProps {
   job: UnifiedJob;
@@ -16,6 +16,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [showExternalModal, setShowExternalModal] = useState(false);
   const { toast } = useToast();
 
   const handleSaveJob = async () => {
@@ -67,7 +68,8 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
     if (job.source === 'employer') {
       window.location.href = job.job_url;
     } else {
-      window.open(job.job_url, '_blank');
+      // For database jobs, show the optimization modal instead of direct redirect
+      setShowExternalModal(true);
     }
   };
 
@@ -153,143 +155,152 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
     parseStructuredData(job.benefits || '').length > 0;
 
   return (
-    <Card className={`hover:shadow-md transition-shadow ${job.source === 'employer' ? 'border-l-4 border-l-blue-500' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              {job.source === 'employer' ? (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  <Star className="h-3 w-3 mr-1" />
-                  Direct Hire
-                </Badge>
-              ) : (
-                <Badge variant="outline">
-                  Database
-                </Badge>
-              )}
-            </div>
-            <CardTitle className="text-lg mb-2">{job.title}</CardTitle>
-            <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Building className="h-4 w-4" />
-                {job.company}
-              </div>
-              {job.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {job.location}
-                </div>
-              )}
-              {job.salary && (
-                <div className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
-                  {job.salary}
-                </div>
-              )}
-              {job.posted_at && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {job.posted_at}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            {job.source === 'employer' && job.employer_profile?.logo_url && (
-              <img 
-                src={job.employer_profile.logo_url} 
-                alt={job.company}
-                className="w-12 h-12 rounded object-cover"
-              />
-            )}
-            {job.source === 'database' && job.thumbnail && (
-              <img 
-                src={job.thumbnail} 
-                alt={job.company}
-                className="w-12 h-12 rounded object-cover"
-              />
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {renderJobDescription()}
-          
-          {shouldShowToggle && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={toggleExpanded} 
-              className="h-auto p-1 text-blue-600 hover:text-blue-800"
-            >
-              {expanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Show Less
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Show More
-                </>
-              )}
-            </Button>
-          )}
-          
-          <div className="flex gap-2">
-            {job.employment_type && (
-              <Badge variant="outline">{job.employment_type}</Badge>
-            )}
-            {job.experience_level && (
-              <Badge variant="outline">{job.experience_level}</Badge>
-            )}
-            {job.source === 'database' && job.via && (
-              <Badge variant="outline">via {job.via}</Badge>
-            )}
-          </div>
-
-          <div className="flex justify-between items-center pt-2">
-            <div className="text-xs text-muted-foreground">
-              {job.source === 'employer' ? 'Posted directly by employer' : 'From job database'}
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSaveJob} 
-                disabled={saving || saved}
-              >
-                {saved ? (
-                  <>
-                    <Check className="h-4 w-4 mr-1" />
-                    Saved
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-1" />
-                    {saving ? 'Saving...' : 'Save'}
-                  </>
-                )}
-              </Button>
-              <Button onClick={handleViewJob} className={job.source === 'employer' ? '' : 'bg-blue-800 hover:bg-blue-700'}>
+    <>
+      <Card className={`hover:shadow-md transition-shadow ${job.source === 'employer' ? 'border-l-4 border-l-blue-500' : ''}`}>
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
                 {job.source === 'employer' ? (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                    <Star className="h-3 w-3 mr-1" />
+                    Direct Hire
+                  </Badge>
+                ) : (
+                  <Badge variant="outline">
+                    Database
+                  </Badge>
+                )}
+              </div>
+              <CardTitle className="text-lg mb-2">{job.title}</CardTitle>
+              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Building className="h-4 w-4" />
+                  {job.company}
+                </div>
+                {job.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {job.location}
+                  </div>
+                )}
+                {job.salary && (
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-4 w-4" />
+                    {job.salary}
+                  </div>
+                )}
+                {job.posted_at && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {job.posted_at}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {job.source === 'employer' && job.employer_profile?.logo_url && (
+                <img 
+                  src={job.employer_profile.logo_url} 
+                  alt={job.company}
+                  className="w-12 h-12 rounded object-cover"
+                />
+              )}
+              {job.source === 'database' && job.thumbnail && (
+                <img 
+                  src={job.thumbnail} 
+                  alt={job.company}
+                  className="w-12 h-12 rounded object-cover"
+                />
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {renderJobDescription()}
+            
+            {shouldShowToggle && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleExpanded} 
+                className="h-auto p-1 text-blue-600 hover:text-blue-800"
+              >
+                {expanded ? (
                   <>
-                    <Briefcase className="h-4 w-4 mr-1" />
-                    View & Apply
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    Show Less
                   </>
                 ) : (
                   <>
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Apply
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    Show More
                   </>
                 )}
               </Button>
+            )}
+            
+            <div className="flex gap-2">
+              {job.employment_type && (
+                <Badge variant="outline">{job.employment_type}</Badge>
+              )}
+              {job.experience_level && (
+                <Badge variant="outline">{job.experience_level}</Badge>
+              )}
+              {job.source === 'database' && job.via && (
+                <Badge variant="outline">via {job.via}</Badge>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <div className="text-xs text-muted-foreground">
+                {job.source === 'employer' ? 'Posted directly by employer' : 'From job database'}
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSaveJob} 
+                  disabled={saving || saved}
+                >
+                  {saved ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Saved
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-1" />
+                      {saving ? 'Saving...' : 'Save'}
+                    </>
+                  )}
+                </Button>
+                <Button onClick={handleViewJob} className={job.source === 'employer' ? '' : 'bg-blue-800 hover:bg-blue-700'}>
+                  {job.source === 'employer' ? (
+                    <>
+                      <Briefcase className="h-4 w-4 mr-1" />
+                      View & Apply
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      Apply
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* External Job Application Modal */}
+      <ExternalJobApplicationModal
+        isOpen={showExternalModal}
+        onClose={() => setShowExternalModal(false)}
+        job={job}
+      />
+    </>
   );
 };
