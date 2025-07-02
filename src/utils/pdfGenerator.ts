@@ -2,39 +2,32 @@
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
 
-// PDF generation options with balanced quality settings for crisp text
-const getPDFOptions = () => {
+// Basic PDF generation options - prioritizing functionality over quality initially
+const getBasicPDFOptions = () => {
   return {
     margin: [36, 36, 36, 36], // 0.5in = 36pt margins
     filename: 'resume.pdf',
-    image: { type: 'jpeg', quality: 0.95 }, // High-quality JPEG (more memory efficient than PNG)
+    image: { type: 'jpeg', quality: 0.8 }, // Moderate quality JPEG
     html2canvas: { 
-      scale: 2, // Keep scale at 2 for better resolution
+      scale: 1, // Start with scale 1 for reliability
       useCORS: true,
       letterRendering: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
-      dpi: 150, // Balanced DPI - better than 96, not overwhelming like 300
-      foreignObjectRendering: true, // Better text rendering
-      imageTimeout: 15000, // Allow time for fonts to load
+      dpi: 96, // Standard DPI for basic functionality
+      imageTimeout: 10000, // Shorter timeout
       onrendered: (canvas: HTMLCanvasElement) => {
-        console.log('Canvas rendered:', canvas.width, 'x', canvas.height);
-        // Log if canvas is extremely large (potential issue)
-        if (canvas.width > 3000 || canvas.height > 4000) {
-          console.warn('Large canvas detected - this might cause PDF generation issues');
-        }
+        console.log('Canvas rendered - Basic settings:', canvas.width, 'x', canvas.height);
+        console.log('Canvas area:', canvas.width * canvas.height, 'pixels');
       }
     },
     jsPDF: { 
-      unit: 'pt', // Changed from 'in' to 'pt' for better CSS consistency
+      unit: 'pt',
       format: 'letter', 
       orientation: 'portrait',
-      compress: true,
-      precision: 16,
-      putOnlyUsedFonts: true,
-      floatPrecision: 16
+      compress: true
     },
     pagebreak: { 
       mode: ['css', 'legacy'],
@@ -45,28 +38,99 @@ const getPDFOptions = () => {
   };
 };
 
-// Simplified HTML cleaning with focused page break controls and inline style overrides
+// Enhanced PDF generation options - only used if basic works
+const getEnhancedPDFOptions = () => {
+  return {
+    margin: [36, 36, 36, 36],
+    filename: 'resume.pdf',
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { 
+      scale: 1.5, // Moderate scale increase
+      useCORS: true,
+      letterRendering: true,
+      allowTaint: false,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      dpi: 120, // Moderate DPI increase
+      foreignObjectRendering: true,
+      imageTimeout: 15000,
+      onrendered: (canvas: HTMLCanvasElement) => {
+        console.log('Canvas rendered - Enhanced settings:', canvas.width, 'x', canvas.height);
+        if (canvas.width > 2500 || canvas.height > 3500) {
+          console.warn('Large canvas detected - Enhanced quality might cause issues');
+        }
+      }
+    },
+    jsPDF: { 
+      unit: 'pt',
+      format: 'letter', 
+      orientation: 'portrait',
+      compress: true,
+      precision: 16
+    },
+    pagebreak: { 
+      mode: ['css', 'legacy'],
+      before: '.page-break-before',
+      after: '.page-break-after',
+      avoid: ['.avoid-page-break', '.job-entry']
+    }
+  };
+};
+
+// Simplified HTML cleaning focused on PDF compatibility
 const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
-  // Remove any interactive elements that might cause issues
+  // Remove interactive elements
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Enhanced page break styles with inline style overrides
-  const pageBreakStyles = `
+  // PDF-specific styles with font size adjustments
+  const pdfStyles = `
     <style>
       @page {
         size: 8.5in 11in;
         margin: 0.5in;
       }
       
-      /* Force proper text rendering and sizing */
+      /* Force proper text rendering */
       * {
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        font-family: Arial, sans-serif !important;
+      }
+      
+      /* Increase font sizes for better PDF rendering */
+      body, div, p, span {
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+      }
+      
+      h1 {
+        font-size: 24px !important;
+        line-height: 1.3 !important;
+      }
+      
+      h2 {
+        font-size: 14px !important;
+        line-height: 1.3 !important;
+      }
+      
+      h3 {
+        font-size: 12px !important;
+        line-height: 1.3 !important;
+      }
+      
+      /* Simplify layouts for PDF */
+      .grid {
+        display: block !important;
+      }
+      
+      .grid-cols-2 > div {
+        display: block !important;
+        margin-bottom: 8px !important;
       }
       
       /* Ensure full width utilization */
@@ -74,66 +138,59 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 16px !important;
       }
       
-      /* ---- PAGE-BREAK PATCH ---- */
-      h1            { page-break-after: avoid !important; }
-      h2, h3        { page-break-after: auto  !important;
-                      break-after:     auto  !important;
-                      page-break-inside: avoid !important; }
-
-      .job-entry                { page-break-inside: auto  !important; }
-      .job-entry > :first-child { page-break-after:  avoid !important; }
-
-      /* Keep at least two lines together in any paragraph or list item */
-      p, li, div { orphans:2 !important; widows:2 !important; }
-      
-      /* ---- INLINE STYLE AND MARGIN OVERRIDES ---- */
-      /* Target h2 elements with marginTop inline style and reduce spacing */
-      h2[style*="marginTop"] { 
-        margin-top: 2px !important; 
+      /* Page break controls */
+      h1, h2, h3 { 
+        page-break-after: avoid !important; 
+        break-after: avoid !important;
       }
       
-      /* Reduce section container margins */
+      .job-entry { 
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important;
+      }
+      
+      /* Reduce excessive margins */
       .mb-6 { 
-        margin-bottom: 8px !important; 
+        margin-bottom: 12px !important; 
       }
       
-      /* Prevent excessive spacing between consecutive sections */
-      .mb-6 + .mb-6 {
-        margin-top: -8px !important;
-      }
-      
-      /* Additional spacing control for section transitions */
       .mb-2 {
-        margin-bottom: 4px !important;
-      }
-      
-      /* Ensure section headings are close to their content */
-      h2 + div {
-        margin-top: 2px !important;
+        margin-bottom: 6px !important;
       }
     </style>
   `;
   
-  // Insert the styles at the beginning
-  clonedElement.insertAdjacentHTML('afterbegin', pageBreakStyles);
-  
-  // Force black text color
-  const allElements = clonedElement.querySelectorAll('*');
-  allElements.forEach((el) => {
-    const htmlEl = el as HTMLElement;
-    if (htmlEl.style) {
-      htmlEl.style.color = '#000000';
-    }
-  });
+  clonedElement.insertAdjacentHTML('afterbegin', pdfStyles);
   
   return clonedElement;
 };
 
-// Improved render wait time for better font loading
-const waitForRender = (ms: number = 1000) => { // Increased from 500ms to 1000ms
+// Check if element has valid content
+const validateResumeContent = (element: HTMLElement): boolean => {
+  if (!element) {
+    console.error('PDF Generation: Resume element is null');
+    return false;
+  }
+  
+  if (!element.innerHTML.trim()) {
+    console.error('PDF Generation: Resume element is empty');
+    return false;
+  }
+  
+  const textContent = element.textContent?.trim() || '';
+  if (textContent.length < 50) {
+    console.error('PDF Generation: Resume content seems too short:', textContent.length, 'characters');
+    return false;
+  }
+  
+  console.log('PDF Generation: Content validation passed - text length:', textContent.length);
+  return true;
+};
+
+const waitForRender = (ms: number = 500) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
@@ -146,62 +203,74 @@ export const generatePDF = async (templateId: string, resumeContent: string, fil
     throw new Error('Resume content not found');
   }
 
-  // Check if element has content
-  if (!resumeElement.innerHTML.trim()) {
-    console.error('PDF Generation: Resume element is empty');
-    throw new Error('Resume content is empty');
+  // Validate content before proceeding
+  if (!validateResumeContent(resumeElement)) {
+    throw new Error('Resume content is empty or invalid');
   }
 
-  try {
-    console.log('PDF Generation: Element dimensions:', {
-      width: resumeElement.offsetWidth,
-      height: resumeElement.offsetHeight,
-      scrollWidth: resumeElement.scrollWidth,
-      scrollHeight: resumeElement.scrollHeight
-    });
+  console.log('PDF Generation: Element dimensions:', {
+    width: resumeElement.offsetWidth,
+    height: resumeElement.offsetHeight,
+    scrollWidth: resumeElement.scrollWidth,
+    scrollHeight: resumeElement.scrollHeight
+  });
 
+  try {
     // Wait for rendering to complete
     await waitForRender();
     
-    // Clean the HTML content with simplified page break controls
+    // Clean the HTML content
     const cleanedElement = cleanHTMLForPDF(resumeElement);
+    console.log('PDF Generation: HTML cleaned for PDF compatibility');
     
-    // Configure PDF options with the provided filename
-    const options = {
-      ...getPDFOptions(),
+    // Try basic settings first
+    const basicOptions = {
+      ...getBasicPDFOptions(),
       filename: fileName || 'resume.pdf'
     };
     
-    console.log('PDF Generation: Generating PDF with balanced quality options:', {
-      scale: options.html2canvas.scale,
-      dpi: options.html2canvas.dpi,
-      imageType: options.image.type,
-      imageQuality: options.image.quality
-    });
+    console.log('PDF Generation: Attempting with basic settings');
     
-    // Generate and download the PDF with improved error handling
-    const worker = html2pdf()
-      .set(options)
-      .from(cleanedElement);
-    
-    await worker.save();
-    
-    console.log('PDF Generation: Successfully downloaded PDF with improved quality');
+    try {
+      const worker = html2pdf()
+        .set(basicOptions)
+        .from(cleanedElement);
+      
+      await worker.save();
+      console.log('PDF Generation: Successfully generated PDF with basic settings');
+      
+    } catch (basicError) {
+      console.warn('PDF Generation: Basic settings failed, trying enhanced settings:', basicError);
+      
+      // Try enhanced settings as fallback
+      const enhancedOptions = {
+        ...getEnhancedPDFOptions(),
+        filename: fileName || 'resume.pdf'
+      };
+      
+      const enhancedWorker = html2pdf()
+        .set(enhancedOptions)
+        .from(cleanedElement);
+      
+      await enhancedWorker.save();
+      console.log('PDF Generation: Successfully generated PDF with enhanced settings');
+    }
     
   } catch (error) {
-    console.error('PDF Generation: Error generating PDF:', error);
+    console.error('PDF Generation: All attempts failed:', error);
     
-    // More specific error handling for canvas/memory issues
+    // Provide specific error messages
     if (error instanceof Error) {
-      if (error.message.includes('Canvas') || error.message.includes('memory')) {
-        console.warn('PDF Generation: High-quality settings failed, this might be due to canvas size limits');
-        throw new Error('PDF generation failed due to high quality settings. Please try again or contact support.');
-      } else if (error.message.includes('jsPDF')) {
-        throw new Error('Failed to generate PDF file. Please check your content and try again.');
+      if (error.message.includes('Canvas') || error.message.includes('canvas')) {
+        throw new Error('PDF generation failed due to rendering issues. The resume content may be too complex. Please try again.');
+      } else if (error.message.includes('jsPDF') || error.message.includes('pdf')) {
+        throw new Error('PDF file creation failed. Please check your browser settings and try again.');
+      } else if (error.message.includes('timeout')) {
+        throw new Error('PDF generation timed out. Please try again.');
       }
     }
     
-    throw new Error('Failed to generate PDF. Please try again.');
+    throw new Error('PDF generation failed. Please try again or contact support if the issue persists.');
   }
 };
 
@@ -222,7 +291,7 @@ export const printResume = (templateId: string, resumeContent: string) => {
         body { 
           margin: 0; 
           padding: 0; 
-          font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+          font-family: Arial, sans-serif !important;
         }
         @page { 
           size: 8.5in 11in; 
