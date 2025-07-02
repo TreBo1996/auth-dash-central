@@ -42,8 +42,8 @@ function App() {
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <RoleProvider>
-            <Router>
+          <Router>
+            <RoleProvider>
               <div className="min-h-screen bg-background">
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -183,8 +183,8 @@ function App() {
                 </Routes>
               </div>
               <Toaster />
-            </Router>
-          </RoleProvider>
+            </RoleProvider>
+          </Router>
         </AuthProvider>
       </QueryClientProvider>
     </AppErrorBoundary>
