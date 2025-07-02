@@ -1,14 +1,23 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, Zap, ArrowRight, Users, Award, CheckCircle, Star, BarChart3, Clock, Shield, Target, ChevronRight, Play, Briefcase } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Upload, FileText, Zap, ArrowRight, Users, Award, CheckCircle, Star, BarChart3, Clock, Shield, Target, ChevronRight, Briefcase } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
+
 const Home = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleUploadResumeClick = () => {
+    if (user) {
+      navigate('/upload-resume');
+    } else {
+      navigate('/auth?redirect=upload-resume');
+    }
+  };
+
   const features = [{
     icon: <Zap className="h-8 w-8" />,
     title: "AI-Powered Optimization",
@@ -40,6 +49,7 @@ const Home = () => {
     description: "Your data is encrypted and secure. We never share your information with third parties.",
     highlight: "100% Secure"
   }];
+
   const testimonials = [{
     name: "Sarah Chen",
     role: "Software Engineer",
@@ -59,6 +69,7 @@ const Home = () => {
     content: "The interview prep feature helped me ace my technical interviews. Highly recommended!",
     rating: 5
   }];
+
   const stats = [{
     number: "50,000+",
     label: "Resumes Optimized"
@@ -72,9 +83,13 @@ const Home = () => {
     number: "24/7",
     label: "AI Support"
   }];
+
   const freeFeatures = ["Upload and optimize 1 resume per month", "Basic ATS scoring", "Access to 3 professional templates", "Standard AI optimization", "Email support"];
+
   const premiumFeatures = ["Unlimited resume uploads", "Advanced ATS scoring with detailed insights", "Access to all 7+ premium templates", "Priority AI optimization", "Interview preparation with AI feedback", "Job search integration", "Priority email & chat support", "Resume version history"];
-  return <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <Header />
       
       {/* Hero Section */}
@@ -121,9 +136,14 @@ const Home = () => {
                       Start Free Today
                     </Button>
                   </Link>
-                  <Button size="lg" variant="outline" className="text-lg px-8 py-4 border-indigo-900 text-white bg-indigo-900 hover:bg-indigo-800">
-                    <Play className="mr-2 h-5 w-5" />
-                    Watch Demo
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="text-lg px-8 py-4 border-indigo-900 text-white bg-indigo-900 hover:bg-indigo-800"
+                    onClick={handleUploadResumeClick}
+                  >
+                    <Upload className="mr-2 h-5 w-5" />
+                    Upload Resume
                   </Button>
                 </>
               )}
@@ -143,10 +163,12 @@ const Home = () => {
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
-              {stats.map((stat, index) => <div key={index} className="text-center">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
                   <div className="text-2xl md:text-3xl font-bold text-yellow-300">{stat.number}</div>
                   <div className="text-sm text-blue-200">{stat.label}</div>
-                </div>)}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -165,7 +187,8 @@ const Home = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {features.map((feature, index) => <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
+            {features.map((feature, index) => (
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div className="text-indigo-600 group-hover:text-indigo-700 transition-colors">
@@ -184,7 +207,8 @@ const Home = () => {
                     {feature.description}
                   </CardDescription>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -204,21 +228,22 @@ const Home = () => {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8">
               {[{
-              step: "1",
-              title: "Upload Your Resume",
-              description: "Upload your current resume and the job description you're targeting.",
-              icon: <Upload className="h-8 w-8" />
-            }, {
-              step: "2",
-              title: "AI Optimization",
-              description: "Our AI analyzes and optimizes your resume for ATS compatibility and relevance.",
-              icon: <Zap className="h-8 w-8" />
-            }, {
-              step: "3",
-              title: "Download & Apply",
-              description: "Get your optimized resume with improved ATS score and start applying!",
-              icon: <FileText className="h-8 w-8" />
-            }].map((step, index) => <div key={index} className="text-center relative">
+                step: "1",
+                title: "Upload Your Resume",
+                description: "Upload your current resume and the job description you're targeting.",
+                icon: <Upload className="h-8 w-8" />
+              }, {
+                step: "2",
+                title: "AI Optimization",
+                description: "Our AI analyzes and optimizes your resume for ATS compatibility and relevance.",
+                icon: <Zap className="h-8 w-8" />
+              }, {
+                step: "3",
+                title: "Download & Apply",
+                description: "Get your optimized resume with improved ATS score and start applying!",
+                icon: <FileText className="h-8 w-8" />
+              }].map((step, index) => (
+                <div key={index} className="text-center relative">
                   <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg text-indigo-600">
                     {step.icon}
                   </div>
@@ -228,7 +253,8 @@ const Home = () => {
                   <h3 className="text-xl font-semibold mb-4">{step.title}</h3>
                   <p className="text-gray-600">{step.description}</p>
                   {index < 2 && <ChevronRight className="hidden md:block absolute top-8 -right-4 h-6 w-6 text-gray-400" />}
-                </div>)}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -245,10 +271,13 @@ const Home = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {testimonials.map((testimonial, index) => <Card key={index} className="border-0 shadow-lg">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="border-0 shadow-lg">
                 <CardContent className="pt-6">
                   <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />)}
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                    ))}
                   </div>
                   <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
                   <div className="flex items-center">
@@ -261,7 +290,8 @@ const Home = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -293,16 +323,20 @@ const Home = () => {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-8">
-                  {freeFeatures.map((feature, index) => <li key={index} className="flex items-start">
+                  {freeFeatures.map((feature, index) => (
+                    <li key={index} className="flex items-start">
                       <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
                       <span className="text-gray-700">{feature}</span>
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
-                {!user && <Link to="/auth" className="block">
+                {!user && (
+                  <Link to="/auth" className="block">
                     <Button className="w-full py-3" size="lg">
                       Get Started Free
                     </Button>
-                  </Link>}
+                  </Link>
+                )}
               </CardContent>
             </Card>
 
@@ -322,16 +356,20 @@ const Home = () => {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-8">
-                  {premiumFeatures.map((feature, index) => <li key={index} className="flex items-start">
+                  {premiumFeatures.map((feature, index) => (
+                    <li key={index} className="flex items-start">
                       <CheckCircle className="h-5 w-5 text-indigo-500 mt-0.5 mr-3 flex-shrink-0" />
                       <span className="text-gray-700">{feature}</span>
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
-                {!user && <Link to="/auth" className="block">
+                {!user && (
+                  <Link to="/auth" className="block">
                     <Button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" size="lg">
                       Start Premium Trial
                     </Button>
-                  </Link>}
+                  </Link>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -346,7 +384,8 @@ const Home = () => {
           </h2>
           <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">Join thousands of professionals who've already boosted their job search success with RezLit.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? <>
+            {user ? (
+              <>
                 <Link to="/dashboard">
                   <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100">
                     <ArrowRight className="mr-2 h-5 w-5" />
@@ -359,23 +398,30 @@ const Home = () => {
                     Upload Resume
                   </Button>
                 </Link>
-              </> : <>
+              </>
+            ) : (
+              <>
                 <Link to="/auth">
                   <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100">
                     <ArrowRight className="mr-2 h-5 w-5" />
                     Start Free Today
                   </Button>
                 </Link>
-                <Link to="/auth">
-                  <Button size="lg" className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-all">
-                    <Users className="mr-2 h-5 w-5" />
-                    Join 50,000+ Users
-                  </Button>
-                </Link>
-              </>}
+                <Button 
+                  size="lg" 
+                  className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-all"
+                  onClick={handleUploadResumeClick}
+                >
+                  <Upload className="mr-2 h-5 w-5" />
+                  Upload Resume
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>
-    </div>;
+    </div>
+  );
 };
+
 export default Home;

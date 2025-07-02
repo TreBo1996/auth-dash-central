@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, AlertTriangle, Sparkles, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 const Auth: React.FC = () => {
@@ -20,13 +20,22 @@ const Auth: React.FC = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  // Get redirect parameter from URL
+  const redirectParam = searchParams.get('redirect');
 
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      // Handle redirect after authentication
+      if (redirectParam === 'upload-resume') {
+        navigate('/upload-resume');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [user, navigate]);
+  }, [user, navigate, redirectParam]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +51,13 @@ const Auth: React.FC = () => {
         title: "Welcome back!",
         description: "You have been signed in successfully.",
       });
-      navigate('/dashboard');
+      
+      // Handle redirect after successful sign in
+      if (redirectParam === 'upload-resume') {
+        navigate('/upload-resume');
+      } else {
+        navigate('/dashboard');
+      }
     }
     
     setIsLoading(false);
@@ -53,7 +68,12 @@ const Auth: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await signUp(email, password, fullName);
+    // Include redirect in the signup redirect URL
+    const redirectUrl = redirectParam === 'upload-resume' 
+      ? `${window.location.origin}/upload-resume`
+      : `${window.location.origin}/dashboard`;
+
+    const { error } = await signUp(email, password, fullName, redirectUrl);
     
     if (error) {
       setError(error.message);
@@ -88,7 +108,10 @@ const Auth: React.FC = () => {
             <span className="text-sm font-medium text-white">Trusted by 50,000+ job seekers</span>
           </div>
           <p className="text-blue-100 text-lg">
-            Transform your career with AI-powered resume optimization
+            {redirectParam === 'upload-resume' 
+              ? 'Sign in to upload and optimize your resume with AI'
+              : 'Transform your career with AI-powered resume optimization'
+            }
           </p>
         </div>
 
