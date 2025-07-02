@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const [coverLetter, setCoverLetter] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
+  const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
+  const [creatingJobDescription, setCreatingJobDescription] = useState(false);
 
   const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
 
@@ -75,6 +78,63 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         description: "Failed to load your resumes",
         variant: "destructive"
       });
+    }
+  };
+
+  const createJobDescription = async () => {
+    if (!user) return null;
+    
+    setCreatingJobDescription(true);
+    try {
+      // Check if job description already exists for this job posting
+      const { data: existingJobDesc } = await supabase
+        .from('job_descriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', jobPosting.title)
+        .eq('parsed_text', jobPosting.description)
+        .eq('source', 'application')
+        .single();
+
+      if (existingJobDesc) {
+        setJobDescriptionId(existingJobDesc.id);
+        return existingJobDesc.id;
+      }
+
+      // Create new job description
+      const { data: newJobDesc, error } = await supabase
+        .from('job_descriptions')
+        .insert({
+          user_id: user.id,
+          title: jobPosting.title,
+          parsed_text: jobPosting.description,
+          source: 'application',
+          company: companyName
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      
+      setJobDescriptionId(newJobDesc.id);
+      return newJobDesc.id;
+    } catch (error) {
+      console.error('Error creating job description:', error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare job description for optimization",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setCreatingJobDescription(false);
+    }
+  };
+
+  const handleOptimizeClick = async () => {
+    const jobDescId = await createJobDescription();
+    if (jobDescId) {
+      setStep('optimize');
     }
   };
 
@@ -169,11 +229,11 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const availableResumes = resumes.filter(resume => resume.parsed_text);
-  const jobDescriptions = [{
-    id: 'current-job',
+  const jobDescriptions = jobDescriptionId ? [{
+    id: jobDescriptionId,
     title: jobPosting.title,
     parsed_text: jobPosting.description
-  }];
+  }] : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -210,7 +270,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
                 <Card 
                   className="cursor-pointer hover:bg-gray-50 transition-colors border-purple-200"
-                  onClick={() => setStep('optimize')}
+                  onClick={handleOptimizeClick}
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-purple-700">
@@ -222,6 +282,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     <p className="text-sm text-muted-foreground">
                       AI-optimize your resume for this specific job
                     </p>
+                    {creatingJobDescription && (
+                      <p className="text-xs text-blue-600 mt-2">Preparing job description...</p>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -242,9 +305,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                   <CardContent className="py-8 text-center">
                     <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-500 mb-4">No resumes found</p>
-                    <Button onClick={() => setStep('optimize')}>
+                    <Button onClick={handleOptimizeClick} disabled={creatingJobDescription}>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      Create Optimized Resume Instead
+                      {creatingJobDescription ? 'Preparing...' : 'Create Optimized Resume Instead'}
                     </Button>
                   </CardContent>
                 </Card>
@@ -282,11 +345,19 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 </Button>
               </div>
 
-              <ResumeOptimizer
-                resumes={resumes}
-                jobDescriptions={jobDescriptions}
-                onOptimizationComplete={handleOptimizationComplete}
-              />
+              {jobDescriptions.length > 0 ? (
+                <ResumeOptimizer
+                  resumes={resumes}
+                  jobDescriptions={jobDescriptions}
+                  onOptimizationComplete={handleOptimizationComplete}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <p className="text-gray-500">Preparing job description for optimization...</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
 
