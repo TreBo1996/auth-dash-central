@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           apify_job_id: string | null
           apply_url: string | null
+          archived_at: string | null
           company: string
           company_size: string | null
           created_at: string
@@ -47,6 +48,7 @@ export type Database = {
         Insert: {
           apify_job_id?: string | null
           apply_url?: string | null
+          archived_at?: string | null
           company: string
           company_size?: string | null
           created_at?: string
@@ -81,6 +83,7 @@ export type Database = {
         Update: {
           apify_job_id?: string | null
           apply_url?: string | null
+          archived_at?: string | null
           company?: string
           company_size?: string | null
           created_at?: string
@@ -681,6 +684,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_admin: boolean | null
           plan_level: string | null
           updated_at: string
         }
@@ -690,6 +694,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_admin?: boolean | null
           plan_level?: string | null
           updated_at?: string
         }
@@ -699,6 +704,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_admin?: boolean | null
           plan_level?: string | null
           updated_at?: string
         }
@@ -1102,9 +1108,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_old_jobs: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_old_jobs: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_job_statistics: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       has_role: {
         Args: {
