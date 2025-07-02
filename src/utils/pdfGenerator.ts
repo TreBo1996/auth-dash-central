@@ -1,21 +1,23 @@
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
 
-// PDF generation options with simplified settings (pt units, 96 DPI)
+// PDF generation options with high-quality settings for crisp text
 const getPDFOptions = () => {
   return {
     margin: [36, 36, 36, 36], // 0.5in = 36pt margins
     filename: 'resume.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'png', quality: 1.0 }, // PNG for crisp text, max quality
     html2canvas: { 
-      scale: 1,
+      scale: 2, // Increase from 1 to 2 for better resolution
       useCORS: true,
       letterRendering: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
-      dpi: 96,
+      dpi: 300, // Increase from 96 to 300 for print quality
+      foreignObjectRendering: true, // Better text rendering
+      imageTimeout: 15000, // Allow time for fonts to load
       onrendered: (canvas: HTMLCanvasElement) => {
         console.log('Canvas rendered:', canvas.width, 'x', canvas.height);
       }
@@ -125,8 +127,8 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   return clonedElement;
 };
 
-// Add better error handling and content detection
-const waitForRender = (ms: number = 500) => {
+// Improved render wait time for better font loading
+const waitForRender = (ms: number = 1000) => { // Increased from 500ms to 1000ms
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
