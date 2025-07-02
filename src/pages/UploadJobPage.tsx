@@ -18,6 +18,7 @@ const UploadJobPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState('');
   const [jobTitle, setJobTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
@@ -166,6 +167,7 @@ const UploadJobPage: React.FC = () => {
         .insert({
           user_id: user.id,
           title: jobTitle || file?.name || 'Untitled Job Description',
+          company: companyName || null,
           source_file_url: fileUrl || null,
           parsed_text: parsedContent,
           file_name: file?.name || null,
@@ -197,6 +199,7 @@ const UploadJobPage: React.FC = () => {
     setFile(null);
     setTextInput('');
     setJobTitle('');
+    setCompanyName('');
     setParsedContent('');
     setShowPreview(false);
   };
@@ -214,16 +217,30 @@ const UploadJobPage: React.FC = () => {
         {!showPreview ? (
           <Card>
             <CardHeader>
-              <CardTitle>Job Title</CardTitle>
-              <CardDescription>Enter the job title for this position</CardDescription>
+              <CardTitle>Job Information</CardTitle>
+              <CardDescription>Enter the job details for this position</CardDescription>
             </CardHeader>
             <CardContent>
-              <Input
-                placeholder="e.g., Senior Software Engineer"
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                className="mb-6"
-              />
+              <div className="space-y-4 mb-6">
+                <div>
+                  <Label htmlFor="job-title">Job Title</Label>
+                  <Input
+                    id="job-title"
+                    placeholder="e.g., Senior Software Engineer"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="company-name">Company Name</Label>
+                  <Input
+                    id="company-name"
+                    placeholder="e.g., Google, Microsoft, Apple"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                  />
+                </div>
+              </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
@@ -319,6 +336,9 @@ const UploadJobPage: React.FC = () => {
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   {jobTitle || file?.name || 'Job Description'}
+                  {companyName && (
+                    <span className="text-muted-foreground">at {companyName}</span>
+                  )}
                 </CardTitle>
                 <CardDescription>
                   Preview of your job description content
@@ -354,7 +374,7 @@ const UploadJobPage: React.FC = () => {
                     onClick={handleStartOver}
                     disabled={isProcessing}
                   >
-                    {activeTab === 'file' ? 'Upload Different File' : 'Edit Text'}
+                    {activeTab === 'file' ? 'Upload Different File' : 'Edit Details'}
                   </Button>
                 </div>
               </CardContent>

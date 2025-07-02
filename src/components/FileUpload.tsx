@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
   const [file, setFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState('');
   const [jobTitle, setJobTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -178,6 +180,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       const insertData = {
         user_id: userId,
         title: jobTitle || file?.name || 'Untitled Job Description',
+        company: companyName || null,
         source_file_url: fileUrl || null,
         parsed_text: parsedContent,
         file_name: file?.name || null,
@@ -308,14 +311,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         )}
 
         {type === 'job-description' && (
-          <div className="space-y-2">
-            <Label htmlFor="job-title">Job Title</Label>
-            <Input
-              id="job-title"
-              placeholder="Enter job title"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="job-title">Job Title</Label>
+              <Input
+                id="job-title"
+                placeholder="Enter job title"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Company Name</Label>
+              <Input
+                id="company-name"
+                placeholder="Enter company name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+              />
+            </div>
           </div>
         )}
 
