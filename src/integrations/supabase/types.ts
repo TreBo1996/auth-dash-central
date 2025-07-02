@@ -114,6 +114,74 @@ export type Database = {
         }
         Relationships: []
       }
+      cover_letters: {
+        Row: {
+          created_at: string
+          generated_text: string
+          id: string
+          job_description_id: string | null
+          job_posting_id: string | null
+          optimized_resume_id: string | null
+          original_resume_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_text: string
+          id?: string
+          job_description_id?: string | null
+          job_posting_id?: string | null
+          optimized_resume_id?: string | null
+          original_resume_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_text?: string
+          id?: string
+          job_description_id?: string | null
+          job_posting_id?: string | null
+          optimized_resume_id?: string | null
+          original_resume_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_letters_job_description_id_fkey"
+            columns: ["job_description_id"]
+            isOneToOne: false
+            referencedRelation: "job_descriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cover_letters_job_posting_id_fkey"
+            columns: ["job_posting_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cover_letters_optimized_resume_id_fkey"
+            columns: ["optimized_resume_id"]
+            isOneToOne: false
+            referencedRelation: "optimized_resumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cover_letters_original_resume_id_fkey"
+            columns: ["original_resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employer_profiles: {
         Row: {
           address: string | null
