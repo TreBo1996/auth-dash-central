@@ -20,7 +20,7 @@ interface EmployerJob {
   employer_profile: {
     company_name: string;
     logo_url: string;
-  };
+  } | null;
 }
 
 interface EmployerJobCardProps {
@@ -42,6 +42,8 @@ export const EmployerJobCard: React.FC<EmployerJobCardProps> = ({ job }) => {
   };
 
   const salaryRange = formatSalary(job.salary_min, job.salary_max, job.salary_currency);
+  const companyName = job.employer_profile?.company_name || 'Company Name Not Available';
+  const logoUrl = job.employer_profile?.logo_url;
 
   const handleViewJob = () => {
     navigate(`/job-posting/${job.id}`);
@@ -62,7 +64,7 @@ export const EmployerJobCard: React.FC<EmployerJobCardProps> = ({ job }) => {
             <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Building className="h-4 w-4" />
-                {job.employer_profile.company_name}
+                {companyName}
               </div>
               {job.location && (
                 <div className="flex items-center gap-1">
@@ -83,10 +85,10 @@ export const EmployerJobCard: React.FC<EmployerJobCardProps> = ({ job }) => {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            {job.employer_profile.logo_url && (
+            {logoUrl && (
               <img 
-                src={job.employer_profile.logo_url} 
-                alt={job.employer_profile.company_name}
+                src={logoUrl} 
+                alt={companyName}
                 className="w-12 h-12 rounded object-cover"
               />
             )}

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
@@ -46,7 +45,7 @@ interface EmployerJob {
   employer_profile: {
     company_name: string;
     logo_url: string;
-  };
+  } | null;
 }
 
 export const JobSearch: React.FC = () => {
