@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
@@ -29,6 +30,7 @@ import Applications from '@/pages/employer/Applications';
 import EmployerAnalytics from '@/pages/employer/EmployerAnalytics';
 import EmployerSettings from '@/pages/employer/EmployerSettings';
 import JobPosting from '@/pages/JobPosting';
+import CoverLetters from '@/pages/CoverLetters';
 
 function App() {
   return (
@@ -85,6 +87,16 @@ function App() {
                   <ProtectedRoute>
                     <RoleProtectedRoute requiredRole="job_seeker">
                       <UploadJobPage />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/cover-letters" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="job_seeker">
+                      <CoverLetters />
                     </RoleProtectedRoute>
                   </ProtectedRoute>
                 } 
