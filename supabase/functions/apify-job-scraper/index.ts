@@ -8,24 +8,42 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ApifyJobData {
-  positionName: string;
+interface IndeedJobData {
+  title: string;
   company: string;
   location: string;
   description: string;
   salary?: string;
-  jobUrl: string;
+  jobUrl?: string;
+  url?: string;
+  link?: string;
+  jobLink?: string;
+  permalink?: string;
+  href?: string;
   applyUrl?: string;
-  postedAt?: string;
-  employmentTypes?: string[];
-  seniorityLevel?: string;
-  jobFunction?: string;
-  industries?: string[];
-  companySize?: string;
-  logoUrl?: string;
-  jobBoard?: string;
+  postedDate?: string;
+  jobType?: string;
   remote?: boolean;
   id?: string;
+}
+
+// Helper function to extract job URL from various possible fields
+function extractJobUrl(job: IndeedJobData): string | null {
+  const urlFields = ['jobUrl', 'url', 'link', 'jobLink', 'permalink', 'href'];
+  
+  for (const field of urlFields) {
+    const url = job[field as keyof IndeedJobData] as string;
+    if (url && typeof url === 'string' && url.trim()) {
+      if (url.startsWith('http') || url.startsWith('//')) {
+        return url.trim();
+      }
+      if (url.startsWith('/')) {
+        return `https://www.indeed.com${url}`;
+      }
+    }
+  }
+  
+  return null;
 }
 
 serve(async (req) => {
@@ -58,7 +76,7 @@ serve(async (req) => {
         .rpc('search_jobs', {
           search_query: query,
           location_filter: location,
-          max_age_days: 7, // Look for jobs scraped in last 7 days
+          max_age_days: 7,
           result_limit: maxJobs
         });
 
@@ -74,23 +92,27 @@ serve(async (req) => {
       }
     }
 
-    // Extract token from your endpoint
-    const apifyToken = 'apify_api_FFh2jcXqfLXqRtENBhbiXg7DjYGLpT1PMyQA';
-    const actorId = 'hZ7jrmnGci5b4D9Fv';
+    // Get Apify API key from environment
+    const apifyToken = Deno.env.get('APIFY_API_KEY');
+    if (!apifyToken) {
+      throw new Error('APIFY_API_KEY not configured');
+    }
     
-    // Use Google Jobs Scraper with your specific configuration
+    // Use Indeed scraper configuration (aligned with manual and scheduled scrapers)
     const runInput = {
-      queries: [`${query} ${location}`.trim()],
-      maxPagesPerQuery: Math.ceil(maxJobs / 10),
-      saveHtml: false,
-      saveHtmlToKeyValueStore: false,
-      includeUnfilteredResults: false
+      position: query,
+      location: location || undefined,
+      country: 'US',
+      maxItems: maxJobs,
+      followApplyRedirects: false,
+      parseCompanyDetails: false,
+      saveOnlyUniqueItems: true
     };
 
-    console.log('Starting Apify actor run...');
+    console.log('Starting Apify Indeed scraper run...');
     
-    // Start the actor run using your specific actor
-    const runResponse = await fetch(`https://api.apify.com/v2/acts/apify~google-jobs-scraper/runs`, {
+    // Start the actor run using Indeed scraper
+    const runResponse = await fetch(`https://api.apify.com/v2/acts/misceres~indeed-scraper/runs`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apifyToken}`,
@@ -118,7 +140,7 @@ serve(async (req) => {
     while (runStatus === 'RUNNING' && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
       
-      const statusResponse = await fetch(`https://api.apify.com/v2/acts/apify~google-jobs-scraper/runs/${runId}`, {
+      const statusResponse = await fetch(`https://api.apify.com/v2/acts/misceres~indeed-scraper/runs/${runId}`, {
         headers: {
           'Authorization': `Bearer ${apifyToken}`
         }
@@ -147,42 +169,53 @@ serve(async (req) => {
       throw new Error(`Failed to fetch results: ${resultsResponse.status}`);
     }
 
-    const apifyJobs: ApifyJobData[] = await resultsResponse.json();
-    console.log(`Retrieved ${apifyJobs.length} jobs from Apify`);
+    const indeedJobs: IndeedJobData[] = await resultsResponse.json();
+    console.log(`Retrieved ${indeedJobs.length} jobs from Apify`);
 
-    // Transform and insert jobs into Supabase
-    const transformedJobs = apifyJobs.map(job => ({
-      apify_job_id: job.id || job.jobUrl,
-      title: job.positionName,
-      company: job.company,
-      location: job.location,
-      description: job.description || '',
-      salary: job.salary || null,
-      posted_at: job.postedAt || null,
-      job_url: job.jobUrl,
-      apply_url: job.applyUrl || job.jobUrl,
-      source: 'Apify',
-      via: job.jobBoard || 'Google Jobs',
-      logo_url: job.logoUrl || null,
-      employment_type: job.employmentTypes?.[0] || null,
-      seniority_level: job.seniorityLevel || null,
-      job_function: job.jobFunction || null,
-      industry: job.industries?.[0] || null,
-      company_size: job.companySize || null,
-      remote_type: job.remote ? 'remote' : null,
-      data_source: 'apify',
-      job_board: job.jobBoard || 'Google Jobs',
-      quality_score: 7, // Default quality score for Apify jobs
-      scraped_at: new Date().toISOString()
-    }));
-
-    // Insert jobs with conflict resolution (upsert based on apify_job_id)
+    // Transform and insert jobs into Supabase (using consistent logic)
     const insertedJobs = [];
-    for (const job of transformedJobs) {
+    let skippedCount = 0;
+
+    for (let index = 0; index < indeedJobs.length; index++) {
+      const job = indeedJobs[index];
+      
+      const jobUrl = extractJobUrl(job);
+      
+      if (!jobUrl) {
+        console.log(`Skipping job ${index}: No valid URL found`);
+        skippedCount++;
+        continue;
+      }
+
+      const transformedJob = {
+        apify_job_id: job.id || `${query}-${index}-${Date.now()}`,
+        title: job.title || query,
+        company: job.company || 'Unknown Company',
+        location: job.location || location || 'Remote',
+        description: job.description || '',
+        salary: job.salary || null,
+        posted_at: job.postedDate || null,
+        job_url: jobUrl,
+        apply_url: job.applyUrl || jobUrl,
+        source: 'Apify',
+        via: 'Indeed',
+        logo_url: null,
+        employment_type: job.jobType || null,
+        seniority_level: null,
+        job_function: null,
+        industry: null,
+        company_size: null,
+        remote_type: job.remote ? 'remote' : null,
+        data_source: 'apify',
+        job_board: 'Indeed',
+        quality_score: 7,
+        scraped_at: new Date().toISOString()
+      };
+
       try {
         const { data, error } = await supabaseClient
           .from('cached_jobs')
-          .upsert(job, { 
+          .upsert(transformedJob, { 
             onConflict: 'apify_job_id',
             ignoreDuplicates: false 
           })
@@ -190,6 +223,7 @@ serve(async (req) => {
 
         if (error) {
           console.error('Error inserting job:', error);
+          skippedCount++;
           continue;
         }
 
@@ -198,18 +232,19 @@ serve(async (req) => {
         }
       } catch (error) {
         console.error('Error processing job:', error);
+        skippedCount++;
         continue;
       }
     }
 
-    console.log(`Successfully inserted/updated ${insertedJobs.length} jobs`);
+    console.log(`Successfully inserted/updated ${insertedJobs.length} jobs, ${skippedCount} skipped`);
 
     // Return the newly scraped jobs using our search function
     const { data: finalJobs } = await supabaseClient
       .rpc('search_jobs', {
         search_query: query,
         location_filter: location,
-        max_age_days: 1, // Get jobs scraped today
+        max_age_days: 1,
         result_limit: maxJobs
       });
 
@@ -220,8 +255,9 @@ serve(async (req) => {
       scrapedCount: insertedJobs.length,
       debug_info: {
         apify_run_id: runId,
-        jobs_scraped: apifyJobs.length,
-        jobs_inserted: insertedJobs.length
+        jobs_scraped: indeedJobs.length,
+        jobs_inserted: insertedJobs.length,
+        jobs_skipped: skippedCount
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

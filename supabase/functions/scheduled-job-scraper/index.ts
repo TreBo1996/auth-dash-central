@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -83,12 +82,17 @@ serve(async (req) => {
     const { 
       jobTitles = JOB_TITLES,
       maxJobsPerTitle = 50,
-      location = 'United States' // Default to United States, can be overridden
+      location = 'United States'
     } = await req.json().catch(() => ({}));
 
     console.log(`Starting batch job scraping for ${jobTitles.length} job titles`);
 
-    const apifyToken = 'apify_api_FFh2jcXqfLXqRtENBhbiXg7DjYGLpT1PMyQA';
+    // Get Apify API key from environment
+    const apifyToken = Deno.env.get('APIFY_API_KEY');
+    if (!apifyToken) {
+      throw new Error('APIFY_API_KEY not configured');
+    }
+    
     const results: JobTitleResult[] = [];
     let totalJobsScraped = 0;
     let totalJobsInserted = 0;
@@ -102,7 +106,7 @@ serve(async (req) => {
         // Use correct parameters for Indeed scraper
         const runInput = {
           position: jobTitle,
-          location: location || undefined, // Use provided location or undefined for broadest results
+          location: location || undefined,
           country: 'US',
           maxItems: maxJobsPerTitle,
           followApplyRedirects: false,
