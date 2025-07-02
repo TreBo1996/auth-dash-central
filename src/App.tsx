@@ -28,6 +28,7 @@ import JobPostings from '@/pages/employer/JobPostings';
 import Applications from '@/pages/employer/Applications';
 import EmployerAnalytics from '@/pages/employer/EmployerAnalytics';
 import EmployerSettings from '@/pages/employer/EmployerSettings';
+import JobPosting from '@/pages/JobPosting';
 
 function App() {
   return (
@@ -40,6 +41,12 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/employer/auth" element={<EmployerAuth />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
+              
+              {/* Public Job Posting Route */}
+              <Route 
+                path="/job-posting/:id" 
+                element={<JobPosting />} 
+              />
               
               {/* Job Seeker Routes */}
               <Route 
