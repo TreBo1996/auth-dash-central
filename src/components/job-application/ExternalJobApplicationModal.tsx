@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,7 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
-  const [optimizedResumeContent, setOptimizedResumeContent] = useState<string>('');
+  const [optimizedResumeName, setOptimizedResumeName] = useState<string>('');
   const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
   const [creatingJobDescription, setCreatingJobDescription] = useState(false);
   const [loadingResumes, setLoadingResumes] = useState(false);
@@ -139,7 +138,7 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
     try {
       const { data } = await supabase
         .from('optimized_resumes')
-        .select('id, generated_text')
+        .select('id')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -147,7 +146,9 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
       
       if (data) {
         setOptimizedResumeId(data.id);
-        setOptimizedResumeContent(data.generated_text || '');
+        // Generate a descriptive name for the optimized resume
+        const resumeName = `${job.title} at ${job.company} - Optimized Resume`;
+        setOptimizedResumeName(resumeName);
         setStep('review');
       } else {
         setStep('redirect');
@@ -182,7 +183,7 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
     setStep('choose');
     setSelectedResumeId('');
     setOptimizedResumeId('');
-    setOptimizedResumeContent('');
+    setOptimizedResumeName('');
     setJobDescriptionId('');
     setRedirecting(false);
   };
@@ -388,7 +389,7 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
           {step === 'review' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Review Optimized Resume</h3>
+                <h3 className="text-lg font-semibold">Resume Optimization Complete</h3>
                 <Button variant="outline" onClick={() => setStep('choose')}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
@@ -403,15 +404,12 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Your resume has been optimized for this position and saved to your dashboard. Here's a preview:
-                  </p>
-                  
-                  <div className="bg-white rounded-lg p-4 border max-h-60 overflow-y-auto">
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {optimizedResumeContent.slice(0, 500)}
-                      {optimizedResumeContent.length > 500 && '...'}
-                    </div>
+                  <div className="bg-white rounded-lg p-4 border">
+                    <h4 className="font-semibold text-gray-800 mb-2">Optimized Resume Created:</h4>
+                    <p className="text-sm text-gray-700 font-medium">"{optimizedResumeName}"</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Your resume has been optimized for this position and saved to your dashboard.
+                    </p>
                   </div>
 
                   <div className="flex gap-3">
