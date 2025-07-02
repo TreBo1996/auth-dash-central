@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
+
 interface Resume {
   id: string;
   file_name: string | null;
@@ -37,11 +38,14 @@ interface ResumeOptimizerProps {
   resumes: Resume[];
   jobDescriptions: JobDescription[];
   onOptimizationComplete: () => void;
+  navigateToEditor?: boolean; // New prop to control navigation
 }
+
 export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   resumes,
   jobDescriptions,
-  onOptimizationComplete
+  onOptimizationComplete,
+  navigateToEditor = true // Default to true for backward compatibility
 }) => {
   const navigate = useNavigate();
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
@@ -99,22 +103,23 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
     if (!selectedResumeId || !selectedJobDescId) {
       return;
     }
+
     try {
       setIsOptimizing(true);
       console.log('Starting resume optimization...');
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('optimize-resume', {
+      
+      const { data, error } = await supabase.functions.invoke('optimize-resume', {
         body: {
           resumeId: selectedResumeId,
           jobDescriptionId: selectedJobDescId
         }
       });
+
       if (error) throw error;
       if (data.error) {
         throw new Error(data.error);
       }
+
       toast({
         title: "Resume Optimized!",
         description: "Your optimized resume has been created successfully."
@@ -130,8 +135,8 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       // Notify parent component
       onOptimizationComplete();
 
-      // Navigate to the resume editor for the newly created optimized resume
-      if (data.optimizedResume?.id) {
+      // Only navigate to editor if navigateToEditor is true
+      if (navigateToEditor && data.optimizedResume?.id) {
         console.log('Navigating to resume editor with ID:', data.optimizedResume.id);
         navigate(`/resume-editor/${data.optimizedResume.id}`);
       }

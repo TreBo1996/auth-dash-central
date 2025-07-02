@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
-import { FileText, Sparkles, Send } from 'lucide-react';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft } from 'lucide-react';
 
 interface Resume {
   id: string;
@@ -44,12 +43,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [step, setStep] = useState<'choose' | 'existing' | 'optimize' | 'submit'>('choose');
+  const [step, setStep] = useState<'choose' | 'existing' | 'optimize' | 'review' | 'submit' | 'success'>('choose');
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [coverLetter, setCoverLetter] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
+  const [optimizedResumeContent, setOptimizedResumeContent] = useState<string>('');
   const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
   const [creatingJobDescription, setCreatingJobDescription] = useState(false);
 
@@ -146,7 +146,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     try {
       const { data } = await supabase
         .from('optimized_resumes')
-        .select('id')
+        .select('id, generated_text')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -154,11 +154,22 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       
       if (data) {
         setOptimizedResumeId(data.id);
-        setStep('submit');
+        setOptimizedResumeContent(data.generated_text || '');
+        setStep('review');
       }
     } catch (error) {
       console.error('Error getting optimized resume:', error);
       setStep('submit');
+    }
+  };
+
+  const handleAcceptOptimizedResume = () => {
+    setStep('submit');
+  };
+
+  const handleViewFullResume = () => {
+    if (optimizedResumeId) {
+      window.open(`/resume-editor/${optimizedResumeId}`, '_blank');
     }
   };
 
@@ -215,7 +226,19 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
       if (applicationError) throw applicationError;
 
-      onApplicationSubmitted();
+      setStep('success');
+      
+      toast({
+        title: "Application Submitted!",
+        description: `Your application to ${jobPosting.title} at ${companyName} has been successfully submitted.`,
+      });
+
+      // Auto-close modal after 3 seconds
+      setTimeout(() => {
+        onApplicationSubmitted();
+        resetModal();
+      }, 3000);
+
     } catch (error) {
       console.error('Error submitting application:', error);
       toast({
@@ -228,12 +251,33 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     }
   };
 
+  const resetModal = () => {
+    setStep('choose');
+    setSelectedResumeId('');
+    setCoverLetter('');
+    setOptimizedResumeId('');
+    setOptimizedResumeContent('');
+    setJobDescriptionId('');
+  };
+
   const availableResumes = resumes.filter(resume => resume.parsed_text);
   const jobDescriptions = jobDescriptionId ? [{
     id: jobDescriptionId,
     title: jobPosting.title,
     parsed_text: jobPosting.description
   }] : [];
+
+  const getProgressStep = () => {
+    switch (step) {
+      case 'choose': return 1;
+      case 'existing': return 2;
+      case 'optimize': return 2;
+      case 'review': return 3;
+      case 'submit': return 4;
+      case 'success': return 5;
+      default: return 1;
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -243,6 +287,22 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
           <DialogDescription>
             at {companyName}
           </DialogDescription>
+          
+          {/* Progress Indicator */}
+          <div className="flex items-center space-x-2 mt-4">
+            {[1, 2, 3, 4, 5].map((num) => (
+              <div
+                key={num}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  num <= getProgressStep()
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-600'
+                }`}
+              >
+                {num}
+              </div>
+            ))}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -341,6 +401,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">AI Resume Optimization</h3>
                 <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
               </div>
@@ -350,6 +411,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                   resumes={resumes}
                   jobDescriptions={jobDescriptions}
                   onOptimizationComplete={handleOptimizationComplete}
+                  navigateToEditor={false}
                 />
               ) : (
                 <Card>
@@ -361,11 +423,55 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             </div>
           )}
 
+          {step === 'review' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Review Optimized Resume</h3>
+                <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-5 w-5" />
+                    Resume Successfully Optimized!
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Your resume has been optimized for this position. Here's a preview of the key changes:
+                  </p>
+                  
+                  <div className="bg-white rounded-lg p-4 border max-h-60 overflow-y-auto">
+                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {optimizedResumeContent.slice(0, 500)}
+                      {optimizedResumeContent.length > 500 && '...'}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button onClick={handleViewFullResume} variant="outline" className="flex-1">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Full Resume
+                    </Button>
+                    <Button onClick={handleAcceptOptimizedResume} className="flex-1">
+                      Continue with Optimized Resume
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {step === 'submit' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Finalize Application</h3>
                 <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
               </div>
@@ -386,7 +492,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
                 <div className="flex justify-between items-center pt-4">
                   <div className="text-sm text-muted-foreground">
-                    {optimizedResumeId ? 'Using optimized resume' : selectedResumeId ? 'Using selected resume' : 'No resume selected'}
+                    {optimizedResumeId ? (
+                      <span className="text-green-600 font-medium">✓ Using optimized resume</span>
+                    ) : selectedResumeId ? (
+                      'Using selected resume'
+                    ) : (
+                      'No resume selected'
+                    )}
                   </div>
                   <Button 
                     onClick={submitApplication}
@@ -404,6 +516,48 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                   </Button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {step === 'success' && (
+            <div className="space-y-4 text-center py-8">
+              <div className="flex justify-center mb-4">
+                <CheckCircle className="h-16 w-16 text-green-500" />
+              </div>
+              
+              <h3 className="text-2xl font-bold text-green-700">Application Submitted!</h3>
+              
+              <div className="space-y-2 text-gray-600">
+                <p>Your application to <strong>{jobPosting.title}</strong></p>
+                <p>at <strong>{companyName}</strong> has been successfully submitted.</p>
+              </div>
+
+              <Card className="bg-gray-50 mt-6">
+                <CardContent className="pt-6">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Resume:</span>
+                      <span className="font-medium">
+                        {optimizedResumeId ? 'Optimized Resume' : 'Selected Resume'}
+                      </span>
+                    </div>
+                    {coverLetter && (
+                      <div className="flex justify-between">
+                        <span>Cover Letter:</span>
+                        <span className="font-medium">{coverLetter.length} characters</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Submitted:</span>
+                      <span className="font-medium">Just now</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <p className="text-sm text-gray-500 mt-4">
+                This window will close automatically in a few seconds...
+              </p>
             </div>
           )}
         </div>
