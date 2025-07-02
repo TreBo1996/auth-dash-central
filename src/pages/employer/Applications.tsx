@@ -144,27 +144,20 @@ const Applications: React.FC = () => {
     setAnalyzingFit(prev => [...prev, applicationId]);
     
     try {
-      const response = await fetch('https://kuthirgvlzyzgmyxyznr.supabase.co/functions/v1/analyze-resume-fit', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('analyze-resume-fit', {
+        body: {
           resumeText,
           jobDescription,
           requirements
-        })
+        }
       });
 
-      if (!response.ok) throw new Error('Analysis failed');
-      
-      const analysis = await response.json();
+      if (error) throw error;
       
       // Update application with fit analysis
       setApplications(prev => prev.map(app => 
         app.id === applicationId 
-          ? { ...app, fit_score: analysis.score, fit_analysis: analysis.analysis }
+          ? { ...app, fit_score: data.score, fit_analysis: data.analysis }
           : app
       ));
       
