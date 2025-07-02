@@ -84,12 +84,12 @@ const Applications: React.FC = () => {
     const phoneRegex = /(\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/;
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
     
-    const phoneMatch = resumeText.match(phoneRegex);
-    const emailMatch = resumeText.match(emailRegex);
-    
     // Extract location - look for city, state patterns
     const locationRegex = /([A-Z][a-z]+,?\s+[A-Z]{2})|([A-Z][a-z]+\s*,\s*[A-Z][a-zA-Z\s]+)/;
     const locationMatch = resumeText.match(locationRegex);
+    
+    const phoneMatch = resumeText.match(phoneRegex);
+    const emailMatch = resumeText.match(emailRegex);
     
     return {
       phone: phoneMatch ? phoneMatch[0] : undefined,
@@ -199,8 +199,8 @@ const Applications: React.FC = () => {
 
       console.log('Fetched resumes:', resumes?.length || 0);
 
-      // Combine the data
-      const combinedApplications = apps.map(app => {
+      // Combine the data and ensure all properties are properly typed
+      const combinedApplications: Application[] = apps.map(app => {
         const applicantProfile = profiles?.find(p => p.id === app.applicant_id);
         const resume = resumes?.find(r => r.user_id === app.applicant_id);
         const contactInfo = resume?.parsed_text ? extractContactInfo(resume.parsed_text) : {};
@@ -212,10 +212,18 @@ const Applications: React.FC = () => {
         });
 
         return {
-          ...app,
+          id: app.id,
+          applicant_id: app.applicant_id,
+          applied_at: app.applied_at,
+          status: app.status || 'pending',
+          cover_letter: app.cover_letter || '',
+          notes: app.notes || '',
+          job_posting: app.job_posting,
           applicant_profile: applicantProfile,
           resume: resume,
-          contact_info: contactInfo
+          contact_info: contactInfo,
+          fit_score: undefined,
+          fit_analysis: undefined
         };
       });
 
