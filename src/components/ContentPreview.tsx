@@ -8,12 +8,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText } from 'lucide-react';
+import { FileText, Mail } from 'lucide-react';
 
 interface ContentPreviewProps {
   content: string;
   title: string;
-  type: 'resume' | 'job-description';
+  type: 'resume' | 'job-description' | 'cover-letter';
   onClose: () => void;
 }
 
@@ -23,16 +23,38 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   type,
   onClose
 }) => {
+  const getIcon = () => {
+    switch (type) {
+      case 'cover-letter':
+        return <Mail className="h-5 w-5" />;
+      default:
+        return <FileText className="h-5 w-5" />;
+    }
+  };
+
+  const getDescription = () => {
+    switch (type) {
+      case 'cover-letter':
+        return 'Preview of your cover letter content';
+      case 'resume':
+        return 'Preview of your resume content';
+      case 'job-description':
+        return 'Preview of your job description content';
+      default:
+        return 'Preview of your content';
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            {getIcon()}
             {title}
           </DialogTitle>
           <DialogDescription>
-            Preview of your {type === 'resume' ? 'resume' : 'job description'} content
+            {getDescription()}
           </DialogDescription>
         </DialogHeader>
         

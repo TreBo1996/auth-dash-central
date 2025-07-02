@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CoverLetterGenerator } from '@/components/CoverLetterGenerator';
+import { ContentPreview } from '@/components/ContentPreview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +23,7 @@ export const CoverLetters: React.FC = () => {
   const [coverLetters, setCoverLetters] = useState<CoverLetterWithJob[]>([]);
   const [showGenerator, setShowGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedCoverLetter, setSelectedCoverLetter] = useState<CoverLetterWithJob | null>(null);
 
   useEffect(() => {
     loadCoverLetters();
@@ -68,6 +70,14 @@ export const CoverLetters: React.FC = () => {
   const handleCoverLetterCreated = () => {
     loadCoverLetters();
     setShowGenerator(false);
+  };
+
+  const handleViewCoverLetter = (coverLetter: CoverLetterWithJob) => {
+    setSelectedCoverLetter(coverLetter);
+  };
+
+  const handleClosePreview = () => {
+    setSelectedCoverLetter(null);
   };
 
   if (showGenerator) {
@@ -149,7 +159,12 @@ export const CoverLetters: React.FC = () => {
                     {coverLetter.generated_text.substring(0, 150)}...
                   </p>
                   <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="outline" size="sm" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleViewCoverLetter(coverLetter)}
+                    >
                       View Cover Letter
                     </Button>
                   </div>
@@ -157,6 +172,15 @@ export const CoverLetters: React.FC = () => {
               </Card>
             ))}
           </div>
+        )}
+
+        {selectedCoverLetter && (
+          <ContentPreview
+            content={selectedCoverLetter.generated_text}
+            title={`${selectedCoverLetter.job_title} at ${selectedCoverLetter.company}`}
+            type="cover-letter"
+            onClose={handleClosePreview}
+          />
         )}
       </div>
     </DashboardLayout>
