@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Building, DollarSign, Clock, Briefcase, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { MapPin, Building, DollarSign, Clock, Briefcase, Star, Save, Check } from 'lucide-react';
 
 interface EmployerJob {
   id: string;
@@ -29,6 +31,9 @@ interface EmployerJobCardProps {
 
 export const EmployerJobCard: React.FC<EmployerJobCardProps> = ({ job }) => {
   const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const { toast } = useToast();
 
   const formatSalary = (min: number, max: number, currency: string) => {
     if (min && max) {
@@ -47,6 +52,51 @@ export const EmployerJobCard: React.FC<EmployerJobCardProps> = ({ job }) => {
 
   const handleViewJob = () => {
     navigate(`/job-posting/${job.id}`);
+  };
+
+  const handleSaveJob = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to save jobs.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('job_descriptions')
+        .insert({
+          user_id: user.id,
+          title: job.title,
+          parsed_text: job.description,
+          source: 'employer',
+          company: companyName,
+          location: job.location,
+          salary_range: salaryRange,
+          job_url: `/job-posting/${job.id}`
+        });
+
+      if (error) throw error;
+
+      setSaved(true);
+      toast({
+        title: "Job saved!",
+        description: "Job description has been saved to your profile."
+      });
+    } catch (error) {
+      console.error('Error saving job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save job. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -117,10 +167,30 @@ export const EmployerJobCard: React.FC<EmployerJobCardProps> = ({ job }) => {
             <div className="text-xs text-muted-foreground">
               Posted directly by employer
             </div>
-            <Button onClick={handleViewJob}>
-              <Briefcase className="h-4 w-4 mr-1" />
-              View & Apply
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSaveJob} 
+                disabled={saving || saved}
+              >
+                {saved ? (
+                  <>
+                    <Check className="h-4 w-4 mr-1" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-1" />
+                    {saving ? 'Saving...' : 'Save'}
+                  </>
+                )}
+              </Button>
+              <Button onClick={handleViewJob}>
+                <Briefcase className="h-4 w-4 mr-1" />
+                View & Apply
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
