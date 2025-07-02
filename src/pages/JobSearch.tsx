@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
@@ -166,7 +167,7 @@ export const JobSearch: React.FC = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">
                     <Building className="h-5 w-5 text-blue-600" />
-                    Direct Employer Opportunities
+                    Featured Jobs
                     <span className="text-sm font-normal text-muted-foreground">
                       ({employerJobs.length} jobs)
                     </span>
