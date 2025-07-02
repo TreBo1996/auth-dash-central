@@ -155,7 +155,7 @@ export const JobSearch: React.FC = () => {
         </div>
 
         <div className="mb-8">
-          <JobSearchForm onSearch={handleSearch} />
+          <JobSearchForm onSearch={handleSearch} loading={loading} />
         </div>
 
         <div className="space-y-8">
