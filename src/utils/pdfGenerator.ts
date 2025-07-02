@@ -1,25 +1,30 @@
+
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
 
-// PDF generation options with high-quality settings for crisp text
+// PDF generation options with balanced quality settings for crisp text
 const getPDFOptions = () => {
   return {
     margin: [36, 36, 36, 36], // 0.5in = 36pt margins
     filename: 'resume.pdf',
-    image: { type: 'png', quality: 1.0 }, // PNG for crisp text, max quality
+    image: { type: 'jpeg', quality: 0.95 }, // High-quality JPEG (more memory efficient than PNG)
     html2canvas: { 
-      scale: 2, // Increase from 1 to 2 for better resolution
+      scale: 2, // Keep scale at 2 for better resolution
       useCORS: true,
       letterRendering: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
-      dpi: 300, // Increase from 96 to 300 for print quality
+      dpi: 150, // Balanced DPI - better than 96, not overwhelming like 300
       foreignObjectRendering: true, // Better text rendering
       imageTimeout: 15000, // Allow time for fonts to load
       onrendered: (canvas: HTMLCanvasElement) => {
         console.log('Canvas rendered:', canvas.width, 'x', canvas.height);
+        // Log if canvas is extremely large (potential issue)
+        if (canvas.width > 3000 || canvas.height > 4000) {
+          console.warn('Large canvas detected - this might cause PDF generation issues');
+        }
       }
     },
     jsPDF: { 
@@ -167,24 +172,30 @@ export const generatePDF = async (templateId: string, resumeContent: string, fil
       filename: fileName || 'resume.pdf'
     };
     
-    console.log('PDF Generation: Generating PDF with options:', options);
+    console.log('PDF Generation: Generating PDF with balanced quality options:', {
+      scale: options.html2canvas.scale,
+      dpi: options.html2canvas.dpi,
+      imageType: options.image.type,
+      imageQuality: options.image.quality
+    });
     
-    // Generate and download the PDF
+    // Generate and download the PDF with improved error handling
     const worker = html2pdf()
       .set(options)
       .from(cleanedElement);
     
     await worker.save();
     
-    console.log('PDF Generation: Successfully downloaded PDF');
+    console.log('PDF Generation: Successfully downloaded PDF with improved quality');
     
   } catch (error) {
     console.error('PDF Generation: Error generating PDF:', error);
     
-    // Provide more specific error messages
+    // More specific error handling for canvas/memory issues
     if (error instanceof Error) {
-      if (error.message.includes('Canvas')) {
-        throw new Error('Failed to render PDF content. Please try again.');
+      if (error.message.includes('Canvas') || error.message.includes('memory')) {
+        console.warn('PDF Generation: High-quality settings failed, this might be due to canvas size limits');
+        throw new Error('PDF generation failed due to high quality settings. Please try again or contact support.');
       } else if (error.message.includes('jsPDF')) {
         throw new Error('Failed to generate PDF file. Please check your content and try again.');
       }
