@@ -39,31 +39,49 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [activeRole, setActiveRole] = useState<AppRole | null>(null);
   const [preferredRole, setPreferredRole] = useState<AppRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [navigationComplete, setNavigationComplete] = useState(false);
 
-  // Memoize navigation logic to prevent infinite loops
+  // Memoize navigation logic with improved conditions
   const handleRoleBasedNavigation = useCallback((role: AppRole, currentPath: string) => {
-    // Prevent navigation loops by checking if we're already navigating
-    if (hasInitialized) {
+    // Skip navigation if already completed for this auth session
+    if (navigationComplete) {
+      console.log('Navigation already completed for this session');
       return;
     }
 
     const isEmployerPath = currentPath.startsWith('/employer');
-    const isJobSeekerPath = !isEmployerPath && currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth';
+    const isJobSeekerPath = currentPath === '/dashboard' || (!isEmployerPath && currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth');
 
-    console.log('Role navigation check:', { role, currentPath, isEmployerPath, isJobSeekerPath });
+    console.log('Role navigation check:', { 
+      role, 
+      currentPath, 
+      isEmployerPath, 
+      isJobSeekerPath,
+      navigationComplete 
+    });
 
-    // Only redirect if there's a clear mismatch and we're not on auth pages
-    if (role === 'employer' && isJobSeekerPath && currentPath !== '/dashboard') {
-      console.log('Redirecting employer to employer dashboard');
-      navigate('/employer/dashboard', { replace: true });
-    } else if (role === 'job_seeker' && isEmployerPath) {
-      console.log('Redirecting job seeker to job seeker dashboard');
-      navigate('/dashboard', { replace: true });
+    // Navigation logic based on role
+    if (role === 'employer') {
+      if (isJobSeekerPath) {
+        console.log('Redirecting employer user from job seeker path to employer dashboard');
+        navigate('/employer/dashboard', { replace: true });
+        setNavigationComplete(true);
+      }
+    } else if (role === 'job_seeker') {
+      if (isEmployerPath) {
+        console.log('Redirecting job seeker user from employer path to job seeker dashboard');
+        navigate('/dashboard', { replace: true });
+        setNavigationComplete(true);
+      }
     }
+  }, [navigate, navigationComplete]);
 
-    setHasInitialized(true);
-  }, [navigate, hasInitialized]);
+  // Reset navigation state when user changes
+  useEffect(() => {
+    if (!user) {
+      setNavigationComplete(false);
+    }
+  }, [user]);
 
   // Load user roles and preferences
   useEffect(() => {
@@ -73,7 +91,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         setActiveRole(null);
         setPreferredRole(null);
         setIsLoadingRoles(false);
-        setHasInitialized(false);
+        setNavigationComplete(false);
         return;
       }
 
@@ -127,7 +145,9 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         const determinedRole = preferred && roles.includes(preferred) ? preferred : roles[0] || 'job_seeker';
         setActiveRole(determinedRole);
 
-        // Handle navigation after role is determined
+        console.log('Roles loaded:', { roles, preferred, determinedRole, currentPath: location.pathname });
+
+        // Handle navigation after role is determined and roles are loaded
         handleRoleBasedNavigation(determinedRole, location.pathname);
 
       } catch (error) {
@@ -160,7 +180,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
       setActiveRole(role);
       setPreferredRole(role);
-      setHasInitialized(false); // Reset to allow navigation
+      setNavigationComplete(false); // Reset to allow navigation
 
       // Navigate to appropriate dashboard
       if (role === 'employer') {

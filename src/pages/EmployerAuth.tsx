@@ -32,19 +32,20 @@ const EmployerAuth = () => {
       if (error) throw error;
       
       const roles = userRoles?.map(r => r.role) || [];
-      console.log('User roles:', roles);
+      console.log('User roles after sign in:', roles);
       
+      // Always redirect employer users to employer dashboard
       if (roles.includes('employer') || roles.includes('both')) {
-        console.log('Redirecting to employer dashboard');
-        navigate('/employer/dashboard');
+        console.log('User has employer role, redirecting to employer dashboard');
+        navigate('/employer/dashboard', { replace: true });
       } else {
-        console.log('User is not an employer, redirecting to regular dashboard');
-        navigate('/dashboard');
+        console.log('User does not have employer role, redirecting to job seeker dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       console.error('Error checking user roles:', error);
       // Default redirect to employer dashboard since they're on employer auth page
-      navigate('/employer/dashboard');
+      navigate('/employer/dashboard', { replace: true });
     }
   };
 
@@ -72,7 +73,7 @@ const EmployerAuth = () => {
           if (user) {
             await checkUserRoleAndRedirect(user.id);
           } else {
-            navigate('/employer/dashboard');
+            navigate('/employer/dashboard', { replace: true });
           }
         }
       } else {
