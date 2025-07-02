@@ -11,7 +11,7 @@ import {
   MessageSquare, 
   Briefcase,
   User,
-  FileTemplate,
+  File,
   Mail
 } from 'lucide-react';
 
@@ -21,8 +21,8 @@ const navigation = [
   { name: 'Cover Letters', href: '/cover-letters', icon: Mail },
   { name: 'Upload Resume', href: '/upload-resume', icon: Upload },
   { name: 'Upload Job', href: '/upload-job', icon: FileText },
-  { name: 'Resume Editor', href: '/resume-editor', icon: FileTemplate },
-  { name: 'Resume Templates', href: '/resume-templates', icon: FileTemplate },
+  { name: 'Resume Editor', href: '/resume-editor', icon: File },
+  { name: 'Resume Templates', href: '/resume-templates', icon: File },
   { name: 'Interview Prep', href: '/interview-prep', icon: MessageSquare },
   { name: 'Profile', href: '/profile', icon: User },
 ];

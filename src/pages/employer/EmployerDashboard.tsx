@@ -15,7 +15,7 @@ interface DashboardStats {
   averageApplicationsPerJob: number;
 }
 
-export const EmployerDashboard: React.FC = () => {
+const EmployerDashboard: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     activeJobs: 0,
@@ -216,3 +216,5 @@ export const EmployerDashboard: React.FC = () => {
     </EmployerDashboardLayout>
   );
 };
+
+export default EmployerDashboard;

@@ -6,7 +6,7 @@ import { CoverLetterManager } from '@/components/cover-letter/CoverLetterManager
 import { Button } from '@/components/ui/button';
 import { Plus, List } from 'lucide-react';
 
-export const CoverLetters: React.FC = () => {
+const CoverLetters: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'manage' | 'create'>('manage');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -55,3 +55,5 @@ export const CoverLetters: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default CoverLetters;

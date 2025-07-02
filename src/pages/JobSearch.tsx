@@ -49,7 +49,7 @@ interface EmployerJob {
   } | null;
 }
 
-export const JobSearch: React.FC = () => {
+const JobSearch: React.FC = () => {
   const [externalJobs, setExternalJobs] = useState<ExternalJob[]>([]);
   const [employerJobs, setEmployerJobs] = useState<EmployerJob[]>([]);
   const [loading, setLoading] = useState(false);
@@ -237,3 +237,5 @@ export const JobSearch: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default JobSearch;
