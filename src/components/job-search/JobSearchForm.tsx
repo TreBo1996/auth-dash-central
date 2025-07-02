@@ -121,7 +121,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
                   <SelectItem value="Part-time">Part-time</SelectItem>
                   <SelectItem value="Contract">Contract</SelectItem>
                   <SelectItem value="Internship">Internship</SelectItem>
-                  <SelectItem value="Temporary">Temporary</SelectItem>
+                  <SelectItem value="Temporary" className="bg-blue-900 hover:bg-blue-800">Temporary</SelectItem>
                 </SelectContent>
               </Select>
             </div>
