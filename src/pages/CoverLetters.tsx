@@ -5,20 +5,21 @@ import { CoverLetterGenerator } from '@/components/CoverLetterGenerator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, Plus } from 'lucide-react';
+import { Mail, Plus, Building, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface CoverLetter {
+interface CoverLetterWithJob {
   id: string;
   title: string;
   created_at: string;
-  job_description_id: string | null;
-  original_resume_id: string | null;
+  job_title: string;
+  company: string;
+  generated_text: string;
 }
 
 export const CoverLetters: React.FC = () => {
   const { user } = useAuth();
-  const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
+  const [coverLetters, setCoverLetters] = useState<CoverLetterWithJob[]>([]);
   const [showGenerator, setShowGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -32,12 +33,31 @@ export const CoverLetters: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('cover_letters')
-        .select('id, title, created_at, job_description_id, original_resume_id')
+        .select(`
+          id, 
+          title, 
+          created_at,
+          generated_text,
+          job_descriptions!inner(
+            title,
+            company
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setCoverLetters(data || []);
+      
+      const formattedData = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        created_at: item.created_at,
+        generated_text: item.generated_text,
+        job_title: item.job_descriptions.title,
+        company: item.job_descriptions.company
+      }));
+      
+      setCoverLetters(formattedData);
     } catch (error) {
       console.error('Error loading cover letters:', error);
     } finally {
@@ -82,10 +102,12 @@ export const CoverLetters: React.FC = () => {
             {[1, 2, 3].map((i) => (
               <Card key={i} className="animate-pulse">
                 <CardHeader>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="h-3 bg-muted rounded w-full mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-2/3"></div>
                 </CardContent>
               </Card>
             ))}
@@ -107,17 +129,30 @@ export const CoverLetters: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {coverLetters.map((coverLetter) => (
-              <Card key={coverLetter.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4" />
-                    {coverLetter.title}
+              <Card key={coverLetter.id} className="hover:shadow-md transition-shadow cursor-pointer group">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold line-clamp-2">
+                    <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                    {coverLetter.job_title}
                   </CardTitle>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Building className="h-3 w-3" />
+                    {coverLetter.company}
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
+                <CardContent className="pt-0">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                    <Calendar className="h-3 w-3" />
                     Created {new Date(coverLetter.created_at).toLocaleDateString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {coverLetter.generated_text.substring(0, 150)}...
                   </p>
+                  <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="outline" size="sm" className="w-full">
+                      View Cover Letter
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

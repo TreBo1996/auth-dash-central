@@ -9,13 +9,16 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, FileText, Building, Sparkles, Save } from 'lucide-react';
+import { ArrowLeft, FileText, Building, Sparkles, Save, CheckCircle, Eye } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 interface Resume {
   id: string;
   file_name: string;
   parsed_text: string;
+  type: 'original' | 'optimized';
+  job_title?: string;
+  company_name?: string;
 }
 
 interface JobDescription {
@@ -36,7 +39,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<'select' | 'preview' | 'generate' | 'review'>('select');
+  const [step, setStep] = useState<'select' | 'preview' | 'generating' | 'complete' | 'review'>('select');
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
@@ -53,14 +56,43 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
     if (!user) return;
 
     try {
-      // Load resumes
-      const { data: resumesData, error: resumesError } = await supabase
+      // Load original resumes
+      const { data: originalResumes, error: resumesError } = await supabase
         .from('resumes')
         .select('id, file_name, parsed_text')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (resumesError) throw resumesError;
+
+      // Load optimized resumes
+      const { data: optimizedResumes, error: optimizedError } = await supabase
+        .from('optimized_resumes')
+        .select(`
+          id, 
+          generated_text,
+          job_descriptions!inner(title, company)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (optimizedError) throw optimizedError;
+
+      // Combine resumes with type indication
+      const combinedResumes: Resume[] = [
+        ...(originalResumes || []).map(resume => ({
+          ...resume,
+          type: 'original' as const
+        })),
+        ...(optimizedResumes || []).map(resume => ({
+          id: resume.id,
+          file_name: `Optimized for ${resume.job_descriptions.title} at ${resume.job_descriptions.company}`,
+          parsed_text: resume.generated_text,
+          type: 'optimized' as const,
+          job_title: resume.job_descriptions.title,
+          company_name: resume.job_descriptions.company
+        }))
+      ];
 
       // Load job descriptions
       const { data: jobsData, error: jobsError } = await supabase
@@ -71,7 +103,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 
       if (jobsError) throw jobsError;
 
-      setResumes(resumesData || []);
+      setResumes(combinedResumes);
       setJobDescriptions(jobsData || []);
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -86,10 +118,18 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
   const selectedResume = resumes.find(r => r.id === selectedResumeId);
   const selectedJob = jobDescriptions.find(j => j.id === selectedJobId);
 
+  const handlePreview = () => {
+    if (selectedResume && selectedJob) {
+      setStep('preview');
+    }
+  };
+
   const handleGenerate = async () => {
     if (!selectedResume || !selectedJob) return;
 
+    setStep('generating');
     setLoading(true);
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-cover-letter', {
         body: {
@@ -104,7 +144,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 
       setGeneratedText(data.generatedText);
       setCoverLetterTitle(data.title || `Cover Letter for ${selectedJob.title} at ${selectedJob.company}`);
-      setStep('review');
+      setStep('complete');
     } catch (error) {
       console.error('Error generating cover letter:', error);
       toast({
@@ -112,9 +152,14 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
         description: "Failed to generate cover letter. Please try again.",
         variant: "destructive"
       });
+      setStep('preview');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinueToReview = () => {
+    setStep('review');
   };
 
   const handleSave = async () => {
@@ -128,8 +173,9 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
           user_id: user.id,
           title: coverLetterTitle,
           generated_text: generatedText,
-          original_resume_id: selectedResumeId,
-          job_description_id: selectedJobId
+          job_description_id: selectedJobId,
+          original_resume_id: null,
+          optimized_resume_id: null
         });
 
       if (error) throw error;
@@ -185,7 +231,12 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
                 <SelectContent>
                   {resumes.map((resume) => (
                     <SelectItem key={resume.id} value={resume.id}>
-                      {resume.file_name || 'Untitled Resume'}
+                      <div className="flex flex-col">
+                        <span>{resume.file_name || 'Untitled Resume'}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {resume.type === 'original' ? 'Original Resume' : 'Optimized Resume'}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -228,22 +279,79 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 
           <div className="flex justify-end">
             <Button
-              onClick={handleGenerate}
-              disabled={!canProceed || loading}
+              onClick={handlePreview}
+              disabled={!canProceed}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate Cover Letter
-                </>
-              )}
+              <Eye className="h-4 w-4 mr-2" />
+              Preview Selection
             </Button>
           </div>
+        </div>
+      )}
+
+      {step === 'preview' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Review Your Selection</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Selected Resume:</h3>
+                <p className="text-sm bg-muted p-3 rounded-md">
+                  {selectedResume?.file_name} ({selectedResume?.type === 'original' ? 'Original' : 'Optimized'})
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Target Position:</h3>
+                <p className="text-sm bg-muted p-3 rounded-md">
+                  {selectedJob?.title} at {selectedJob?.company}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setStep('select')}>
+              Back to Selection
+            </Button>
+            <Button onClick={handleGenerate}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Generate Cover Letter
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'generating' && (
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Generating Your Cover Letter</h3>
+              <p className="text-muted-foreground text-center max-w-md">
+                Our AI is crafting a personalized cover letter that highlights your experience for the {selectedJob?.title} position at {selectedJob?.company}...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {step === 'complete' && (
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Cover Letter Generated!</h3>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
+                Your personalized cover letter for {selectedJob?.title} at {selectedJob?.company} is ready for review.
+              </p>
+              <Button onClick={handleContinueToReview}>
+                <Eye className="h-4 w-4 mr-2" />
+                Review & Edit
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -277,8 +385,8 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
           </Card>
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep('select')}>
-              Back to Selection
+            <Button variant="outline" onClick={() => setStep('preview')}>
+              Back to Preview
             </Button>
             <Button onClick={handleSave} disabled={loading || !generatedText.trim()}>
               {loading ? (
