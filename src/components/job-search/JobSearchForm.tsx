@@ -46,7 +46,7 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Search className="h-5 w-5" />
-          Search Jobs in Database
+          Search Jobs
         </CardTitle>
       </CardHeader>
       <CardContent>
