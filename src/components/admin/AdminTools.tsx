@@ -48,7 +48,8 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     try {
       const { data, error } = await supabase.rpc('get_job_statistics');
       if (error) throw error;
-      setStatistics(data);
+      // Properly type the Json response as JobStatistics
+      setStatistics(data as JobStatistics);
     } catch (error) {
       console.error('Error loading statistics:', error);
     }
