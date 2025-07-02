@@ -16,7 +16,10 @@ import {
   FileText,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Phone,
+  MapPin,
+  Mail
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +48,10 @@ interface Application {
     file_name: string;
     parsed_text: string;
   };
+  contact_info?: {
+    phone?: string;
+    location?: string;
+  };
   fit_score?: number;
   fit_analysis?: string;
 }
@@ -62,72 +69,166 @@ const Applications: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [jobFilter, setJobFilter] = useState(selectedJobId || 'all');
   const [analyzingFit, setAnalyzingFit] = useState<string[]>([]);
+  const [autoScoring, setAutoScoring] = useState<string[]>([]);
 
   useEffect(() => {
     loadData();
   }, [user]);
+
+  const extractContactInfo = (resumeText: string) => {
+    if (!resumeText) return {};
+    
+    const phoneRegex = /(\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/;
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+    
+    const phoneMatch = resumeText.match(phoneRegex);
+    const emailMatch = resumeText.match(emailRegex);
+    
+    // Extract location - look for city, state patterns
+    const locationRegex = /([A-Z][a-z]+,?\s+[A-Z]{2})|([A-Z][a-z]+\s*,\s*[A-Z][a-zA-Z\s]+)/;
+    const locationMatch = resumeText.match(locationRegex);
+    
+    return {
+      phone: phoneMatch ? phoneMatch[0] : undefined,
+      email: emailMatch ? emailMatch[0] : undefined,
+      location: locationMatch ? locationMatch[0] : undefined
+    };
+  };
 
   const loadData = async () => {
     if (!user) return;
     
     setLoading(true);
     try {
+      console.log('Loading applications data for user:', user.id);
+      
       // Get employer profile
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('employer_profiles')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
+      if (profileError) {
+        console.error('Error fetching employer profile:', profileError);
+        throw profileError;
+      }
+
       if (!profile) {
+        console.log('No employer profile found');
         setLoading(false);
         return;
       }
 
+      console.log('Found employer profile:', profile.id);
+
       // Get job postings
-      const { data: jobs } = await supabase
+      const { data: jobs, error: jobsError } = await supabase
         .from('job_postings')
         .select('id, title, description, requirements')
         .eq('employer_id', profile.id);
 
+      if (jobsError) {
+        console.error('Error fetching job postings:', jobsError);
+        throw jobsError;
+      }
+
+      console.log('Found job postings:', jobs?.length || 0);
       setJobPostings(jobs || []);
 
+      if (!jobs || jobs.length === 0) {
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
       // Get applications with job posting data
-      const { data: apps, error } = await supabase
+      const { data: apps, error: appsError } = await supabase
         .from('job_applications')
         .select(`
           *,
           job_posting:job_postings!inner(id, title, description, requirements)
         `)
-        .in('job_posting_id', (jobs || []).map(j => j.id))
+        .in('job_posting_id', jobs.map(j => j.id))
         .order('applied_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching applications:', error);
-        throw error;
+      if (appsError) {
+        console.error('Error fetching applications:', appsError);
+        throw appsError;
       }
 
-      // Fetch applicant profiles separately
-      const applicantIds = apps?.map(app => app.applicant_id) || [];
-      const { data: profiles } = await supabase
+      console.log('Found applications:', apps?.length || 0);
+
+      if (!apps || apps.length === 0) {
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get unique applicant IDs
+      const applicantIds = [...new Set(apps.map(app => app.applicant_id))];
+      console.log('Fetching profiles for applicant IDs:', applicantIds);
+
+      // Fetch applicant profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, email')
         .in('id', applicantIds);
 
-      // Fetch resumes separately
-      const { data: resumes } = await supabase
+      if (profilesError) {
+        console.error('Error fetching applicant profiles:', profilesError);
+      }
+
+      console.log('Fetched profiles:', profiles?.length || 0);
+      profiles?.forEach(profile => {
+        console.log('Profile:', profile.id, profile.full_name, profile.email);
+      });
+
+      // Fetch resumes
+      const { data: resumes, error: resumesError } = await supabase
         .from('resumes')
         .select('id, file_name, parsed_text, user_id')
         .in('user_id', applicantIds);
 
-      // Combine the data
-      const combinedApplications = apps?.map(app => ({
-        ...app,
-        applicant_profile: profiles?.find(p => p.id === app.applicant_id),
-        resume: resumes?.find(r => r.user_id === app.applicant_id)
-      })) || [];
+      if (resumesError) {
+        console.error('Error fetching resumes:', resumesError);
+      }
 
+      console.log('Fetched resumes:', resumes?.length || 0);
+
+      // Combine the data
+      const combinedApplications = apps.map(app => {
+        const applicantProfile = profiles?.find(p => p.id === app.applicant_id);
+        const resume = resumes?.find(r => r.user_id === app.applicant_id);
+        const contactInfo = resume?.parsed_text ? extractContactInfo(resume.parsed_text) : {};
+        
+        console.log(`Application ${app.id}:`, {
+          applicant_id: app.applicant_id,
+          profile: applicantProfile,
+          has_resume: !!resume
+        });
+
+        return {
+          ...app,
+          applicant_profile: applicantProfile,
+          resume: resume,
+          contact_info: contactInfo
+        };
+      });
+
+      console.log('Final combined applications:', combinedApplications.length);
       setApplications(combinedApplications);
+
+      // Auto-score applications that don't have fit scores
+      const unscored = combinedApplications.filter(app => 
+        !app.fit_score && app.resume?.parsed_text && app.job_posting
+      );
+      
+      if (unscored.length > 0) {
+        console.log('Auto-scoring', unscored.length, 'applications');
+        autoScoreApplications(unscored);
+      }
+
     } catch (error) {
       console.error('Error loading applications:', error);
       toast({
@@ -138,6 +239,26 @@ const Applications: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const autoScoreApplications = async (applicationsToScore: Application[]) => {
+    const scoringIds = applicationsToScore.map(app => app.id);
+    setAutoScoring(prev => [...prev, ...scoringIds]);
+
+    for (const application of applicationsToScore) {
+      try {
+        await analyzeResumeFit(
+          application.id,
+          application.resume!.parsed_text,
+          application.job_posting.description,
+          application.job_posting.requirements || []
+        );
+      } catch (error) {
+        console.error(`Failed to auto-score application ${application.id}:`, error);
+      }
+    }
+
+    setAutoScoring(prev => prev.filter(id => !scoringIds.includes(id)));
   };
 
   const analyzeResumeFit = async (applicationId: string, resumeText: string, jobDescription: string, requirements: string[]) => {
@@ -224,6 +345,12 @@ const Applications: React.FC = () => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
     return 'text-red-600';
+  };
+
+  const getFitScoreBgColor = (score: number) => {
+    if (score >= 80) return 'bg-green-100';
+    if (score >= 60) return 'bg-yellow-100';
+    return 'bg-red-100';
   };
 
   const filteredApplications = applications.filter(app => {
@@ -315,19 +442,39 @@ const Applications: React.FC = () => {
               <Card key={application.id}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div className="space-y-2">
+                    <div className="space-y-3 flex-1">
                       <div className="flex items-center gap-3">
                         <CardTitle className="text-lg flex items-center gap-2">
                           <User className="h-5 w-5" />
-                          {application.applicant_profile?.full_name || 'Unknown Applicant'}
+                          {application.applicant_profile?.full_name || 'No Name Available'}
                         </CardTitle>
                         <Badge variant={getStatusColor(application.status)} className="flex items-center gap-1">
                           {getStatusIcon(application.status)}
                           {application.status}
                         </Badge>
                       </div>
+
+                      {/* Contact Information */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Mail className="h-4 w-4" />
+                          {application.applicant_profile?.email || application.contact_info?.email || 'No email available'}
+                        </div>
+                        {application.contact_info?.phone && (
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-4 w-4" />
+                            {application.contact_info.phone}
+                          </div>
+                        )}
+                        {application.contact_info?.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {application.contact_info.location}
+                          </div>
+                        )}
+                      </div>
+
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{application.applicant_profile?.email || 'No email available'}</span>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
                           Applied {new Date(application.applied_at).toLocaleDateString()}
@@ -336,12 +483,21 @@ const Applications: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      {application.fit_score !== undefined && (
-                        <div className={`flex items-center gap-1 ${getFitScoreColor(application.fit_score)}`}>
-                          <Star className="h-4 w-4" />
-                          <span className="font-semibold">{application.fit_score}% fit</span>
+                    <div className="flex flex-col items-end gap-2">
+                      {application.fit_score !== undefined ? (
+                        <div className={`px-3 py-1 rounded-full flex items-center gap-1 ${getFitScoreBgColor(application.fit_score)}`}>
+                          <Star className={`h-4 w-4 ${getFitScoreColor(application.fit_score)}`} />
+                          <span className={`font-semibold ${getFitScoreColor(application.fit_score)}`}>
+                            {application.fit_score}% Potential Fit
+                          </span>
                         </div>
+                      ) : (
+                        autoScoring.includes(application.id) && (
+                          <div className="px-3 py-1 rounded-full bg-gray-100 flex items-center gap-1">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                            <span className="text-sm text-gray-600">Analyzing...</span>
+                          </div>
+                        )
                       )}
                     </div>
                   </div>
@@ -384,7 +540,7 @@ const Applications: React.FC = () => {
                           </SelectContent>
                         </Select>
                         
-                        {application.resume && application.resume.parsed_text && !application.fit_score && (
+                        {application.resume && application.resume.parsed_text && !application.fit_score && !autoScoring.includes(application.id) && (
                           <Button
                             variant="outline"
                             size="sm"
