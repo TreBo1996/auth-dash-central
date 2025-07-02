@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
-import { EmployerJobCard } from '@/components/job-search/EmployerJobCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
-import { Building, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { UnifiedJob } from '@/types/job';
 
 interface JobSearchFilters {
   query: string;
@@ -19,44 +18,13 @@ interface JobSearchFilters {
   maxAge?: number;
 }
 
-interface ExternalJob {
-  title: string;
-  company: string;
-  location: string;
-  description: string;
-  salary: string | null;
-  posted_at: string;
-  job_url: string;
-  source: string;
-  via: string;
-  thumbnail?: string;
-  job_type?: string | null;
-  experience_level?: string | null;
-}
-
-interface EmployerJob {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  employment_type: string;
-  experience_level: string;
-  salary_min: number;
-  salary_max: number;
-  salary_currency: string;
-  created_at: string;
-  employer_profile: {
-    company_name: string;
-    logo_url: string;
-  } | null;
-}
+const JOBS_PER_PAGE = 10;
 
 export const JobSearch: React.FC = () => {
-  const [databaseJobs, setDatabaseJobs] = useState<ExternalJob[]>([]);
-  const [employerJobs, setEmployerJobs] = useState<EmployerJob[]>([]);
+  const [allJobs, setAllJobs] = useState<UnifiedJob[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
-  const [pagination, setPagination] = useState<any>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
   // Load employer jobs on component mount
@@ -81,9 +49,7 @@ export const JobSearch: React.FC = () => {
             company_name,
             logo_url
           )
-        `).eq('is_active', true).order('created_at', {
-        ascending: false
-      });
+        `).eq('is_active', true).order('created_at', { ascending: false });
 
       // Apply filters if provided
       if (searchFilters?.query) {
@@ -99,21 +65,49 @@ export const JobSearch: React.FC = () => {
         query = query.eq('experience_level', searchFilters.seniorityLevel);
       }
 
-      const { data, error } = await query.limit(20);
+      const { data, error } = await query;
       if (error) throw error;
-      setEmployerJobs(data || []);
+
+      // Transform employer jobs to unified format
+      const employerJobs: UnifiedJob[] = (data || []).map(job => ({
+        id: job.id,
+        title: job.title,
+        company: job.employer_profile?.company_name || 'Company Name Not Available',
+        location: job.location || '',
+        description: job.description,
+        salary: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
+        posted_at: new Date(job.created_at).toLocaleDateString(),
+        job_url: `/job-posting/${job.id}`,
+        source: 'employer' as const,
+        employer_profile: job.employer_profile,
+        employment_type: job.employment_type,
+        experience_level: job.experience_level,
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        salary_currency: job.salary_currency,
+        created_at: job.created_at
+      }));
+
+      return employerJobs;
     } catch (error) {
       console.error('Error loading employer jobs:', error);
+      return [];
     }
   };
 
-  const handleSearch = async (searchFilters: JobSearchFilters) => {
-    setLoading(true);
-    try {
-      // Load employer jobs with filters
-      await loadEmployerJobs(searchFilters);
+  const formatSalary = (min: number, max: number, currency: string) => {
+    if (min && max) {
+      return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}`;
+    } else if (min) {
+      return `${currency} ${min.toLocaleString()}+`;
+    } else if (max) {
+      return `Up to ${currency} ${max.toLocaleString()}`;
+    }
+    return null;
+  };
 
-      // Search database jobs using the database-job-search function
+  const loadDatabaseJobs = async (searchFilters: JobSearchFilters) => {
+    try {
       const { data, error } = await supabase.functions.invoke('database-job-search', {
         body: {
           query: searchFilters.query || '',
@@ -123,26 +117,87 @@ export const JobSearch: React.FC = () => {
           seniorityLevel: searchFilters.seniorityLevel || '',
           company: searchFilters.company || '',
           maxAge: searchFilters.maxAge || 30,
-          limit: 50,
+          limit: 1000, // Get all matching jobs, we'll paginate on frontend
           offset: 0
         }
       });
 
       if (error) throw error;
 
-      setDatabaseJobs(data.jobs || []);
-      setPagination(data.pagination || null);
-      setWarnings(data.warnings || []);
-      setSearchPerformed(true);
+      // Transform database jobs to unified format
+      const databaseJobs: UnifiedJob[] = (data.jobs || []).map((job: any) => ({
+        id: job.job_url || `${job.title}-${job.company}`,
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        description: job.description,
+        salary: job.salary,
+        posted_at: job.posted_at,
+        job_url: job.job_url,
+        source: 'database' as const,
+        via: job.via,
+        thumbnail: job.thumbnail,
+        job_type: job.job_type,
+        experience_level: job.experience_level,
+        requirements: job.requirements,
+        responsibilities: job.responsibilities,
+        benefits: job.benefits
+      }));
+
+      return { jobs: databaseJobs, warnings: data.warnings || [] };
     } catch (error) {
       console.error('Database job search error:', error);
-      setDatabaseJobs([]);
-      setPagination(null);
-      setWarnings(['Failed to search jobs. Please try again.']);
+      return { jobs: [], warnings: ['Failed to search jobs. Please try again.'] };
+    }
+  };
+
+  const handleSearch = async (searchFilters: JobSearchFilters) => {
+    setLoading(true);
+    setCurrentPage(1); // Reset to first page on new search
+    
+    try {
+      // Load both employer and database jobs
+      const [employerJobs, databaseResult] = await Promise.all([
+        loadEmployerJobs(searchFilters),
+        loadDatabaseJobs(searchFilters)
+      ]);
+
+      // Combine jobs with employer jobs first
+      const combinedJobs = [...employerJobs, ...databaseResult.jobs];
+      
+      setAllJobs(combinedJobs);
+      setWarnings(databaseResult.warnings);
+      setSearchPerformed(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      setAllJobs([]);
+      setWarnings(['Search failed. Please try again.']);
     } finally {
       setLoading(false);
     }
   };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of results
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
+
+  // Calculate pagination
+  const totalJobs = allJobs.length;
+  const totalPages = Math.ceil(totalJobs / JOBS_PER_PAGE);
+  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = startIndex + JOBS_PER_PAGE;
+  const currentJobs = allJobs.slice(startIndex, endIndex);
+
+  const pagination = totalJobs > 0 ? {
+    currentPage,
+    totalPages,
+    hasNextPage: currentPage < totalPages,
+    hasPreviousPage: currentPage > 1,
+    totalResults: totalJobs,
+    resultsPerPage: JOBS_PER_PAGE
+  } : null;
 
   return (
     <DashboardLayout>
@@ -157,77 +212,22 @@ export const JobSearch: React.FC = () => {
         </div>
 
         <div className="space-y-8">
-          {/* Employer Jobs Section */}
-          {employerJobs.length > 0 && (
-            <div>
-              <Card className="mb-4">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5 text-blue-600" />
-                    Featured Jobs
-                    <span className="text-sm font-normal text-muted-foreground">
-                      ({employerJobs.length} jobs)
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Direct job postings from employers on our platform.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <div className="space-y-4">
-                {employerJobs.map(job => (
-                  <EmployerJobCard key={job.id} job={job} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Database Jobs Section */}
-          {(searchPerformed || databaseJobs.length > 0) && (
-            <>
-              {employerJobs.length > 0 && <Separator className="my-8" />}
-              
-              <div>
-                {databaseJobs.length > 0 && (
-                  <Card className="mb-4">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2">
-                        <Search className="h-5 w-5 text-gray-600" />
-                        Job Database Results
-                        <span className="text-sm font-normal text-muted-foreground">
-                          ({databaseJobs.length} jobs)
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        Jobs from our curated database, sourced from various job boards.
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-                
-                <JobSearchResults 
-                  jobs={databaseJobs} 
-                  loading={loading} 
-                  searchPerformed={searchPerformed}
-                  pagination={pagination}
-                  warnings={warnings}
-                />
-              </div>
-            </>
-          )}
+          <JobSearchResults 
+            jobs={currentJobs}
+            loading={loading} 
+            searchPerformed={searchPerformed}
+            pagination={pagination}
+            warnings={warnings}
+            onPageChange={handlePageChange}
+          />
 
           {/* No results state */}
-          {searchPerformed && employerJobs.length === 0 && databaseJobs.length === 0 && !loading && (
+          {searchPerformed && totalJobs === 0 && !loading && (
             <Card>
               <CardContent className="py-12 text-center">
                 <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
-                  No jobs found in our database. Try adjusting your search criteria or contact support to add more jobs.
+                  No jobs found matching your search criteria. Try adjusting your search terms or filters.
                 </p>
               </CardContent>
             </Card>

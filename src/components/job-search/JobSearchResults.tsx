@@ -2,28 +2,13 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { JobCard } from './JobCard';
 import { JobSearchPagination } from './JobSearchPagination';
-import { Loader2, Search, Briefcase, AlertTriangle, Plus } from 'lucide-react';
-
-interface Job {
-  title: string;
-  company: string;
-  location: string;
-  description: string;
-  salary: string | null;
-  posted_at: string;
-  job_url: string;
-  source: string;
-  via: string;
-  thumbnail?: string;
-  job_type?: string | null;
-  experience_level?: string | null;
-}
+import { Loader2, Search, Briefcase, AlertTriangle } from 'lucide-react';
+import { UnifiedJob } from '@/types/job';
 
 interface JobSearchResultsProps {
-  jobs: Job[];
+  jobs: UnifiedJob[];
   loading: boolean;
   searchPerformed: boolean;
   pagination?: {
@@ -36,11 +21,6 @@ interface JobSearchResultsProps {
   };
   warnings?: string[];
   onPageChange?: (page: number) => void;
-  totalAvailable?: number;
-  canLoadMore?: boolean;
-  onLoadMore?: () => void;
-  loadingMore?: boolean;
-  searchVariationsUsed?: string[];
 }
 
 export const JobSearchResults: React.FC<JobSearchResultsProps> = ({ 
@@ -49,12 +29,7 @@ export const JobSearchResults: React.FC<JobSearchResultsProps> = ({
   searchPerformed,
   pagination,
   warnings = [],
-  onPageChange,
-  totalAvailable,
-  canLoadMore = false,
-  onLoadMore,
-  loadingMore = false,
-  searchVariationsUsed = []
+  onPageChange
 }) => {
   if (loading) {
     return (
@@ -109,16 +84,14 @@ export const JobSearchResults: React.FC<JobSearchResultsProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">
-            {pagination ? `Showing ${((pagination.currentPage - 1) * pagination.resultsPerPage) + 1}-${Math.min(pagination.currentPage * pagination.resultsPerPage, pagination.totalResults)} of ${pagination.totalResults} jobs` : `Found ${jobs.length} job${jobs.length !== 1 ? 's' : ''}`}
+            {pagination ? 
+              `Showing ${((pagination.currentPage - 1) * pagination.resultsPerPage) + 1}-${Math.min(pagination.currentPage * pagination.resultsPerPage, pagination.totalResults)} Jobs` : 
+              `Found ${jobs.length} job${jobs.length !== 1 ? 's' : ''}`
+            }
           </h2>
-          {totalAvailable && totalAvailable > pagination?.totalResults && (
+          {pagination && pagination.totalResults > pagination.resultsPerPage && (
             <p className="text-sm text-muted-foreground mt-1">
-              ({totalAvailable.toLocaleString()} total results available from search)
-            </p>
-          )}
-          {searchVariationsUsed.length > 0 && (
-            <p className="text-sm text-blue-600 mt-1">
-              Enhanced search using {searchVariationsUsed.length} variation{searchVariationsUsed.length !== 1 ? 's' : ''}: {searchVariationsUsed.slice(-2).join(', ')}
+              {pagination.totalResults} total results found
             </p>
           )}
         </div>
@@ -126,51 +99,11 @@ export const JobSearchResults: React.FC<JobSearchResultsProps> = ({
       
       <div className="space-y-4">
         {jobs.map((job, index) => (
-          <JobCard key={`${job.job_url}-${index}`} job={job} />
+          <JobCard key={`${job.id}-${index}`} job={job} />
         ))}
       </div>
 
-      {/* Load More Section */}
-      {canLoadMore && onLoadMore && (
-        <div className="flex justify-center py-6">
-          <Button 
-            onClick={onLoadMore} 
-            disabled={loadingMore}
-            variant="outline"
-            size="lg"
-            className="gap-2"
-          >
-            {loadingMore ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading more jobs...
-              </>
-            ) : (
-              <>
-                <Plus className="h-4 w-4" />
-                Load More Jobs
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-
-      {/* Search Enhancement Tips */}
-      {!canLoadMore && pagination && pagination.totalResults < 50 && !loadingMore && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="py-4">
-            <h3 className="font-medium text-blue-900 mb-2">Tips to find more jobs:</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Try broader search terms (e.g., "Manager" instead of "Project Manager")</li>
-              <li>• Search without location restrictions</li>
-              <li>• Use different job titles or synonyms</li>
-              <li>• Adjust date filters to include older postings</li>
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
-      {pagination && onPageChange && (
+      {pagination && onPageChange && pagination.totalPages > 1 && (
         <JobSearchPagination
           pagination={pagination}
           onPageChange={onPageChange}
