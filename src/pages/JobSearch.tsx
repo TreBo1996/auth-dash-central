@@ -4,6 +4,7 @@ import { JobSearchResults } from '@/components/job-search/JobSearchResults';
 import { EmployerJobCard } from '@/components/job-search/EmployerJobCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Building, Search } from 'lucide-react';
 
@@ -146,7 +147,7 @@ export const JobSearch: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Find Your Next Job</h1>
@@ -233,6 +234,6 @@ export const JobSearch: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
