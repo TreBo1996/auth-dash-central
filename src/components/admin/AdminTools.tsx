@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -64,44 +65,101 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
       return;
     }
 
+    // Validate maxJobs parameter
+    if (maxJobs < 10 || maxJobs > 200) {
+      toast({
+        title: "Error",
+        description: "Max jobs must be between 10 and 200",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
+    console.log('Starting manual job scraper with params:', { query: query.trim(), location: location.trim(), maxJobs });
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
+      if (!session) {
+        throw new Error('No active session - please log in again');
+      }
 
-      const response = await fetch('/functions/v1/manual-job-scraper', {
+      console.log('Session found, making request to manual job scraper...');
+
+      // Use the full Supabase function URL instead of relative path
+      const functionUrl = 'https://kuthirgvlzyzgmyxyzpr.supabase.co/functions/v1/manual-job-scraper';
+      console.log('Calling function URL:', functionUrl);
+
+      const requestBody = {
+        query: query.trim(),
+        location: location.trim(),
+        maxJobs
+      };
+      console.log('Request body:', requestBody);
+
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          query: query.trim(),
-          location: location.trim(),
-          maxJobs
-        })
+        body: JSON.stringify(requestBody)
       });
 
-      const result = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to run job scraper');
+        console.error('Response not OK:', response.status, response.statusText);
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorData = await response.json();
+          console.error('Error response body:', errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Could not parse error response:', parseError);
+          const errorText = await response.text();
+          console.error('Raw error response:', errorText);
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
+
+      const result = await response.json();
+      console.log('Success response:', result);
 
       toast({
         title: "Job Scraper Completed!",
-        description: `Successfully scraped ${result.jobsScraped} new jobs. ${result.archivedJobs} old jobs archived.`
+        description: `Successfully scraped ${result.jobsScraped || 0} new jobs. ${result.archivedJobs || 0} old jobs archived. Total results: ${result.jobsReturned || 0}`,
+        duration: 10000
       });
 
-      // Refresh statistics
+      // Refresh statistics after successful scrape
+      console.log('Refreshing statistics...');
       await loadStatistics();
 
     } catch (error) {
       console.error('Error running manual scraper:', error);
+      
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Network error - please check your internet connection';
+      }
+
       toast({
         title: "Scraper Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive"
+        description: `Error: ${errorMessage}`,
+        variant: "destructive",
+        duration: 10000
       });
     } finally {
       setIsLoading(false);
@@ -194,7 +252,7 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="query">Job Query</Label>
+              <Label htmlFor="query">Job Query *</Label>
               <Input
                 id="query"
                 value={query}
@@ -216,7 +274,7 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="maxJobs">Max Jobs</Label>
+              <Label htmlFor="maxJobs">Max Jobs (10-200)</Label>
               <Input
                 id="maxJobs"
                 type="number"
@@ -238,7 +296,7 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Scraping...
+                  Scraping jobs...
                 </>
               ) : (
                 <>
@@ -265,6 +323,10 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
                 </>
               )}
             </Button>
+          </div>
+
+          <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+            <strong>Debug Info:</strong> Check browser console for detailed logs when running the scraper.
           </div>
         </div>
       </CardContent>
