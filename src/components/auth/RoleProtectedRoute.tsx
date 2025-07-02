@@ -29,8 +29,10 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
     );
   }
 
-  // Check if user has the required role
-  if (!hasRole(requiredRole)) {
+  // Check if user has the required role or "both" role
+  const hasRequiredRole = hasRole(requiredRole) || userRoles.includes('both');
+
+  if (!hasRequiredRole) {
     // Determine the appropriate redirect path
     let redirectPath = fallbackPath;
     

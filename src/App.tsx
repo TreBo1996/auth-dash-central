@@ -8,32 +8,32 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
 import { AppErrorBoundary } from '@/components/common/AppErrorBoundary';
 
-// Pages
-import { Home } from '@/pages/Home';
-import { Auth } from '@/pages/Auth';
-import { EmployerAuth } from '@/pages/EmployerAuth';
-import { Dashboard } from '@/pages/Dashboard';
-import { Upload } from '@/pages/Upload';
-import { UploadResumePage } from '@/pages/UploadResumePage';
-import { UploadJobPage } from '@/pages/UploadJobPage';
-import { ResumeEditor } from '@/pages/ResumeEditor';
-import { InitialResumeEditor } from '@/pages/InitialResumeEditor';
-import { ResumeTemplates } from '@/pages/ResumeTemplates';
-import { InterviewPrep } from '@/pages/InterviewPrep';
-import { JobSearch } from '@/pages/JobSearch';
-import { CoverLetters } from '@/pages/CoverLetters';
-import { Profile } from '@/pages/Profile';
-import { VerifyEmail } from '@/pages/VerifyEmail';
-import { NotFound } from '@/pages/NotFound';
+// Pages - using default imports
+import Home from '@/pages/Home';
+import Auth from '@/pages/Auth';
+import EmployerAuth from '@/pages/EmployerAuth';
+import Dashboard from '@/pages/Dashboard';
+import Upload from '@/pages/Upload';
+import UploadResumePage from '@/pages/UploadResumePage';
+import UploadJobPage from '@/pages/UploadJobPage';
+import ResumeEditor from '@/pages/ResumeEditor';
+import InitialResumeEditor from '@/pages/InitialResumeEditor';
+import ResumeTemplates from '@/pages/ResumeTemplates';
+import InterviewPrep from '@/pages/InterviewPrep';
+import JobSearch from '@/pages/JobSearch';
+import CoverLetters from '@/pages/CoverLetters';
+import Profile from '@/pages/Profile';
+import VerifyEmail from '@/pages/VerifyEmail';
+import NotFound from '@/pages/NotFound';
 
-// Employer Pages
-import { EmployerDashboard } from '@/pages/employer/EmployerDashboard';
-import { PostJob } from '@/pages/employer/PostJob';
-import { JobPostings } from '@/pages/employer/JobPostings';
-import { Applications } from '@/pages/employer/Applications';
-import { EmployerProfile } from '@/pages/employer/EmployerProfile';
-import { EmployerSettings } from '@/pages/employer/EmployerSettings';
-import { EmployerAnalytics } from '@/pages/employer/EmployerAnalytics';
+// Employer Pages - using default imports
+import EmployerDashboard from '@/pages/employer/EmployerDashboard';
+import PostJob from '@/pages/employer/PostJob';
+import JobPostings from '@/pages/employer/JobPostings';
+import Applications from '@/pages/employer/Applications';
+import EmployerProfile from '@/pages/employer/EmployerProfile';
+import EmployerSettings from '@/pages/employer/EmployerSettings';
+import EmployerAnalytics from '@/pages/employer/EmployerAnalytics';
 
 const queryClient = new QueryClient();
 
@@ -54,70 +54,70 @@ function App() {
                   {/* Job Seeker Routes */}
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <Dashboard />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/upload" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <Upload />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/upload-resume" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <UploadResumePage />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/upload-job" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <UploadJobPage />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/resume-editor" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <ResumeEditor />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/initial-resume-editor" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <InitialResumeEditor />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/resume-templates" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <ResumeTemplates />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/interview-prep" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <InterviewPrep />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/job-search" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <JobSearch />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/cover-letters" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['job_seeker', 'both']}>
+                      <RoleProtectedRoute requiredRole="job_seeker">
                         <CoverLetters />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
@@ -129,51 +129,51 @@ function App() {
                   } />
 
                   {/* Employer Routes */}
-                  <Route path="/employer" element={
+                  <Route path="/employer/dashboard" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <EmployerDashboard />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/employer/post-job" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <PostJob />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/employer/job-postings" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <JobPostings />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/employer/applications" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <Applications />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/employer/profile" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <EmployerProfile />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/employer/settings" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <EmployerSettings />
                       </RoleProtectedRoute>
                     </ProtectedRoute>
                   } />
                   <Route path="/employer/analytics" element={
                     <ProtectedRoute>
-                      <RoleProtectedRoute allowedRoles={['employer', 'both']}>
+                      <RoleProtectedRoute requiredRole="employer">
                         <EmployerAnalytics />
                       </RoleProtectedRoute>
                     </ProtectedRoute>

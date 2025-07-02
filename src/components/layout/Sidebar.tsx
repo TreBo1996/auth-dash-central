@@ -11,7 +11,7 @@ import {
   MessageSquare, 
   Briefcase,
   User,
-  Template,
+  FileTemplate,
   Mail
 } from 'lucide-react';
 
@@ -21,13 +21,17 @@ const navigation = [
   { name: 'Cover Letters', href: '/cover-letters', icon: Mail },
   { name: 'Upload Resume', href: '/upload-resume', icon: Upload },
   { name: 'Upload Job', href: '/upload-job', icon: FileText },
-  { name: 'Resume Editor', href: '/resume-editor', icon: Template },
-  { name: 'Resume Templates', href: '/resume-templates', icon: Template },
+  { name: 'Resume Editor', href: '/resume-editor', icon: FileTemplate },
+  { name: 'Resume Templates', href: '/resume-templates', icon: FileTemplate },
   { name: 'Interview Prep', href: '/interview-prep', icon: MessageSquare },
   { name: 'Profile', href: '/profile', icon: User },
 ];
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const location = useLocation();
 
   return (
@@ -42,6 +46,7 @@ export const Sidebar: React.FC = () => {
             <Link
               key={item.name}
               to={item.href}
+              onClick={onClose}
               className={cn(
                 'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors',
                 isActive
