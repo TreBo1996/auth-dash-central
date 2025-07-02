@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,8 +64,28 @@ const JobPosting: React.FC = () => {
     }
   }, [id, user]);
 
+  useEffect(() => {
+    // Debug logging for user authentication
+    console.log('🔍 JobPosting Debug - User auth state:', {
+      isAuthenticated: !!user,
+      userId: user?.id,
+      userEmail: user?.email
+    });
+  }, [user]);
+
+  useEffect(() => {
+    // Debug logging for application state
+    console.log('🔍 JobPosting Debug - Application state:', {
+      jobPostingId: id,
+      hasApplied,
+      showApplicationModal,
+      jobPostingLoaded: !!jobPosting
+    });
+  }, [id, hasApplied, showApplicationModal, jobPosting]);
+
   const loadJobPosting = async () => {
     try {
+      console.log('📋 Loading job posting with ID:', id);
       const { data, error } = await supabase
         .from('job_postings')
         .select(`
@@ -82,7 +103,12 @@ const JobPosting: React.FC = () => {
         .eq('is_active', true)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error loading job posting:', error);
+        throw error;
+      }
+      
+      console.log('✅ Job posting loaded successfully:', data?.title);
       setJobPosting(data);
     } catch (error) {
       console.error('Error loading job posting:', error);
@@ -97,20 +123,78 @@ const JobPosting: React.FC = () => {
   };
 
   const checkApplicationStatus = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('🔍 No user found, skipping application status check');
+      return;
+    }
     
     try {
-      const { data } = await supabase
+      console.log('🔍 Checking application status for user:', user.id, 'job:', id);
+      const { data, error } = await supabase
         .from('job_applications')
         .select('id')
         .eq('job_posting_id', id)
         .eq('applicant_id', user.id)
-        .single();
+        .maybeSingle();
       
-      setHasApplied(!!data);
+      if (error) {
+        console.error('❌ Error checking application status:', error);
+        throw error;
+      }
+      
+      const hasUserApplied = !!data;
+      console.log('✅ Application status check result:', {
+        hasApplied: hasUserApplied,
+        applicationId: data?.id
+      });
+      
+      setHasApplied(hasUserApplied);
     } catch (error) {
-      // No application found, which is fine
+      console.error('Error checking application status:', error);
+      // Don't show error toast for this, just log it
+      setHasApplied(false);
     }
+  };
+
+  const handleApplyClick = () => {
+    console.log('🎯 Apply button clicked:', {
+      userId: user?.id,
+      jobId: id,
+      hasApplied,
+      showApplicationModal
+    });
+    
+    if (!user) {
+      console.log('❌ No user authenticated, cannot apply');
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to apply for this job",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (hasApplied) {
+      console.log('❌ User has already applied');
+      toast({
+        title: "Already Applied",
+        description: "You have already applied for this position",
+      });
+      return;
+    }
+    
+    console.log('✅ Opening application modal');
+    setShowApplicationModal(true);
+  };
+
+  const handleApplicationSubmitted = () => {
+    console.log('✅ Application submitted successfully');
+    setHasApplied(true);
+    setShowApplicationModal(false);
+    toast({
+      title: "Application Submitted!",
+      description: "Your application has been sent to the employer."
+    });
   };
 
   const formatSalary = (min: number, max: number, currency: string) => {
@@ -152,6 +236,15 @@ const JobPosting: React.FC = () => {
 
   const salaryRange = formatSalary(jobPosting.salary_min, jobPosting.salary_max, jobPosting.salary_currency);
   const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
+
+  // Debug logging for render decisions
+  console.log('🎨 Rendering job posting with state:', {
+    userAuthenticated: !!user,
+    hasApplied,
+    showApplicationModal,
+    jobTitle: jobPosting.title,
+    companyName
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,20 +314,36 @@ const JobPosting: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  {hasApplied ? (
-                    <Badge className="bg-green-100 text-green-800">Applied</Badge>
+                  {!user ? (
+                    <div className="text-center space-y-2">
+                      <Button 
+                        size="lg"
+                        onClick={() => navigate('/auth')}
+                        className="w-full"
+                      >
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Login to Apply
+                      </Button>
+                      <p className="text-sm text-muted-foreground">Sign in to apply for this position</p>
+                    </div>
+                  ) : hasApplied ? (
+                    <div className="text-center space-y-2">
+                      <Badge className="bg-green-100 text-green-800 px-4 py-2">
+                        ✓ Application Submitted
+                      </Badge>
+                      <p className="text-sm text-muted-foreground">
+                        You've successfully applied for this position
+                      </p>
+                    </div>
                   ) : (
                     <Button 
                       size="lg"
-                      onClick={() => setShowApplicationModal(true)}
-                      disabled={!user}
+                      onClick={handleApplyClick}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold"
                     >
-                      <Briefcase className="h-4 w-4 mr-2" />
+                      <Briefcase className="h-5 w-5 mr-2" />
                       Apply Now
                     </Button>
-                  )}
-                  {!user && (
-                    <p className="text-sm text-muted-foreground">Login to apply</p>
                   )}
                 </div>
               </div>
@@ -338,22 +447,41 @@ const JobPosting: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Apply Section */}
-          {!hasApplied && user && (
-            <Card>
+          {/* Apply Section - Enhanced for non-authenticated users */}
+          {!hasApplied && (
+            <Card className="border-blue-200 bg-blue-50">
               <CardContent className="py-6">
                 <div className="text-center space-y-4">
-                  <h3 className="text-lg font-semibold">Ready to Apply?</h3>
-                  <p className="text-muted-foreground">
-                    Apply with an existing resume or create an optimized resume for this position
-                  </p>
-                  <Button 
-                    size="lg"
-                    onClick={() => setShowApplicationModal(true)}
-                  >
-                    <Briefcase className="h-4 w-4 mr-2" />
-                    Start Application
-                  </Button>
+                  <h3 className="text-lg font-semibold text-blue-900">Ready to Apply?</h3>
+                  {!user ? (
+                    <>
+                      <p className="text-blue-700">
+                        Create an account or sign in to apply with an optimized resume and cover letter
+                      </p>
+                      <Button 
+                        size="lg"
+                        onClick={() => navigate('/auth')}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Sign Up / Login to Apply
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-blue-700">
+                        Apply with an existing resume or create an AI-optimized resume for this position
+                      </p>
+                      <Button 
+                        size="lg"
+                        onClick={handleApplyClick}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Start Application
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -361,19 +489,15 @@ const JobPosting: React.FC = () => {
         </div>
 
         {/* Application Modal */}
-        {showApplicationModal && (
+        {showApplicationModal && jobPosting && (
           <JobApplicationModal
             isOpen={showApplicationModal}
-            onClose={() => setShowApplicationModal(false)}
-            jobPosting={jobPosting}
-            onApplicationSubmitted={() => {
-              setHasApplied(true);
+            onClose={() => {
+              console.log('🔄 Closing application modal');
               setShowApplicationModal(false);
-              toast({
-                title: "Application Submitted!",
-                description: "Your application has been sent to the employer."
-              });
             }}
+            jobPosting={jobPosting}
+            onApplicationSubmitted={handleApplicationSubmitted}
           />
         )}
       </div>

@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
-import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft } from 'lucide-react';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface Resume {
   id: string;
@@ -52,24 +52,54 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const [optimizedResumeContent, setOptimizedResumeContent] = useState<string>('');
   const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
   const [creatingJobDescription, setCreatingJobDescription] = useState(false);
+  const [loadingResumes, setLoadingResumes] = useState(false);
 
   const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
 
   useEffect(() => {
     if (isOpen && user) {
+      console.log('🔄 Modal opened, loading user resumes...');
       loadResumes();
+      resetModal();
     }
   }, [isOpen, user]);
 
+  useEffect(() => {
+    // Debug logging for modal state
+    console.log('🔍 Modal Debug - Current state:', {
+      isOpen,
+      step,
+      userId: user?.id,
+      resumesCount: resumes.length,
+      selectedResumeId,
+      optimizedResumeId,
+      jobDescriptionId,
+      submitting
+    });
+  }, [isOpen, step, user, resumes.length, selectedResumeId, optimizedResumeId, jobDescriptionId, submitting]);
+
   const loadResumes = async () => {
+    if (!user) {
+      console.log('❌ No user found, cannot load resumes');
+      return;
+    }
+
     try {
+      setLoadingResumes(true);
+      console.log('📋 Loading resumes for user:', user.id);
+      
       const { data, error } = await supabase
         .from('resumes')
         .select('id, file_name, parsed_text')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error loading resumes:', error);
+        throw error;
+      }
+      
+      console.log('✅ Loaded resumes:', data?.length || 0);
       setResumes(data || []);
     } catch (error) {
       console.error('Error loading resumes:', error);
@@ -78,14 +108,21 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         description: "Failed to load your resumes",
         variant: "destructive"
       });
+    } finally {
+      setLoadingResumes(false);
     }
   };
 
   const createJobDescription = async () => {
-    if (!user) return null;
+    if (!user) {
+      console.log('❌ No user found, cannot create job description');
+      return null;
+    }
     
     setCreatingJobDescription(true);
     try {
+      console.log('📝 Creating job description for:', jobPosting.title);
+      
       // Check if job description already exists for this job posting
       const { data: existingJobDesc } = await supabase
         .from('job_descriptions')
@@ -94,9 +131,10 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         .eq('title', jobPosting.title)
         .eq('parsed_text', jobPosting.description)
         .eq('source', 'application')
-        .single();
+        .maybeSingle();
 
       if (existingJobDesc) {
+        console.log('✅ Found existing job description:', existingJobDesc.id);
         setJobDescriptionId(existingJobDesc.id);
         return existingJobDesc.id;
       }
@@ -114,8 +152,12 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         .select('id')
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error creating job description:', error);
+        throw error;
+      }
       
+      console.log('✅ Created new job description:', newJobDesc.id);
       setJobDescriptionId(newJobDesc.id);
       return newJobDesc.id;
     } catch (error) {
@@ -132,13 +174,16 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const handleOptimizeClick = async () => {
+    console.log('🎯 Optimize button clicked');
     const jobDescId = await createJobDescription();
     if (jobDescId) {
+      console.log('✅ Job description ready, moving to optimize step');
       setStep('optimize');
     }
   };
 
   const handleOptimizationComplete = async () => {
+    console.log('✅ Optimization complete, reloading resumes...');
     // Reload resumes to get the newly created optimized resume
     await loadResumes();
     
@@ -153,9 +198,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         .single();
       
       if (data) {
+        console.log('✅ Found optimized resume:', data.id);
         setOptimizedResumeId(data.id);
         setOptimizedResumeContent(data.generated_text || '');
         setStep('review');
+      } else {
+        console.log('⚠️ No optimized resume found, going to submit');
+        setStep('submit');
       }
     } catch (error) {
       console.error('Error getting optimized resume:', error);
@@ -164,17 +213,20 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const handleAcceptOptimizedResume = () => {
+    console.log('✅ User accepted optimized resume');
     setStep('submit');
   };
 
   const handleViewFullResume = () => {
     if (optimizedResumeId) {
+      console.log('👀 Opening resume editor for:', optimizedResumeId);
       window.open(`/resume-editor/${optimizedResumeId}`, '_blank');
     }
   };
 
   const submitApplication = async () => {
     if (!selectedResumeId && !optimizedResumeId) {
+      console.log('❌ No resume selected for application');
       toast({
         title: "Resume Required",
         description: "Please select a resume to proceed with your application.",
@@ -185,6 +237,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
     setSubmitting(true);
     try {
+      console.log('📤 Submitting application...', {
+        jobId: jobPosting.id,
+        userId: user?.id,
+        resumeId: selectedResumeId || optimizedResumeId,
+        hasCoverLetter: !!coverLetter
+      });
+
       // Create job description entry if it doesn't exist
       const { data: existingJobDesc } = await supabase
         .from('job_descriptions')
@@ -192,7 +251,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         .eq('user_id', user!.id)
         .eq('title', jobPosting.title)
         .eq('source', 'application')
-        .single();
+        .maybeSingle();
 
       let jobDescriptionId = existingJobDesc?.id;
 
@@ -219,13 +278,17 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         .insert({
           job_posting_id: jobPosting.id,
           applicant_id: user!.id,
-          resume_id: selectedResumeId || null,
+          resume_id: selectedResumeId || optimizedResumeId,
           cover_letter: coverLetter || null,
           status: 'pending'
         });
 
-      if (applicationError) throw applicationError;
+      if (applicationError) {
+        console.error('❌ Error submitting application:', applicationError);
+        throw applicationError;
+      }
 
+      console.log('✅ Application submitted successfully');
       setStep('success');
       
       toast({
@@ -252,6 +315,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const resetModal = () => {
+    console.log('🔄 Resetting modal state');
     setStep('choose');
     setSelectedResumeId('');
     setCoverLetter('');
@@ -279,12 +343,14 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Apply to {jobPosting.title}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl">Apply to {jobPosting.title}</DialogTitle>
+          <DialogDescription className="text-lg">
             at {companyName}
           </DialogDescription>
           
@@ -310,44 +376,56 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">How would you like to apply?</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card 
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => setStep('existing')}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Use Existing Resume
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Apply with one of your uploaded resumes
-                    </p>
-                  </CardContent>
-                </Card>
+              {loadingResumes ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading your resumes...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-blue-200"
+                    onClick={() => setStep('existing')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Use Existing Resume
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Apply with one of your uploaded resumes
+                      </p>
+                      {availableResumes.length > 0 && (
+                        <p className="text-xs text-green-600 mt-2">
+                          {availableResumes.length} resume(s) available
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                <Card 
-                  className="cursor-pointer hover:bg-gray-50 transition-colors border-purple-200"
-                  onClick={handleOptimizeClick}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-purple-700">
-                      <Sparkles className="h-5 w-5" />
-                      Create Optimized Resume
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      AI-optimize your resume for this specific job
-                    </p>
-                    {creatingJobDescription && (
-                      <p className="text-xs text-blue-600 mt-2">Preparing job description...</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                  <Card 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors border-2 border-purple-200 hover:border-purple-300"
+                    onClick={handleOptimizeClick}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-700">
+                        <Sparkles className="h-5 w-5" />
+                        Create Optimized Resume
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        AI-optimize your resume for this specific job
+                      </p>
+                      {creatingJobDescription && (
+                        <p className="text-xs text-blue-600 mt-2">Preparing job description...</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           )}
 
@@ -356,25 +434,44 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Select Resume</h3>
                 <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
               </div>
 
               {availableResumes.length === 0 ? (
-                <Card>
+                <Card className="border-orange-200 bg-orange-50">
                   <CardContent className="py-8 text-center">
-                    <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500 mb-4">No resumes found</p>
-                    <Button onClick={handleOptimizeClick} disabled={creatingJobDescription}>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {creatingJobDescription ? 'Preparing...' : 'Create Optimized Resume Instead'}
-                    </Button>
+                    <AlertCircle className="h-12 w-12 mx-auto text-orange-500 mb-4" />
+                    <h4 className="font-semibold text-orange-900 mb-2">No Resumes Found</h4>
+                    <p className="text-orange-700 mb-4">
+                      You need to upload a resume before you can apply for jobs.
+                    </p>
+                    <div className="space-y-2">
+                      <Button 
+                        onClick={() => window.open('/upload-resume', '_blank')}
+                        className="bg-orange-600 hover:bg-orange-700"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Upload Resume
+                      </Button>
+                      <p className="text-sm text-orange-600">or</p>
+                      <Button 
+                        onClick={handleOptimizeClick} 
+                        disabled={creatingJobDescription}
+                        variant="outline"
+                        className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {creatingJobDescription ? 'Preparing...' : 'Create Optimized Resume Instead'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ) : (
                 <>
                   <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Choose a resume" />
                     </SelectTrigger>
                     <SelectContent>
@@ -387,7 +484,10 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                   </Select>
 
                   {selectedResumeId && (
-                    <Button onClick={() => setStep('submit')}>
+                    <Button 
+                      onClick={() => setStep('submit')}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
                       Continue to Application
                     </Button>
                   )}
@@ -416,14 +516,16 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
               ) : (
                 <Card>
                   <CardContent className="py-8 text-center">
-                    <p className="text-gray-500">Preparing job description for optimization...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Preparing job description for optimization...</p>
                   </CardContent>
                 </Card>
               )}
             </div>
           )}
 
-          {step === 'review' && (
+          {
+            step === 'review' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Review Optimized Resume</h3>
@@ -478,13 +580,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Cover Letter (Optional)</label>
+                  <label className="text-sm font-medium mb-2 block">Cover Letter (Optional)</label>
                   <Textarea
-                    placeholder="Tell the employer why you're interested in this position..."
+                    placeholder="Tell the employer why you're interested in this position and what makes you a great fit..."
                     value={coverLetter}
                     onChange={(e) => setCoverLetter(e.target.value)}
                     rows={6}
-                    className="mt-2"
+                    className="w-full"
                   />
                 </div>
 
@@ -493,7 +595,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 <div className="flex justify-between items-center pt-4">
                   <div className="text-sm text-muted-foreground">
                     {optimizedResumeId ? (
-                      <span className="text-green-600 font-medium">✓ Using optimized resume</span>
+                      <span className="text-green-600 font-medium">✓ Using AI-optimized resume</span>
                     ) : selectedResumeId ? (
                       'Using selected resume'
                     ) : (
@@ -504,9 +606,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     onClick={submitApplication}
                     disabled={submitting || (!selectedResumeId && !optimizedResumeId)}
                     size="lg"
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     {submitting ? (
-                      'Submitting...'
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting...
+                      </>
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
@@ -538,7 +644,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     <div className="flex justify-between">
                       <span>Resume:</span>
                       <span className="font-medium">
-                        {optimizedResumeId ? 'Optimized Resume' : 'Selected Resume'}
+                        {optimizedResumeId ? 'AI-Optimized Resume' : 'Selected Resume'}
                       </span>
                     </div>
                     {coverLetter && (
