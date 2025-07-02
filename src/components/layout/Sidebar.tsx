@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X, Sparkles, Mail } from 'lucide-react';
@@ -19,6 +18,11 @@ const navigation = [
     icon: MessageSquare
   },
   {
+    name: 'Cover Letters',
+    href: '/cover-letters',
+    icon: Mail
+  },
+  {
     name: 'Job Search',
     href: '/job-search',
     icon: Search
@@ -32,11 +36,6 @@ const navigation = [
     name: 'Upload Job Description',
     href: '/upload-job',
     icon: FileText
-  },
-  {
-    name: 'Cover Letters',
-    href: '/cover-letters',
-    icon: Mail
   },
   {
     name: 'Profile',
