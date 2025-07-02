@@ -23,7 +23,8 @@ serve(async (req) => {
     if (!openAIApiKey) {
       console.error('OpenAI API key not found in environment variables');
       return new Response(JSON.stringify({ 
-        error: 'OpenAI API key not configured. Please check Edge Function secrets.' 
+        error: 'OpenAI API key not configured. Please check Edge Function secrets.',
+        details: 'Missing API key configuration'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -31,52 +32,81 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    console.log('Request body received:', { 
-      hasResumeText: !!requestBody.resumeText,
-      hasJobDescription: !!requestBody.jobDescription,
-      jobTitle: requestBody.jobTitle,
-      companyName: requestBody.companyName,
-      resumeTextLength: requestBody.resumeText?.length || 0,
-      jobDescriptionLength: requestBody.jobDescription?.length || 0
-    });
+    console.log('Raw request body received:', JSON.stringify(requestBody, null, 2));
 
     const { resumeText, jobDescription, jobTitle, companyName } = requestBody;
 
-    // Validate required parameters
-    if (!resumeText) {
-      console.error('Missing resumeText parameter');
-      return new Response(JSON.stringify({ error: 'Resume text is required' }), {
+    // Enhanced logging for debugging
+    console.log('Parsed request parameters:', {
+      hasResumeText: !!resumeText,
+      resumeTextType: typeof resumeText,
+      resumeTextLength: resumeText?.length || 0,
+      resumeTextPreview: resumeText ? resumeText.substring(0, 100) + '...' : 'null/undefined',
+      hasJobDescription: !!jobDescription,
+      jobDescriptionType: typeof jobDescription,
+      jobDescriptionLength: jobDescription?.length || 0,
+      jobDescriptionPreview: jobDescription ? jobDescription.substring(0, 100) + '...' : 'null/undefined',
+      jobTitle: jobTitle,
+      jobTitleType: typeof jobTitle,
+      companyName: companyName,
+      companyNameType: typeof companyName
+    });
+
+    // Enhanced validation with specific error messages
+    const validationErrors = [];
+
+    if (!resumeText || typeof resumeText !== 'string') {
+      validationErrors.push('Resume text is required and must be a string');
+    } else if (resumeText.trim().length === 0) {
+      validationErrors.push('Resume text cannot be empty');
+    } else if (resumeText.trim().length < 50) {
+      validationErrors.push('Resume text is too short (minimum 50 characters required)');
+    }
+
+    if (!jobDescription || typeof jobDescription !== 'string') {
+      validationErrors.push('Job description is required and must be a string');
+    } else if (jobDescription.trim().length === 0) {
+      validationErrors.push('Job description cannot be empty');
+    } else if (jobDescription.trim().length < 50) {
+      validationErrors.push('Job description is too short (minimum 50 characters required)');
+    }
+
+    if (!jobTitle || typeof jobTitle !== 'string') {
+      validationErrors.push('Job title is required and must be a string');
+    } else if (jobTitle.trim().length === 0) {
+      validationErrors.push('Job title cannot be empty');
+    }
+
+    if (validationErrors.length > 0) {
+      console.error('Validation errors:', validationErrors);
+      return new Response(JSON.stringify({ 
+        error: 'Validation failed',
+        details: validationErrors.join('; '),
+        validationErrors: validationErrors
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    if (!jobDescription) {
-      console.error('Missing jobDescription parameter');
-      return new Response(JSON.stringify({ error: 'Job description is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Clean and prepare the data
+    const cleanResumeText = resumeText.trim();
+    const cleanJobDescription = jobDescription.trim();
+    const cleanJobTitle = jobTitle.trim();
+    const cleanCompanyName = companyName ? companyName.trim() : '';
 
-    if (!jobTitle) {
-      console.error('Missing jobTitle parameter');
-      return new Response(JSON.stringify({ error: 'Job title is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    console.log('Data validation passed. Proceeding with OpenAI API call');
 
     const prompt = `Create a professional and personalized cover letter based on the following:
 
 RESUME CONTENT:
-${resumeText}
+${cleanResumeText}
 
 JOB DESCRIPTION:
-${jobDescription}
+${cleanJobDescription}
 
-JOB TITLE: ${jobTitle}
-COMPANY: ${companyName || 'the company'}
+JOB TITLE: ${cleanJobTitle}
+COMPANY: ${cleanCompanyName || 'the company'}
 
 Instructions:
 1. Write a compelling cover letter that demonstrates how the candidate's experience aligns with the job requirements
@@ -129,7 +159,8 @@ Generate only the cover letter content, no additional commentary.`;
       
       if (response.status === 401) {
         return new Response(JSON.stringify({ 
-          error: 'Invalid OpenAI API key. Please check your API key configuration.' 
+          error: 'Invalid OpenAI API key. Please check your API key configuration.',
+          details: 'API key authentication failed'
         }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -137,7 +168,8 @@ Generate only the cover letter content, no additional commentary.`;
       }
       
       return new Response(JSON.stringify({ 
-        error: `OpenAI API error: ${response.status} ${response.statusText}` 
+        error: `OpenAI API error: ${response.status} ${response.statusText}`,
+        details: errorText
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -150,7 +182,8 @@ Generate only the cover letter content, no additional commentary.`;
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error('Invalid OpenAI API response structure:', data);
       return new Response(JSON.stringify({ 
-        error: 'Invalid response from OpenAI API' 
+        error: 'Invalid response from OpenAI API',
+        details: 'Missing expected response structure'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -159,21 +192,34 @@ Generate only the cover letter content, no additional commentary.`;
 
     const generatedText = data.choices[0].message.content;
 
-    // Generate a title for the cover letter
-    const title = `Cover Letter for ${jobTitle}${companyName ? ` at ${companyName}` : ''}`;
+    if (!generatedText || generatedText.trim().length === 0) {
+      console.error('Empty generated text from OpenAI');
+      return new Response(JSON.stringify({ 
+        error: 'Generated cover letter is empty',
+        details: 'OpenAI returned empty content'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    console.log('Cover letter generated successfully');
+    // Generate a title for the cover letter
+    const title = `Cover Letter for ${cleanJobTitle}${cleanCompanyName ? ` at ${cleanCompanyName}` : ''}`;
+
+    console.log('Cover letter generated successfully, length:', generatedText.length);
 
     return new Response(JSON.stringify({ 
-      generatedText,
+      generatedText: generatedText.trim(),
       title 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in generate-cover-letter function:', error);
+    console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({ 
-      error: `Server error: ${error.message}` 
+      error: `Server error: ${error.message}`,
+      details: error.stack || 'No stack trace available'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

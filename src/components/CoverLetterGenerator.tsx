@@ -127,27 +127,70 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 
   const validateSelection = () => {
     setError('');
+    console.log('Validating selection...', {
+      selectedResumeId,
+      selectedJobId,
+      selectedResume: selectedResume ? {
+        id: selectedResume.id,
+        file_name: selectedResume.file_name,
+        type: selectedResume.type,
+        parsed_text_length: selectedResume.parsed_text?.length || 0,
+        parsed_text_preview: selectedResume.parsed_text?.substring(0, 100) || 'empty'
+      } : null,
+      selectedJob: selectedJob ? {
+        id: selectedJob.id,
+        title: selectedJob.title,
+        company: selectedJob.company,
+        parsed_text_length: selectedJob.parsed_text?.length || 0,
+        parsed_text_preview: selectedJob.parsed_text?.substring(0, 100) || 'empty'
+      } : null
+    });
     
     if (!selectedResume || !selectedJob) {
-      setError('Please select both a resume and a job description.');
+      const missingItems = [];
+      if (!selectedResume) missingItems.push('resume');
+      if (!selectedJob) missingItems.push('job description');
+      setError(`Please select a ${missingItems.join(' and ')}.`);
       return false;
     }
 
-    if (!selectedResume.parsed_text || selectedResume.parsed_text.trim().length === 0) {
+    // Enhanced validation with specific checks
+    if (!selectedResume.parsed_text || typeof selectedResume.parsed_text !== 'string') {
+      setError('The selected resume has invalid content. Please choose a different resume or re-upload it.');
+      return false;
+    }
+
+    if (selectedResume.parsed_text.trim().length === 0) {
       setError('The selected resume has no content. Please choose a different resume or re-upload it.');
       return false;
     }
 
-    if (!selectedJob.parsed_text || selectedJob.parsed_text.trim().length === 0) {
+    if (selectedResume.parsed_text.trim().length < 50) {
+      setError('The selected resume content is too short. Please choose a different resume or re-upload it.');
+      return false;
+    }
+
+    if (!selectedJob.parsed_text || typeof selectedJob.parsed_text !== 'string') {
+      setError('The selected job description has invalid content. Please choose a different job description or re-upload it.');
+      return false;
+    }
+
+    if (selectedJob.parsed_text.trim().length === 0) {
       setError('The selected job description has no content. Please choose a different job description or re-upload it.');
       return false;
     }
 
-    if (!selectedJob.title || selectedJob.title.trim().length === 0) {
+    if (selectedJob.parsed_text.trim().length < 50) {
+      setError('The selected job description content is too short. Please choose a different job description or re-upload it.');
+      return false;
+    }
+
+    if (!selectedJob.title || typeof selectedJob.title !== 'string' || selectedJob.title.trim().length === 0) {
       setError('The selected job description is missing a title. Please choose a different job description.');
       return false;
     }
 
+    console.log('Validation passed successfully');
     return true;
   };
 
@@ -165,43 +208,77 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
     setError('');
     
     try {
-      console.log('Starting cover letter generation with:', {
+      const requestPayload = {
+        resumeText: selectedResume!.parsed_text.trim(),
+        jobDescription: selectedJob!.parsed_text.trim(),
+        jobTitle: selectedJob!.title.trim(),
+        companyName: selectedJob!.company?.trim() || ''
+      };
+
+      console.log('Starting cover letter generation with payload:', {
         resumeType: selectedResume?.type,
-        resumeTextLength: selectedResume?.parsed_text?.length || 0,
-        jobTitle: selectedJob?.title,
-        company: selectedJob?.company,
-        jobDescriptionLength: selectedJob?.parsed_text?.length || 0
+        resumeTextLength: requestPayload.resumeText.length,
+        resumeTextPreview: requestPayload.resumeText.substring(0, 100) + '...',
+        jobTitle: requestPayload.jobTitle,
+        company: requestPayload.companyName,
+        jobDescriptionLength: requestPayload.jobDescription.length,
+        jobDescriptionPreview: requestPayload.jobDescription.substring(0, 100) + '...'
       });
 
       const { data, error } = await supabase.functions.invoke('generate-cover-letter', {
-        body: {
-          resumeText: selectedResume!.parsed_text,
-          jobDescription: selectedJob!.parsed_text,
-          jobTitle: selectedJob!.title,
-          companyName: selectedJob!.company
-        }
+        body: requestPayload
       });
 
-      console.log('Cover letter generation response:', { data, error });
+      console.log('Cover letter generation response:', { 
+        data, 
+        error,
+        hasGeneratedText: !!data?.generatedText,
+        generatedTextLength: data?.generatedText?.length || 0
+      });
 
       if (error) {
         console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to generate cover letter');
+        let errorMessage = 'Failed to generate cover letter';
+        
+        if (error.message) {
+          errorMessage += `: ${error.message}`;
+        }
+        
+        // Handle specific error types
+        if (error.message?.includes('Validation failed') || error.message?.includes('validation')) {
+          errorMessage = `Data validation error: ${error.details || error.message}`;
+        } else if (error.message?.includes('API key')) {
+          errorMessage = `API configuration error: ${error.details || error.message}`;
+        } else if (error.message?.includes('OpenAI')) {
+          errorMessage = `AI service error: ${error.details || error.message}`;
+        }
+
+        throw new Error(errorMessage);
       }
 
-      if (!data || !data.generatedText) {
-        throw new Error('No cover letter content was generated');
+      if (!data) {
+        throw new Error('No response data received from the server');
       }
 
-      setGeneratedText(data.generatedText);
+      if (!data.generatedText || typeof data.generatedText !== 'string') {
+        throw new Error('Invalid cover letter content received from the server');
+      }
+
+      if (data.generatedText.trim().length === 0) {
+        throw new Error('Empty cover letter content received from the server');
+      }
+
+      setGeneratedText(data.generatedText.trim());
       setCoverLetterTitle(data.title || `Cover Letter for ${selectedJob!.title} at ${selectedJob!.company}`);
       setStep('complete');
+
+      console.log('Cover letter generation completed successfully');
     } catch (error) {
       console.error('Error generating cover letter:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      setError(`Failed to generate cover letter: ${errorMessage}`);
+      setError(errorMessage);
       toast({
-        title: "Error",
+        title: "Generation Failed",
         description: errorMessage,
         variant: "destructive"
       });
@@ -270,7 +347,17 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            <div className="space-y-1">
+              <div className="font-medium">Generation Error</div>
+              <div className="text-sm">{error}</div>
+              {error.includes('validation') && (
+                <div className="text-xs mt-2 opacity-90">
+                  Please ensure both your resume and job description contain sufficient content (at least 50 characters each).
+                </div>
+              )}
+            </div>
+          </AlertDescription>
         </Alert>
       )}
 
