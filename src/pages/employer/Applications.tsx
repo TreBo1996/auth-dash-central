@@ -26,6 +26,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 
+interface ContactInfo {
+  phone?: string;
+  email?: string;
+  location?: string;
+}
+
 interface Application {
   id: string;
   applicant_id: string;
@@ -48,10 +54,7 @@ interface Application {
     file_name: string;
     parsed_text: string;
   };
-  contact_info?: {
-    phone?: string;
-    location?: string;
-  };
+  contact_info?: ContactInfo;
   fit_score?: number;
   fit_analysis?: string;
 }
@@ -75,7 +78,7 @@ const Applications: React.FC = () => {
     loadData();
   }, [user]);
 
-  const extractContactInfo = (resumeText: string) => {
+  const extractContactInfo = (resumeText: string): ContactInfo => {
     if (!resumeText) return {};
     
     const phoneRegex = /(\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})/;
