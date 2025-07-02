@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, FileText, Building, Sparkles, Save, CheckCircle, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, Building, Sparkles, Save, CheckCircle, Eye, AlertCircle } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
 
 interface Resume {
@@ -47,6 +48,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
   const [generatedText, setGeneratedText] = useState<string>('');
   const [coverLetterTitle, setCoverLetterTitle] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     loadUserData();
@@ -56,6 +58,8 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
     if (!user) return;
 
     try {
+      console.log('Loading user data for cover letter generation');
+      
       // Load original resumes
       const { data: originalResumes, error: resumesError } = await supabase
         .from('resumes')
@@ -103,6 +107,9 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 
       if (jobsError) throw jobsError;
 
+      console.log('Available resumes:', combinedResumes.length);
+      console.log('Available job descriptions:', jobsData?.length || 0);
+
       setResumes(combinedResumes);
       setJobDescriptions(jobsData || []);
     } catch (error) {
@@ -118,38 +125,84 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
   const selectedResume = resumes.find(r => r.id === selectedResumeId);
   const selectedJob = jobDescriptions.find(j => j.id === selectedJobId);
 
+  const validateSelection = () => {
+    setError('');
+    
+    if (!selectedResume || !selectedJob) {
+      setError('Please select both a resume and a job description.');
+      return false;
+    }
+
+    if (!selectedResume.parsed_text || selectedResume.parsed_text.trim().length === 0) {
+      setError('The selected resume has no content. Please choose a different resume or re-upload it.');
+      return false;
+    }
+
+    if (!selectedJob.parsed_text || selectedJob.parsed_text.trim().length === 0) {
+      setError('The selected job description has no content. Please choose a different job description or re-upload it.');
+      return false;
+    }
+
+    if (!selectedJob.title || selectedJob.title.trim().length === 0) {
+      setError('The selected job description is missing a title. Please choose a different job description.');
+      return false;
+    }
+
+    return true;
+  };
+
   const handlePreview = () => {
-    if (selectedResume && selectedJob) {
+    if (validateSelection()) {
       setStep('preview');
     }
   };
 
   const handleGenerate = async () => {
-    if (!selectedResume || !selectedJob) return;
+    if (!validateSelection()) return;
 
     setStep('generating');
     setLoading(true);
+    setError('');
     
     try {
+      console.log('Starting cover letter generation with:', {
+        resumeType: selectedResume?.type,
+        resumeTextLength: selectedResume?.parsed_text?.length || 0,
+        jobTitle: selectedJob?.title,
+        company: selectedJob?.company,
+        jobDescriptionLength: selectedJob?.parsed_text?.length || 0
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-cover-letter', {
         body: {
-          resumeText: selectedResume.parsed_text,
-          jobDescription: selectedJob.parsed_text,
-          jobTitle: selectedJob.title,
-          companyName: selectedJob.company
+          resumeText: selectedResume!.parsed_text,
+          jobDescription: selectedJob!.parsed_text,
+          jobTitle: selectedJob!.title,
+          companyName: selectedJob!.company
         }
       });
 
-      if (error) throw error;
+      console.log('Cover letter generation response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to generate cover letter');
+      }
+
+      if (!data || !data.generatedText) {
+        throw new Error('No cover letter content was generated');
+      }
 
       setGeneratedText(data.generatedText);
-      setCoverLetterTitle(data.title || `Cover Letter for ${selectedJob.title} at ${selectedJob.company}`);
+      setCoverLetterTitle(data.title || `Cover Letter for ${selectedJob!.title} at ${selectedJob!.company}`);
       setStep('complete');
     } catch (error) {
       console.error('Error generating cover letter:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(`Failed to generate cover letter: ${errorMessage}`);
       toast({
         title: "Error",
-        description: "Failed to generate cover letter. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
       setStep('preview');
@@ -213,6 +266,13 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
           </p>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {step === 'select' && (
         <div className="space-y-6">
