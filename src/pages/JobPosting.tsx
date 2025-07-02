@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,7 +42,7 @@ interface JobPosting {
     company_size: string;
     website: string;
     logo_url: string;
-  };
+  } | null;
 }
 
 const JobPosting: React.FC = () => {
@@ -152,6 +151,7 @@ const JobPosting: React.FC = () => {
   }
 
   const salaryRange = formatSalary(jobPosting.salary_min, jobPosting.salary_max, jobPosting.salary_currency);
+  const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,7 +175,7 @@ const JobPosting: React.FC = () => {
                     {jobPosting.employer_profile?.logo_url && (
                       <img 
                         src={jobPosting.employer_profile.logo_url} 
-                        alt={jobPosting.employer_profile.company_name}
+                        alt={companyName}
                         className="w-16 h-16 rounded-lg object-cover"
                       />
                     )}
@@ -183,7 +183,7 @@ const JobPosting: React.FC = () => {
                       <CardTitle className="text-2xl">{jobPosting.title}</CardTitle>
                       <p className="text-lg text-muted-foreground flex items-center">
                         <Building className="h-4 w-4 mr-2" />
-                        {jobPosting.employer_profile?.company_name}
+                        {companyName}
                       </p>
                     </div>
                   </div>
@@ -245,7 +245,7 @@ const JobPosting: React.FC = () => {
           {jobPosting.employer_profile && (
             <Card>
               <CardHeader>
-                <CardTitle>About {jobPosting.employer_profile.company_name}</CardTitle>
+                <CardTitle>About {companyName}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {jobPosting.employer_profile.company_description && (

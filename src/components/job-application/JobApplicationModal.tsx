@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ interface JobPosting {
   requirements: string[];
   employer_profile: {
     company_name: string;
-  };
+  } | null;
 }
 
 interface JobApplicationModalProps {
@@ -50,6 +49,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const [coverLetter, setCoverLetter] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
+
+  const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
 
   useEffect(() => {
     if (isOpen && user) {
@@ -132,7 +133,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             title: jobPosting.title,
             parsed_text: jobPosting.description,
             source: 'application',
-            company: jobPosting.employer_profile.company_name
+            company: companyName
           })
           .select('id')
           .single();
@@ -180,7 +181,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         <DialogHeader>
           <DialogTitle>Apply to {jobPosting.title}</DialogTitle>
           <DialogDescription>
-            at {jobPosting.employer_profile.company_name}
+            at {companyName}
           </DialogDescription>
         </DialogHeader>
 
