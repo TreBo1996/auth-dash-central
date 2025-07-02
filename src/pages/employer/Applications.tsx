@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EmployerDashboardLayout } from '@/components/layout/EmployerDashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,11 +36,11 @@ interface Application {
     description: string;
     requirements: string[];
   };
-  applicant_profile: {
+  applicant_profile?: {
     full_name: string;
     email: string;
   };
-  resume: {
+  resume?: {
     id: string;
     file_name: string;
     parsed_text: string;
@@ -93,20 +92,42 @@ const Applications: React.FC = () => {
 
       setJobPostings(jobs || []);
 
-      // Get applications with related data
+      // Get applications with job posting data
       const { data: apps, error } = await supabase
         .from('job_applications')
         .select(`
           *,
-          job_posting:job_postings!inner(id, title, description, requirements),
-          applicant_profile:profiles!job_applications_applicant_id_fkey(full_name, email),
-          resume:resumes(id, file_name, parsed_text)
+          job_posting:job_postings!inner(id, title, description, requirements)
         `)
         .in('job_posting_id', (jobs || []).map(j => j.id))
         .order('applied_at', { ascending: false });
 
-      if (error) throw error;
-      setApplications(apps || []);
+      if (error) {
+        console.error('Error fetching applications:', error);
+        throw error;
+      }
+
+      // Fetch applicant profiles separately
+      const applicantIds = apps?.map(app => app.applicant_id) || [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', applicantIds);
+
+      // Fetch resumes separately
+      const { data: resumes } = await supabase
+        .from('resumes')
+        .select('id, file_name, parsed_text, user_id')
+        .in('user_id', applicantIds);
+
+      // Combine the data
+      const combinedApplications = apps?.map(app => ({
+        ...app,
+        applicant_profile: profiles?.find(p => p.id === app.applicant_id),
+        resume: resumes?.find(r => r.user_id === app.applicant_id)
+      })) || [];
+
+      setApplications(combinedApplications);
     } catch (error) {
       console.error('Error loading applications:', error);
       toast({
@@ -123,9 +144,12 @@ const Applications: React.FC = () => {
     setAnalyzingFit(prev => [...prev, applicationId]);
     
     try {
-      const response = await fetch('/api/analyze-resume-fit', {
+      const response = await fetch('https://kuthirgvlzyzgmyxyznr.supabase.co/functions/v1/analyze-resume-fit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
         body: JSON.stringify({
           resumeText,
           jobDescription,
@@ -310,7 +334,7 @@ const Applications: React.FC = () => {
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{application.applicant_profile?.email}</span>
+                        <span>{application.applicant_profile?.email || 'No email available'}</span>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
                           Applied {new Date(application.applied_at).toLocaleDateString()}
@@ -367,13 +391,13 @@ const Applications: React.FC = () => {
                           </SelectContent>
                         </Select>
                         
-                        {application.resume && !application.fit_score && (
+                        {application.resume && application.resume.parsed_text && !application.fit_score && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => analyzeResumeFit(
                               application.id,
-                              application.resume.parsed_text,
+                              application.resume!.parsed_text,
                               application.job_posting.description,
                               application.job_posting.requirements || []
                             )}
