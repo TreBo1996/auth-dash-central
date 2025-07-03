@@ -24,12 +24,12 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
       }}
     >
       {/* Header - Technical Professional Style */}
-      <header className="mb-8 pb-6 border-b-2" style={{ borderColor: config.colors.accent }}>
+      <header className="mb-8 pb-6 border-b-2" style={{ borderColor: colors.accent }}>
         <h1 
           className="text-3xl font-bold mb-2"
           style={{ 
             fontFamily: config.fonts.heading,
-            color: config.colors.primary
+            color: colors.primary
           }}
         >
           {resumeData.name}
@@ -38,7 +38,7 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
         {resumeData.experience.length > 0 && (
           <h2 
             className="text-lg mb-4 font-medium"
-            style={{ color: config.colors.accent }}
+            style={{ color: colors.accent }}
           >
             {resumeData.experience[0].title}
           </h2>
@@ -50,13 +50,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
               <span 
                 className="font-mono text-xs mr-2 px-2 py-1 rounded"
                 style={{ 
-                  backgroundColor: `${config.colors.accent}10`,
-                  color: config.colors.accent
+                  backgroundColor: `${colors.accent}10`,
+                  color: colors.accent
                 }}
               >
                 TEL
               </span>
-              <span style={{ color: config.colors.textSecondary }}>{resumeData.phone}</span>
+              <span style={{ color: colors.textSecondary }}>{resumeData.phone}</span>
             </div>
           )}
           {resumeData.email && (
@@ -64,13 +64,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
               <span 
                 className="font-mono text-xs mr-2 px-2 py-1 rounded"
                 style={{ 
-                  backgroundColor: `${config.colors.accent}10`,
-                  color: config.colors.accent
+                  backgroundColor: `${colors.accent}10`,
+                  color: colors.accent
                 }}
               >
                 EMAIL
               </span>
-              <span style={{ color: config.colors.textSecondary }}>{resumeData.email}</span>
+              <span style={{ color: colors.textSecondary }}>{resumeData.email}</span>
             </div>
           )}
           {resumeData.location && (
@@ -78,13 +78,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
               <span 
                 className="font-mono text-xs mr-2 px-2 py-1 rounded"
                 style={{ 
-                  backgroundColor: `${config.colors.accent}10`,
-                  color: config.colors.accent
+                  backgroundColor: `${colors.accent}10`,
+                  color: colors.accent
                 }}
               >
                 LOC
               </span>
-              <span style={{ color: config.colors.textSecondary }}>{resumeData.location}</span>
+              <span style={{ color: colors.textSecondary }}>{resumeData.location}</span>
             </div>
           )}
         </div>
@@ -97,13 +97,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
             className="text-lg font-bold mb-4 flex items-center"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary
+              color: colors.primary
             }}
           >
             <span 
               className="w-6 h-6 flex items-center justify-center rounded mr-3 font-mono text-xs"
               style={{ 
-                backgroundColor: config.colors.accent,
+                backgroundColor: colors.accent,
                 color: 'white'
               }}
             >
@@ -113,7 +113,7 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
           </h2>
           <p 
             className="leading-relaxed ml-9"
-            style={{ color: config.colors.text }}
+            style={{ color: colors.text }}
           >
             {resumeData.summary}
           </p>
@@ -127,13 +127,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
             className="text-lg font-bold mb-4 flex items-center"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary
+              color: colors.primary
             }}
           >
             <span 
               className="w-6 h-6 flex items-center justify-center rounded mr-3 font-mono text-xs"
               style={{ 
-                backgroundColor: config.colors.accent,
+                backgroundColor: colors.accent,
                 color: 'white'
               }}
             >
@@ -144,14 +144,14 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
           
           <div className="ml-9 space-y-4">
             {resumeData.skills.map((skillGroup, groupIndex) => (
-              <div key={groupIndex} className="border rounded-lg p-4" style={{ borderColor: config.colors.border }}>
+              <div key={groupIndex} className="border rounded-lg p-4" style={{ borderColor: colors.border }}>
                 <h3 
                   className="font-bold mb-3 flex items-center"
-                  style={{ color: config.colors.secondary }}
+                  style={{ color: colors.secondary }}
                 >
                   <span 
                     className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: config.colors.accent }}
+                    style={{ backgroundColor: colors.accent }}
                   ></span>
                   {skillGroup.category.toUpperCase()}
                 </h3>
@@ -161,9 +161,9 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                       key={index}
                       className="px-3 py-1 rounded text-xs font-medium text-center"
                       style={{ 
-                        backgroundColor: `${config.colors.accent}08`,
-                        color: config.colors.text,
-                        border: `1px solid ${config.colors.border}`
+                        backgroundColor: `${colors.accent}08`,
+                        color: colors.text,
+                        border: `1px solid ${colors.border}`
                       }}
                     >
                       {skill}
@@ -183,13 +183,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
             className="text-lg font-bold mb-4 flex items-center"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary
+              color: colors.primary
             }}
           >
             <span 
               className="w-6 h-6 flex items-center justify-center rounded mr-3 font-mono text-xs"
               style={{ 
-                backgroundColor: config.colors.accent,
+                backgroundColor: colors.accent,
                 color: 'white'
               }}
             >
@@ -201,22 +201,22 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
           <div className="ml-9 space-y-6">
             {resumeData.experience.map((exp, index) => (
               <div key={index} className="job-entry">
-                <div className="border-l-4 pl-4" style={{ borderColor: config.colors.accent }}>
+                <div className="border-l-4 pl-4" style={{ borderColor: colors.accent }}>
                   <div className="job-header flex justify-between items-start">
                     <div>
                       <h3 
                         className="text-base font-bold"
-                        style={{ color: config.colors.primary }}
+                        style={{ color: colors.primary }}
                       >
                         {exp.title}
                       </h3>
                       <h4 
                         className="text-base font-medium flex items-center"
-                        style={{ color: config.colors.secondary }}
+                        style={{ color: colors.secondary }}
                       >
                         <span 
                           className="w-3 h-3 rounded mr-2"
-                          style={{ backgroundColor: config.colors.accent }}
+                          style={{ backgroundColor: colors.accent }}
                         ></span>
                         {exp.company}
                       </h4>
@@ -224,9 +224,9 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                     <div 
                       className="job-meta text-sm font-mono px-3 py-1 rounded border"
                       style={{ 
-                        color: config.colors.accent,
-                        borderColor: config.colors.accent,
-                        backgroundColor: `${config.colors.accent}08`
+                        color: colors.accent,
+                        borderColor: colors.accent,
+                        backgroundColor: `${colors.accent}08`
                       }}
                     >
                       {exp.duration}
@@ -238,13 +238,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                       <li 
                         key={bulletIndex} 
                         className="bullet-point flex items-start"
-                        style={{ color: config.colors.text }}
+                        style={{ color: colors.text }}
                       >
                         <span 
                           className="font-mono text-xs mt-1 mr-3 px-1.5 py-0.5 rounded flex-shrink-0"
                           style={{ 
-                            backgroundColor: `${config.colors.accent}15`,
-                            color: config.colors.accent
+                            backgroundColor: `${colors.accent}15`,
+                            color: colors.accent
                           }}
                         >
                           ▸
@@ -269,13 +269,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
               className="text-base font-bold mb-4 flex items-center"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary
+                color: colors.primary
               }}
             >
               <span 
                 className="w-5 h-5 flex items-center justify-center rounded mr-2 font-mono text-xs"
                 style={{ 
-                  backgroundColor: config.colors.accent,
+                  backgroundColor: colors.accent,
                   color: 'white'
                 }}
               >
@@ -289,23 +289,23 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                 <div 
                   key={index} 
                   className="border rounded p-3"
-                  style={{ borderColor: config.colors.border }}
+                  style={{ borderColor: colors.border }}
                 >
                   <h3 
                     className="font-bold text-sm"
-                    style={{ color: config.colors.primary }}
+                    style={{ color: colors.primary }}
                   >
                     {edu.degree}
                   </h3>
                   <p 
                     className="text-sm"
-                    style={{ color: config.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     {edu.school}
                   </p>
                   <p 
                     className="text-xs font-mono mt-1"
-                    style={{ color: config.colors.accent }}
+                    style={{ color: colors.accent }}
                   >
                     {edu.year}
                   </p>
@@ -322,13 +322,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
               className="text-base font-bold mb-4 flex items-center"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary
+                color: colors.primary
               }}
             >
               <span 
                 className="w-5 h-5 flex items-center justify-center rounded mr-2 font-mono text-xs"
                 style={{ 
-                  backgroundColor: config.colors.accent,
+                  backgroundColor: colors.accent,
                   color: 'white'
                 }}
               >
@@ -342,23 +342,23 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                 <div 
                   key={index}
                   className="border rounded p-3"
-                  style={{ borderColor: config.colors.border }}
+                  style={{ borderColor: colors.border }}
                 >
                   <h3 
                     className="font-bold text-sm"
-                    style={{ color: config.colors.primary }}
+                    style={{ color: colors.primary }}
                   >
                     {cert.name}
                   </h3>
                   <p 
                     className="text-sm"
-                    style={{ color: config.colors.secondary }}
+                    style={{ color: colors.secondary }}
                   >
                     {cert.issuer}
                   </p>
                   <p 
                     className="text-xs font-mono mt-1"
-                    style={{ color: config.colors.accent }}
+                    style={{ color: colors.accent }}
                   >
                     {cert.year}
                   </p>

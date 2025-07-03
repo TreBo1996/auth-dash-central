@@ -29,7 +29,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
           className="text-3xl font-bold mb-2"
           style={{ 
             fontFamily: config.fonts.heading,
-            color: config.colors.primary
+            color: colors.primary
           }}
         >
           {resumeData.name}
@@ -38,7 +38,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
         {resumeData.experience.length > 0 && (
           <h2 
             className="text-lg mb-4 font-medium"
-            style={{ color: config.colors.secondary }}
+            style={{ color: colors.secondary }}
           >
             {resumeData.experience[0].title}
           </h2>
@@ -47,8 +47,8 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
         <div 
           className="flex flex-wrap gap-4 text-sm pb-4 border-b-2"
           style={{ 
-            color: config.colors.textSecondary,
-            borderColor: config.colors.accent
+            color: colors.textSecondary,
+            borderColor: colors.accent
           }}
         >
           {resumeData.phone && (
@@ -79,15 +79,15 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
             className="text-lg font-bold mb-4 pb-2 border-b"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary,
-              borderColor: config.colors.border
+              color: colors.primary,
+              borderColor: colors.border
             }}
           >
             PROFESSIONAL SUMMARY
           </h2>
           <p 
             className="leading-relaxed"
-            style={{ color: config.colors.text }}
+            style={{ color: colors.text }}
           >
             {resumeData.summary}
           </p>
@@ -101,8 +101,8 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
             className="text-lg font-bold mb-4 pb-2 border-b"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary,
-              borderColor: config.colors.border
+              color: colors.primary,
+              borderColor: colors.border
             }}
           >
             CORE SKILLS
@@ -112,9 +112,9 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
               <div 
                 key={index} 
                 className="flex items-center"
-                style={{ color: config.colors.text }}
+                style={{ color: colors.text }}
               >
-                <div className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: config.colors.accent }}></div>
+                <div className="w-1.5 h-1.5 rounded-full mr-2" style={{ backgroundColor: colors.accent }}></div>
                 {skill}
               </div>
             ))}
@@ -129,8 +129,8 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
             className="text-lg font-bold mb-4 pb-2 border-b"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary,
-              borderColor: config.colors.border
+              color: colors.primary,
+              borderColor: colors.border
             }}
           >
             PROFESSIONAL EXPERIENCE
@@ -143,13 +143,13 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                   <div>
                     <h3 
                       className="text-base font-bold"
-                      style={{ color: config.colors.primary }}
+                      style={{ color: colors.primary }}
                     >
                       {exp.title}
                     </h3>
                     <h4 
                       className="text-base font-medium"
-                      style={{ color: config.colors.secondary }}
+                      style={{ color: colors.secondary }}
                     >
                       {exp.company}
                     </h4>
@@ -157,8 +157,8 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                   <div 
                     className="job-meta text-sm font-medium px-3 py-1 rounded"
                     style={{ 
-                      color: config.colors.accent,
-                      backgroundColor: `${config.colors.accent}10`
+                      color: colors.accent,
+                      backgroundColor: `${colors.accent}10`
                     }}
                   >
                     {exp.duration}
@@ -170,9 +170,9 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                     <li 
                       key={bulletIndex} 
                       className="bullet-point flex items-start"
-                      style={{ color: config.colors.text }}
+                      style={{ color: colors.text }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: config.colors.accent }}></span>
+                      <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: colors.accent }}></span>
                       <span>{bullet}</span>
                     </li>
                   ))}
@@ -190,8 +190,8 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
             className="text-lg font-bold mb-4 pb-2 border-b"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary,
-              borderColor: config.colors.border
+              color: colors.primary,
+              borderColor: colors.border
             }}
           >
             EDUCATION
@@ -203,17 +203,17 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                 <div>
                   <h3 
                     className="font-bold"
-                    style={{ color: config.colors.primary }}
+                    style={{ color: colors.primary }}
                   >
                     {edu.degree}
                   </h3>
-                  <p style={{ color: config.colors.secondary }}>{edu.school}</p>
+                  <p style={{ color: colors.secondary }}>{edu.school}</p>
                 </div>
                 <div 
                   className="font-medium px-3 py-1 rounded"
                   style={{ 
-                    color: config.colors.accent,
-                    backgroundColor: `${config.colors.accent}10`
+                    color: colors.accent,
+                    backgroundColor: `${colors.accent}10`
                   }}
                 >
                   {edu.year}
@@ -231,8 +231,8 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
             className="text-lg font-bold mb-4 pb-2 border-b"
             style={{ 
               fontFamily: config.fonts.heading,
-              color: config.colors.primary,
-              borderColor: config.colors.border
+              color: colors.primary,
+              borderColor: colors.border
             }}
           >
             CERTIFICATIONS
@@ -244,17 +244,17 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                 <div>
                   <h3 
                     className="font-bold"
-                    style={{ color: config.colors.primary }}
+                    style={{ color: colors.primary }}
                   >
                     {cert.name}
                   </h3>
-                  <p style={{ color: config.colors.secondary }}>{cert.issuer}</p>
+                  <p style={{ color: colors.secondary }}>{cert.issuer}</p>
                 </div>
                 <div 
                   className="font-medium px-3 py-1 rounded"
                   style={{ 
-                    color: config.colors.accent,
-                    backgroundColor: `${config.colors.accent}10`
+                    color: colors.accent,
+                    backgroundColor: `${colors.accent}10`
                   }}
                 >
                   {cert.year}
