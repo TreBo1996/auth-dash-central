@@ -15,7 +15,7 @@ import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
-import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
+import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 
 interface Resume {
   id: string;
@@ -323,8 +323,8 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Usage Dashboard */}
-        <UsageDashboard />
+        {/* Usage Overview */}
+        <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
 
         {/* AI Resume Optimizer Section */}
         <div className="space-y-4">

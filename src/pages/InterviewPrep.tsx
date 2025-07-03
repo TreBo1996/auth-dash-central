@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { InterviewSession } from '@/components/interview/InterviewSession';
 import { InterviewHistoryTable } from '@/components/interview/InterviewHistoryTable';
 import { InterviewAnalytics } from '@/components/interview/InterviewAnalytics';
+import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 
 interface JobDescription {
   id: string;
@@ -182,6 +183,9 @@ const InterviewPrep: React.FC = () => {
             Practice with AI-powered interview questions and track your progress over time
           </p>
         </div>
+
+        {/* Usage Counter */}
+        <ContextualUsageCounter features={['interview_sessions']} />
 
         {sessionActive && selectedJob && questions ? (
           <InterviewSession

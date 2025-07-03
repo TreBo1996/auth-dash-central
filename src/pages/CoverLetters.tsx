@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Plus, Building, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 
 interface CoverLetterWithJob {
   id: string;
@@ -106,6 +107,9 @@ export const CoverLetters: React.FC = () => {
             Create Cover Letter
           </Button>
         </div>
+
+        {/* Usage Counter */}
+        <ContextualUsageCounter features={['cover_letters']} />
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

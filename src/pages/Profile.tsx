@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { AdminTools } from '@/components/admin/AdminTools';
+import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
 
 interface UserProfile {
   email: string;
@@ -118,6 +119,9 @@ const Profile: React.FC = () => {
 
         {/* Admin Tools - Only visible to admin users */}
         <AdminTools isAdmin={profile?.is_admin || false} />
+
+        {/* Usage Overview */}
+        <UsageDashboard />
 
         <Card>
           <CardHeader>
