@@ -1,0 +1,251 @@
+import React from 'react';
+import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
+import { newTemplateConfigs } from '../configs/newTemplateConfigs';
+
+interface MinimalistExecutiveTemplateProps {
+  resumeData: StructuredResumeData;
+}
+
+export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplateProps> = ({
+  resumeData
+}) => {
+  const config = newTemplateConfigs['minimalist-executive'];
+
+  return (
+    <div 
+      className="w-full max-w-[8.5in] mx-auto bg-white p-12 font-serif text-sm leading-relaxed"
+      style={{
+        fontFamily: config.fonts.body,
+        color: config.colors.text,
+        minHeight: '11in'
+      }}
+    >
+      {/* Header - Centered Executive Style */}
+      <header className="text-center mb-10 pb-6 border-b border-gray-200">
+        <h1 
+          className="text-3xl font-bold mb-3 tracking-wide"
+          style={{ 
+            fontFamily: config.fonts.heading,
+            color: config.colors.primary
+          }}
+        >
+          {resumeData.name.toUpperCase()}
+        </h1>
+        
+        {resumeData.experience.length > 0 && (
+          <h2 
+            className="text-lg mb-4 font-medium"
+            style={{ color: config.colors.secondary }}
+          >
+            {resumeData.experience[0].title}
+          </h2>
+        )}
+        
+        <div 
+          className="text-sm flex justify-center items-center space-x-6"
+          style={{ color: config.colors.textSecondary }}
+        >
+          {resumeData.phone && <span>{resumeData.phone}</span>}
+          {resumeData.email && <span>{resumeData.email}</span>}
+          {resumeData.location && <span>{resumeData.location}</span>}
+        </div>
+      </header>
+
+      {/* Executive Summary */}
+      {resumeData.summary && (
+        <section className="mb-8">
+          <div className="text-center mb-6">
+            <h2 
+              className="text-lg font-bold tracking-wider pb-2"
+              style={{ 
+                fontFamily: config.fonts.heading,
+                color: config.colors.primary,
+                borderBottom: `1px solid ${config.colors.border}`
+              }}
+            >
+              EXECUTIVE SUMMARY
+            </h2>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <p 
+              className="text-center leading-relaxed"
+              style={{ color: config.colors.text }}
+            >
+              {resumeData.summary}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Core Competencies */}
+      {resumeData.skills.length > 0 && (
+        <section className="mb-8">
+          <div className="text-center mb-6">
+            <h2 
+              className="text-lg font-bold tracking-wider pb-2"
+              style={{ 
+                fontFamily: config.fonts.heading,
+                color: config.colors.primary,
+                borderBottom: `1px solid ${config.colors.border}`
+              }}
+            >
+              CORE COMPETENCIES
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-4xl mx-auto">
+            {resumeData.skills.flatMap(group => group.items).map((skill, index) => (
+              <div 
+                key={index} 
+                className="flex items-center"
+                style={{ color: config.colors.text }}
+              >
+                <span className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: config.colors.accent }}></span>
+                {skill}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Professional Experience */}
+      {resumeData.experience.length > 0 && (
+        <section className="mb-8">
+          <div className="text-center mb-6">
+            <h2 
+              className="text-lg font-bold tracking-wider pb-2"
+              style={{ 
+                fontFamily: config.fonts.heading,
+                color: config.colors.primary,
+                borderBottom: `1px solid ${config.colors.border}`
+              }}
+            >
+              PROFESSIONAL EXPERIENCE
+            </h2>
+          </div>
+          
+          <div className="space-y-6">
+            {resumeData.experience.map((exp, index) => (
+              <div key={index} className="avoid-page-break">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 
+                      className="text-base font-bold"
+                      style={{ color: config.colors.primary }}
+                    >
+                      {exp.title.toUpperCase()}
+                    </h3>
+                    <h4 
+                      className="text-base font-medium"
+                      style={{ color: config.colors.secondary }}
+                    >
+                      {exp.company}
+                    </h4>
+                  </div>
+                  <div 
+                    className="text-sm font-medium"
+                    style={{ color: config.colors.textSecondary }}
+                  >
+                    {exp.duration}
+                  </div>
+                </div>
+                
+                <ul className="space-y-1 ml-4">
+                  {exp.bullets.map((bullet, bulletIndex) => (
+                    <li 
+                      key={bulletIndex} 
+                      className="flex items-start"
+                      style={{ color: config.colors.text }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: config.colors.accent }}></span>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Education */}
+      {resumeData.education.length > 0 && (
+        <section className="mb-8">
+          <div className="text-center mb-6">
+            <h2 
+              className="text-lg font-bold tracking-wider pb-2"
+              style={{ 
+                fontFamily: config.fonts.heading,
+                color: config.colors.primary,
+                borderBottom: `1px solid ${config.colors.border}`
+              }}
+            >
+              EDUCATION
+            </h2>
+          </div>
+          
+          <div className="space-y-3 max-w-4xl mx-auto">
+            {resumeData.education.map((edu, index) => (
+              <div key={index} className="flex justify-between items-center">
+                <div>
+                  <h3 
+                    className="font-bold"
+                    style={{ color: config.colors.primary }}
+                  >
+                    {edu.degree}
+                  </h3>
+                  <p style={{ color: config.colors.secondary }}>{edu.school}</p>
+                </div>
+                <div 
+                  className="font-medium"
+                  style={{ color: config.colors.textSecondary }}
+                >
+                  {edu.year}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Certifications */}
+      {resumeData.certifications && resumeData.certifications.length > 0 && (
+        <section>
+          <div className="text-center mb-6">
+            <h2 
+              className="text-lg font-bold tracking-wider pb-2"
+              style={{ 
+                fontFamily: config.fonts.heading,
+                color: config.colors.primary,
+                borderBottom: `1px solid ${config.colors.border}`
+              }}
+            >
+              CERTIFICATIONS
+            </h2>
+          </div>
+          
+          <div className="space-y-3 max-w-4xl mx-auto">
+            {resumeData.certifications.map((cert, index) => (
+              <div key={index} className="flex justify-between items-center">
+                <div>
+                  <h3 
+                    className="font-bold"
+                    style={{ color: config.colors.primary }}
+                  >
+                    {cert.name}
+                  </h3>
+                  <p style={{ color: config.colors.secondary }}>{cert.issuer}</p>
+                </div>
+                <div 
+                  className="font-medium"
+                  style={{ color: config.colors.textSecondary }}
+                >
+                  {cert.year}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+};

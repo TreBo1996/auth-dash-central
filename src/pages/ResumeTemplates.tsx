@@ -9,8 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
-import { templateConfigs } from '@/components/resume-templates/templateConfigs';
-import { generatePDF, printResume } from '@/utils/pdfGenerator';
+import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
+import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+import { parseResumeContent } from '@/components/resume-templates/utils/parseResumeContent';
 
 interface OptimizedResume {
   id: string;
@@ -29,7 +31,7 @@ const ResumeTemplates: React.FC = () => {
   const { toast } = useToast();
   
   const [optimizedResume, setOptimizedResume] = useState<OptimizedResume | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState('sidebar');
+  const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -149,15 +151,24 @@ const ResumeTemplates: React.FC = () => {
     }
 
     if (isGeneratingPDF) {
-      return; // Prevent multiple simultaneous downloads
+      return;
     }
 
-    const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${templateConfigs[selectedTemplate].name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+    const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${newTemplateConfigs[selectedTemplate].name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
     
     setIsGeneratingPDF(true);
     
     try {
-      await generatePDF(selectedTemplate, optimizedResume.generated_text, fileName, resumeId);
+      // Get structured resume data
+      let resumeData;
+      try {
+        resumeData = await fetchStructuredResumeData(resumeId!);
+      } catch (error) {
+        console.log('Fallback to text parsing');
+        resumeData = parseResumeContent(optimizedResume.generated_text);
+      }
+      
+      await generateNewProfessionalPDF(selectedTemplate, resumeData, fileName);
       
       toast({
         title: "Success",
@@ -256,8 +267,8 @@ const ResumeTemplates: React.FC = () => {
             <div className="w-full max-w-4xl">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-lg">{templateConfigs[selectedTemplate].name}</h3>
-                  <Badge variant="outline">{templateConfigs[selectedTemplate].category}</Badge>
+                  <h3 className="font-semibold text-lg">{newTemplateConfigs[selectedTemplate].name}</h3>
+                  <Badge variant="outline">{newTemplateConfigs[selectedTemplate].category}</Badge>
                 </div>
               </div>
               <Card className="shadow-lg">

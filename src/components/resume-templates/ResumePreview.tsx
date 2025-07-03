@@ -1,13 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { ModernTemplate } from './templates/ModernTemplate';
-import { ClassicTemplate } from './templates/ClassicTemplate';
-import { ProfessionalClassicTemplate } from './templates/ProfessionalClassicTemplate';
-import { CreativeTemplate } from './templates/CreativeTemplate';
-import { ExecutiveTemplate } from './templates/ExecutiveTemplate';
-import { TechnicalTemplate } from './templates/TechnicalTemplate';
-import { AcademicTemplate } from './templates/AcademicTemplate';
-import { SidebarTemplate } from './templates/SidebarTemplate';
+import { MinimalistExecutiveTemplate } from './templates/MinimalistExecutiveTemplate';
+import { ModernATSTemplate } from './templates/ModernATSTemplate';
+import { CreativeProfessionalTemplate } from './templates/CreativeProfessionalTemplate';
+import { AcademicResearchTemplate } from './templates/AcademicResearchTemplate';
+import { TechnicalEngineeringTemplate } from './templates/TechnicalEngineeringTemplate';
 import { fetchStructuredResumeData, StructuredResumeData } from './utils/fetchStructuredResumeData';
 import { parseResumeContent } from './utils/parseResumeContent';
 
@@ -58,22 +55,18 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
     const props = { resumeData: dataToUse };
     
     switch (template) {
-      case 'sidebar':
-        return <SidebarTemplate {...props} />;
-      case 'modern':
-        return <ModernTemplate {...props} />;
-      case 'classic':
-        return <ProfessionalClassicTemplate {...props} />;
-      case 'executive':
-        return <ExecutiveTemplate {...props} />;
-      case 'creative':
-        return <CreativeTemplate {...props} />;
-      case 'technical':
-        return <TechnicalTemplate {...props} />;
-      case 'academic':
-        return <AcademicTemplate {...props} />;
+      case 'minimalist-executive':
+        return <MinimalistExecutiveTemplate {...props} />;
+      case 'modern-ats':
+        return <ModernATSTemplate {...props} />;
+      case 'creative-professional':
+        return <CreativeProfessionalTemplate {...props} />;
+      case 'academic-research':
+        return <AcademicResearchTemplate {...props} />;
+      case 'technical-engineering':
+        return <TechnicalEngineeringTemplate {...props} />;
       default:
-        return <ModernTemplate {...props} />;
+        return <ModernATSTemplate {...props} />;
     }
   };
 

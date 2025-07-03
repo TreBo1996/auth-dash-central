@@ -1,0 +1,307 @@
+import jsPDF from 'jspdf';
+import { StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+
+export class CreativeProfessionalPdfGenerator {
+  private pdf: jsPDF;
+  private currentY: number;
+  private margin = 36;
+  private pageWidth: number;
+  private pageHeight: number;
+  private usableWidth: number;
+
+  constructor() {
+    this.pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'letter',
+    });
+    this.pageWidth = this.pdf.internal.pageSize.getWidth();
+    this.pageHeight = this.pdf.internal.pageSize.getHeight();
+    this.usableWidth = this.pageWidth - (this.margin * 2);
+    this.currentY = this.margin;
+  }
+
+  async generate(resumeData: StructuredResumeData): Promise<jsPDF> {
+    console.log('CreativeProfessionalPdfGenerator: Starting generation');
+    
+    this.addHeader(resumeData);
+    this.addProfessionalProfile(resumeData);
+    this.addSkillsExpertise(resumeData);
+    this.addProfessionalExperience(resumeData);
+    this.addEducationCertifications(resumeData);
+
+    return this.pdf;
+  }
+
+  private checkPageBreak(spaceNeeded: number = 50): void {
+    if (this.currentY + spaceNeeded > this.pageHeight - this.margin) {
+      this.pdf.addPage();
+      this.currentY = this.margin;
+    }
+  }
+
+  private addHeader(data: StructuredResumeData): void {
+    this.checkPageBreak(100);
+    
+    // Purple accent bar
+    this.pdf.setFillColor(123, 31, 162); // Purple accent
+    this.pdf.rect(this.margin, this.currentY, 4, 80, 'F');
+    
+    const headerX = this.margin + 15;
+    
+    // Name
+    this.pdf.setFontSize(22);
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.text(data.name, headerX, this.currentY + 20);
+
+    // Title with accent color
+    if (data.experience.length > 0) {
+      this.pdf.setFontSize(14);
+      this.pdf.setFont('helvetica', 'normal');
+      this.pdf.setTextColor(123, 31, 162);
+      this.pdf.text(data.experience[0].title, headerX, this.currentY + 45);
+      this.pdf.setTextColor(0, 0, 0);
+    }
+
+    // Contact info
+    this.pdf.setFontSize(10);
+    this.pdf.setFont('helvetica', 'normal');
+    const contact = [data.phone, data.email, data.location].filter(Boolean).join(' • ');
+    this.pdf.text(contact, headerX, this.currentY + 65);
+
+    this.currentY += 100;
+  }
+
+  private addProfessionalProfile(data: StructuredResumeData): void {
+    if (!data.summary) return;
+    
+    this.checkPageBreak(80);
+    this.addSectionHeader('PROFESSIONAL PROFILE');
+    
+    this.pdf.setFontSize(11);
+    this.pdf.setFont('helvetica', 'normal');
+    const lines = this.pdf.splitTextToSize(data.summary, this.usableWidth - 30);
+    
+    lines.forEach((line: string) => {
+      this.checkPageBreak(20);
+      this.pdf.text(line, this.margin + 30, this.currentY);
+      this.currentY += 16;
+    });
+    this.currentY += 20;
+  }
+
+  private addSkillsExpertise(data: StructuredResumeData): void {
+    if (data.skills.length === 0) return;
+
+    this.checkPageBreak(100);
+    this.addSectionHeader('SKILLS & EXPERTISE');
+
+    const startY = this.currentY;
+    const leftMargin = this.margin + 30;
+
+    data.skills.forEach((skillGroup, groupIndex) => {
+      this.checkPageBreak(60);
+      
+      // Category header
+      this.pdf.setFontSize(11);
+      this.pdf.setFont('helvetica', 'bold');
+      this.pdf.setTextColor(123, 31, 162);
+      this.pdf.text(skillGroup.category, leftMargin, this.currentY);
+      this.pdf.setTextColor(0, 0, 0);
+      this.currentY += 18;
+
+      // Skills as styled tags
+      this.pdf.setFontSize(10);
+      this.pdf.setFont('helvetica', 'normal');
+      
+      let x = leftMargin;
+      let y = this.currentY;
+      const tagHeight = 14;
+      const tagSpacing = 8;
+
+      skillGroup.items.forEach((skill, index) => {
+        const tagWidth = this.pdf.getTextWidth(skill) + 12;
+        
+        // Check if tag fits on current line
+        if (x + tagWidth > this.pageWidth - this.margin) {
+          x = leftMargin;
+          y += tagHeight + 4;
+        }
+
+        // Tag background
+        this.pdf.setFillColor(123, 31, 162, 0.1);
+        this.pdf.roundedRect(x, y - 10, tagWidth, tagHeight, 2, 2, 'F');
+        
+        // Tag border
+        this.pdf.setDrawColor(123, 31, 162, 0.3);
+        this.pdf.setLineWidth(0.5);
+        this.pdf.roundedRect(x, y - 10, tagWidth, tagHeight, 2, 2, 'S');
+        
+        // Tag text
+        this.pdf.setTextColor(123, 31, 162);
+        this.pdf.text(skill, x + 6, y);
+        this.pdf.setTextColor(0, 0, 0);
+        
+        x += tagWidth + tagSpacing;
+      });
+
+      this.currentY = y + 25;
+    });
+  }
+
+  private addProfessionalExperience(data: StructuredResumeData): void {
+    if (data.experience.length === 0) return;
+
+    this.checkPageBreak(100);
+    this.addSectionHeader('PROFESSIONAL EXPERIENCE');
+
+    const leftMargin = this.margin + 30;
+    const timelineX = this.margin + 18;
+
+    data.experience.forEach((exp, index) => {
+      this.checkPageBreak(120);
+      
+      // Timeline dot
+      this.pdf.setFillColor(123, 31, 162);
+      this.pdf.circle(timelineX, this.currentY + 5, 6, 'F');
+      this.pdf.setFillColor(255, 255, 255);
+      this.pdf.circle(timelineX, this.currentY + 5, 3, 'F');
+      
+      // Timeline line (except for last item)
+      if (index < data.experience.length - 1) {
+        this.pdf.setDrawColor(200, 200, 200);
+        this.pdf.setLineWidth(1);
+        this.pdf.line(timelineX, this.currentY + 12, timelineX, this.currentY + 100);
+      }
+      
+      // Position and company
+      this.pdf.setFontSize(12);
+      this.pdf.setFont('helvetica', 'bold');
+      this.pdf.text(exp.title, leftMargin, this.currentY);
+      
+      this.pdf.setFontSize(11);
+      this.pdf.setFont('helvetica', 'normal');
+      this.pdf.setTextColor(123, 31, 162);
+      this.pdf.text(exp.company, leftMargin, this.currentY + 16);
+      this.pdf.setTextColor(0, 0, 0);
+
+      // Duration badge
+      this.pdf.setFontSize(9);
+      this.pdf.setFont('helvetica', 'normal');
+      this.pdf.setFillColor(100, 100, 100, 0.2);
+      const durationWidth = this.pdf.getTextWidth(exp.duration) + 12;
+      this.pdf.roundedRect(this.pageWidth - this.margin - durationWidth, this.currentY - 8, durationWidth, 12, 2, 2, 'F');
+      this.pdf.setTextColor(100, 100, 100);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - durationWidth + 6, this.currentY);
+      this.pdf.setTextColor(0, 0, 0);
+      
+      this.currentY += 35;
+
+      // Bullets
+      this.pdf.setFontSize(11);
+      this.pdf.setFont('helvetica', 'normal');
+      exp.bullets.forEach(bullet => {
+        this.checkPageBreak(30);
+        
+        // Purple bullet point
+        this.pdf.setFillColor(123, 31, 162);
+        this.pdf.circle(leftMargin + 6, this.currentY - 3, 1.5, 'F');
+        
+        const lines = this.pdf.splitTextToSize(bullet, this.usableWidth - 50);
+        lines.forEach((line: string, lineIndex: number) => {
+          this.pdf.text(line, leftMargin + 15, this.currentY);
+          this.currentY += 16;
+        });
+      });
+
+      this.currentY += 20;
+    });
+  }
+
+  private addEducationCertifications(data: StructuredResumeData): void {
+    const hasEducation = data.education.length > 0;
+    const hasCertifications = data.certifications && data.certifications.length > 0;
+    
+    if (!hasEducation && !hasCertifications) return;
+
+    this.checkPageBreak(100);
+    
+    // Two-column layout for education and certifications
+    const colWidth = this.usableWidth / 2 - 20;
+    const leftCol = this.margin + 30;
+    const rightCol = this.margin + this.usableWidth / 2 + 10;
+
+    // Education
+    if (hasEducation) {
+      this.addSmallSectionHeader('EDUCATION', leftCol);
+      let eduY = this.currentY + 20;
+      
+      data.education.forEach(edu => {
+        this.pdf.setFontSize(11);
+        this.pdf.setFont('helvetica', 'bold');
+        this.pdf.text(edu.degree, leftCol, eduY);
+        eduY += 14;
+        
+        this.pdf.setFontSize(10);
+        this.pdf.setFont('helvetica', 'normal');
+        this.pdf.setTextColor(123, 31, 162);
+        this.pdf.text(edu.school, leftCol, eduY);
+        eduY += 12;
+        
+        this.pdf.setTextColor(100, 100, 100);
+        this.pdf.text(edu.year, leftCol, eduY);
+        this.pdf.setTextColor(0, 0, 0);
+        eduY += 20;
+      });
+    }
+
+    // Certifications
+    if (hasCertifications) {
+      this.addSmallSectionHeader('CERTIFICATIONS', rightCol);
+      let certY = this.currentY + 20;
+      
+      data.certifications!.forEach(cert => {
+        this.pdf.setFontSize(11);
+        this.pdf.setFont('helvetica', 'bold');
+        this.pdf.text(cert.name, rightCol, certY);
+        certY += 14;
+        
+        this.pdf.setFontSize(10);
+        this.pdf.setFont('helvetica', 'normal');
+        this.pdf.setTextColor(123, 31, 162);
+        this.pdf.text(cert.issuer, rightCol, certY);
+        certY += 12;
+        
+        this.pdf.setTextColor(100, 100, 100);
+        this.pdf.text(cert.year, rightCol, certY);
+        this.pdf.setTextColor(0, 0, 0);
+        certY += 20;
+      });
+    }
+
+    this.currentY += 100; // Approximate space for both columns
+  }
+
+  private addSectionHeader(title: string): void {
+    this.checkPageBreak(50);
+    
+    // Purple accent line
+    this.pdf.setFillColor(123, 31, 162);
+    this.pdf.rect(this.margin, this.currentY + 5, 20, 1, 'F');
+    
+    this.pdf.setFontSize(14);
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.text(title, this.margin + 30, this.currentY + 10);
+    this.currentY += 30;
+  }
+
+  private addSmallSectionHeader(title: string, x: number): void {
+    // Small purple accent line
+    this.pdf.setFillColor(123, 31, 162);
+    this.pdf.rect(x, this.currentY + 5, 15, 1, 'F');
+    
+    this.pdf.setFontSize(12);
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.text(title, x + 20, this.currentY + 10);
+  }
+}

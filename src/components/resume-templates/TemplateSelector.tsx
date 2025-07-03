@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { templateConfigs } from './templateConfigs';
+import { newTemplateConfigs } from './configs/newTemplateConfigs';
 
 interface TemplateSelectorProps {
   selectedTemplate: string;
@@ -18,7 +18,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   if (isMobile) {
     return (
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {Object.values(templateConfigs).map((template) => (
+        {Object.values(newTemplateConfigs).map((template) => (
           <div key={template.id} className="flex-shrink-0">
             <Button
               variant={selectedTemplate === template.id ? "default" : "outline"}
@@ -55,7 +55,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
 
   return (
     <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
-      {Object.values(templateConfigs).map((template) => (
+      {Object.values(newTemplateConfigs).map((template) => (
         <div key={template.id} className="space-y-1">
           <Button
             variant={selectedTemplate === template.id ? "default" : "outline"}
