@@ -69,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex h-16 items-center justify-between px-6 border-b border-indigo-100 bg-gradient-to-r from-blue-600 to-indigo-600">
         <div className="flex items-center space-x-2">
           <Sparkles className="h-6 w-6 text-yellow-300" />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">RezLitt</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">RezLit</h1>
         </div>
         {isMobile && onClose && <Button variant="ghost" size="sm" onClick={onClose} className="p-2 text-white hover:bg-white/20">
             <X className="h-4 w-4" />
