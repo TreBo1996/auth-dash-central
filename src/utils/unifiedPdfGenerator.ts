@@ -26,18 +26,19 @@ export class ProfessionalResumeGenerator {
   }
 
   async generateResume(resumeData: string | StructuredResumeData, template: string = 'classic'): Promise<jsPDF> {
+    console.log('ProfessionalResumeGenerator: Generating resume with template:', template);
     const data = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
     
-    // Set up fonts
+    // Set up fonts based on template
     this.pdf.setFont('helvetica');
     
-    // Generate sections
-    this.addHeader(data);
-    this.addSummary(data);
-    this.addSkills(data);
-    this.addExperience(data);
-    this.addEducation(data);
-    this.addCertifications(data);
+    // Generate sections with template-specific formatting
+    this.addHeader(data, template);
+    this.addSummary(data, template);
+    this.addSkills(data, template);
+    this.addExperience(data, template);
+    this.addEducation(data, template);
+    this.addCertifications(data, template);
 
     return this.pdf;
   }
@@ -49,40 +50,94 @@ export class ProfessionalResumeGenerator {
     }
   }
 
-  private addHeader(data: StructuredResumeData): void {
+  private addHeader(data: StructuredResumeData, template: string = 'classic'): void {
     this.checkPageBreak(100);
     
-    // Name - 22pt, bold, centered
-    this.pdf.setFontSize(22);
-    this.pdf.setFont('helvetica', 'bold');
-    const nameWidth = this.pdf.getTextWidth(data.name.toUpperCase());
-    this.pdf.text(data.name.toUpperCase(), (this.pageWidth - nameWidth) / 2, this.currentY);
-    this.currentY += 30; // More space after name
+    // Template-specific header styling
+    if (template === 'executive') {
+      // Executive template - banner style header with background
+      const headerHeight = 60;
+      this.pdf.setFillColor(240, 240, 240); // Light gray background
+      this.pdf.rect(this.margin, this.currentY - 10, this.usableWidth, headerHeight, 'F');
+      
+      // Name - large, bold
+      this.pdf.setFontSize(24);
+      this.pdf.setFont('helvetica', 'bold');
+      this.pdf.setTextColor(0, 0, 0);
+      this.pdf.text(data.name.toUpperCase(), this.margin + 20, this.currentY + 15);
+      
+      // Contact info in banner
+      this.pdf.setFontSize(10);
+      this.pdf.setFont('helvetica', 'normal');
+      const contact = [data.phone, data.email, data.location].filter(Boolean).join(' • ');
+      this.pdf.text(contact, this.margin + 20, this.currentY + 35);
+      
+      this.currentY += headerHeight + 20;
+      
+    } else if (template === 'sidebar') {
+      // Sidebar template - compact header for two-column layout
+      this.pdf.setFontSize(20);
+      this.pdf.setFont('helvetica', 'bold');
+      this.pdf.text(data.name.toUpperCase(), this.margin, this.currentY);
+      this.currentY += 25;
+      
+      // Role smaller
+      if (data.experience.length > 0) {
+        this.pdf.setFontSize(12);
+        this.pdf.setFont('helvetica', 'normal');
+        this.pdf.text(data.experience[0].title, this.margin, this.currentY);
+        this.currentY += 20;
+      }
+      
+    } else if (template === 'modern') {
+      // Modern template - clean, minimalist header
+      this.pdf.setFontSize(26);
+      this.pdf.setFont('helvetica', 'bold');
+      const nameWidth = this.pdf.getTextWidth(data.name);
+      this.pdf.text(data.name, (this.pageWidth - nameWidth) / 2, this.currentY);
+      this.currentY += 35;
+      
+      // Contact info centered, modern style
+      this.pdf.setFontSize(10);
+      this.pdf.setFont('helvetica', 'normal');
+      const contact = [data.phone, data.email, data.location].filter(Boolean).join(' | ');
+      const contactWidth = this.pdf.getTextWidth(contact);
+      this.pdf.text(contact, (this.pageWidth - contactWidth) / 2, this.currentY);
+      this.currentY += 25;
+      
+    } else {
+      // Classic template - traditional centered layout with lines
+      this.pdf.setFontSize(22);
+      this.pdf.setFont('helvetica', 'bold');
+      const nameWidth = this.pdf.getTextWidth(data.name.toUpperCase());
+      this.pdf.text(data.name.toUpperCase(), (this.pageWidth - nameWidth) / 2, this.currentY);
+      this.currentY += 30;
 
-    // Role - 11pt, bold, centered
-    if (data.experience.length > 0) {
+      // Role - 11pt, bold, centered
+      if (data.experience.length > 0) {
+        this.pdf.setFontSize(11);
+        const role = data.experience[0].title.toUpperCase();
+        const roleWidth = this.pdf.getTextWidth(role);
+        this.pdf.text(role, (this.pageWidth - roleWidth) / 2, this.currentY);
+        this.currentY += 20;
+      }
+
+      // Line
+      this.pdf.setLineWidth(0.75);
+      this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
+      this.currentY += 16;
+
+      // Contact info - 11pt, centered
       this.pdf.setFontSize(11);
-      const role = data.experience[0].title.toUpperCase();
-      const roleWidth = this.pdf.getTextWidth(role);
-      this.pdf.text(role, (this.pageWidth - roleWidth) / 2, this.currentY);
-      this.currentY += 20; // More space after role
+      this.pdf.setFont('helvetica', 'normal');
+      const contact = [data.phone, data.email, data.location].filter(Boolean).join(' · ');
+      const contactWidth = this.pdf.getTextWidth(contact);
+      this.pdf.text(contact, (this.pageWidth - contactWidth) / 2, this.currentY);
+      this.currentY += 30;
     }
-
-    // Line
-    this.pdf.setLineWidth(0.75);
-    this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    this.currentY += 16; // More space after line
-
-    // Contact info - 11pt, centered
-    this.pdf.setFontSize(11);
-    this.pdf.setFont('helvetica', 'normal');
-    const contact = [data.phone, data.email, data.location].filter(Boolean).join(' · ');
-    const contactWidth = this.pdf.getTextWidth(contact);
-    this.pdf.text(contact, (this.pageWidth - contactWidth) / 2, this.currentY);
-    this.currentY += 30; // More space after contact info
   }
 
-  private addSummary(data: StructuredResumeData): void {
+  private addSummary(data: StructuredResumeData, template: string = 'classic'): void {
     if (!data.summary) return;
     
     this.checkPageBreak(80);
@@ -91,106 +146,190 @@ export class ProfessionalResumeGenerator {
     this.pdf.setFont('helvetica', 'normal');
     
     const lines = this.pdf.splitTextToSize(data.summary, this.usableWidth);
-    lines.forEach((line: string) => {
-      const lineWidth = this.pdf.getTextWidth(line);
-      this.pdf.text(line, (this.pageWidth - lineWidth) / 2, this.currentY);
-      this.currentY += 16; // Better line spacing
-    });
-    this.currentY += 20; // More space after summary
-  }
-
-  private addSectionHeader(title: string): void {
-    this.checkPageBreak(50);
-    this.pdf.setFontSize(13);
-    this.pdf.setFont('helvetica', 'bold');
-    const titleWidth = this.pdf.getTextWidth(title);
-    this.pdf.text(title, (this.pageWidth - titleWidth) / 2, this.currentY);
-    this.currentY += 12;
     
-    // Line under header
-    this.pdf.setLineWidth(0.5);
-    this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    this.currentY += 16; // More space after section header
+    if (template === 'sidebar' || template === 'executive') {
+      // Left-aligned for sidebar and executive templates
+      lines.forEach((line: string) => {
+        this.pdf.text(line, this.margin, this.currentY);
+        this.currentY += 16;
+      });
+    } else {
+      // Centered for classic and modern templates
+      lines.forEach((line: string) => {
+        const lineWidth = this.pdf.getTextWidth(line);
+        this.pdf.text(line, (this.pageWidth - lineWidth) / 2, this.currentY);
+        this.currentY += 16;
+      });
+    }
+    this.currentY += 20;
   }
 
-  private addSkills(data: StructuredResumeData): void {
+  private addSectionHeader(title: string, template: string = 'classic'): void {
+    this.checkPageBreak(50);
+    
+    if (template === 'modern') {
+      // Modern template - left-aligned with subtle styling
+      this.pdf.setFontSize(14);
+      this.pdf.setFont('helvetica', 'bold');
+      this.pdf.text(title.toUpperCase(), this.margin, this.currentY);
+      this.currentY += 8;
+      
+      // Subtle underline
+      this.pdf.setLineWidth(0.3);
+      this.pdf.line(this.margin, this.currentY, this.margin + 60, this.currentY);
+      this.currentY += 16;
+      
+    } else if (template === 'executive' || template === 'sidebar') {
+      // Left-aligned section headers
+      this.pdf.setFontSize(13);
+      this.pdf.setFont('helvetica', 'bold');
+      this.pdf.text(title.toUpperCase(), this.margin, this.currentY);
+      this.currentY += 12;
+      
+      // Line under header
+      this.pdf.setLineWidth(0.5);
+      this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
+      this.currentY += 16;
+      
+    } else {
+      // Classic template - centered with full line
+      this.pdf.setFontSize(13);
+      this.pdf.setFont('helvetica', 'bold');
+      const titleWidth = this.pdf.getTextWidth(title);
+      this.pdf.text(title, (this.pageWidth - titleWidth) / 2, this.currentY);
+      this.currentY += 12;
+      
+      // Line under header
+      this.pdf.setLineWidth(0.5);
+      this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
+      this.currentY += 16;
+    }
+  }
+
+  private addSkills(data: StructuredResumeData, template: string = 'classic'): void {
     if (data.skills.length === 0) return;
 
-    this.addSectionHeader('SKILLS');
+    this.addSectionHeader('SKILLS', template);
 
     const allSkills: string[] = [];
     data.skills.forEach(group => allSkills.push(...group.items));
 
-    const mid = Math.ceil(allSkills.length / 2);
-    const leftCol = allSkills.slice(0, mid);
-    const rightCol = allSkills.slice(mid);
-
     this.pdf.setFontSize(11);
     this.pdf.setFont('helvetica', 'normal');
 
-    const colWidth = this.usableWidth / 2 - 12;
-    let leftY = this.currentY;
-    let rightY = this.currentY;
+    if (template === 'modern') {
+      // Modern template - tag-style skills in rows
+      const skillsPerRow = 3;
+      let currentRow = 0;
+      let currentCol = 0;
+      const colWidth = this.usableWidth / skillsPerRow;
+      
+      allSkills.forEach(skill => {
+        this.checkPageBreak(20);
+        const x = this.margin + (currentCol * colWidth);
+        const y = this.currentY + (currentRow * 20);
+        this.pdf.text(`• ${skill}`, x, y);
+        
+        currentCol++;
+        if (currentCol >= skillsPerRow) {
+          currentCol = 0;
+          currentRow++;
+        }
+      });
+      
+      this.currentY += (currentRow + 1) * 20 + 10;
+      
+    } else {
+      // Classic, Executive, Sidebar - two-column layout
+      const mid = Math.ceil(allSkills.length / 2);
+      const leftCol = allSkills.slice(0, mid);
+      const rightCol = allSkills.slice(mid);
 
-    leftCol.forEach(skill => {
-      this.checkPageBreak(20);
-      this.pdf.text(`• ${skill}`, this.margin, leftY);
-      leftY += 16; // Better spacing
-    });
+      const colWidth = this.usableWidth / 2 - 12;
+      let leftY = this.currentY;
+      let rightY = this.currentY;
 
-    rightCol.forEach(skill => {
-      this.pdf.text(`• ${skill}`, this.margin + colWidth + 24, rightY);
-      rightY += 16; // Better spacing
-    });
+      leftCol.forEach(skill => {
+        this.checkPageBreak(20);
+        this.pdf.text(`• ${skill}`, this.margin, leftY);
+        leftY += 16;
+      });
 
-    this.currentY = Math.max(leftY, rightY) + 20; // More section spacing
+      rightCol.forEach(skill => {
+        this.pdf.text(`• ${skill}`, this.margin + colWidth + 24, rightY);
+        rightY += 16;
+      });
+
+      this.currentY = Math.max(leftY, rightY) + 20;
+    }
   }
 
-  private addExperience(data: StructuredResumeData): void {
+  private addExperience(data: StructuredResumeData, template: string = 'classic'): void {
     if (data.experience.length === 0) return;
 
-    this.addSectionHeader('EXPERIENCE');
+    this.addSectionHeader('EXPERIENCE', template);
 
     data.experience.forEach((exp, index) => {
-      this.checkPageBreak(100); // Check space for job entry
-      // Title and dates
+      this.checkPageBreak(100);
+      
+      // Title and dates formatting varies by template
       this.pdf.setFontSize(12);
       this.pdf.setFont('helvetica', 'bold');
-      this.pdf.text(exp.title.toUpperCase(), this.margin, this.currentY);
       
-      const dateText = exp.duration.replace('-', '–');
-      const dateWidth = this.pdf.getTextWidth(dateText);
-      this.pdf.text(dateText, this.pageWidth - this.margin - dateWidth, this.currentY);
-      this.currentY += 18; // Better spacing
+      if (template === 'modern' || template === 'executive') {
+        // Left-aligned title with dates on same line
+        this.pdf.text(exp.title, this.margin, this.currentY);
+        const dateText = exp.duration.replace('-', '–');
+        const dateWidth = this.pdf.getTextWidth(dateText);
+        this.pdf.text(dateText, this.pageWidth - this.margin - dateWidth, this.currentY);
+        this.currentY += 18;
+        
+        // Company with subtle styling
+        this.pdf.setFontSize(11);
+        this.pdf.setFont('helvetica', 'italic');
+        this.pdf.text(exp.company, this.margin, this.currentY);
+        this.currentY += 20;
+        
+      } else {
+        // Classic/sidebar - uppercase title, centered or left-aligned
+        const titleText = template === 'classic' ? exp.title.toUpperCase() : exp.title;
+        this.pdf.text(titleText, this.margin, this.currentY);
+        
+        const dateText = exp.duration.replace('-', '–');
+        const dateWidth = this.pdf.getTextWidth(dateText);
+        this.pdf.text(dateText, this.pageWidth - this.margin - dateWidth, this.currentY);
+        this.currentY += 18;
 
-      // Company
-      this.pdf.setFontSize(12);
-      this.pdf.setFont('helvetica', 'normal');
-      this.pdf.text(exp.company, this.margin, this.currentY);
-      this.currentY += 20; // More space before bullets
+        // Company
+        this.pdf.setFontSize(12);
+        this.pdf.setFont('helvetica', 'normal');
+        this.pdf.text(exp.company, this.margin, this.currentY);
+        this.currentY += 20;
+      }
 
       // Bullets
       this.pdf.setFontSize(11);
+      this.pdf.setFont('helvetica', 'normal');
       exp.bullets.forEach(bullet => {
         this.checkPageBreak(30);
         const lines = this.pdf.splitTextToSize(`• ${bullet}`, this.usableWidth - 12);
         lines.forEach((line: string, lineIndex: number) => {
           const x = lineIndex === 0 ? this.margin : this.margin + 12;
           this.pdf.text(line, x, this.currentY);
-          this.currentY += 16; // Better line spacing
+          this.currentY += 16;
         });
       });
 
-      if (index < data.experience.length - 1) this.currentY += 16; // Space between jobs
+      if (index < data.experience.length - 1) this.currentY += 16;
     });
 
-    this.currentY += 20; // More space after experience section
+    this.currentY += 20;
   }
 
-  private addEducation(data: StructuredResumeData): void {
+  private addEducation(data: StructuredResumeData, template: string = 'classic'): void {
     if (data.education.length === 0) return;
 
-    this.addSectionHeader('EDUCATION');
+    this.addSectionHeader('EDUCATION', template);
 
     data.education.forEach(edu => {
       this.checkPageBreak(50);
@@ -204,14 +343,14 @@ export class ProfessionalResumeGenerator {
 
       this.pdf.setFont('helvetica', 'normal');
       this.pdf.text(edu.school, this.margin, this.currentY);
-      this.currentY += 20; // Better spacing between education entries
+      this.currentY += 20;
     });
   }
 
-  private addCertifications(data: StructuredResumeData): void {
+  private addCertifications(data: StructuredResumeData, template: string = 'classic'): void {
     if (!data.certifications?.length) return;
 
-    this.addSectionHeader('CERTIFICATIONS');
+    this.addSectionHeader('CERTIFICATIONS', template);
 
     data.certifications.forEach(cert => {
       this.checkPageBreak(50);
@@ -235,7 +374,9 @@ export const generateProfessionalPDF = async (
   resumeData: string | StructuredResumeData, 
   fileName: string
 ): Promise<void> => {
+  console.log('UnifiedPdfGenerator: Starting PDF generation with template:', templateId);
   const generator = new ProfessionalResumeGenerator();
   const pdf = await generator.generateResume(resumeData, templateId);
+  console.log('UnifiedPdfGenerator: PDF generation completed for template:', templateId);
   pdf.save(fileName);
 };
