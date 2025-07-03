@@ -1,5 +1,8 @@
 import html2pdf from 'html2pdf.js';
 import { templateConfigs } from '@/components/resume-templates/templateConfigs';
+import { generateProfessionalPDF } from './professionalPdfGenerator';
+import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+import { parseResumeContent } from '@/components/resume-templates/utils/parseResumeContent';
 
 // PDF generation options with simplified settings (pt units, 96 DPI)
 const getPDFOptions = () => {
@@ -104,9 +107,39 @@ const waitForRender = (ms: number = 500) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-export const generatePDF = async (templateId: string, resumeContent: string, fileName: string) => {
+export const generatePDF = async (templateId: string, resumeContent: string, fileName: string, optimizedResumeId?: string) => {
   console.log('PDF Generation: Starting PDF generation for template:', templateId);
   
+  // Use professional PDF generation for supported templates
+  const professionalTemplates = ['classic', 'modern'];
+  if (professionalTemplates.includes(templateId)) {
+    try {
+      console.log('PDF Generation: Using professional PDF generator for template:', templateId);
+      
+      let resumeData: any = resumeContent;
+      
+      // Try to fetch structured data if available
+      if (optimizedResumeId) {
+        try {
+          resumeData = await fetchStructuredResumeData(optimizedResumeId);
+          console.log('PDF Generation: Using structured data for professional PDF');
+        } catch (error) {
+          console.log('PDF Generation: Fallback to text parsing for professional PDF');
+          resumeData = parseResumeContent(resumeContent);
+        }
+      } else {
+        resumeData = parseResumeContent(resumeContent);
+      }
+      
+      await generateProfessionalPDF(templateId, resumeData, fileName);
+      return;
+    } catch (error) {
+      console.error('PDF Generation: Professional PDF generation failed, falling back to HTML2PDF:', error);
+      // Fall through to HTML2PDF generation
+    }
+  }
+  
+  // Fallback to HTML2PDF for other templates or when professional generation fails
   const resumeElement = document.getElementById('resume-preview');
   if (!resumeElement) {
     console.error('PDF Generation: Resume preview element not found');

@@ -157,7 +157,7 @@ const ResumeTemplates: React.FC = () => {
     setIsGeneratingPDF(true);
     
     try {
-      await generatePDF(selectedTemplate, optimizedResume.generated_text, fileName);
+      await generatePDF(selectedTemplate, optimizedResume.generated_text, fileName, resumeId);
       
       toast({
         title: "Success",

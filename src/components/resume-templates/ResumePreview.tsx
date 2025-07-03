@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ModernTemplate } from './templates/ModernTemplate';
 import { ClassicTemplate } from './templates/ClassicTemplate';
+import { ProfessionalClassicTemplate } from './templates/ProfessionalClassicTemplate';
 import { CreativeTemplate } from './templates/CreativeTemplate';
 import { ExecutiveTemplate } from './templates/ExecutiveTemplate';
 import { TechnicalTemplate } from './templates/TechnicalTemplate';
@@ -62,7 +63,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
       case 'modern':
         return <ModernTemplate {...props} />;
       case 'classic':
-        return <ClassicTemplate {...props} />;
+        return <ProfessionalClassicTemplate {...props} />;
       case 'executive':
         return <ExecutiveTemplate {...props} />;
       case 'creative':
