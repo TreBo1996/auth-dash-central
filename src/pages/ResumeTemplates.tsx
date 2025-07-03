@@ -235,9 +235,24 @@ const ResumeTemplates: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6 min-h-[800px]">
-          {/* Resume Preview - Center (takes 3 columns) */}
-          <div className="lg:col-span-3 flex justify-center">
+        {/* Mobile Template Selector - Shows on small screens */}
+        <div className="block lg:hidden mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="font-semibold mb-4 text-center">Choose Template</h3>
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onTemplateSelect={setSelectedTemplate}
+                isMobile={true}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Desktop/Tablet Layout */}
+        <div className="grid lg:grid-cols-4 md:grid-cols-3 gap-6 min-h-[800px]">
+          {/* Resume Preview */}
+          <div className="lg:col-span-3 md:col-span-2 flex justify-center">
             <div className="w-full max-w-4xl">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex items-center gap-2">
@@ -259,14 +274,15 @@ const ResumeTemplates: React.FC = () => {
             </div>
           </div>
 
-          {/* Template Selector - Right Side (takes 2 columns) */}
-          <div className="lg:col-span-2">
-            <Card className="h-fit sticky top-6">
+          {/* Desktop Template Selector - Hidden on mobile */}
+          <div className="hidden lg:block lg:col-span-1 md:block md:col-span-1">
+            <Card className="h-fit sticky top-24">
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-4 text-center">Resume Templates</h3>
+                <h3 className="font-semibold mb-4 text-center">Templates</h3>
                 <TemplateSelector
                   selectedTemplate={selectedTemplate}
                   onTemplateSelect={setSelectedTemplate}
+                  isMobile={false}
                 />
               </CardContent>
             </Card>
