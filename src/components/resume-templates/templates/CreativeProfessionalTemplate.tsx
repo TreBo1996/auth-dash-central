@@ -154,7 +154,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
           
           <div className="ml-12 space-y-6">
             {resumeData.experience.map((exp, index) => (
-              <div key={index} className="job-entry avoid-page-break relative">
+              <div key={index} className="job-entry relative">
                 <div 
                   className="absolute -left-12 top-2 w-3 h-3 rounded-full border-2 bg-white"
                   style={{ borderColor: config.colors.accent }}
@@ -166,7 +166,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
                   ></div>
                 )}
                 
-                <div className="flex justify-between items-start mb-2">
+                <div className="job-header flex justify-between items-start">
                   <div>
                     <h3 
                       className="text-base font-bold"
@@ -182,7 +182,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
                     </h4>
                   </div>
                   <div 
-                    className="text-sm font-medium px-3 py-1 rounded-full"
+                    className="job-meta text-sm font-medium px-3 py-1 rounded-full"
                     style={{ 
                       color: config.colors.secondary,
                       backgroundColor: `${config.colors.secondary}10`
@@ -196,7 +196,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
                   {exp.bullets.map((bullet, bulletIndex) => (
                     <li 
                       key={bulletIndex} 
-                      className="flex items-start"
+                      className="bullet-point flex items-start"
                       style={{ color: config.colors.text }}
                     >
                       <span 

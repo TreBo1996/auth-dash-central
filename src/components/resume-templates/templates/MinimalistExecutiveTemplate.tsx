@@ -125,8 +125,8 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
           
           <div className="space-y-6">
             {resumeData.experience.map((exp, index) => (
-              <div key={index} className="avoid-page-break">
-                <div className="flex justify-between items-start mb-2">
+              <div key={index} className="job-entry">
+                <div className="job-header flex justify-between items-start">
                   <div>
                     <h3 
                       className="text-base font-bold"
@@ -142,7 +142,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                     </h4>
                   </div>
                   <div 
-                    className="text-sm font-medium"
+                    className="job-meta text-sm font-medium"
                     style={{ color: config.colors.textSecondary }}
                   >
                     {exp.duration}
@@ -153,7 +153,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                   {exp.bullets.map((bullet, bulletIndex) => (
                     <li 
                       key={bulletIndex} 
-                      className="flex items-start"
+                      className="bullet-point flex items-start"
                       style={{ color: config.colors.text }}
                     >
                       <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: config.colors.accent }}></span>

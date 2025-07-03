@@ -129,8 +129,8 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
           
           <div className="space-y-5">
             {resumeData.experience.map((exp, index) => (
-              <div key={index} className="job-entry avoid-page-break">
-                <div className="flex justify-between mb-2">
+              <div key={index} className="job-entry">
+                <div className="job-header flex justify-between">
                   <div>
                     <h3 
                       className="font-bold"
@@ -146,7 +146,7 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
                     </h4>
                   </div>
                   <div 
-                    className="text-right font-medium"
+                    className="job-meta text-right font-medium"
                     style={{ color: config.colors.textSecondary }}
                   >
                     {exp.duration}
@@ -157,6 +157,7 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
                   {exp.bullets.map((bullet, bulletIndex) => (
                     <li 
                       key={bulletIndex}
+                      className="bullet-point"
                       style={{ color: config.colors.text }}
                     >
                       {bullet}

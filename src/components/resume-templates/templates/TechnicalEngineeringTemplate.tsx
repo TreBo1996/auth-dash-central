@@ -197,9 +197,9 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
           
           <div className="ml-9 space-y-6">
             {resumeData.experience.map((exp, index) => (
-              <div key={index} className="job-entry avoid-page-break">
+              <div key={index} className="job-entry">
                 <div className="border-l-4 pl-4" style={{ borderColor: config.colors.accent }}>
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="job-header flex justify-between items-start">
                     <div>
                       <h3 
                         className="text-base font-bold"
@@ -219,7 +219,7 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                       </h4>
                     </div>
                     <div 
-                      className="text-sm font-mono px-3 py-1 rounded border"
+                      className="job-meta text-sm font-mono px-3 py-1 rounded border"
                       style={{ 
                         color: config.colors.accent,
                         borderColor: config.colors.accent,
@@ -234,7 +234,7 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                     {exp.bullets.map((bullet, bulletIndex) => (
                       <li 
                         key={bulletIndex} 
-                        className="flex items-start"
+                        className="bullet-point flex items-start"
                         style={{ color: config.colors.text }}
                       >
                         <span 

@@ -26,7 +26,7 @@ const getPDFOptions = (templateId: string) => {
       mode: ['css', 'legacy'],
       before: '.page-break-before',
       after: '.page-break-after',
-      avoid: ['.avoid-page-break', '.experience-item']
+      avoid: ['.job-header', '.bullet-point', '.job-meta']
     }
   };
 
@@ -44,11 +44,11 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Template-specific PDF styles
+  // Template-specific PDF styles with granular page break control
   const templateStyles = {
     'minimalist-executive': `
       <style>
-        @page { size: 8.5in 11in; margin: 0.5in; }
+        @page { size: 8.5in 11in; margin: 0.5in; orphans: 3; widows: 3; }
         * { 
           color: #2d3748 !important; 
           font-family: Georgia, "Times New Roman", serif !important; 
@@ -58,13 +58,15 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
         .text-sm { font-size: 12px !important; }
         .font-bold { font-weight: 700 !important; }
         .border-b { border-bottom: 1px solid #e2e8f0 !important; }
-        .experience-item { page-break-inside: avoid !important; margin-bottom: 16px !important; }
+        .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
+        .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
+        .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
     'modern-ats': `
       <style>
-        @page { size: 8.5in 11in; margin: 0.5in; }
+        @page { size: 8.5in 11in; margin: 0.5in; orphans: 3; widows: 3; }
         * { 
           color: #1a202c !important; 
           font-family: Inter, "Helvetica Neue", sans-serif !important; 
@@ -73,13 +75,15 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
         .text-base { font-size: 14px !important; }
         .text-sm { font-size: 12px !important; }
         .font-bold { font-weight: 600 !important; }
-        .experience-item { page-break-inside: avoid !important; margin-bottom: 16px !important; }
+        .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
+        .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
+        .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
     'creative-professional': `
       <style>
-        @page { size: 8.5in 11in; margin: 0.5in; }
+        @page { size: 8.5in 11in; margin: 0.5in; orphans: 3; widows: 3; }
         * { 
           font-family: Montserrat, Arial, sans-serif !important; 
         }
@@ -87,13 +91,15 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
         .text-base { font-size: 14px !important; }
         .text-sm { font-size: 12px !important; }
         .font-bold { font-weight: 600 !important; }
-        .experience-item { page-break-inside: avoid !important; margin-bottom: 16px !important; }
+        .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
+        .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
+        .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
     'academic-research': `
       <style>
-        @page { size: 8.5in 11in; margin: 0.75in; }
+        @page { size: 8.5in 11in; margin: 0.75in; orphans: 2; widows: 2; }
         * { 
           color: #1a1a1a !important; 
           font-family: "Times New Roman", Georgia, serif !important; 
@@ -102,13 +108,15 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
         .text-base { font-size: 12px !important; }
         .text-sm { font-size: 11px !important; }
         .font-bold { font-weight: 700 !important; }
-        .experience-item { page-break-inside: auto !important; margin-bottom: 12px !important; }
+        .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
+        .job-meta { page-break-before: avoid !important; margin-bottom: 6px !important; }
+        .bullet-point { page-break-inside: avoid !important; margin-bottom: 3px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
     'technical-engineering': `
       <style>
-        @page { size: 8.5in 11in; margin: 0.5in; }
+        @page { size: 8.5in 11in; margin: 0.5in; orphans: 3; widows: 3; }
         * { 
           color: #2c5282 !important; 
           font-family: Inter, "Helvetica Neue", sans-serif !important; 
@@ -117,7 +125,9 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
         .text-base { font-size: 14px !important; }
         .text-sm { font-size: 12px !important; }
         .font-bold { font-weight: 600 !important; }
-        .experience-item { page-break-inside: avoid !important; margin-bottom: 16px !important; }
+        .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
+        .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
+        .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `
