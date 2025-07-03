@@ -253,7 +253,7 @@ const ResumeTemplates: React.FC = () => {
           {/* Desktop Template Selector - Hidden on mobile */}
           <div className="hidden lg:block lg:col-span-1 md:block md:col-span-1">
             <Card className="h-fit sticky top-24">
-              <CardContent className="p-4 px-[2px]">
+              <CardContent className="p-4 px-[4px]">
                 <h3 className="font-semibold mb-4 text-center">Templates</h3>
                 <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={setSelectedTemplate} isMobile={false} />
               </CardContent>
