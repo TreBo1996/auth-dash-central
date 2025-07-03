@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { parseDocument } from '@/utils/documentParser';
 import { useNavigate } from 'react-router-dom';
-
 const UploadResumePage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -18,22 +17,30 @@ const UploadResumePage: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
 
   // Check authentication status on component mount
   React.useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        console.log('Auth check result:', { user: user?.id, error });
-        
+        const {
+          data: {
+            user
+          },
+          error
+        } = await supabase.auth.getUser();
+        console.log('Auth check result:', {
+          user: user?.id,
+          error
+        });
         if (error) {
           console.error('Auth error:', error);
           setAuthStatus('unauthenticated');
           return;
         }
-        
         if (user) {
           setAuthStatus('authenticated');
           console.log('User authenticated:', user.id);
@@ -46,10 +53,8 @@ const UploadResumePage: React.FC = () => {
         setAuthStatus('unauthenticated');
       }
     };
-
     checkAuth();
   }, []);
-
   const acceptedFileTypes = ['.pdf', '.docx'];
   const maxFileSize = 10 * 1024 * 1024; // 10MB
 
@@ -57,25 +62,20 @@ const UploadResumePage: React.FC = () => {
     e.preventDefault();
     setIsDragOver(true);
   }, []);
-
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
   }, []);
-
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       handleFileSelection(droppedFile);
     }
   }, []);
-
   const handleFileSelection = async (selectedFile: File) => {
     setUploadError(null);
-    
     if (selectedFile.size > maxFileSize) {
       toast({
         title: "File too large",
@@ -84,7 +84,6 @@ const UploadResumePage: React.FC = () => {
       });
       return;
     }
-
     const fileExtension = selectedFile.name.toLowerCase();
     if (!fileExtension.endsWith('.pdf') && !fileExtension.endsWith('.docx')) {
       toast({
@@ -94,9 +93,8 @@ const UploadResumePage: React.FC = () => {
       });
       return;
     }
-
     setFile(selectedFile);
-    
+
     // Parse document immediately for preview
     try {
       setIsUploading(true);
@@ -109,7 +107,7 @@ const UploadResumePage: React.FC = () => {
       console.error('Error parsing document:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setUploadError(`Parse error: ${errorMessage}`);
-      
+
       // Show more helpful toast for PDF parsing failures
       if (errorMessage.includes('PDF parsing failed') || errorMessage.includes('poor quality results')) {
         toast({
@@ -128,27 +126,23 @@ const UploadResumePage: React.FC = () => {
       setIsUploading(false);
     }
   };
-
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       handleFileSelection(selectedFile);
     }
   };
-
   const testDatabaseConnection = async () => {
     try {
       console.log('Testing database connection...');
-      const { data, error } = await supabase
-        .from('resumes')
-        .select('id')
-        .limit(1);
-      
+      const {
+        data,
+        error
+      } = await supabase.from('resumes').select('id').limit(1);
       if (error) {
         console.error('Database test failed:', error);
         return false;
       }
-      
       console.log('Database connection successful');
       return true;
     } catch (error) {
@@ -156,28 +150,22 @@ const UploadResumePage: React.FC = () => {
       return false;
     }
   };
-
   const uploadFileToStorage = async (file: File, userId: string): Promise<string | null> => {
     try {
       const fileExtension = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExtension}`;
       const filePath = `${userId}/resumes/${fileName}`;
-
       console.log('Attempting file upload to:', filePath);
-
-      const { error } = await supabase.storage
-        .from('user-files')
-        .upload(filePath, file);
-
+      const {
+        error
+      } = await supabase.storage.from('user-files').upload(filePath, file);
       if (error) {
         console.error('Storage upload error:', error);
         throw error;
       }
-
-      const { data } = supabase.storage
-        .from('user-files')
-        .getPublicUrl(filePath);
-
+      const {
+        data
+      } = supabase.storage.from('user-files').getPublicUrl(filePath);
       console.log('File uploaded successfully to:', data.publicUrl);
       return data.publicUrl;
     } catch (error) {
@@ -185,12 +173,9 @@ const UploadResumePage: React.FC = () => {
       return null;
     }
   };
-
   const handleConfirmUpload = async () => {
     if (!file || !parsedContent) return;
-
     setUploadError(null);
-    
     try {
       setIsUploading(true);
 
@@ -199,10 +184,16 @@ const UploadResumePage: React.FC = () => {
       if (!dbConnected) {
         throw new Error('Database connection failed');
       }
-
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('Auth check during upload:', { user: user?.id, authError });
-      
+      const {
+        data: {
+          user
+        },
+        error: authError
+      } = await supabase.auth.getUser();
+      console.log('Auth check during upload:', {
+        user: user?.id,
+        authError
+      });
       if (authError || !user) {
         console.error('Authentication failed during upload:', authError);
         setUploadError('Authentication failed. Please log in and try again.');
@@ -213,7 +204,6 @@ const UploadResumePage: React.FC = () => {
         });
         return;
       }
-
       console.log('Starting upload process for user:', user.id);
 
       // Try to upload file to storage (optional)
@@ -238,25 +228,23 @@ const UploadResumePage: React.FC = () => {
         file_name: file.name,
         file_size: file.size
       };
-      
-      console.log('Insert data:', { ...insertData, parsed_text: `${parsedContent.length} characters` });
-
-      const { data: insertResult, error: insertError } = await supabase
-        .from('resumes')
-        .insert(insertData)
-        .select();
-
+      console.log('Insert data:', {
+        ...insertData,
+        parsed_text: `${parsedContent.length} characters`
+      });
+      const {
+        data: insertResult,
+        error: insertError
+      } = await supabase.from('resumes').insert(insertData).select();
       if (insertError) {
         console.error('Database insert error:', insertError);
         setUploadError(`Database error: ${insertError.message}`);
         throw insertError;
       }
-
       console.log('Resume inserted successfully:', insertResult);
-
       toast({
         title: "Upload Successful",
-        description: "Your resume has been uploaded successfully.",
+        description: "Your resume has been uploaded successfully."
       });
 
       // Redirect to the resume editor
@@ -265,7 +253,6 @@ const UploadResumePage: React.FC = () => {
       } else {
         navigate('/dashboard');
       }
-
     } catch (error) {
       console.error('Upload process error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -279,7 +266,6 @@ const UploadResumePage: React.FC = () => {
       setIsUploading(false);
     }
   };
-
   const handleStartOver = () => {
     setFile(null);
     setParsedContent('');
@@ -289,21 +275,17 @@ const UploadResumePage: React.FC = () => {
 
   // Show authentication status
   if (authStatus === 'checking') {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="max-w-4xl mx-auto flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-600 mb-4" />
             <p className="text-gray-600">Checking authentication...</p>
           </div>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
   if (authStatus === 'unauthenticated') {
-    return (
-      <DashboardLayout>
+    return <DashboardLayout>
         <div className="max-w-4xl mx-auto">
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
@@ -312,76 +294,40 @@ const UploadResumePage: React.FC = () => {
             </AlertDescription>
           </Alert>
         </div>
-      </DashboardLayout>
-    );
+      </DashboardLayout>;
   }
-
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Resume</h1>
           <p className="text-gray-600">
             Upload your resume in PDF or DOCX format to get started
           </p>
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center justify-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="bg-green-500 text-white px-3 py-1 rounded-full font-medium">
-                  ✓ RECOMMENDED
-                </span>
-                <span className="font-medium text-green-700">DOCX Format</span>
-                <span className="text-gray-600">- Best parsing results</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="bg-yellow-500 text-white px-3 py-1 rounded-full font-medium">
-                  ⚠ LIMITED
-                </span>
-                <span className="font-medium text-yellow-700">PDF Format</span>
-                <span className="text-gray-600">- May have parsing issues</span>
-              </div>
-            </div>
-            <div className="mt-2 text-xs text-gray-600">
-              💡 <strong>Tip:</strong> Convert PDFs to DOCX using Word, Google Docs, or online converters for guaranteed success
-            </div>
-          </div>
+          
         </div>
 
         {/* Show upload error if any */}
-        {uploadError && (
-          <Alert variant="destructive">
+        {uploadError && <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               <div className="whitespace-pre-line">{uploadError}</div>
-              {uploadError.includes('PDF parsing failed') && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+              {uploadError.includes('PDF parsing failed') && <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
                   <p className="text-sm font-medium text-blue-800 mb-2">Quick conversion options:</p>
                   <ul className="text-sm text-blue-700 space-y-1">
                     <li>• <strong>Microsoft Word:</strong> File → Save As → Word Document (.docx)</li>
                     <li>• <strong>Google Docs:</strong> Upload PDF → File → Download → Microsoft Word</li>
                     <li>• <strong>Online:</strong> SmallPDF.com, ILovePDF.com, or PDF24.org</li>
                   </ul>
-                </div>
-              )}
+                </div>}
             </AlertDescription>
-          </Alert>
-        )}
+          </Alert>}
 
-        {!showPreview ? (
-          <Card className="border-2 border-dashed border-gray-300">
+        {!showPreview ? <Card className="border-2 border-dashed border-gray-300">
             <CardContent className="p-8">
-              <div
-                className={`
+              <div className={`
                   relative border-2 border-dashed rounded-2xl p-12 text-center transition-colors
-                  ${isDragOver 
-                    ? 'border-blue-400 bg-blue-50' 
-                    : 'border-gray-300 hover:border-gray-400'
-                  }
-                `}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
+                  ${isDragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                `} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
                 <Upload className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   Drag and drop your resume here
@@ -390,13 +336,7 @@ const UploadResumePage: React.FC = () => {
                   or click below to select a file
                 </p>
                 
-                <Input
-                  type="file"
-                  accept=".pdf,.docx"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                  id="resume-upload"
-                />
+                <Input type="file" accept=".pdf,.docx" onChange={handleFileInputChange} className="hidden" id="resume-upload" />
                 <Button asChild>
                   <label htmlFor="resume-upload" className="cursor-pointer">
                     <FileText className="h-4 w-4 mr-2" />
@@ -408,35 +348,17 @@ const UploadResumePage: React.FC = () => {
                   <p className="text-sm text-gray-500">
                     Supported formats: PDF, DOCX (max 10MB)
                   </p>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Format Recommendations:</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                        <span><strong>DOCX:</strong> 99% success rate, perfect text extraction</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                        <span><strong>PDF:</strong> Variable results, may need conversion</span>
-                      </div>
-                    </div>
-                  </div>
+                  
                 </div>
               </div>
             </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
+          </Card> : <div className="space-y-6">
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Resume parsed successfully!</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartOver}
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleStartOver}>
                     <X className="h-4 w-4 mr-1" />
                     Start Over
                   </Button>
@@ -462,38 +384,24 @@ const UploadResumePage: React.FC = () => {
                 </div>
                 
                 <div className="flex gap-4">
-                  <Button 
-                    onClick={handleConfirmUpload}
-                    disabled={isUploading}
-                    className="flex-1"
-                  >
-                    {isUploading ? (
-                      <>
+                  <Button onClick={handleConfirmUpload} disabled={isUploading} className="flex-1">
+                    {isUploading ? <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Saving Resume...
-                      </>
-                    ) : (
-                      <>
+                      </> : <>
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Confirm & Save Resume
-                      </>
-                    )}
+                      </>}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleStartOver}
-                    disabled={isUploading}
-                  >
+                  <Button variant="outline" onClick={handleStartOver} disabled={isUploading}>
                     Upload Different File
                   </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          </div>}
 
-        {isUploading && !showPreview && (
-          <Card>
+        {isUploading && !showPreview && <Card>
             <CardContent className="py-8 text-center">
               <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-600 mb-4" />
               <p className="text-gray-600">Parsing your resume...</p>
@@ -501,11 +409,8 @@ const UploadResumePage: React.FC = () => {
                 PDF files may take longer or fail - DOCX is recommended
               </p>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default UploadResumePage;
