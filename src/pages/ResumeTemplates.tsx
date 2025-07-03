@@ -13,6 +13,7 @@ import { newTemplateConfigs } from '@/components/resume-templates/configs/newTem
 import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
 import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 import { parseResumeContent } from '@/components/resume-templates/utils/parseResumeContent';
+import { printResume } from '@/utils/pdfGenerator';
 
 interface OptimizedResume {
   id: string;
