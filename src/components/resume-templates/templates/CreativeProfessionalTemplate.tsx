@@ -120,9 +120,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
                 <div className="absolute -left-12 top-2 w-3 h-3 rounded-full border-2 bg-white" style={{
             borderColor: colors.accent
           }}></div>
-                {index < resumeData.experience.length - 1 && <div style={{
-            backgroundColor: colors.border
-          }} className="absolute -left-10.5 top-5 w-0.5 h-full bg-transparent"></div>}
+                {index < resumeData.experience.length - 1 && <div className="absolute -left-10.5 top-5 w-0.5 h-full bg-transparent"></div>}
                 
                 <div className="job-header flex justify-between items-start">
                   <div>
