@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,7 +99,7 @@ const Auth: React.FC = () => {
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Sparkles className="h-10 w-10 text-yellow-300" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              Best Hire
+              RezLit
             </h1>
           </div>
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-4">

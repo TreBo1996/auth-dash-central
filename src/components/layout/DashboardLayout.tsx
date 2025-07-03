@@ -45,7 +45,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <Menu className="h-5 w-5 text-indigo-600" />
             </Button>
             <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Best Hire
+              RezLit
             </h1>
             <div className="w-9" /> {/* Spacer for centering */}
           </div>

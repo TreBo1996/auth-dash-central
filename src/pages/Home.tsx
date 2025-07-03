@@ -54,13 +54,13 @@ const Home = () => {
     name: "Sarah Chen",
     role: "Software Engineer",
     company: "Google",
-    content: "Best Hire helped me land my dream job at Google. The ATS optimization was a game-changer!",
+    content: "RezLit helped me land my dream job at Google. The ATS optimization was a game-changer!",
     rating: 5
   }, {
     name: "Michael Rodriguez",
     role: "Marketing Manager",
     company: "Meta",
-    content: "I went from 2% to 40% response rate after using Best Hire. The AI suggestions were spot-on.",
+    content: "I went from 2% to 40% response rate after using RezLit. The AI suggestions were spot-on.",
     rating: 5
   }, {
     name: "Jennifer Liu",
