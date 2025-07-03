@@ -67,6 +67,32 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
     }
 
     try {
+      // Check if user can start an interview session
+      const { data: usageCheck, error: usageError } = await supabase.rpc('can_use_feature', {
+        p_user_id: user.id,
+        p_feature_type: 'interview_sessions'
+      });
+
+      if (usageError) {
+        console.error('Error checking usage limits:', usageError);
+        toast({
+          title: "Error",
+          description: "Unable to verify usage limits. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const canUse = usageCheck[0];
+      if (!canUse.can_use) {
+        toast({
+          title: "Monthly Limit Reached",
+          description: `You have reached your monthly limit of interview sessions. You have used ${canUse.current_usage} sessions this month.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Combine and shuffle questions (3 behavioral, 2 technical)
       const behavioralQuestions = questions.behavioral.slice(0, 3).map(q => ({ text: q, type: 'behavioral' as const }));
       const technicalQuestions = questions.technical.slice(0, 2).map(q => ({ text: q, type: 'technical' as const }));
@@ -88,6 +114,18 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
         .single();
 
       if (error) throw error;
+      
+      // Increment usage count for interview sessions
+      try {
+        await supabase.rpc('increment_feature_usage', {
+          p_user_id: user.id,
+          p_feature_type: 'interview_sessions'
+        });
+      } catch (usageIncrementError) {
+        console.error('Error incrementing usage count:', usageIncrementError);
+        // Don't fail the entire operation if usage tracking fails
+      }
+      
       setSessionId(session.id);
     } catch (error) {
       console.error('Error initializing session:', error);

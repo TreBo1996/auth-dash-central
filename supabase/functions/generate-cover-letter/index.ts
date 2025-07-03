@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Try both possible secret names for OpenAI API key
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OpenAI');
@@ -29,6 +30,60 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Initialize Supabase client for usage tracking
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase environment variables not configured');
+      throw new Error('Supabase configuration missing');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    // Get the authorization header to extract the JWT token
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      try {
+        const jwt = authHeader.replace('Bearer ', '');
+        
+        // Verify the JWT token and get the user
+        const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+        if (!userError && user) {
+          console.log('Authenticated user:', user.id);
+
+          // Check if user can use cover letter generation feature
+          const { data: usageCheck, error: usageError } = await supabase.rpc('can_use_feature', {
+            p_user_id: user.id,
+            p_feature_type: 'cover_letters'
+          });
+
+          if (!usageError && usageCheck && usageCheck[0]) {
+            const canUse = usageCheck[0];
+            if (!canUse.can_use) {
+              console.log('User has reached monthly limit for cover letter generations');
+              return new Response(JSON.stringify({ 
+                error: 'Monthly limit reached',
+                message: `You have reached your monthly limit of cover letter generations. You have used ${canUse.current_usage} cover letters this month.`,
+                upgrade_required: true,
+                current_usage: canUse.current_usage
+              }), {
+                status: 429,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+          }
+        }
+      } catch (authError) {
+        console.log('Authentication check failed, proceeding without user tracking:', authError);
+      }
     }
 
     const requestBody = await req.json();
@@ -207,6 +262,24 @@ Generate only the cover letter content, no additional commentary.`;
     const title = `Cover Letter for ${cleanJobTitle}${cleanCompanyName ? ` at ${cleanCompanyName}` : ''}`;
 
     console.log('Cover letter generated successfully, length:', generatedText.length);
+
+    // Increment usage count for authenticated users
+    if (authHeader) {
+      try {
+        const jwt = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+        if (!userError && user) {
+          await supabase.rpc('increment_feature_usage', {
+            p_user_id: user.id,
+            p_feature_type: 'cover_letters'
+          });
+          console.log('Successfully incremented cover letter usage');
+        }
+      } catch (usageIncrementError) {
+        console.error('Error incrementing usage count:', usageIncrementError);
+        // Don't fail the entire operation if usage tracking fails
+      }
+    }
 
     return new Response(JSON.stringify({ 
       generatedText: generatedText.trim(),

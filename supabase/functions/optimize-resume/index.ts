@@ -56,6 +56,31 @@ serve(async (req) => {
 
     console.log('Authenticated user:', user.id);
 
+    // Check if user can use resume optimization feature
+    const { data: usageCheck, error: usageError } = await supabase.rpc('can_use_feature', {
+      p_user_id: user.id,
+      p_feature_type: 'resume_optimizations'
+    });
+
+    if (usageError) {
+      console.error('Error checking usage limits:', usageError);
+      throw new Error('Unable to verify usage limits');
+    }
+
+    const canUse = usageCheck[0];
+    if (!canUse.can_use) {
+      console.log('User has reached monthly limit for resume optimizations');
+      return new Response(JSON.stringify({ 
+        error: 'Monthly limit reached',
+        message: `You have reached your monthly limit of resume optimizations. You have used ${canUse.current_usage} optimizations this month.`,
+        upgrade_required: true,
+        current_usage: canUse.current_usage
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Fetch resume and job description
     console.log('Fetching resume and job description...');
     const [resumeResult, jobDescResult] = await Promise.all([
@@ -345,6 +370,18 @@ REMEMBER: Your goal is to DRAMATICALLY INCREASE the ATS score by making this res
     }
 
     console.log('Successfully stored all structured resume data');
+
+    // Increment usage count for the user
+    try {
+      await supabase.rpc('increment_feature_usage', {
+        p_user_id: user.id,
+        p_feature_type: 'resume_optimizations'
+      });
+      console.log('Successfully incremented resume optimization usage');
+    } catch (usageIncrementError) {
+      console.error('Error incrementing usage count:', usageIncrementError);
+      // Don't fail the entire operation if usage tracking fails
+    }
 
     // Calculate ATS score for the optimized resume
     console.log('Calculating ATS score for optimized resume...');

@@ -1023,6 +1023,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_feature_usage: {
+        Row: {
+          created_at: string
+          feature_type: string
+          id: string
+          last_reset_date: string
+          month_year: string
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_type: string
+          id?: string
+          last_reset_date?: string
+          month_year: string
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_type?: string
+          id?: string
+          last_reset_date?: string
+          month_year?: string
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_role_preferences: {
         Row: {
           created_at: string
@@ -1112,6 +1145,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      can_use_feature: {
+        Args: { p_user_id: string; p_feature_type: string }
+        Returns: {
+          can_use: boolean
+          current_usage: number
+          limit_reached: boolean
+        }[]
+      }
       cleanup_old_jobs: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1120,12 +1161,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_monthly_usage: {
+        Args: { p_user_id: string; p_feature_type: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      increment_feature_usage: {
+        Args: { p_user_id: string; p_feature_type: string }
+        Returns: number
       }
       normalize_search_query: {
         Args: { input_query: string }

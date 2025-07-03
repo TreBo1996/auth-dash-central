@@ -152,6 +152,32 @@ const UploadJobPage: React.FC = () => {
         return;
       }
 
+      // Check if user can save more job descriptions
+      const { data: usageCheck, error: usageError } = await supabase.rpc('can_use_feature', {
+        p_user_id: user.id,
+        p_feature_type: 'job_descriptions'
+      });
+
+      if (usageError) {
+        console.error('Error checking usage limits:', usageError);
+        toast({
+          title: "Error",
+          description: "Unable to verify usage limits. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const canUse = usageCheck[0];
+      if (!canUse.can_use) {
+        toast({
+          title: "Monthly Limit Reached",
+          description: `You have reached your monthly limit of job description saves. You have used ${canUse.current_usage} saves this month.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       let fileUrl: string | undefined;
 
       if (file) {
@@ -175,6 +201,17 @@ const UploadJobPage: React.FC = () => {
         });
 
       if (error) throw error;
+
+      // Increment usage count
+      try {
+        await supabase.rpc('increment_feature_usage', {
+          p_user_id: user.id,
+          p_feature_type: 'job_descriptions'
+        });
+      } catch (usageIncrementError) {
+        console.error('Error incrementing usage count:', usageIncrementError);
+        // Don't fail the entire operation if usage tracking fails
+      }
 
       toast({
         title: "Saved Successfully",

@@ -15,6 +15,7 @@ import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
+import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
 
 interface Resume {
   id: string;
@@ -321,6 +322,9 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
         </div>
+
+        {/* Usage Dashboard */}
+        <UsageDashboard />
 
         {/* AI Resume Optimizer Section */}
         <div className="space-y-4">
