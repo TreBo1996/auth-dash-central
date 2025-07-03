@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
 import { parseResumeContent } from '../utils/parseResumeContent';
@@ -41,15 +40,15 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
     <div 
       className="bg-white font-helvetica text-black leading-normal w-full max-w-4xl mx-auto p-12"
       style={{ 
-        fontSize: '10px',
-        lineHeight: '14px',
+        fontSize: '12px',
+        lineHeight: '16px',
         fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
         minHeight: '800px'
       }}
     >
       {/* Header */}
       <div className="text-center mb-6">
-        {/* Full Name - 22pt, Bold, ALL CAPS, Centered */}
+        {/* Full Name - 22pt, Bold, ALL CAPS, Centered - UNCHANGED */}
         <h1 
           className="font-bold uppercase text-center mb-0"
           style={{ 
@@ -63,7 +62,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           {parsedData.name}
         </h1>
         
-        {/* Desired Role - 11pt, Bold, Small-Caps, Centered, 2pt letter-spacing */}
+        {/* Desired Role - 11pt, Bold, Small-Caps, Centered, 2pt letter-spacing - UNCHANGED */}
         <div 
           className="font-bold uppercase text-center"
           style={{ 
@@ -88,11 +87,11 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           }}
         ></div>
         
-        {/* Contact Row - single line, centered, 9pt Regular */}
+        {/* Contact Row - single line, centered, 11pt Regular (was 9pt) */}
         <div 
           className="text-center"
           style={{ 
-            fontSize: '9px',
+            fontSize: '11px',
             fontWeight: 'normal',
             textAlign: 'center'
           }}
@@ -103,14 +102,14 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
         </div>
       </div>
 
-      {/* Professional Summary - 10pt Italic, 14pt leading, centered */}
+      {/* Professional Summary - 12pt Italic, 16pt leading, centered (was 10pt/14pt) */}
       {parsedData.summary && (
         <div 
           className="mb-6 text-center italic mx-auto"
           style={{ 
             marginTop: '12px',
-            fontSize: '10px',
-            lineHeight: '14px',
+            fontSize: '12px',
+            lineHeight: '16px',
             maxWidth: '100%',
             margin: '12px auto 24px auto',
             textAlign: 'center'
@@ -123,12 +122,12 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
       {/* Skills Section */}
       {parsedData.skills.length > 0 && (
         <div className="mb-6">
-          {/* Section Heading */}
+          {/* Section Heading - 13pt (was 11pt) */}
           <div className="mb-2">
             <h2 
               className="font-bold uppercase text-center"
               style={{ 
-                fontSize: '11px',
+                fontSize: '13px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
@@ -153,7 +152,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                     key={index}
                     className="flex items-start pl-4"
                     style={{ 
-                      fontSize: '9px'
+                      fontSize: '11px'
                     }}
                   >
                     <span className="mr-2 -ml-4">▪</span>
@@ -167,7 +166,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                     key={index}
                     className="flex items-start pl-4"
                     style={{ 
-                      fontSize: '9px'
+                      fontSize: '11px'
                     }}
                   >
                     <span className="mr-2 -ml-4">▪</span>
@@ -183,12 +182,12 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
       {/* Experience Section */}
       {parsedData.experience.length > 0 && (
         <div className="mb-6">
-          {/* Section Heading */}
+          {/* Section Heading - 13pt (was 11pt) */}
           <div className="mb-2">
             <h2 
               className="font-bold uppercase text-center"
               style={{ 
-                fontSize: '11px',
+                fontSize: '13px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
@@ -207,12 +206,12 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
           <div className="space-y-4 mt-2">
             {parsedData.experience.map((exp, index) => (
               <div key={index} className="mb-4 job-entry">
-                {/* Job Title and Date */}
+                {/* Job Title and Date - 12pt (was 10pt) */}
                 <div className="flex justify-between items-baseline mb-0">
                   <h3 
                     className="font-bold uppercase"
                     style={{ 
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: 'bold'
                     }}
                   >
@@ -220,7 +219,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   </h3>
                   <span 
                     style={{ 
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: 'normal'
                     }}
                   >
@@ -228,11 +227,11 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   </span>
                 </div>
                 
-                {/* Company/Location */}
+                {/* Company/Location - 12pt (was 10pt) */}
                 <p 
                   className="italic mb-1"
                   style={{ 
-                    fontSize: '10px',
+                    fontSize: '12px',
                     fontStyle: 'italic',
                     marginBottom: '2px'
                   }}
@@ -240,7 +239,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   {exp.company}
                 </p>
                 
-                {/* Bullets */}
+                {/* Bullets - 11pt (was 9pt) */}
                 {exp.bullets.length > 0 && (
                   <ul className="space-y-1 pl-4">
                     {exp.bullets.map((bullet, bulletIndex) => (
@@ -248,7 +247,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                         key={bulletIndex}
                         className="flex items-start"
                         style={{ 
-                          fontSize: '9px',
+                          fontSize: '11px',
                           marginBottom: '4px'
                         }}
                       >
@@ -267,12 +266,12 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
       {/* Education Section */}
       {parsedData.education.length > 0 && (
         <div className="mb-6">
-          {/* Section Heading */}
+          {/* Section Heading - 13pt (was 11pt) */}
           <div className="mb-2">
             <h2 
               className="font-bold uppercase text-center"
               style={{ 
-                fontSize: '11px',
+                fontSize: '13px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
@@ -295,7 +294,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   <h3 
                     className="font-bold"
                     style={{ 
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: 'bold'
                     }}
                   >
@@ -303,7 +302,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   </h3>
                   <span 
                     style={{ 
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: 'normal'
                     }}
                   >
@@ -312,7 +311,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                 </div>
                 <p 
                   style={{ 
-                    fontSize: '10px',
+                    fontSize: '12px',
                     fontWeight: 'normal'
                   }}
                 >
@@ -327,12 +326,12 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
       {/* Certifications Section */}
       {parsedData.certifications && parsedData.certifications.length > 0 && (
         <div className="mb-6">
-          {/* Section Heading */}
+          {/* Section Heading - 13pt (was 11pt) */}
           <div className="mb-2">
             <h2 
               className="font-bold uppercase text-center"
               style={{ 
-                fontSize: '11px',
+                fontSize: '13px',
                 fontWeight: 'bold',
                 letterSpacing: '1px',
                 marginTop: '12px',
@@ -355,7 +354,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   <h3 
                     className="font-bold"
                     style={{ 
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: 'bold'
                     }}
                   >
@@ -363,7 +362,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                   </h3>
                   <span 
                     style={{ 
-                      fontSize: '10px',
+                      fontSize: '12px',
                       fontWeight: 'normal'
                     }}
                   >
@@ -372,7 +371,7 @@ export const ClassicTemplate: React.FC<ClassicTemplateProps> = ({ resumeData }) 
                 </div>
                 <p 
                   style={{ 
-                    fontSize: '10px',
+                    fontSize: '12px',
                     fontWeight: 'normal'
                   }}
                 >
