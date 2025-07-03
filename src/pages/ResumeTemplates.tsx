@@ -212,7 +212,7 @@ const ResumeTemplates: React.FC = () => {
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
-            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF}>
+            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700">
               <Download className="h-4 w-4 mr-2" />
               {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
             </Button>
