@@ -36,8 +36,8 @@ const getPDFOptions = (templateId: string) => {
   };
 };
 
-// Clean HTML for PDF generation with template-specific styles
-const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement => {
+// Clean HTML for PDF generation with template-specific styles and color scheme
+const cleanHTMLForPDF = (element: HTMLElement, templateId: string, colorScheme?: any): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
   // Remove interactive elements
@@ -133,8 +133,39 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
     `
   };
 
-  // Insert template-specific styles
-  const styles = templateStyles[templateId as keyof typeof templateStyles] || templateStyles['modern-ats'];
+  // Insert template-specific styles with color scheme
+  let styles = templateStyles[templateId as keyof typeof templateStyles] || templateStyles['modern-ats'];
+  
+  // Apply color scheme if provided
+  if (colorScheme?.colors) {
+    const colorVariables = `
+      <style>
+        :root {
+          --primary-color: ${colorScheme.colors.primary};
+          --secondary-color: ${colorScheme.colors.secondary};
+          --accent-color: ${colorScheme.colors.accent};
+          --text-color: ${colorScheme.colors.text};
+          --text-secondary-color: ${colorScheme.colors.textSecondary};
+          --background-color: ${colorScheme.colors.background};
+          --border-color: ${colorScheme.colors.border};
+        }
+        * { 
+          color: ${colorScheme.colors.text} !important; 
+        }
+        h1, h2, h3, .font-bold { 
+          color: ${colorScheme.colors.primary} !important; 
+        }
+        .text-secondary { 
+          color: ${colorScheme.colors.secondary} !important; 
+        }
+        .border-b { 
+          border-color: ${colorScheme.colors.border} !important; 
+        }
+      </style>
+    `;
+    styles = colorVariables + styles;
+  }
+  
   clonedElement.insertAdjacentHTML('afterbegin', styles);
   
   return clonedElement;
@@ -159,7 +190,7 @@ export const generateNewProfessionalPDF = async (
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Clean and prepare HTML for PDF
-    const cleanedHTML = cleanHTMLForPDF(resumeElement, templateId);
+    const cleanedHTML = cleanHTMLForPDF(resumeElement, templateId, selectedColorScheme);
     
     // Generate PDF with template-specific options
     const options = getPDFOptions(templateId);

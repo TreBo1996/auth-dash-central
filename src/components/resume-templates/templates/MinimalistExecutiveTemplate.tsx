@@ -88,8 +88,8 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
               className="text-lg font-bold tracking-wider pb-2"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary,
-                borderBottom: `1px solid ${config.colors.border}`
+                color: colors.primary,
+                borderBottom: `1px solid ${colors.border}`
               }}
             >
               CORE COMPETENCIES
@@ -100,9 +100,9 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
               <div 
                 key={index} 
                 className="flex items-center"
-                style={{ color: config.colors.text }}
+                style={{ color: colors.text }}
               >
-                <span className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: config.colors.accent }}></span>
+                <span className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: colors.accent }}></span>
                 {skill}
               </div>
             ))}
@@ -118,8 +118,8 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
               className="text-lg font-bold tracking-wider pb-2"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary,
-                borderBottom: `1px solid ${config.colors.border}`
+                color: colors.primary,
+                borderBottom: `1px solid ${colors.border}`
               }}
             >
               PROFESSIONAL EXPERIENCE
@@ -133,20 +133,20 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                   <div>
                     <h3 
                       className="text-base font-bold"
-                      style={{ color: config.colors.primary }}
+                      style={{ color: colors.primary }}
                     >
                       {exp.title.toUpperCase()}
                     </h3>
                     <h4 
                       className="text-base font-medium"
-                      style={{ color: config.colors.secondary }}
+                      style={{ color: colors.secondary }}
                     >
                       {exp.company}
                     </h4>
                   </div>
                   <div 
                     className="job-meta text-sm font-medium"
-                    style={{ color: config.colors.textSecondary }}
+                    style={{ color: colors.textSecondary }}
                   >
                     {exp.duration}
                   </div>
@@ -157,9 +157,9 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                     <li 
                       key={bulletIndex} 
                       className="bullet-point flex items-start"
-                      style={{ color: config.colors.text }}
+                      style={{ color: colors.text }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: config.colors.accent }}></span>
+                      <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: colors.accent }}></span>
                       <span>{bullet}</span>
                     </li>
                   ))}
@@ -178,8 +178,8 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
               className="text-lg font-bold tracking-wider pb-2"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary,
-                borderBottom: `1px solid ${config.colors.border}`
+                color: colors.primary,
+                borderBottom: `1px solid ${colors.border}`
               }}
             >
               EDUCATION
@@ -192,15 +192,15 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                 <div>
                   <h3 
                     className="font-bold"
-                    style={{ color: config.colors.primary }}
+                    style={{ color: colors.primary }}
                   >
                     {edu.degree}
                   </h3>
-                  <p style={{ color: config.colors.secondary }}>{edu.school}</p>
+                  <p style={{ color: colors.secondary }}>{edu.school}</p>
                 </div>
                 <div 
                   className="font-medium"
-                  style={{ color: config.colors.textSecondary }}
+                  style={{ color: colors.textSecondary }}
                 >
                   {edu.year}
                 </div>
@@ -218,8 +218,8 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
               className="text-lg font-bold tracking-wider pb-2"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary,
-                borderBottom: `1px solid ${config.colors.border}`
+                color: colors.primary,
+                borderBottom: `1px solid ${colors.border}`
               }}
             >
               CERTIFICATIONS
@@ -232,15 +232,15 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                 <div>
                   <h3 
                     className="font-bold"
-                    style={{ color: config.colors.primary }}
+                    style={{ color: colors.primary }}
                   >
                     {cert.name}
                   </h3>
-                  <p style={{ color: config.colors.secondary }}>{cert.issuer}</p>
+                  <p style={{ color: colors.secondary }}>{cert.issuer}</p>
                 </div>
                 <div 
                   className="font-medium"
-                  style={{ color: config.colors.textSecondary }}
+                  style={{ color: colors.textSecondary }}
                 >
                   {cert.year}
                 </div>

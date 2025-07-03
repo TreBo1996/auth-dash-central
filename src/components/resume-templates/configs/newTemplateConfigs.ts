@@ -61,6 +61,19 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
     },
     colorSchemes: [
       {
+        id: 'classic-monochrome',
+        name: 'Classic Monochrome',
+        colors: {
+          primary: 'hsl(0, 0%, 10%)',
+          secondary: 'hsl(0, 0%, 30%)',
+          accent: 'hsl(0, 0%, 20%)',
+          text: 'hsl(0, 0%, 10%)',
+          textSecondary: 'hsl(0, 0%, 40%)',
+          background: 'hsl(0, 0%, 100%)',
+          border: 'hsl(0, 0%, 75%)'
+        }
+      },
+      {
         id: 'charcoal',
         name: 'Charcoal Professional',
         colors: {
@@ -100,7 +113,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
         }
       }
     ],
-    defaultColorScheme: 'charcoal',
+    defaultColorScheme: 'classic-monochrome',
     fonts: {
       heading: 'Georgia, "Times New Roman", serif',
       body: 'Inter, "Helvetica Neue", sans-serif'
@@ -129,6 +142,19 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
       border: 'hsl(210, 15%, 85%)'
     },
     colorSchemes: [
+      {
+        id: 'classic-monochrome',
+        name: 'Classic Monochrome',
+        colors: {
+          primary: 'hsl(0, 0%, 10%)',
+          secondary: 'hsl(0, 0%, 30%)',
+          accent: 'hsl(0, 0%, 20%)',
+          text: 'hsl(0, 0%, 10%)',
+          textSecondary: 'hsl(0, 0%, 40%)',
+          background: 'hsl(0, 0%, 100%)',
+          border: 'hsl(0, 0%, 75%)'
+        }
+      },
       {
         id: 'professional-blue',
         name: 'Professional Blue',
@@ -169,7 +195,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
         }
       }
     ],
-    defaultColorScheme: 'professional-blue',
+    defaultColorScheme: 'classic-monochrome',
     fonts: {
       heading: 'Inter, "Helvetica Neue", sans-serif',
       body: 'Inter, "Helvetica Neue", sans-serif'
@@ -198,6 +224,19 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
       border: 'hsl(260, 20%, 85%)'
     },
     colorSchemes: [
+      {
+        id: 'classic-monochrome',
+        name: 'Classic Monochrome',
+        colors: {
+          primary: 'hsl(0, 0%, 10%)',
+          secondary: 'hsl(0, 0%, 30%)',
+          accent: 'hsl(0, 0%, 20%)',
+          text: 'hsl(0, 0%, 10%)',
+          textSecondary: 'hsl(0, 0%, 40%)',
+          background: 'hsl(0, 0%, 100%)',
+          border: 'hsl(0, 0%, 75%)'
+        }
+      },
       {
         id: 'creative-purple',
         name: 'Creative Purple',
@@ -238,7 +277,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
         }
       }
     ],
-    defaultColorScheme: 'creative-purple',
+    defaultColorScheme: 'classic-monochrome',
     fonts: {
       heading: 'Montserrat, "Arial", sans-serif',
       body: 'Inter, "Helvetica Neue", sans-serif'
@@ -268,6 +307,19 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
     },
     colorSchemes: [
       {
+        id: 'classic-monochrome',
+        name: 'Classic Monochrome',
+        colors: {
+          primary: 'hsl(0, 0%, 10%)',
+          secondary: 'hsl(0, 0%, 30%)',
+          accent: 'hsl(0, 0%, 20%)',
+          text: 'hsl(0, 0%, 10%)',
+          textSecondary: 'hsl(0, 0%, 40%)',
+          background: 'hsl(0, 0%, 100%)',
+          border: 'hsl(0, 0%, 75%)'
+        }
+      },
+      {
         id: 'traditional-black',
         name: 'Traditional Black',
         colors: {
@@ -294,7 +346,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
         }
       }
     ],
-    defaultColorScheme: 'traditional-black',
+    defaultColorScheme: 'classic-monochrome',
     fonts: {
       heading: '"Times New Roman", Georgia, serif',
       body: '"Times New Roman", Georgia, serif'
@@ -323,6 +375,19 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
       border: 'hsl(195, 20%, 80%)'
     },
     colorSchemes: [
+      {
+        id: 'classic-monochrome',
+        name: 'Classic Monochrome',
+        colors: {
+          primary: 'hsl(0, 0%, 10%)',
+          secondary: 'hsl(0, 0%, 30%)',
+          accent: 'hsl(0, 0%, 20%)',
+          text: 'hsl(0, 0%, 10%)',
+          textSecondary: 'hsl(0, 0%, 40%)',
+          background: 'hsl(0, 0%, 100%)',
+          border: 'hsl(0, 0%, 75%)'
+        }
+      },
       {
         id: 'tech-teal',
         name: 'Tech Teal',
@@ -363,7 +428,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
         }
       }
     ],
-    defaultColorScheme: 'tech-teal',
+    defaultColorScheme: 'classic-monochrome',
     fonts: {
       heading: 'Inter, "Helvetica Neue", sans-serif',
       body: 'Inter, "Helvetica Neue", sans-serif',
