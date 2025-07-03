@@ -1,22 +1,25 @@
 import React from 'react';
 import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
-import { newTemplateConfigs } from '../configs/newTemplateConfigs';
+import { newTemplateConfigs, ColorScheme } from '../configs/newTemplateConfigs';
 
 interface MinimalistExecutiveTemplateProps {
   resumeData: StructuredResumeData;
+  colorScheme?: ColorScheme;
 }
 
 export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplateProps> = ({
-  resumeData
+  resumeData,
+  colorScheme
 }) => {
   const config = newTemplateConfigs['minimalist-executive'];
+  const colors = colorScheme?.colors || config.colors;
 
   return (
     <div 
       className="w-full max-w-[8.5in] mx-auto bg-white p-12 font-serif text-sm leading-relaxed"
       style={{
         fontFamily: config.fonts.body,
-        color: config.colors.text,
+        color: colors.text,
         minHeight: '11in'
       }}
     >
@@ -26,7 +29,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
           className="text-3xl font-bold mb-3 tracking-wide"
           style={{ 
             fontFamily: config.fonts.heading,
-            color: config.colors.primary
+            color: colors.primary
           }}
         >
           {resumeData.name.toUpperCase()}
@@ -35,7 +38,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
         {resumeData.experience.length > 0 && (
           <h2 
             className="text-lg mb-4 font-medium"
-            style={{ color: config.colors.secondary }}
+            style={{ color: colors.secondary }}
           >
             {resumeData.experience[0].title}
           </h2>
@@ -43,7 +46,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
         
         <div 
           className="text-sm flex justify-center items-center space-x-6"
-          style={{ color: config.colors.textSecondary }}
+          style={{ color: colors.textSecondary }}
         >
           {resumeData.phone && <span>{resumeData.phone}</span>}
           {resumeData.email && <span>{resumeData.email}</span>}
@@ -59,8 +62,8 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
               className="text-lg font-bold tracking-wider pb-2"
               style={{ 
                 fontFamily: config.fonts.heading,
-                color: config.colors.primary,
-                borderBottom: `1px solid ${config.colors.border}`
+                color: colors.primary,
+                borderBottom: `1px solid ${colors.border}`
               }}
             >
               EXECUTIVE SUMMARY
@@ -69,7 +72,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
           <div className="max-w-4xl mx-auto">
             <p 
               className="text-center leading-relaxed"
-              style={{ color: config.colors.text }}
+              style={{ color: colors.text }}
             >
               {resumeData.summary}
             </p>

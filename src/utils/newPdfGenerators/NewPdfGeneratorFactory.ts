@@ -143,7 +143,8 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string): HTMLElement 
 export const generateNewProfessionalPDF = async (
   templateId: string, 
   resumeData: StructuredResumeData, 
-  fileName: string
+  fileName: string,
+  selectedColorScheme?: string
 ): Promise<void> => {
   console.log('generateNewProfessionalPDF: Starting generation for:', templateId);
   

@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
+import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
 import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
@@ -36,6 +37,7 @@ const ResumeTemplates: React.FC = () => {
   } = useToast();
   const [optimizedResume, setOptimizedResume] = useState<OptimizedResume | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
+  const [selectedColorScheme, setSelectedColorScheme] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -90,6 +92,12 @@ const ResumeTemplates: React.FC = () => {
         jobTitle: data.job_descriptions?.title
       });
       setOptimizedResume(data);
+      
+      // Set default color scheme for template
+      const templateConfig = newTemplateConfigs[selectedTemplate];
+      if (templateConfig && !selectedColorScheme) {
+        setSelectedColorScheme(templateConfig.defaultColorScheme);
+      }
     } catch (error) {
       console.error('ResumeTemplates: Error in fetchOptimizedResume:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to load resume data';
@@ -148,7 +156,7 @@ const ResumeTemplates: React.FC = () => {
         console.log('Fallback to text parsing');
         resumeData = parseResumeContent(optimizedResume.generated_text);
       }
-      await generateNewProfessionalPDF(selectedTemplate, resumeData, fileName);
+      await generateNewProfessionalPDF(selectedTemplate, resumeData, fileName, selectedColorScheme);
       toast({
         title: "Success",
         description: "PDF downloaded successfully"
@@ -242,9 +250,14 @@ const ResumeTemplates: React.FC = () => {
               </div>
               <Card className="shadow-lg">
                 <CardContent className="p-4">
-                  <div className="bg-white border rounded-lg shadow-sm">
-                    <ResumePreview template={selectedTemplate} resumeData={optimizedResume.generated_text} optimizedResumeId={resumeId} />
-                  </div>
+                <div className="bg-white border rounded-lg shadow-sm">
+                  <ResumePreview 
+                    template={selectedTemplate} 
+                    resumeData={optimizedResume.generated_text} 
+                    optimizedResumeId={resumeId}
+                    selectedColorScheme={selectedColorScheme}
+                  />
+                </div>
                 </CardContent>
               </Card>
             </div>
@@ -252,12 +265,32 @@ const ResumeTemplates: React.FC = () => {
 
           {/* Desktop Template Selector - Hidden on mobile */}
           <div className="hidden lg:block lg:col-span-1 md:block md:col-span-1">
-            <Card className="h-fit sticky top-24">
-              <CardContent className="p-4 px-[4px]">
-                <h3 className="font-semibold mb-4 text-center">Templates</h3>
-                <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={setSelectedTemplate} isMobile={false} />
-              </CardContent>
-            </Card>
+            <div className="space-y-4 sticky top-24">
+              <Card className="h-fit">
+                <CardContent className="p-4 px-[4px]">
+                  <h3 className="font-semibold mb-4 text-center">Templates</h3>
+                  <TemplateSelector 
+                    selectedTemplate={selectedTemplate} 
+                    onTemplateSelect={(templateId) => {
+                      setSelectedTemplate(templateId);
+                      const config = newTemplateConfigs[templateId];
+                      setSelectedColorScheme(config.defaultColorScheme);
+                    }} 
+                    isMobile={false} 
+                  />
+                </CardContent>
+              </Card>
+              
+              <Card className="h-fit">
+                <CardContent className="p-4">
+                  <ColorSchemeSelector
+                    colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes}
+                    selectedScheme={selectedColorScheme}
+                    onSchemeSelect={setSelectedColorScheme}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

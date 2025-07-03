@@ -7,17 +7,20 @@ import { AcademicResearchTemplate } from './templates/AcademicResearchTemplate';
 import { TechnicalEngineeringTemplate } from './templates/TechnicalEngineeringTemplate';
 import { fetchStructuredResumeData, StructuredResumeData } from './utils/fetchStructuredResumeData';
 import { parseResumeContent } from './utils/parseResumeContent';
+import { newTemplateConfigs } from './configs/newTemplateConfigs';
 
 interface ResumePreviewProps {
   template: string;
   resumeData: string;
   optimizedResumeId?: string;
+  selectedColorScheme?: string;
 }
 
 export const ResumePreview: React.FC<ResumePreviewProps> = ({
   template,
   resumeData,
-  optimizedResumeId
+  optimizedResumeId,
+  selectedColorScheme
 }) => {
   const [structuredData, setStructuredData] = useState<StructuredResumeData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -52,7 +55,14 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
   const renderTemplate = () => {
     // Use structured data if available, otherwise fall back to text parsing
     const dataToUse = structuredData || parseResumeContent(resumeData);
-    const props = { resumeData: dataToUse };
+    
+    // Get the selected color scheme
+    const templateConfig = newTemplateConfigs[template];
+    const colorScheme = selectedColorScheme 
+      ? templateConfig.colorSchemes.find(scheme => scheme.id === selectedColorScheme)
+      : templateConfig.colorSchemes.find(scheme => scheme.id === templateConfig.defaultColorScheme);
+    
+    const props = { resumeData: dataToUse, colorScheme };
     
     switch (template) {
       case 'minimalist-executive':

@@ -1,22 +1,25 @@
 import React from 'react';
 import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
-import { newTemplateConfigs } from '../configs/newTemplateConfigs';
+import { newTemplateConfigs, ColorScheme } from '../configs/newTemplateConfigs';
 
 interface ModernATSTemplateProps {
   resumeData: StructuredResumeData;
+  colorScheme?: ColorScheme;
 }
 
 export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
-  resumeData
+  resumeData,
+  colorScheme
 }) => {
   const config = newTemplateConfigs['modern-ats'];
+  const colors = colorScheme?.colors || config.colors;
 
   return (
     <div 
       className="w-full max-w-[8.5in] mx-auto bg-white p-12 text-sm leading-normal"
       style={{
         fontFamily: config.fonts.body,
-        color: config.colors.text,
+        color: colors.text,
         minHeight: '11in'
       }}
     >

@@ -1,40 +1,45 @@
 import React from 'react';
 import { StructuredResumeData } from '../utils/fetchStructuredResumeData';
-import { newTemplateConfigs } from '../configs/newTemplateConfigs';
+import { newTemplateConfigs, ColorScheme } from '../configs/newTemplateConfigs';
+
 interface CreativeProfessionalTemplateProps {
   resumeData: StructuredResumeData;
+  colorScheme?: ColorScheme;
 }
+
 export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplateProps> = ({
-  resumeData
+  resumeData,
+  colorScheme
 }) => {
   const config = newTemplateConfigs['creative-professional'];
+  const colors = colorScheme?.colors || config.colors;
   return <div className="w-full max-w-[8.5in] mx-auto bg-white p-12 text-sm leading-normal" style={{
     fontFamily: config.fonts.body,
-    color: config.colors.text,
+    color: colors.text,
     minHeight: '11in'
   }}>
       {/* Header - Creative Modern Style */}
       <header className="mb-8 relative">
         <div className="absolute left-0 top-0 w-2 h-full rounded" style={{
-        backgroundColor: config.colors.accent
+        backgroundColor: colors.accent
       }}></div>
         
         <div className="ml-6">
           <h1 className="text-3xl font-bold mb-2" style={{
           fontFamily: config.fonts.heading,
-          color: config.colors.primary
+          color: colors.primary
         }}>
             {resumeData.name}
           </h1>
           
           {resumeData.experience.length > 0 && <h2 className="text-lg mb-4 font-medium" style={{
-          color: config.colors.accent
+          color: colors.accent
         }}>
               {resumeData.experience[0].title}
             </h2>}
           
           <div className="flex flex-wrap gap-4 text-sm" style={{
-          color: config.colors.textSecondary
+          color: colors.textSecondary
         }}>
             {resumeData.phone && <span>{resumeData.phone}</span>}
             {resumeData.email && <span>{resumeData.email}</span>}
