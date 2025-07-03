@@ -108,94 +108,30 @@ const waitForRender = (ms: number = 500) => {
 };
 
 export const generatePDF = async (templateId: string, resumeContent: string, fileName: string, optimizedResumeId?: string) => {
-  console.log('PDF Generation: Starting PDF generation for template:', templateId);
+  console.log('PDF Generation: Starting for template:', templateId);
   
-  // Use professional PDF generation for supported templates
-  const professionalTemplates = ['classic', 'modern'];
-  if (professionalTemplates.includes(templateId)) {
-    try {
-      console.log('PDF Generation: Using professional PDF generator for template:', templateId);
-      
-      let resumeData: any = resumeContent;
-      
-      // Try to fetch structured data if available
-      if (optimizedResumeId) {
-        try {
-          resumeData = await fetchStructuredResumeData(optimizedResumeId);
-          console.log('PDF Generation: Using structured data for professional PDF');
-        } catch (error) {
-          console.log('PDF Generation: Fallback to text parsing for professional PDF');
-          resumeData = parseResumeContent(resumeContent);
-        }
-      } else {
+  try {
+    // Use professional PDF generation for all templates now
+    let resumeData: any = resumeContent;
+    
+    if (optimizedResumeId) {
+      try {
+        resumeData = await fetchStructuredResumeData(optimizedResumeId);
+      } catch (error) {
+        console.log('Fallback to text parsing');
         resumeData = parseResumeContent(resumeContent);
       }
-      
-      await generateProfessionalPDF(templateId, resumeData, fileName);
-      return;
-    } catch (error) {
-      console.error('PDF Generation: Professional PDF generation failed, falling back to HTML2PDF:', error);
-      // Fall through to HTML2PDF generation
+    } else {
+      resumeData = parseResumeContent(resumeContent);
     }
-  }
-  
-  // Fallback to HTML2PDF for other templates or when professional generation fails
-  const resumeElement = document.getElementById('resume-preview');
-  if (!resumeElement) {
-    console.error('PDF Generation: Resume preview element not found');
-    throw new Error('Resume content not found');
-  }
-
-  // Check if element has content
-  if (!resumeElement.innerHTML.trim()) {
-    console.error('PDF Generation: Resume element is empty');
-    throw new Error('Resume content is empty');
-  }
-
-  try {
-    console.log('PDF Generation: Element dimensions:', {
-      width: resumeElement.offsetWidth,
-      height: resumeElement.offsetHeight,
-      scrollWidth: resumeElement.scrollWidth,
-      scrollHeight: resumeElement.scrollHeight
-    });
-
-    // Wait for rendering to complete
-    await waitForRender();
     
-    // Clean the HTML content with simplified page break controls
-    const cleanedElement = cleanHTMLForPDF(resumeElement);
+    const { generateProfessionalPDF } = await import('./unifiedPdfGenerator');
+    await generateProfessionalPDF(templateId, resumeData, fileName);
     
-    // Configure PDF options with the provided filename
-    const options = {
-      ...getPDFOptions(),
-      filename: fileName || 'resume.pdf'
-    };
-    
-    console.log('PDF Generation: Generating PDF with options:', options);
-    
-    // Generate and download the PDF
-    const worker = html2pdf()
-      .set(options)
-      .from(cleanedElement);
-    
-    await worker.save();
-    
-    console.log('PDF Generation: Successfully downloaded PDF');
-    
+    console.log('PDF Generation: Success');
   } catch (error) {
-    console.error('PDF Generation: Error generating PDF:', error);
-    
-    // Provide more specific error messages
-    if (error instanceof Error) {
-      if (error.message.includes('Canvas')) {
-        throw new Error('Failed to render PDF content. Please try again.');
-      } else if (error.message.includes('jsPDF')) {
-        throw new Error('Failed to generate PDF file. Please check your content and try again.');
-      }
-    }
-    
-    throw new Error('Failed to generate PDF. Please try again.');
+    console.error('PDF Generation Error:', error);
+    throw new Error('Failed to generate PDF');
   }
 };
 
