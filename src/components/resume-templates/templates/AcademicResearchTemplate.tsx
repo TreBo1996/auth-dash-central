@@ -37,12 +37,7 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
 
       {/* Research Interests / Summary */}
       {resumeData.summary && <section className="mb-8">
-          <h2 className="text-base font-bold mb-3 text-center" style={{
-        fontFamily: config.fonts.heading,
-        color: config.colors.primary
-      }}>
-            RESEARCH INTERESTS
-          </h2>
+          
           <p className="text-justify leading-relaxed" style={{
         color: config.colors.text
       }}>
@@ -130,9 +125,7 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
         fontFamily: config.fonts.heading,
         color: config.colors.primary,
         borderColor: config.colors.border
-      }}>
-            RESEARCH SKILLS & EXPERTISE
-          </h2>
+      }}>SKILLS</h2>
           
           <div className="space-y-4">
             {resumeData.skills.map((skillGroup, groupIndex) => <div key={groupIndex}>
@@ -152,34 +145,14 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
 
       {/* Publications Section (Placeholder) */}
       <section className="mb-8">
-        <h2 className="text-base font-bold mb-4 text-center border-b pb-2" style={{
-        fontFamily: config.fonts.heading,
-        color: config.colors.primary,
-        borderColor: config.colors.border
-      }}>
-          PUBLICATIONS
-        </h2>
-        <p className="italic text-center" style={{
-        color: config.colors.textSecondary
-      }}>
-          Publications section would be populated from structured academic data
-        </p>
+        
+        
       </section>
 
       {/* Conference Presentations (Placeholder) */}
       <section className="mb-8">
-        <h2 className="text-base font-bold mb-4 text-center border-b pb-2" style={{
-        fontFamily: config.fonts.heading,
-        color: config.colors.primary,
-        borderColor: config.colors.border
-      }}>
-          CONFERENCE PRESENTATIONS
-        </h2>
-        <p className="italic text-center" style={{
-        color: config.colors.textSecondary
-      }}>
-          Conference presentations would be populated from structured academic data
-        </p>
+        
+        
       </section>
 
       {/* Certifications & Professional Development */}
@@ -217,11 +190,7 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
 
       {/* Footer for multi-page support */}
       <footer className="mt-8 pt-4 border-t border-gray-200 text-center">
-        <p className="text-xs" style={{
-        color: config.colors.textSecondary
-      }}>
-          Curriculum Vitae - {resumeData.name}
-        </p>
+        
       </footer>
     </div>;
 };
