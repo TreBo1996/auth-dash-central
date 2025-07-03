@@ -12,6 +12,7 @@ interface RoleContextType {
   activeRole: AppRole | null;
   preferredRole: AppRole | null;
   isLoadingRoles: boolean;
+  isInitializing: boolean;
   switchRole: (role: AppRole) => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   canSwitchRoles: boolean;
@@ -39,49 +40,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [activeRole, setActiveRole] = useState<AppRole | null>(null);
   const [preferredRole, setPreferredRole] = useState<AppRole | null>(null);
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
-  const [navigationComplete, setNavigationComplete] = useState(false);
-
-  // Memoize navigation logic with improved conditions
-  const handleRoleBasedNavigation = useCallback((role: AppRole, currentPath: string) => {
-    // Skip navigation if already completed for this auth session
-    if (navigationComplete) {
-      console.log('Navigation already completed for this session');
-      return;
-    }
-
-    const isEmployerPath = currentPath.startsWith('/employer');
-    const isJobSeekerPath = currentPath === '/dashboard' || (!isEmployerPath && currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth');
-
-    console.log('Role navigation check:', { 
-      role, 
-      currentPath, 
-      isEmployerPath, 
-      isJobSeekerPath,
-      navigationComplete 
-    });
-
-    // Navigation logic based on role
-    if (role === 'employer') {
-      if (isJobSeekerPath) {
-        console.log('Redirecting employer user from job seeker path to employer dashboard');
-        navigate('/employer/dashboard', { replace: true });
-        setNavigationComplete(true);
-      }
-    } else if (role === 'job_seeker') {
-      if (isEmployerPath) {
-        console.log('Redirecting job seeker user from employer path to job seeker dashboard');
-        navigate('/dashboard', { replace: true });
-        setNavigationComplete(true);
-      }
-    }
-  }, [navigate, navigationComplete]);
-
-  // Reset navigation state when user changes
-  useEffect(() => {
-    if (!user) {
-      setNavigationComplete(false);
-    }
-  }, [user]);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   // Load user roles and preferences
   useEffect(() => {
@@ -91,12 +51,14 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         setActiveRole(null);
         setPreferredRole(null);
         setIsLoadingRoles(false);
-        setNavigationComplete(false);
+        setIsInitializing(false);
+        setHasNavigated(false);
         return;
       }
 
       try {
         console.log('Loading roles for user:', user.id);
+        setIsLoadingRoles(true);
 
         // Get user roles
         const { data: rolesData, error: rolesError } = await supabase
@@ -145,10 +107,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         const determinedRole = preferred && roles.includes(preferred) ? preferred : roles[0] || 'job_seeker';
         setActiveRole(determinedRole);
 
-        console.log('Roles loaded:', { roles, preferred, determinedRole, currentPath: location.pathname });
-
-        // Handle navigation after role is determined and roles are loaded
-        handleRoleBasedNavigation(determinedRole, location.pathname);
+        console.log('Roles loaded:', { roles, preferred, determinedRole });
 
       } catch (error) {
         console.error('Error loading user roles:', error);
@@ -158,11 +117,52 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         setPreferredRole('job_seeker');
       } finally {
         setIsLoadingRoles(false);
+        // Add a small delay to ensure everything is ready
+        setTimeout(() => {
+          setIsInitializing(false);
+        }, 100);
       }
     };
 
     loadUserRoles();
-  }, [user, handleRoleBasedNavigation, location.pathname]);
+  }, [user]);
+
+  // Handle role-based navigation after roles are loaded
+  useEffect(() => {
+    if (!user || isLoadingRoles || isInitializing || hasNavigated || !activeRole) {
+      return;
+    }
+
+    const currentPath = location.pathname;
+    const isEmployerPath = currentPath.startsWith('/employer');
+    const isJobSeekerPath = currentPath === '/dashboard' || (!isEmployerPath && currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth');
+
+    console.log('Role navigation check:', { 
+      activeRole, 
+      currentPath, 
+      isEmployerPath, 
+      isJobSeekerPath,
+      hasNavigated 
+    });
+
+    // Navigation logic based on role
+    if (activeRole === 'employer' && isJobSeekerPath) {
+      console.log('Redirecting employer user from job seeker path to employer dashboard');
+      navigate('/employer/dashboard', { replace: true });
+      setHasNavigated(true);
+    } else if (activeRole === 'job_seeker' && isEmployerPath) {
+      console.log('Redirecting job seeker user from employer path to job seeker dashboard');
+      navigate('/dashboard', { replace: true });
+      setHasNavigated(true);
+    }
+  }, [activeRole, isLoadingRoles, isInitializing, hasNavigated, location.pathname, navigate, user]);
+
+  // Reset navigation state when user changes
+  useEffect(() => {
+    if (!user) {
+      setHasNavigated(false);
+    }
+  }, [user]);
 
   const switchRole = async (role: AppRole) => {
     if (!user || !userRoles.includes(role)) return;
@@ -180,7 +180,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
       setActiveRole(role);
       setPreferredRole(role);
-      setNavigationComplete(false); // Reset to allow navigation
+      setHasNavigated(false); // Reset to allow navigation
 
       // Navigate to appropriate dashboard
       if (role === 'employer') {
@@ -205,6 +205,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     activeRole,
     preferredRole,
     isLoadingRoles,
+    isInitializing,
     switchRole,
     hasRole,
     canSwitchRoles

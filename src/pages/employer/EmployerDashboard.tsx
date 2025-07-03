@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { EmployerDashboardLayout } from '@/components/layout/EmployerDashboardLayout';
+import { AppLoadingScreen } from '@/components/common/AppLoadingScreen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText, Users, Eye, TrendingUp, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRole } from '@/contexts/RoleContext';
 
 interface DashboardStats {
   activeJobs: number;
@@ -17,6 +18,7 @@ interface DashboardStats {
 
 export const EmployerDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { isLoadingRoles, isInitializing } = useRole();
   const [stats, setStats] = useState<DashboardStats>({
     activeJobs: 0,
     totalApplications: 0,
@@ -25,12 +27,22 @@ export const EmployerDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [hasEmployerProfile, setHasEmployerProfile] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Show loading screen while roles are being determined or data is loading
+  const showLoadingScreen = isLoadingRoles || isInitializing || loading || !dataLoaded;
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (!user) return;
+      // Wait for roles to be fully loaded before proceeding
+      if (!user || isLoadingRoles || isInitializing) {
+        return;
+      }
 
       try {
+        console.log('Loading employer dashboard data...');
+        setLoading(true);
+
         // Check if user has employer profile
         const { data: profileData } = await supabase
           .from('employer_profiles')
@@ -65,6 +77,9 @@ export const EmployerDashboard: React.FC = () => {
             averageApplicationsPerJob: activeJobs > 0 ? Math.round(totalApplications / activeJobs) : 0
           });
         }
+
+        setDataLoaded(true);
+        console.log('Employer dashboard data loaded successfully');
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -73,7 +88,11 @@ export const EmployerDashboard: React.FC = () => {
     };
 
     loadDashboardData();
-  }, [user]);
+  }, [user, isLoadingRoles, isInitializing]);
+
+  if (showLoadingScreen) {
+    return <AppLoadingScreen message="Loading employer dashboard..." />;
+  }
 
   if (!hasEmployerProfile) {
     return (

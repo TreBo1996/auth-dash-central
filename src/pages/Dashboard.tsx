@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { AppLoadingScreen } from '@/components/common/AppLoadingScreen';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
+import { useRole } from '@/contexts/RoleContext';
 
 interface Resume {
   id: string;
@@ -63,11 +65,13 @@ interface OptimizedResume {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { isLoadingRoles, isInitializing } = useRole();
   const [user, setUser] = useState<User | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
   const [optimizedResumes, setOptimizedResumes] = useState<OptimizedResume[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [resumesOpen, setResumesOpen] = useState(true);
   const [jobDescriptionsOpen, setJobDescriptionsOpen] = useState(true);
   const [optimizedResumesOpen, setOptimizedResumesOpen] = useState(true);
@@ -80,11 +84,42 @@ const Dashboard: React.FC = () => {
     toast
   } = useToast();
   useEffect(() => {
-    fetchUserData();
-    fetchResumes();
-    fetchJobDescriptions();
-    fetchOptimizedResumes();
-  }, []);
+    const initializeDashboard = async () => {
+      // Wait for roles to be fully loaded before proceeding
+      if (isLoadingRoles || isInitializing) {
+        return;
+      }
+
+      try {
+        console.log('Initializing dashboard data...');
+        setLoading(true);
+
+        // Fetch all data concurrently
+        await Promise.all([
+          fetchUserData(),
+          fetchResumes(),
+          fetchJobDescriptions(),
+          fetchOptimizedResumes()
+        ]);
+
+        setDataLoaded(true);
+        console.log('Dashboard data loaded successfully');
+      } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard data. Please refresh the page.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeDashboard();
+  }, [isLoadingRoles, isInitializing]);
+  const showLoadingScreen = isLoadingRoles || isInitializing || loading || !dataLoaded;
+
   const fetchUserData = async () => {
     try {
       const {
@@ -269,12 +304,8 @@ const Dashboard: React.FC = () => {
       day: 'numeric'
     });
   };
-  if (loading) {
-    return <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
-      </DashboardLayout>;
+  if (showLoadingScreen) {
+    return <AppLoadingScreen message="Loading your dashboard..." />;
   }
   return <DashboardLayout>
       <div className="space-y-6 md:space-y-8">

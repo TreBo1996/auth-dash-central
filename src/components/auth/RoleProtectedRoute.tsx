@@ -3,7 +3,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { Database } from '@/integrations/supabase/types';
-import { Loader2 } from 'lucide-react';
+import { AppLoadingScreen } from '@/components/common/AppLoadingScreen';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -18,15 +18,11 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   requiredRole,
   fallbackPath
 }) => {
-  const { hasRole, isLoadingRoles, userRoles } = useRole();
+  const { hasRole, isLoadingRoles, isInitializing, userRoles } = useRole();
   const location = useLocation();
 
-  if (isLoadingRoles) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+  if (isLoadingRoles || isInitializing) {
+    return <AppLoadingScreen message="Verifying access permissions..." />;
   }
 
   // Check if user has the required role
