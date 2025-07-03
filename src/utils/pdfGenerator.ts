@@ -38,7 +38,7 @@ const getPDFOptions = () => {
   };
 };
 
-// Simplified HTML cleaning with focused page break controls and inline style overrides
+// Simplified HTML cleaning with essential page break controls only - preserving template spacing
 const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const clonedElement = element.cloneNode(true) as HTMLElement;
   
@@ -46,7 +46,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
   const interactiveElements = clonedElement.querySelectorAll('button, input, select, textarea, [contenteditable]');
   interactiveElements.forEach(el => el.remove());
   
-  // Enhanced page break styles with inline style overrides
+  // Essential page break styles with minimal spacing interference
   const pageBreakStyles = `
     <style>
       @page {
@@ -70,7 +70,7 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
         padding: 0 !important;
       }
       
-      /* ---- PAGE-BREAK PATCH ---- */
+      /* ---- PAGE-BREAK CONTROLS ONLY ---- */
       h1            { page-break-after: avoid !important; }
       h2, h3        { page-break-after: auto  !important;
                       break-after:     auto  !important;
@@ -81,32 +81,6 @@ const cleanHTMLForPDF = (element: HTMLElement): HTMLElement => {
 
       /* Keep at least two lines together in any paragraph or list item */
       p, li, div { orphans:2 !important; widows:2 !important; }
-      
-      /* ---- INLINE STYLE AND MARGIN OVERRIDES ---- */
-      /* Target h2 elements with marginTop inline style and reduce spacing */
-      h2[style*="marginTop"] { 
-        margin-top: 2px !important; 
-      }
-      
-      /* Reduce section container margins */
-      .mb-6 { 
-        margin-bottom: 8px !important; 
-      }
-      
-      /* Prevent excessive spacing between consecutive sections */
-      .mb-6 + .mb-6 {
-        margin-top: -8px !important;
-      }
-      
-      /* Additional spacing control for section transitions */
-      .mb-2 {
-        margin-bottom: 4px !important;
-      }
-      
-      /* Ensure section headings are close to their content */
-      h2 + div {
-        margin-top: 2px !important;
-      }
     </style>
   `;
   
