@@ -20,15 +20,23 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Check all required environment variables
     const stripeKey = Deno.env.get("STRIPE_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
     if (!stripeKey) throw new Error("STRIPE_API_KEY is not set");
-    logStep("Stripe key verified");
+    if (!supabaseUrl) throw new Error("SUPABASE_URL is not set");
+    if (!supabaseAnonKey) throw new Error("SUPABASE_ANON_KEY is not set");
+    
+    logStep("Environment variables verified", { 
+      hasStripeKey: !!stripeKey, 
+      hasSupabaseUrl: !!supabaseUrl, 
+      hasSupabaseAnonKey: !!supabaseAnonKey 
+    });
 
     // Create a Supabase client using the anon key for authentication
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");

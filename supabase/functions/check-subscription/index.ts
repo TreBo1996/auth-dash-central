@@ -20,14 +20,25 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // Check all required environment variables
     const stripeKey = Deno.env.get("STRIPE_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
     if (!stripeKey) throw new Error("STRIPE_API_KEY is not set");
-    logStep("Stripe key verified");
+    if (!supabaseUrl) throw new Error("SUPABASE_URL is not set");
+    if (!supabaseServiceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set");
+    
+    logStep("Environment variables verified", { 
+      hasStripeKey: !!stripeKey, 
+      hasSupabaseUrl: !!supabaseUrl, 
+      hasSupabaseServiceKey: !!supabaseServiceKey 
+    });
 
     // Use the service role key to perform writes (upsert) in Supabase
     const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      supabaseUrl, 
+      supabaseServiceKey,
       { auth: { persistSession: false } }
     );
 
