@@ -106,14 +106,14 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
       id="resume-preview" 
       className={`min-h-[800px] bg-white ${
         isMobile 
-          ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' 
+          ? 'w-full overflow-hidden' 
           : ''
       }`}
     >
       <div 
         className={`${
           isMobile 
-            ? 'scale-110 origin-top-left min-w-[850px] transform-gpu' 
+            ? 'scale-75 origin-top-left w-[133%] transform-gpu' 
             : ''
         } transition-transform duration-200`}
         style={isMobile ? { transformOrigin: '0 0' } : {}}

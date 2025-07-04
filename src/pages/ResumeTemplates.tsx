@@ -257,7 +257,7 @@ const ResumeTemplates: React.FC = () => {
         <div className="grid lg:grid-cols-4 md:grid-cols-3 gap-6 min-h-[800px]">
           {/* Resume Preview */}
           <div className="lg:col-span-3 md:col-span-2 flex justify-center">
-            <div className="w-full max-w-4xl">
+            <div className={`w-full ${isMobile ? '' : 'max-w-4xl'}`}>
               <div className="flex items-center justify-center mb-4">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">{newTemplateConfigs[selectedTemplate].name}</h3>
@@ -265,7 +265,7 @@ const ResumeTemplates: React.FC = () => {
                 </div>
               </div>
               <Card className="shadow-lg">
-                <CardContent className="p-4">
+                <CardContent className={`${isMobile ? 'p-2' : 'p-4'}`}>
                 <div className="bg-white border rounded-lg shadow-sm">
                   <ResumePreview 
                     template={selectedTemplate} 
