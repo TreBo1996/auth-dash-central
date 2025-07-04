@@ -50,11 +50,6 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
     console.log('Upgrade to premium');
   };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
 
   const hasLimitReached = features.some(feature => usage[feature]?.limit_reached);
 
@@ -91,7 +86,7 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
                 
                 <Progress 
                   value={progressPercentage} 
-                  className={`h-1.5 ${getProgressColor(progressPercentage)}`}
+                  className="h-1.5"
                 />
                 
                 <div className="flex items-center justify-between">
@@ -121,7 +116,7 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
                     Upgrade to Premium for unlimited access
                   </p>
                 </div>
-                <Button size="sm" onClick={handleUpgrade} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                <Button size="sm" onClick={handleUpgrade} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                   <Zap className="h-3 w-3 mr-1" />
                   Upgrade
                 </Button>
