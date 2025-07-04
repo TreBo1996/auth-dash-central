@@ -8,12 +8,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { toast } from "sonner";
 import { PaymentModal } from '@/components/subscription/PaymentModal';
+import { useTypewriter } from '@/hooks/useTypewriter';
 
 const Home = () => {
   const { user } = useAuth();
   const { createCheckout } = useSubscription();
   const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const { displayText, isComplete } = useTypewriter({ text: "AI Power", speed: 120, delay: 800 });
 
   const handleUploadResumeClick = () => {
     if (user) {
@@ -116,8 +118,11 @@ const Home = () => {
             </div>
             
             <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
-              Transform Your Resume with 
-              <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent"> AI Power</span>
+              Transform Your Job Search with{" "}
+              <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                {displayText}
+                {!isComplete && <span className="animate-blink">|</span>}
+              </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
