@@ -30,7 +30,7 @@ export const Header: React.FC = () => {
             <img 
               src="/lovable-uploads/d0ccaa36-1015-45a6-8037-ae20ff6cf275.png" 
               alt="RezLit Logo" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
           </Link>
           
