@@ -27,11 +27,13 @@ export const Header: React.FC = () => {
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to={user ? "/dashboard" : "/"} className="flex items-center">
-            <img 
-              src="/lovable-uploads/7efa04f5-0fb8-419e-9b8c-62b5d4411064.png" 
-              alt="RezLit Logo" 
-              className="h-12 w-auto"
-            />
+            <div className="bg-white/15 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+              <img 
+                src="/lovable-uploads/7efa04f5-0fb8-419e-9b8c-62b5d4411064.png" 
+                alt="RezLit Logo" 
+                className="h-12 w-auto"
+              />
+            </div>
           </Link>
           
           <div className="flex items-center gap-4">
