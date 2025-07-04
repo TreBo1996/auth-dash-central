@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Crown, Zap, AlertTriangle } from 'lucide-react';
 import { useFeatureUsage, type FeatureLimits } from '@/hooks/useFeatureUsage';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 interface ContextualUsageCounterProps {
   features: (keyof FeatureLimits)[];
@@ -27,6 +28,7 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
   onUpgrade,
 }) => {
   const { usage, isPremium, limits, loading } = useFeatureUsage();
+  const { createCheckout } = useSubscription();
 
   // Don't show for premium users
   if (isPremium) {
@@ -44,10 +46,16 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
     );
   }
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
+    try {
+      const checkoutUrl = await createCheckout();
+      if (checkoutUrl) {
+        window.open(checkoutUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+    }
     onUpgrade?.();
-    // TODO: Implement upgrade flow
-    console.log('Upgrade to premium');
   };
 
 
