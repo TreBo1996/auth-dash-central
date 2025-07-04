@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Loader2, AlertTriangle, Sparkles, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -16,10 +17,12 @@ const Auth: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const captchaRef = useRef<HCaptcha>(null);
 
   // Get redirect parameter from URL
   const redirectParam = searchParams.get('redirect');
@@ -38,13 +41,22 @@ const Auth: React.FC = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      setError('Please complete the captcha verification');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password, captchaToken);
     
     if (error) {
       setError(error.message);
+      // Reset captcha on error
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
     } else {
       toast({
         title: "Welcome back!",
@@ -64,6 +76,12 @@ const Auth: React.FC = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      setError('Please complete the captcha verification');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 
@@ -72,10 +90,13 @@ const Auth: React.FC = () => {
       ? `${window.location.origin}/upload-resume`
       : `${window.location.origin}/dashboard`;
 
-    const { error } = await signUp(email, password, fullName, redirectUrl);
+    const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
     
     if (error) {
       setError(error.message);
+      // Reset captcha on error
+      setCaptchaToken(null);
+      captchaRef.current?.resetCaptcha();
     } else {
       // Redirect to verification screen with email in URL
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
@@ -167,10 +188,24 @@ const Auth: React.FC = () => {
                       required
                     />
                   </div>
+                  
+                  <div className="flex justify-center">
+                    <HCaptcha
+                      ref={captchaRef}
+                      sitekey="10000000-ffff-ffff-ffff-000000000001"
+                      onVerify={(token) => {
+                        setCaptchaToken(token);
+                        setError(null);
+                      }}
+                      onExpire={() => setCaptchaToken(null)}
+                      onError={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading}
+                    disabled={isLoading || !captchaToken}
                   >
                     {isLoading ? (
                       <>
@@ -221,10 +256,24 @@ const Auth: React.FC = () => {
                       required
                     />
                   </div>
+                  
+                  <div className="flex justify-center">
+                    <HCaptcha
+                      ref={captchaRef}
+                      sitekey="10000000-ffff-ffff-ffff-000000000001"
+                      onVerify={(token) => {
+                        setCaptchaToken(token);
+                        setError(null);
+                      }}
+                      onExpire={() => setCaptchaToken(null)}
+                      onError={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                  
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading}
+                    disabled={isLoading || !captchaToken}
                   >
                     {isLoading ? (
                       <>

@@ -7,8 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string, redirectTo?: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName?: string, redirectTo?: string, captchaToken?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []); // Remove handleAuthStateChange from dependencies to prevent re-runs
 
-  const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string, captchaToken?: string) => {
     const redirectUrl = redirectTo || `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signUp({
@@ -75,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password,
       options: {
         emailRedirectTo: redirectUrl,
+        captchaToken,
         data: {
           full_name: fullName || '',
           intended_role: redirectTo?.includes('/employer') ? 'employer' : 'job_seeker'
@@ -84,10 +85,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, captchaToken?: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        captchaToken
+      }
     });
     return { error };
   };

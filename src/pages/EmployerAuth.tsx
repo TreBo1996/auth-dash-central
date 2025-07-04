@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const EmployerAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,9 +18,11 @@ const EmployerAuth = () => {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const captchaRef = useRef<HCaptcha>(null);
 
   // Helper function to check user roles and redirect appropriately
   const checkUserRoleAndRedirect = async (userId: string) => {
@@ -51,17 +54,30 @@ const EmployerAuth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      toast({
+        title: "Captcha Required",
+        description: "Please complete the captcha verification",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(email, password, captchaToken);
         if (error) {
           toast({
             title: "Sign in failed",
             description: error.message,
             variant: "destructive",
           });
+          // Reset captcha on error
+          setCaptchaToken(null);
+          captchaRef.current?.resetCaptcha();
         } else {
           toast({
             title: "Welcome back!",
@@ -79,7 +95,7 @@ const EmployerAuth = () => {
       } else {
         // Use the employer dashboard as redirect URL for sign up
         const redirectUrl = `${window.location.origin}/employer/dashboard`;
-        const { error } = await signUp(email, password, fullName, redirectUrl);
+        const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
         
         if (error) {
           toast({
@@ -87,6 +103,9 @@ const EmployerAuth = () => {
             description: error.message,
             variant: "destructive",
           });
+          // Reset captcha on error
+          setCaptchaToken(null);
+          captchaRef.current?.resetCaptcha();
         } else {
           toast({
             title: "Account created!",
@@ -200,10 +219,20 @@ const EmployerAuth = () => {
                   />
                 </div>
                 
+                <div className="flex justify-center">
+                  <HCaptcha
+                    ref={captchaRef}
+                    sitekey="10000000-ffff-ffff-ffff-000000000001"
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
+                    onError={() => setCaptchaToken(null)}
+                  />
+                </div>
+                
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3"
-                  disabled={loading}
+                  disabled={loading || !captchaToken}
                   size="lg"
                 >
                   {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Employer Account')}
