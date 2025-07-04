@@ -14,6 +14,8 @@ import { InterviewSession } from '@/components/interview/InterviewSession';
 import { InterviewHistoryTable } from '@/components/interview/InterviewHistoryTable';
 import { InterviewAnalytics } from '@/components/interview/InterviewAnalytics';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
+import { useFeatureUsage } from '@/hooks/useFeatureUsage';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 interface JobDescription {
   id: string;
@@ -42,11 +44,13 @@ interface InterviewSessionData {
 const InterviewPrep: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { checkFeatureAccess } = useFeatureUsage();
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [questions, setQuestions] = useState<InterviewQuestions | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [activeTab, setActiveTab] = useState('new-interview');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Fetch user's job descriptions
   const { data: jobDescriptions, isLoading: isLoadingJobs, error: jobsError } = useQuery({
@@ -100,6 +104,13 @@ const InterviewPrep: React.FC = () => {
         description: "Please select a job description first.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check usage limits before proceeding
+    const canUse = await checkFeatureAccess('interview_sessions');
+    if (!canUse) {
+      setShowPaymentModal(true);
       return;
     }
 
@@ -295,6 +306,12 @@ const InterviewPrep: React.FC = () => {
             </TabsContent>
           </Tabs>
         )}
+
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          returnUrl={window.location.href}
+        />
       </div>
     </DashboardLayout>
   );

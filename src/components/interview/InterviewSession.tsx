@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { AudioRecorder } from './AudioRecorder';
-import { Brain, Wrench, Star, MessageSquare, Clock, CheckCircle } from 'lucide-react';
+import { Brain, Wrench, Star, MessageSquare, Clock, CheckCircle, Crown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 interface Question {
   text: string;
@@ -50,6 +51,7 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [responses, setResponses] = useState<Response[]>([]);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,11 +87,7 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
 
       const canUse = usageCheck[0];
       if (!canUse.can_use) {
-        toast({
-          title: "Monthly Limit Reached",
-          description: `You have reached your monthly limit of interview sessions. You have used ${canUse.current_usage} sessions this month.`,
-          variant: "destructive"
-        });
+        setShowPaymentModal(true);
         return;
       }
 
@@ -287,6 +285,12 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
             </Card>
           ))}
         </div>
+
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          returnUrl={window.location.href}
+        />
       </div>
     );
   }
@@ -382,6 +386,12 @@ export const InterviewSession: React.FC<InterviewSessionProps> = ({
           ))}
         </div>
       )}
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        returnUrl={window.location.href}
+      />
     </div>
   );
 };

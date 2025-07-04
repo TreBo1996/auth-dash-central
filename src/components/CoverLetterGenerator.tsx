@@ -10,8 +10,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, FileText, Building, Sparkles, Save, CheckCircle, Eye, AlertCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Building, Sparkles, Save, CheckCircle, Eye, AlertCircle, Crown } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import { useFeatureUsage } from '@/hooks/useFeatureUsage';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 interface Resume {
   id: string;
@@ -40,6 +42,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { checkFeatureAccess, isPremium } = useFeatureUsage();
   const [step, setStep] = useState<'select' | 'preview' | 'generating' | 'complete' | 'review'>('select');
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
@@ -49,6 +52,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
   const [coverLetterTitle, setCoverLetterTitle] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -203,6 +207,13 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
   const handleGenerate = async () => {
     if (!validateSelection()) return;
 
+    // Check usage limits before proceeding
+    const canUse = await checkFeatureAccess('cover_letters');
+    if (!canUse) {
+      setShowPaymentModal(true);
+      return;
+    }
+
     setStep('generating');
     setLoading(true);
     setError('');
@@ -251,6 +262,11 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
           errorMessage = `API configuration error: ${error.details || error.message}`;
         } else if (error.message?.includes('OpenAI')) {
           errorMessage = `AI service error: ${error.details || error.message}`;
+        } else if (error.message?.includes('Monthly limit reached') || error.message?.includes('limit reached')) {
+          setShowPaymentModal(true);
+          setStep('preview');
+          setLoading(false);
+          return;
         }
 
         throw new Error(errorMessage);
@@ -551,6 +567,12 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
           </div>
         </div>
       )}
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        returnUrl={window.location.href}
+      />
     </div>
   );
 };
