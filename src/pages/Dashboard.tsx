@@ -325,9 +325,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Usage Overview */}
-        <div className="max-w-md">
-          <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
-        </div>
+        <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
 
         {/* AI Resume Optimizer Section */}
         <div className="space-y-4">
