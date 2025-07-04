@@ -12,7 +12,7 @@ interface SubscriptionContextType {
   subscriptionData: SubscriptionData | null;
   loading: boolean;
   refreshSubscription: () => Promise<void>;
-  createCheckout: () => Promise<string | null>;
+  createCheckout: (returnUrl?: string) => Promise<string | null>;
   openCustomerPortal: () => Promise<void>;
 }
 
@@ -59,7 +59,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user, session]);
 
-  const createCheckout = useCallback(async (): Promise<string | null> => {
+  const createCheckout = useCallback(async (returnUrl?: string): Promise<string | null> => {
     if (!user || !session) {
       throw new Error('User must be authenticated to create checkout');
     }
@@ -68,6 +68,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          return_url: returnUrl || window.location.href,
         },
       });
 

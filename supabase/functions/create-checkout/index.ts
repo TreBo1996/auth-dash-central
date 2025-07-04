@@ -48,6 +48,11 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Parse request body for return URL
+    const body = await req.json().catch(() => ({}));
+    const returnUrl = body.return_url || req.headers.get("origin") || "http://localhost:3000";
+    logStep("Return URL determined", { returnUrl });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     
     // Check if customer already exists
@@ -60,8 +65,7 @@ serve(async (req) => {
       logStep("No existing customer found");
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
-    logStep("Creating checkout session", { origin, productId: "prod_ScCZq1P6q7pIXx" });
+    logStep("Creating checkout session", { returnUrl, productId: "prod_ScCZq1P6q7pIXx" });
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -78,8 +82,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/dashboard?subscription=success`,
-      cancel_url: `${origin}/?subscription=cancelled`,
+      success_url: `${returnUrl}?subscription=success`,
+      cancel_url: `${returnUrl}?subscription=cancelled`,
       metadata: {
         user_id: user.id,
       },

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Crown, Zap, AlertTriangle } from 'lucide-react';
 import { useFeatureUsage, type FeatureLimits } from '@/hooks/useFeatureUsage';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 interface ContextualUsageCounterProps {
   features: (keyof FeatureLimits)[];
@@ -29,6 +30,7 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
 }) => {
   const { usage, isPremium, limits, loading } = useFeatureUsage();
   const { createCheckout } = useSubscription();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Don't show for premium users
   if (isPremium) {
@@ -46,16 +48,13 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
     );
   }
 
-  const handleUpgrade = async () => {
-    try {
-      const checkoutUrl = await createCheckout();
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-      }
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-    }
+  const handleUpgrade = () => {
+    setShowPaymentModal(true);
     onUpgrade?.();
+  };
+
+  const handlePaymentModalClose = () => {
+    setShowPaymentModal(false);
   };
 
 
@@ -133,6 +132,12 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
           )}
         </div>
       </CardContent>
+      
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handlePaymentModalClose}
+        returnUrl={window.location.href}
+      />
     </Card>
   );
 };
