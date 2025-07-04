@@ -106,7 +106,7 @@ const Home = () => {
       <Header />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white -mt-20 pt-20">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-4xl mx-auto text-center">
