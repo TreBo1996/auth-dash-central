@@ -26,9 +26,12 @@ export const Header: React.FC = () => {
     <header className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 sticky top-0 z-50">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-yellow-300" />
-            <h1 className="text-xl font-bold text-white">RezLit</h1>
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center">
+            <img 
+              src="/lovable-uploads/d0ccaa36-1015-45a6-8037-ae20ff6cf275.png" 
+              alt="RezLit Logo" 
+              className="h-8 w-auto"
+            />
           </Link>
           
           <div className="flex items-center gap-4">
