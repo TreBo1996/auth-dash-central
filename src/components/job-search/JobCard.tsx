@@ -8,6 +8,7 @@ import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, Chevron
 import { UnifiedJob } from '@/types/job';
 import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 interface JobCardProps {
   job: UnifiedJob;
@@ -18,6 +19,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const [saved, setSaved] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showExternalModal, setShowExternalModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { toast } = useToast();
   const { checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
 
@@ -38,11 +40,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       if (!isPremium) {
         const canUse = await checkFeatureAccess('job_descriptions');
         if (!canUse) {
-          toast({
-            title: "Usage limit reached",
-            description: "You've reached your monthly limit for saving job descriptions. Upgrade to Premium for unlimited saves.",
-            variant: "destructive"
-          });
+          setShowPaymentModal(true);
           return;
         }
       }
@@ -325,6 +323,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
         isOpen={showExternalModal}
         onClose={() => setShowExternalModal(false)}
         job={job}
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
       />
     </>
   );
