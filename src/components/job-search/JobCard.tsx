@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, ChevronDown, ChevronUp, Star, Briefcase } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
 import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
+import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 
 interface JobCardProps {
   job: UnifiedJob;
@@ -18,6 +19,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const [expanded, setExpanded] = useState(false);
   const [showExternalModal, setShowExternalModal] = useState(false);
   const { toast } = useToast();
+  const { checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
 
   const handleSaveJob = async () => {
     setSaving(true);
@@ -30,6 +32,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
           variant: "destructive"
         });
         return;
+      }
+
+      // Check usage limit before saving (only for non-premium users)
+      if (!isPremium) {
+        const canUse = await checkFeatureAccess('job_descriptions');
+        if (!canUse) {
+          toast({
+            title: "Usage limit reached",
+            description: "You've reached your monthly limit for saving job descriptions. Upgrade to Premium for unlimited saves.",
+            variant: "destructive"
+          });
+          return;
+        }
       }
 
       const { error } = await supabase
@@ -46,6 +61,16 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
         });
 
       if (error) throw error;
+
+      // Increment usage counter after successful save (only for non-premium users)
+      if (!isPremium) {
+        try {
+          await incrementUsage('job_descriptions');
+        } catch (usageError) {
+          console.error('Error incrementing usage:', usageError);
+          // Don't fail the save if usage increment fails
+        }
+      }
 
       setSaved(true);
       toast({
