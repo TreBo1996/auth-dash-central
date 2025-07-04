@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Crown, Zap, FileText, MessageSquare, BrainCircuit, Upload } from 'lucide-react';
 import { useFeatureUsage, type FeatureLimits } from '@/hooks/useFeatureUsage';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 const FEATURE_INFO: Record<keyof FeatureLimits, {
   title: string;
@@ -35,10 +36,14 @@ const FEATURE_INFO: Record<keyof FeatureLimits, {
 
 export const UsageDashboard: React.FC = () => {
   const { usage, isPremium, limits, loading } = useFeatureUsage();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleUpgrade = () => {
-    // TODO: Implement upgrade flow
-    console.log('Upgrade to premium');
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentModalClose = () => {
+    setShowPaymentModal(false);
   };
 
   if (loading) {
@@ -159,6 +164,12 @@ export const UsageDashboard: React.FC = () => {
           </div>
         )}
       </CardContent>
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={handlePaymentModalClose}
+        returnUrl={window.location.href}
+      />
     </Card>
   );
 };
