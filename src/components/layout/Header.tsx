@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
     });
   };
   return (
-    <header className="backdrop-blur-md bg-indigo-500/10 border-b border-indigo-300/20 sticky top-0 z-50">
+    <header className="backdrop-blur-md bg-indigo-500/20 border-b border-indigo-300/20 sticky top-0 z-50">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to={user ? "/dashboard" : "/"} className="flex items-center">
