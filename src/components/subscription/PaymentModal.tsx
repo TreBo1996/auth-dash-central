@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,8 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, CreditCard, X } from 'lucide-react';
-import { useSubscription } from '@/contexts/SubscriptionContext';
+import { CreditCard } from 'lucide-react';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -20,35 +19,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   returnUrl
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { createCheckout, refreshSubscription } = useSubscription();
 
-  const handleStartCheckout = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const checkoutUrl = await createCheckout(returnUrl);
-      if (checkoutUrl) {
-        // Open Stripe checkout in the same window but handle return
-        window.location.href = checkoutUrl;
-      } else {
-        setError('Failed to create checkout session. Please try again.');
-      }
-    } catch (err) {
-      console.error('Checkout error:', err);
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleStartCheckout = () => {
+    // Navigate to dedicated payment page
+    const currentUrl = window.location.href;
+    const paymentUrl = `/payment?returnUrl=${encodeURIComponent(returnUrl || currentUrl)}`;
+    window.location.href = paymentUrl;
   };
 
   const handleClose = () => {
-    if (!loading) {
-      setError(null);
-      onClose();
-    }
+    onClose();
   };
 
   return (
@@ -79,37 +59,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </ul>
           </div>
 
-          {error && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-
           <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={handleClose}
-              disabled={loading}
               className="flex-1"
             >
               Cancel
             </Button>
             <Button
               onClick={handleStartCheckout}
-              disabled={loading}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              className="flex-1 bg-gradient-primary hover:opacity-90"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscribe Now
-                </>
-              )}
+              <CreditCard className="h-4 w-4 mr-2" />
+              Subscribe Now
             </Button>
           </div>
         </div>
