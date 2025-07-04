@@ -28,7 +28,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           <Link to={user ? "/dashboard" : "/"} className="flex items-center">
             <img 
-              src="/lovable-uploads/d0ccaa36-1015-45a6-8037-ae20ff6cf275.png" 
+              src="/lovable-uploads/7efa04f5-0fb8-419e-9b8c-62b5d4411064.png" 
               alt="RezLit Logo" 
               className="h-12 w-auto"
             />
