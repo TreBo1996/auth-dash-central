@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, Zap, ArrowRight, Users, Award, CheckCircle, Star, BarChart3, Clock, Shield, Target, ChevronRight, Briefcase } from "lucide-react";
@@ -7,11 +7,13 @@ import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { toast } from "sonner";
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 const Home = () => {
   const { user } = useAuth();
   const { createCheckout } = useSubscription();
   const navigate = useNavigate();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const handleUploadResumeClick = () => {
     if (user) {
@@ -21,23 +23,12 @@ const Home = () => {
     }
   };
 
-  const handlePremiumSignup = async () => {
+  const handleJoinPremium = () => {
     if (!user) {
       navigate('/auth');
       return;
     }
-
-    try {
-      const checkoutUrl = await createCheckout();
-      if (checkoutUrl) {
-        window.open(checkoutUrl, '_blank');
-      } else {
-        toast.error('Failed to create checkout session. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-      toast.error('Failed to start premium subscription. Please try again.');
-    }
+    setShowPaymentModal(true);
   };
 
   const features = [{
@@ -392,11 +383,11 @@ const Home = () => {
                   ))}
                 </ul>
                 <Button 
-                  onClick={handlePremiumSignup}
+                  onClick={handleJoinPremium}
                   className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" 
                   size="lg"
                 >
-                  Start Premium Trial
+                  Join Premium
                 </Button>
               </CardContent>
             </Card>
@@ -448,6 +439,12 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      <PaymentModal 
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        returnUrl={window.location.href}
+      />
     </div>
   );
 };
