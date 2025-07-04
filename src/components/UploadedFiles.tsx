@@ -26,6 +26,7 @@ interface JobDescription {
   file_name: string | null;
   file_size: number | null;
   created_at: string;
+  company: string | null;
 }
 
 export const UploadedFiles: React.FC = () => {
@@ -231,6 +232,11 @@ export const UploadedFiles: React.FC = () => {
                       <FileText className="h-4 w-4" />
                       {jobDesc.title}
                     </CardTitle>
+                    {jobDesc.company && (
+                      <CardDescription className="text-sm text-muted-foreground font-medium">
+                        {jobDesc.company}
+                      </CardDescription>
+                    )}
                     <CardDescription className="flex items-center gap-2">
                       <Calendar className="h-3 w-3" />
                       {formatDate(jobDesc.created_at)}
