@@ -7,6 +7,7 @@ import { JobSearch } from '@/pages/JobSearch';
 import { EmployerDashboard } from '@/pages/employer/EmployerDashboard';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
+import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -36,8 +37,9 @@ function App() {
   return (
     <AppErrorBoundary>
       <AuthProvider>
-        <Router>
-          <RoleProvider>
+        <SubscriptionProvider>
+          <Router>
+            <RoleProvider>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
@@ -245,6 +247,7 @@ function App() {
             </Routes>
           </RoleProvider>
         </Router>
+      </SubscriptionProvider>
       </AuthProvider>
     </AppErrorBoundary>
   );

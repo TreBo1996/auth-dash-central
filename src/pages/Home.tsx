@@ -5,9 +5,12 @@ import { Upload, FileText, Zap, ArrowRight, Users, Award, CheckCircle, Star, Bar
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { toast } from "sonner";
 
 const Home = () => {
   const { user } = useAuth();
+  const { createCheckout } = useSubscription();
   const navigate = useNavigate();
 
   const handleUploadResumeClick = () => {
@@ -15,6 +18,25 @@ const Home = () => {
       navigate('/upload-resume');
     } else {
       navigate('/auth?redirect=upload-resume');
+    }
+  };
+
+  const handlePremiumSignup = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const checkoutUrl = await createCheckout();
+      if (checkoutUrl) {
+        window.open(checkoutUrl, '_blank');
+      } else {
+        toast.error('Failed to create checkout session. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+      toast.error('Failed to start premium subscription. Please try again.');
     }
   };
 
@@ -330,13 +352,19 @@ const Home = () => {
                     </li>
                   ))}
                 </ul>
-                {!user && (
-                  <Link to="/auth" className="block">
-                    <Button className="w-full py-3" size="lg">
-                      Get Started Free
-                    </Button>
-                  </Link>
-                )}
+{!user ? (
+                <Link to="/auth" className="block">
+                  <Button className="w-full py-3" size="lg">
+                    Get Started Free
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/dashboard" className="block">
+                  <Button className="w-full py-3" size="lg">
+                    Access Dashboard
+                  </Button>
+                </Link>
+              )}
               </CardContent>
             </Card>
 
@@ -363,13 +391,13 @@ const Home = () => {
                     </li>
                   ))}
                 </ul>
-                {!user && (
-                  <Link to="/auth" className="block">
-                    <Button className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" size="lg">
-                      Start Premium Trial
-                    </Button>
-                  </Link>
-                )}
+                <Button 
+                  onClick={handlePremiumSignup}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" 
+                  size="lg"
+                >
+                  Start Premium Trial
+                </Button>
               </CardContent>
             </Card>
           </div>

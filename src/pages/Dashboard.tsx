@@ -16,6 +16,7 @@ import { ContentPreview } from '@/components/ContentPreview';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
+import { SubscriptionCard } from '@/components/subscription/SubscriptionCard';
 
 interface Resume {
   id: string;
@@ -323,8 +324,11 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Usage Overview */}
-        <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
+        {/* Usage Overview and Subscription */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
+          <SubscriptionCard />
+        </div>
 
         {/* AI Resume Optimizer Section */}
         <div className="space-y-4">
