@@ -84,9 +84,9 @@ const Home = () => {
     label: "AI Support"
   }];
 
-  const freeFeatures = ["Upload and optimize 1 resume per month", "Basic ATS scoring", "Access to 3 professional templates", "Standard AI optimization", "Email support"];
+  const freeFeatures = ["3 resume optimizations per month", "1 mock interview session per month", "2 AI-generated cover letters per month", "3 job description saves per month", "Basic ATS scoring", "Access to 2 professional templates", "Standard AI optimization", "Email support"];
 
-  const premiumFeatures = ["Unlimited resume uploads", "Advanced ATS scoring with detailed insights", "Access to all 7+ premium templates", "Priority AI optimization", "Interview preparation with AI feedback", "Job search integration", "Priority email & chat support", "Resume version history"];
+  const premiumFeatures = ["Unlimited resume optimizations", "Unlimited mock interview sessions with AI feedback", "Unlimited AI-generated cover letters", "Unlimited job description saves", "Advanced ATS scoring with detailed insights", "Access to all 5+ professional templates", "Priority AI optimization", "Job search integration", "Priority email & chat support", "Resume version history", "Export to multiple formats"];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
