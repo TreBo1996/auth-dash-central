@@ -33,6 +33,7 @@ interface JobDescription {
   parsed_text: string;
   file_name: string | null;
   created_at: string;
+  company: string | null;
 }
 interface ATSFeedback {
   overall_score: number;
@@ -493,6 +494,11 @@ const Dashboard: React.FC = () => {
                                   <FileText className="h-4 w-4 flex-shrink-0 text-green-600" />
                                   <span className="truncate font-semibold text-gray-800">{jobDesc.title}</span>
                                 </CardTitle>
+                                {jobDesc.company && (
+                                  <CardDescription className="text-sm text-muted-foreground font-medium">
+                                    {jobDesc.company}
+                                  </CardDescription>
+                                )}
                                 <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
                                   <Calendar className="h-3 w-3 flex-shrink-0" />
                                   {formatDate(jobDesc.created_at)}
