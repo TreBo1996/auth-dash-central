@@ -202,31 +202,46 @@ const ResumeTemplates: React.FC = () => {
   }
   console.log('ResumeTemplates: Rendering main component with resume:', optimizedResume.id);
   return <DashboardLayout>
-      <div className="space-y-6">
+      <div className={`space-y-6 ${isMobile ? 'pb-20' : ''}`}>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
+        <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
+          <div className={`${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/dashboard')}
+              className={isMobile ? 'w-full sm:w-auto' : ''}
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Choose Resume Template</h1>
-              <p className="text-gray-600">
-                {optimizedResume.resumes?.file_name || 'Resume'} → {optimizedResume.job_descriptions?.title || 'Job Position'}
+            <div className={isMobile ? 'text-center sm:text-left' : ''}>
+              <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                Choose Resume Template
+              </h1>
+              <p className={`text-gray-600 ${isMobile ? 'text-sm break-words' : ''}`}>
+                <span className="font-medium">
+                  {optimizedResume.resumes?.file_name || 'Resume'}
+                </span>
+                {' → '}
+                <span className="font-medium">
+                  {optimizedResume.job_descriptions?.title || 'Job Position'}
+                </span>
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePrint} className={isMobile ? "hidden" : ""}>
-              <Printer className="h-4 w-4 mr-2" />
-              Print
-            </Button>
-            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700">
-              <Download className="h-4 w-4 mr-2" />
-              {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
-            </Button>
-          </div>
+          {/* Desktop buttons only */}
+          {!isMobile && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+              <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700">
+                <Download className="h-4 w-4 mr-2" />
+                {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Template Selector - Shows on small screens */}
