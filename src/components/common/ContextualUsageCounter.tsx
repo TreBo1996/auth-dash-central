@@ -105,15 +105,15 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
             );
           })}
 
-          {hasLimitReached && showUpgradePrompt && (
-            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          {showUpgradePrompt && (
+            <div className={`mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border ${hasLimitReached ? 'border-red-200 bg-red-50/50' : 'border-blue-200'}`}>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900">
-                    Monthly limit reached
+                  <p className={`text-sm font-medium ${hasLimitReached ? 'text-red-900' : 'text-blue-900'}`}>
+                    {hasLimitReached ? 'Monthly limit reached' : 'Upgrade to Premium'}
                   </p>
-                  <p className="text-xs text-blue-700">
-                    Upgrade to Premium for unlimited access
+                  <p className={`text-xs ${hasLimitReached ? 'text-red-700' : 'text-blue-700'}`}>
+                    {hasLimitReached ? 'Upgrade for unlimited access' : 'Get unlimited access and premium features'}
                   </p>
                 </div>
                 <Button size="sm" onClick={handleUpgrade} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
