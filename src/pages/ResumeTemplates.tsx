@@ -15,6 +15,7 @@ import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGener
 import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 import { parseResumeContent } from '@/components/resume-templates/utils/parseResumeContent';
 import { printResume } from '@/utils/pdfGenerator';
+import { useIsMobile } from '@/hooks/use-mobile';
 interface OptimizedResume {
   id: string;
   generated_text: string;
@@ -41,6 +42,7 @@ const ResumeTemplates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const isMobile = useIsMobile();
   useEffect(() => {
     console.log('ResumeTemplates: Component mounted with resumeId:', resumeId);
     if (!resumeId) {
@@ -216,7 +218,7 @@ const ResumeTemplates: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePrint}>
+            <Button variant="outline" onClick={handlePrint} className={isMobile ? "hidden" : ""}>
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
@@ -228,11 +230,25 @@ const ResumeTemplates: React.FC = () => {
         </div>
 
         {/* Mobile Template Selector - Shows on small screens */}
-        <div className="block lg:hidden mb-6">
+        <div className="block lg:hidden mb-6 space-y-4">
           <Card>
             <CardContent className="p-4">
               <h3 className="font-semibold mb-4 text-center">Choose Template</h3>
-              <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={setSelectedTemplate} isMobile={true} />
+              <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={(templateId) => {
+                setSelectedTemplate(templateId);
+                const config = newTemplateConfigs[templateId];
+                setSelectedColorScheme(config.defaultColorScheme);
+              }} isMobile={true} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <ColorSchemeSelector
+                colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes}
+                selectedScheme={selectedColorScheme}
+                onSchemeSelect={setSelectedColorScheme}
+              />
             </CardContent>
           </Card>
         </div>
@@ -293,6 +309,20 @@ const ResumeTemplates: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* Mobile Floating Action Button */}
+        {isMobile && (
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button 
+              onClick={handleDownloadPDF} 
+              disabled={isGeneratingPDF}
+              className="bg-blue-800 hover:bg-blue-700 shadow-lg rounded-full h-14 w-14 p-0"
+              size="lg"
+            >
+              <Download className="h-6 w-6" />
+            </Button>
+          </div>
+        )}
       </div>
     </DashboardLayout>;
 };

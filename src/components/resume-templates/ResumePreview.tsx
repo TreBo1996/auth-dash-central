@@ -8,6 +8,7 @@ import { TechnicalEngineeringTemplate } from './templates/TechnicalEngineeringTe
 import { fetchStructuredResumeData, StructuredResumeData } from './utils/fetchStructuredResumeData';
 import { parseResumeContent } from './utils/parseResumeContent';
 import { newTemplateConfigs } from './configs/newTemplateConfigs';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ResumePreviewProps {
   template: string;
@@ -25,6 +26,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
   const [structuredData, setStructuredData] = useState<StructuredResumeData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadStructuredData = async () => {
@@ -100,8 +102,24 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
   }
 
   return (
-    <div id="resume-preview" className="min-h-[800px] bg-white">
-      {renderTemplate()}
+    <div 
+      id="resume-preview" 
+      className={`min-h-[800px] bg-white ${
+        isMobile 
+          ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100' 
+          : ''
+      }`}
+    >
+      <div 
+        className={`${
+          isMobile 
+            ? 'scale-110 origin-top-left min-w-[850px] transform-gpu' 
+            : ''
+        } transition-transform duration-200`}
+        style={isMobile ? { transformOrigin: '0 0' } : {}}
+      >
+        {renderTemplate()}
+      </div>
     </div>
   );
 };
