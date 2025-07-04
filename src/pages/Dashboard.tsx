@@ -403,8 +403,11 @@ const Dashboard: React.FC = () => {
                         <FileText className="h-10 w-10 md:h-12 md:w-12 text-blue-600" />
                       </div>
                       <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No resumes uploaded yet</p>
-                      <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg">
-                        <a href="/upload-resume">Upload Your First Resume</a>
+                      <Button 
+                        onClick={() => navigate('/upload-resume')}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg"
+                      >
+                        Upload Your First Resume
                       </Button>
                     </CardContent>
                   </Card> : <ScrollArea className="h-[480px]">
@@ -473,8 +476,11 @@ const Dashboard: React.FC = () => {
                         <FileText className="h-10 w-10 md:h-12 md:w-12 text-green-600" />
                       </div>
                       <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No job descriptions added yet</p>
-                      <Button asChild className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg">
-                        <a href="/upload-job">Add Your First Job Description</a>
+                      <Button 
+                        onClick={() => navigate('/upload-job')}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg"
+                      >
+                        Add Your First Job Description
                       </Button>
                     </CardContent>
                   </Card> : <ScrollArea className="h-[480px]">
