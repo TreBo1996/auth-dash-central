@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, Loader2, TrendingUp, AlertCircle, Target } from 'lucide-react';
+import { Sparkles, Loader2, TrendingUp, AlertCircle, Target, Zap, FileText, CheckCircle } from 'lucide-react';
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -43,6 +43,24 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
   isLoading,
   isOptimizing
 }) => {
+  const [optimizationStep, setOptimizationStep] = useState(0);
+
+  const optimizationSteps = [
+    { icon: <TrendingUp className="h-5 w-5" />, text: "Analyzing resume content..." },
+    { icon: <Zap className="h-5 w-5" />, text: "Enhancing keywords and phrases..." },
+    { icon: <FileText className="h-5 w-5" />, text: "Optimizing format and structure..." },
+    { icon: <CheckCircle className="h-5 w-5" />, text: "Finalizing your optimized resume..." }
+  ];
+
+  useEffect(() => {
+    if (isOptimizing) {
+      setOptimizationStep(0);
+      const interval = setInterval(() => {
+        setOptimizationStep(prev => (prev + 1) % optimizationSteps.length);
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [isOptimizing]);
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
@@ -58,8 +76,30 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
     // AI optimization should improve score by 10-15 points minimum
     return Math.min(95, currentScore + 15);
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
+  return <Dialog open={isOpen} onOpenChange={isOptimizing ? undefined : onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        {/* Optimization Loading Overlay */}
+        {isOptimizing && (
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="text-center space-y-6 max-w-md">
+              <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">Creating Your Optimized Resume</h3>
+                <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                  {optimizationSteps[optimizationStep].icon}
+                  <span>{optimizationSteps[optimizationStep].text}</span>
+                </div>
+              </div>
+              <Progress value={(optimizationStep + 1) * 25} className="w-full" />
+              <p className="text-sm text-muted-foreground">
+                This usually takes 30-60 seconds. Please don't close this window.
+              </p>
+            </div>
+          </div>
+        )}
+
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />

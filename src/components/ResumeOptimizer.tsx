@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, AlertTriangle, Crown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
+import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 
 interface Resume {
   id: string;
@@ -52,12 +54,12 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const [selectedJobDescId, setSelectedJobDescId] = useState<string>('');
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [showATSModal, setShowATSModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [originalATSScore, setOriginalATSScore] = useState<number | undefined>();
   const [originalATSFeedback, setOriginalATSFeedback] = useState<ATSFeedback | undefined>();
   const [isLoadingATS, setIsLoadingATS] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { usage, checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
+  const { toast } = useToast();
   const handleAnalyzeATS = async () => {
     if (!selectedResumeId || !selectedJobDescId) {
       toast({
@@ -67,6 +69,24 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       });
       return;
     }
+
+    // Check usage limits for free users
+    if (!isPremium) {
+      const canUse = await checkFeatureAccess('resume_optimizations');
+      if (!canUse) {
+        const currentUsage = usage.resume_optimizations?.current_usage || 0;
+        const limit = usage.resume_optimizations?.limit || 3;
+        
+        toast({
+          title: "Monthly Limit Reached",
+          description: `You've used ${currentUsage}/${limit} resume optimizations this month.`,
+          variant: "destructive"
+        });
+        setShowPaymentModal(true);
+        return;
+      }
+    }
+
     try {
       setIsLoadingATS(true);
       setShowATSModal(true);
@@ -118,6 +138,11 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       if (error) throw error;
       if (data.error) {
         throw new Error(data.error);
+      }
+
+      // Increment usage for free users
+      if (!isPremium) {
+        await incrementUsage('resume_optimizations');
       }
 
       toast({
@@ -237,9 +262,37 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
                 Analyze & Optimize Resume
               </>}
           </Button>
+
+          {/* Usage limit info for free users */}
+          {!isPremium && usage.resume_optimizations && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                <span>
+                  {usage.resume_optimizations.current_usage}/{usage.resume_optimizations.limit} optimizations used this month
+                </span>
+              </div>
+              {usage.resume_optimizations.limit_reached && (
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowPaymentModal(true)}
+                  className="bg-gradient-primary hover:opacity-90"
+                >
+                  <Crown className="h-3 w-3 mr-1" />
+                  Upgrade
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <ATSPreviewModal isOpen={showATSModal} onClose={() => setShowATSModal(false)} onOptimize={handleOptimize} resumeName={selectedResume?.file_name || 'Untitled Resume'} jobTitle={selectedJobDesc?.title || 'Job Position'} atsScore={originalATSScore} atsFeedback={originalATSFeedback} isLoading={isLoadingATS} isOptimizing={isOptimizing} />
+      
+      <PaymentModal 
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        returnUrl={window.location.href}
+      />
     </>;
 };
