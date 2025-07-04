@@ -23,16 +23,11 @@ export const Header: React.FC = () => {
     });
   };
   return (
-    <header className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 sticky top-0 z-50">
+    <header className="backdrop-blur-md bg-white/10 border-b border-white/20 sticky top-0 z-50">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to={user ? "/dashboard" : "/"} className="flex items-center">
-            <div 
-              className="p-3 rounded-full"
-              style={{
-                background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 50%, transparent 100%)'
-              }}
-            >
+            <div className="p-3">
               <img 
                 src="/lovable-uploads/7efa04f5-0fb8-419e-9b8c-62b5d4411064.png" 
                 alt="RezLit Logo" 
