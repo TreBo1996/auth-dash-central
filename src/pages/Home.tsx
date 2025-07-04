@@ -350,7 +350,7 @@ const Home = () => {
               <CardHeader className="text-center pb-8">
                 <CardTitle className="text-2xl font-bold">Premium Plan</CardTitle>
                 <div className="text-4xl font-bold text-gray-900 mt-4">
-                  $19<span className="text-lg text-gray-600">/month</span>
+                  $19.99<span className="text-lg text-gray-600">/month</span>
                 </div>
                 <CardDescription className="text-lg mt-2">For serious job seekers</CardDescription>
               </CardHeader>
