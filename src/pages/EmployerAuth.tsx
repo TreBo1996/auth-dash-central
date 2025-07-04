@@ -220,9 +220,9 @@ const EmployerAuth = () => {
                 </div>
                 
                 <div className="flex justify-center">
-                  <HCaptcha
-                    ref={captchaRef}
-                    sitekey="10000000-ffff-ffff-ffff-000000000001"
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
                     onVerify={(token) => setCaptchaToken(token)}
                     onExpire={() => setCaptchaToken(null)}
                     onError={() => setCaptchaToken(null)}
