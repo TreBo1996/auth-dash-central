@@ -82,8 +82,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${returnUrl}?subscription=success`,
-      cancel_url: `${returnUrl}?subscription=cancelled`,
+      success_url: `${returnUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${returnUrl}?payment=cancelled`,
       metadata: {
         user_id: user.id,
       },

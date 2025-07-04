@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -19,12 +21,36 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   returnUrl
 }) => {
+  const { createCheckout } = useSubscription();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleStartCheckout = () => {
-    // Navigate to dedicated payment page
-    const currentUrl = window.location.href;
-    const paymentUrl = `/payment?returnUrl=${encodeURIComponent(returnUrl || currentUrl)}`;
-    window.location.href = paymentUrl;
+  const handleStartCheckout = async () => {
+    setIsLoading(true);
+    try {
+      const currentUrl = window.location.href;
+      const checkoutUrl = await createCheckout(returnUrl || currentUrl);
+      
+      if (checkoutUrl) {
+        // Store context before redirect for better return experience
+        localStorage.setItem('preCheckoutContext', JSON.stringify({
+          returnUrl: returnUrl || currentUrl,
+          timestamp: Date.now()
+        }));
+        
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start checkout. Please try again.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -69,10 +95,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </Button>
             <Button
               onClick={handleStartCheckout}
+              disabled={isLoading}
               className="flex-1 bg-gradient-primary hover:opacity-90"
             >
-              <CreditCard className="h-4 w-4 mr-2" />
-              Subscribe Now
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Subscribe Now
+                </>
+              )}
             </Button>
           </div>
         </div>

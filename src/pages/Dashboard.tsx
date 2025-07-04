@@ -13,9 +13,10 @@ import { User } from '@supabase/supabase-js';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { ContentPreview } from '@/components/ContentPreview';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 
 interface Resume {
@@ -67,7 +68,9 @@ interface OptimizedResume {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoadingRoles, isInitializing } = useRole();
+  const { refreshSubscription } = useSubscription();
   const [user, setUser] = useState<User | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
@@ -82,9 +85,38 @@ const Dashboard: React.FC = () => {
     title: string;
     type: 'resume' | 'job-description';
   } | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
+  // Handle Stripe return URLs
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const paymentStatus = urlParams.get('payment');
+    const sessionId = urlParams.get('session_id');
+
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Payment Successful!",
+        description: "Welcome to RezLit Premium! Your subscription is now active.",
+        variant: "default"
+      });
+      
+      // Refresh subscription status
+      refreshSubscription();
+      
+      // Clear URL parameters
+      window.history.replaceState({}, '', location.pathname);
+    } else if (paymentStatus === 'cancelled') {
+      toast({
+        title: "Payment Cancelled",
+        description: "No worries! You can upgrade to Premium anytime.",
+        variant: "default"
+      });
+      
+      // Clear URL parameters
+      window.history.replaceState({}, '', location.pathname);
+    }
+  }, [location.search, toast, refreshSubscription]);
+
   useEffect(() => {
     const initializeDashboard = async () => {
       // Wait for roles to be fully loaded before proceeding

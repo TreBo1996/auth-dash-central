@@ -32,7 +32,6 @@ import EmployerAnalytics from '@/pages/employer/EmployerAnalytics';
 import EmployerSettings from '@/pages/employer/EmployerSettings';
 import JobPosting from '@/pages/JobPosting';
 import CoverLetters from '@/pages/CoverLetters';
-import Payment from '@/pages/Payment';
 
 function App() {
   return (
@@ -101,14 +100,6 @@ function App() {
                     <RoleProtectedRoute requiredRole="job_seeker">
                       <CoverLetters />
                     </RoleProtectedRoute>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/payment" 
-                element={
-                  <ProtectedRoute>
-                    <Payment />
                   </ProtectedRoute>
                 } 
               />
