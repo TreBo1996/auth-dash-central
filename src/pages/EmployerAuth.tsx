@@ -21,11 +21,51 @@ const EmployerAuth = () => {
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetting, setCaptchaResetting] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const captchaRef = useRef<HCaptcha>(null);
   const rateLimit = useAuthRateLimit();
+
+  // Enhanced captcha reset function with better error handling
+  const resetCaptcha = async () => {
+    setCaptchaResetting(true);
+    setCaptchaToken(null);
+    
+    // Wait longer for hCaptcha to fully reset
+    setTimeout(() => {
+      captchaRef.current?.resetCaptcha();
+      setCaptchaResetting(false);
+    }, 500);
+  };
+
+  // Enhanced error handling function
+  const handleAuthError = (error: any) => {
+    if (error.message.toLowerCase().includes('already-seen-response') || 
+        error.message.toLowerCase().includes('captcha protection')) {
+      toast({
+        title: "Captcha Already Used",
+        description: "The captcha has already been used. Please complete a new captcha verification.",
+        variant: "destructive",
+      });
+      resetCaptcha();
+    } else if (error.message.toLowerCase().includes('captcha')) {
+      toast({
+        title: "Captcha Failed",
+        description: "Captcha verification failed. Please try the captcha again.",
+        variant: "destructive",
+      });
+      resetCaptcha();
+    } else {
+      const enhancedError = rateLimit.getErrorMessage(error.message);
+      toast({
+        title: isLogin ? "Sign in failed" : "Sign up failed",
+        description: enhancedError,
+        variant: "destructive",
+      });
+    }
+  };
 
   // Helper function to check user roles and redirect appropriately
   const checkUserRoleAndRedirect = async (userId: string) => {
@@ -58,7 +98,7 @@ const EmployerAuth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaToken) {
+    if (!captchaToken || captchaResetting) {
       toast({
         title: "Captcha Required",
         description: "Please complete the captcha verification",
@@ -82,14 +122,9 @@ const EmployerAuth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password, captchaToken);
         if (error) {
-          const enhancedError = rateLimit.getErrorMessage(error.message);
+          handleAuthError(error);
           rateLimit.recordAttempt(false, error.message);
-          
-          toast({
-            title: "Sign in failed",
-            description: enhancedError,
-            variant: "destructive",
-          });
+          resetCaptcha();
         } else {
           rateLimit.recordAttempt(true);
           toast({
@@ -105,24 +140,15 @@ const EmployerAuth = () => {
             navigate('/employer/dashboard', { replace: true });
           }
         }
-        
-        // Always reset captcha after any attempt
-        setCaptchaToken(null);
-        setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
       } else {
         // Use the employer dashboard as redirect URL for sign up
         const redirectUrl = `${window.location.origin}/employer/dashboard`;
         const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
         
         if (error) {
-          const enhancedError = rateLimit.getErrorMessage(error.message);
+          handleAuthError(error);
           rateLimit.recordAttempt(false, error.message);
-          
-          toast({
-            title: "Sign up failed",
-            description: enhancedError,
-            variant: "destructive",
-          });
+          resetCaptcha();
         } else {
           rateLimit.recordAttempt(true);
           toast({
@@ -133,10 +159,6 @@ const EmployerAuth = () => {
           // Navigate to verification page with employer context
           navigate(`/verify-email?email=${encodeURIComponent(email)}&type=employer`);
         }
-        
-        // Always reset captcha after any attempt
-        setCaptchaToken(null);
-        setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -145,6 +167,7 @@ const EmployerAuth = () => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+      resetCaptcha();
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,7 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetting, setCaptchaResetting] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -41,10 +42,38 @@ const Auth: React.FC = () => {
     }
   }, [user, navigate, redirectParam]);
 
+  // Enhanced captcha reset function with better error handling
+  const resetCaptcha = async () => {
+    setCaptchaResetting(true);
+    setCaptchaToken(null);
+    setError(null);
+    
+    // Wait longer for hCaptcha to fully reset
+    setTimeout(() => {
+      captchaRef.current?.resetCaptcha();
+      setCaptchaResetting(false);
+    }, 500);
+  };
+
+  // Enhanced error handling function
+  const handleAuthError = (error: any) => {
+    if (error.message.toLowerCase().includes('already-seen-response') || 
+        error.message.toLowerCase().includes('captcha protection')) {
+      setError('The captcha has already been used. Please complete a new captcha verification.');
+      resetCaptcha();
+    } else if (error.message.toLowerCase().includes('captcha')) {
+      setError('Captcha verification failed. Please try the captcha again.');
+      resetCaptcha();
+    } else {
+      const enhancedError = rateLimit.getErrorMessage(error.message);
+      setError(enhancedError);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaToken) {
+    if (!captchaToken || captchaResetting) {
       setError('Please complete the captcha verification');
       return;
     }
@@ -59,14 +88,10 @@ const Auth: React.FC = () => {
 
     const { error } = await signIn(email, password, captchaToken);
     
-    // Always reset captcha after any attempt
-    setCaptchaToken(null);
-    setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
-    
     if (error) {
-      const enhancedError = rateLimit.getErrorMessage(error.message);
-      setError(enhancedError);
+      handleAuthError(error);
       rateLimit.recordAttempt(false, error.message);
+      resetCaptcha();
     } else {
       rateLimit.recordAttempt(true);
       toast({
@@ -88,7 +113,7 @@ const Auth: React.FC = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaToken) {
+    if (!captchaToken || captchaResetting) {
       setError('Please complete the captcha verification');
       return;
     }
@@ -108,14 +133,10 @@ const Auth: React.FC = () => {
 
     const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
     
-    // Always reset captcha after any attempt
-    setCaptchaToken(null);
-    setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
-    
     if (error) {
-      const enhancedError = rateLimit.getErrorMessage(error.message);
-      setError(enhancedError);
+      handleAuthError(error);
       rateLimit.recordAttempt(false, error.message);
+      resetCaptcha();
     } else {
       rateLimit.recordAttempt(true);
       // Redirect to verification screen with email in URL
