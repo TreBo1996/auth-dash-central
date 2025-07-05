@@ -22,16 +22,26 @@ const EmployerAuth = () => {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetting, setCaptchaResetting] = useState(false);
+  const [captchaTokenTimestamp, setCaptchaTokenTimestamp] = useState<number | null>(null);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const captchaRef = useRef<HCaptcha>(null);
   const rateLimit = useAuthRateLimit();
 
+  // Check if captcha token is fresh (not older than 5 minutes)
+  const isCaptchaTokenFresh = () => {
+    if (!captchaTokenTimestamp) return false;
+    const tokenAge = Date.now() - captchaTokenTimestamp;
+    return tokenAge < 5 * 60 * 1000; // 5 minutes
+  };
+
   // Enhanced captcha reset function with better error handling
   const resetCaptcha = async () => {
     setCaptchaResetting(true);
     setCaptchaToken(null);
+    setCaptchaTokenTimestamp(null);
     
     // Wait longer for hCaptcha to fully reset
     setTimeout(() => {
@@ -40,20 +50,52 @@ const EmployerAuth = () => {
     }, 500);
   };
 
+  // Check if enough time has passed since last submission to prevent rapid fire
+  const canSubmit = () => {
+    const timeSinceLastSubmission = Date.now() - lastSubmissionTime;
+    return timeSinceLastSubmission > 2000; // 2 second minimum between submissions
+  };
+
   // Enhanced error handling function
-  const handleAuthError = (error: any) => {
-    if (error.message.toLowerCase().includes('already-seen-response') || 
-        error.message.toLowerCase().includes('captcha protection')) {
+  const handleAuthError = (error: any, isSignUp = false) => {
+    const errorMessage = error.message.toLowerCase();
+    
+    if (errorMessage.includes('already-seen-response') || 
+        errorMessage.includes('captcha protection')) {
       toast({
         title: "Captcha Already Used",
-        description: "The captcha has already been used. Please complete a new captcha verification.",
+        description: "The captcha has already been used. A fresh captcha is being loaded...",
         variant: "destructive",
       });
       resetCaptcha();
-    } else if (error.message.toLowerCase().includes('captcha')) {
+    } else if (errorMessage.includes('captcha')) {
       toast({
         title: "Captcha Failed",
-        description: "Captcha verification failed. Please try the captcha again.",
+        description: "Captcha verification failed. Please complete the captcha again.",
+        variant: "destructive",
+      });
+      resetCaptcha();
+    } else if (errorMessage.includes('504') || 
+               errorMessage.includes('timeout') || 
+               errorMessage.includes('processing this request timed out')) {
+      if (isSignUp) {
+        toast({
+          title: "Request Timeout",
+          description: "Your signup request timed out, but your account may have been created. Please check your email for a verification link, or try signing in if the account was created.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Request Timeout",
+          description: "The request timed out. Please try again with a fresh captcha.",
+          variant: "destructive",
+        });
+      }
+      resetCaptcha();
+    } else if (errorMessage.includes('context deadline exceeded')) {
+      toast({
+        title: "Server Timeout",
+        description: "The server is taking too long to respond. Please try again in a moment.",
         variant: "destructive",
       });
       resetCaptcha();
@@ -107,6 +149,25 @@ const EmployerAuth = () => {
       return;
     }
 
+    if (!isCaptchaTokenFresh()) {
+      toast({
+        title: "Captcha Expired",
+        description: "Captcha has expired. Please complete a new captcha verification.",
+        variant: "destructive",
+      });
+      resetCaptcha();
+      return;
+    }
+
+    if (!canSubmit()) {
+      toast({
+        title: "Please Wait",
+        description: "Please wait a moment before trying again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!rateLimit.canAttempt) {
       toast({
         title: "Rate Limited",
@@ -117,14 +178,14 @@ const EmployerAuth = () => {
     }
     
     setLoading(true);
+    setLastSubmissionTime(Date.now());
 
     try {
       if (isLogin) {
         const { error } = await signIn(email, password, captchaToken);
         if (error) {
-          handleAuthError(error);
+          handleAuthError(error, false);
           rateLimit.recordAttempt(false, error.message);
-          resetCaptcha();
         } else {
           rateLimit.recordAttempt(true);
           toast({
@@ -146,9 +207,8 @@ const EmployerAuth = () => {
         const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
         
         if (error) {
-          handleAuthError(error);
+          handleAuthError(error, true);
           rateLimit.recordAttempt(false, error.message);
-          resetCaptcha();
         } else {
           rateLimit.recordAttempt(true);
           toast({
@@ -280,7 +340,10 @@ const EmployerAuth = () => {
                 <HCaptcha
                   ref={captchaRef}
                   sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
-                  onVerify={(token) => setCaptchaToken(token)}
+                  onVerify={(token) => {
+                    setCaptchaToken(token);
+                    setCaptchaTokenTimestamp(Date.now());
+                  }}
                   onExpire={() => {
                     setCaptchaToken(null);
                   }}

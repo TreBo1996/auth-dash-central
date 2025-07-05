@@ -20,6 +20,8 @@ const Auth: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetting, setCaptchaResetting] = useState(false);
+  const [captchaTokenTimestamp, setCaptchaTokenTimestamp] = useState<number | null>(null);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,10 +44,18 @@ const Auth: React.FC = () => {
     }
   }, [user, navigate, redirectParam]);
 
+  // Check if captcha token is fresh (not older than 5 minutes)
+  const isCaptchaTokenFresh = () => {
+    if (!captchaTokenTimestamp) return false;
+    const tokenAge = Date.now() - captchaTokenTimestamp;
+    return tokenAge < 5 * 60 * 1000; // 5 minutes
+  };
+
   // Enhanced captcha reset function with better error handling
   const resetCaptcha = async () => {
     setCaptchaResetting(true);
     setCaptchaToken(null);
+    setCaptchaTokenTimestamp(null);
     setError(null);
     
     // Wait longer for hCaptcha to fully reset
@@ -55,14 +65,34 @@ const Auth: React.FC = () => {
     }, 500);
   };
 
+  // Check if enough time has passed since last submission to prevent rapid fire
+  const canSubmit = () => {
+    const timeSinceLastSubmission = Date.now() - lastSubmissionTime;
+    return timeSinceLastSubmission > 2000; // 2 second minimum between submissions
+  };
+
   // Enhanced error handling function
-  const handleAuthError = (error: any) => {
-    if (error.message.toLowerCase().includes('already-seen-response') || 
-        error.message.toLowerCase().includes('captcha protection')) {
-      setError('The captcha has already been used. Please complete a new captcha verification.');
+  const handleAuthError = (error: any, isSignUp = false) => {
+    const errorMessage = error.message.toLowerCase();
+    
+    if (errorMessage.includes('already-seen-response') || 
+        errorMessage.includes('captcha protection')) {
+      setError('The captcha has already been used. A fresh captcha is being loaded...');
       resetCaptcha();
-    } else if (error.message.toLowerCase().includes('captcha')) {
-      setError('Captcha verification failed. Please try the captcha again.');
+    } else if (errorMessage.includes('captcha')) {
+      setError('Captcha verification failed. Please complete the captcha again.');
+      resetCaptcha();
+    } else if (errorMessage.includes('504') || 
+               errorMessage.includes('timeout') || 
+               errorMessage.includes('processing this request timed out')) {
+      if (isSignUp) {
+        setError('Your signup request timed out, but your account may have been created. Please check your email for a verification link, or try signing in if the account was created.');
+      } else {
+        setError('The request timed out. Please try again with a fresh captcha.');
+      }
+      resetCaptcha();
+    } else if (errorMessage.includes('context deadline exceeded')) {
+      setError('The server is taking too long to respond. Please try again in a moment.');
       resetCaptcha();
     } else {
       const enhancedError = rateLimit.getErrorMessage(error.message);
@@ -78,6 +108,17 @@ const Auth: React.FC = () => {
       return;
     }
 
+    if (!isCaptchaTokenFresh()) {
+      setError('Captcha has expired. Please complete a new captcha verification.');
+      resetCaptcha();
+      return;
+    }
+
+    if (!canSubmit()) {
+      setError('Please wait a moment before trying again.');
+      return;
+    }
+
     if (!rateLimit.canAttempt) {
       setError(rateLimit.getCooldownMessage());
       return;
@@ -85,13 +126,13 @@ const Auth: React.FC = () => {
     
     setIsLoading(true);
     setError(null);
+    setLastSubmissionTime(Date.now());
 
     const { error } = await signIn(email, password, captchaToken);
     
     if (error) {
-      handleAuthError(error);
+      handleAuthError(error, false);
       rateLimit.recordAttempt(false, error.message);
-      resetCaptcha();
     } else {
       rateLimit.recordAttempt(true);
       toast({
@@ -118,6 +159,17 @@ const Auth: React.FC = () => {
       return;
     }
 
+    if (!isCaptchaTokenFresh()) {
+      setError('Captcha has expired. Please complete a new captcha verification.');
+      resetCaptcha();
+      return;
+    }
+
+    if (!canSubmit()) {
+      setError('Please wait a moment before trying again.');
+      return;
+    }
+
     if (!rateLimit.canAttempt) {
       setError(rateLimit.getCooldownMessage());
       return;
@@ -125,6 +177,7 @@ const Auth: React.FC = () => {
     
     setIsLoading(true);
     setError(null);
+    setLastSubmissionTime(Date.now());
 
     // Include redirect in the signup redirect URL
     const redirectUrl = redirectParam === 'upload-resume' 
@@ -134,9 +187,8 @@ const Auth: React.FC = () => {
     const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
     
     if (error) {
-      handleAuthError(error);
+      handleAuthError(error, true);
       rateLimit.recordAttempt(false, error.message);
-      resetCaptcha();
     } else {
       rateLimit.recordAttempt(true);
       // Redirect to verification screen with email in URL
@@ -248,6 +300,7 @@ const Auth: React.FC = () => {
                     sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
                     onVerify={(token) => {
                       setCaptchaToken(token);
+                      setCaptchaTokenTimestamp(Date.now());
                       setError(null);
                     }}
                     onExpire={() => {
@@ -327,6 +380,7 @@ const Auth: React.FC = () => {
                     sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
                       onVerify={(token) => {
                         setCaptchaToken(token);
+                        setCaptchaTokenTimestamp(Date.now());
                         setError(null);
                       }}
                       onExpire={() => setCaptchaToken(null)}
