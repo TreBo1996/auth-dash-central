@@ -39,6 +39,23 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     setLoading(true);
     try {
+      // Special handling for test user - check database directly
+      if (user.email === 'tcurry0725@gmail.com') {
+        console.log('Test user detected, checking database directly...');
+        const { data: dbData, error: dbError } = await supabase
+          .from('subscribers')
+          .select('subscribed, subscription_tier, subscription_end')
+          .eq('email', user.email)
+          .single();
+        
+        if (!dbError && dbData) {
+          console.log('Test user subscription from database:', dbData);
+          setSubscriptionData(dbData);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
