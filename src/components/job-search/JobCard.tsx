@@ -182,19 +182,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       <Card className={`hover:shadow-md transition-shadow ${job.source === 'employer' ? 'border-l-4 border-l-blue-500' : ''}`}>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                {job.source === 'employer' ? (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    <Star className="h-3 w-3 mr-1" />
-                    Direct Hire
-                  </Badge>
-                ) : (
-                  <Badge variant="outline">
-                    Database
-                  </Badge>
-                )}
-              </div>
+              <div className="flex-1">
               <CardTitle className="text-lg mb-2">{job.title}</CardTitle>
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
@@ -278,7 +266,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
             <div className="flex justify-between items-center pt-2">
               <div className="text-xs text-muted-foreground">
-                {job.source === 'employer' ? 'Posted directly by employer' : 'From job database'}
+                Posted {job.posted_at && `${job.posted_at}`}
               </div>
               <div className="flex gap-2">
                 <Button 
