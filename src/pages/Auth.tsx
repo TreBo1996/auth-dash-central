@@ -225,13 +225,19 @@ const Auth: React.FC = () => {
                   <HCaptcha
                     ref={captchaRef}
                     sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
-                      onVerify={(token) => {
-                        setCaptchaToken(token);
-                        setError(null);
-                      }}
-                      onExpire={() => setCaptchaToken(null)}
-                      onError={() => setCaptchaToken(null)}
-                    />
+                    onVerify={(token) => {
+                      setCaptchaToken(token);
+                      setError(null);
+                    }}
+                    onExpire={() => {
+                      setCaptchaToken(null);
+                      setError('Captcha expired. Please verify again.');
+                    }}
+                    onError={() => {
+                      setCaptchaToken(null);
+                      setError('Captcha verification failed. Please try again.');
+                    }}
+                  />
                   </div>
                   
                   <Button 
