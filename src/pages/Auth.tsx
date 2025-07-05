@@ -59,14 +59,14 @@ const Auth: React.FC = () => {
 
     const { error } = await signIn(email, password, captchaToken);
     
+    // Always reset captcha after any attempt
+    setCaptchaToken(null);
+    setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
+    
     if (error) {
       const enhancedError = rateLimit.getErrorMessage(error.message);
       setError(enhancedError);
       rateLimit.recordAttempt(false, error.message);
-      
-      // Reset captcha on error
-      setCaptchaToken(null);
-      captchaRef.current?.resetCaptcha();
     } else {
       rateLimit.recordAttempt(true);
       toast({
@@ -108,14 +108,14 @@ const Auth: React.FC = () => {
 
     const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
     
+    // Always reset captcha after any attempt
+    setCaptchaToken(null);
+    setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
+    
     if (error) {
       const enhancedError = rateLimit.getErrorMessage(error.message);
       setError(enhancedError);
       rateLimit.recordAttempt(false, error.message);
-      
-      // Reset captcha on error
-      setCaptchaToken(null);
-      captchaRef.current?.resetCaptcha();
     } else {
       rateLimit.recordAttempt(true);
       // Redirect to verification screen with email in URL

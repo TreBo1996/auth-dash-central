@@ -90,9 +90,6 @@ const EmployerAuth = () => {
             description: enhancedError,
             variant: "destructive",
           });
-          // Reset captcha on error
-          setCaptchaToken(null);
-          captchaRef.current?.resetCaptcha();
         } else {
           rateLimit.recordAttempt(true);
           toast({
@@ -108,6 +105,10 @@ const EmployerAuth = () => {
             navigate('/employer/dashboard', { replace: true });
           }
         }
+        
+        // Always reset captcha after any attempt
+        setCaptchaToken(null);
+        setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
       } else {
         // Use the employer dashboard as redirect URL for sign up
         const redirectUrl = `${window.location.origin}/employer/dashboard`;
@@ -122,9 +123,6 @@ const EmployerAuth = () => {
             description: enhancedError,
             variant: "destructive",
           });
-          // Reset captcha on error
-          setCaptchaToken(null);
-          captchaRef.current?.resetCaptcha();
         } else {
           rateLimit.recordAttempt(true);
           toast({
@@ -135,6 +133,10 @@ const EmployerAuth = () => {
           // Navigate to verification page with employer context
           navigate(`/verify-email?email=${encodeURIComponent(email)}&type=employer`);
         }
+        
+        // Always reset captcha after any attempt
+        setCaptchaToken(null);
+        setTimeout(() => captchaRef.current?.resetCaptcha(), 100);
       }
     } catch (error) {
       console.error('Auth error:', error);
