@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, AlertTriangle, Sparkles, Star } from 'lucide-react';
+import { Loader2, AlertTriangle, Sparkles, Star, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthRateLimit } from '@/hooks/useAuthRateLimit';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const Auth: React.FC = () => {
@@ -23,6 +24,7 @@ const Auth: React.FC = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const captchaRef = useRef<HCaptcha>(null);
+  const rateLimit = useAuthRateLimit();
 
   // Get redirect parameter from URL
   const redirectParam = searchParams.get('redirect');
@@ -46,6 +48,11 @@ const Auth: React.FC = () => {
       setError('Please complete the captcha verification');
       return;
     }
+
+    if (!rateLimit.canAttempt) {
+      setError(rateLimit.getCooldownMessage());
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -53,11 +60,15 @@ const Auth: React.FC = () => {
     const { error } = await signIn(email, password, captchaToken);
     
     if (error) {
-      setError(error.message);
+      const enhancedError = rateLimit.getErrorMessage(error.message);
+      setError(enhancedError);
+      rateLimit.recordAttempt(false, error.message);
+      
       // Reset captcha on error
       setCaptchaToken(null);
       captchaRef.current?.resetCaptcha();
     } else {
+      rateLimit.recordAttempt(true);
       toast({
         title: "Welcome back!",
         description: "You have been signed in successfully.",
@@ -81,6 +92,11 @@ const Auth: React.FC = () => {
       setError('Please complete the captcha verification');
       return;
     }
+
+    if (!rateLimit.canAttempt) {
+      setError(rateLimit.getCooldownMessage());
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
@@ -93,11 +109,15 @@ const Auth: React.FC = () => {
     const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
     
     if (error) {
-      setError(error.message);
+      const enhancedError = rateLimit.getErrorMessage(error.message);
+      setError(enhancedError);
+      rateLimit.recordAttempt(false, error.message);
+      
       // Reset captcha on error
       setCaptchaToken(null);
       captchaRef.current?.resetCaptcha();
     } else {
+      rateLimit.recordAttempt(true);
       // Redirect to verification screen with email in URL
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     }
@@ -149,6 +169,18 @@ const Auth: React.FC = () => {
               <Alert variant="destructive" className="mb-6 border-red-200 bg-red-50">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {!rateLimit.canAttempt && (
+              <Alert className="mb-6 border-orange-200 bg-orange-50">
+                <Clock className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-800">
+                  <div className="flex items-center gap-2">
+                    <span>Rate limited:</span>
+                    <span className="font-medium">{rateLimit.getCooldownMessage()}</span>
+                  </div>
+                </AlertDescription>
               </Alert>
             )}
 
@@ -205,12 +237,17 @@ const Auth: React.FC = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading || !captchaToken}
+                    disabled={isLoading || !captchaToken || !rateLimit.canAttempt}
                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Signing In...
+                      </>
+                    ) : !rateLimit.canAttempt ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Wait {rateLimit.remainingCooldown}s
                       </>
                     ) : (
                       'Sign In'
@@ -273,12 +310,17 @@ const Auth: React.FC = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading || !captchaToken}
+                    disabled={isLoading || !captchaToken || !rateLimit.canAttempt}
                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Creating Account...
+                      </>
+                    ) : !rateLimit.canAttempt ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4" />
+                        Wait {rateLimit.remainingCooldown}s
                       </>
                     ) : (
                       'Create Account'

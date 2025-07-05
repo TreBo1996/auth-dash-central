@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building, Mail, Lock, User, ArrowLeft, Briefcase } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Building, Mail, Lock, User, ArrowLeft, Briefcase, Clock, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthRateLimit } from '@/hooks/useAuthRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 import HCaptcha from '@hcaptcha/react-hcaptcha';
 
@@ -23,6 +25,7 @@ const EmployerAuth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const captchaRef = useRef<HCaptcha>(null);
+  const rateLimit = useAuthRateLimit();
 
   // Helper function to check user roles and redirect appropriately
   const checkUserRoleAndRedirect = async (userId: string) => {
@@ -63,6 +66,15 @@ const EmployerAuth = () => {
       });
       return;
     }
+
+    if (!rateLimit.canAttempt) {
+      toast({
+        title: "Rate Limited",
+        description: rateLimit.getCooldownMessage(),
+        variant: "destructive",
+      });
+      return;
+    }
     
     setLoading(true);
 
@@ -70,15 +82,19 @@ const EmployerAuth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password, captchaToken);
         if (error) {
+          const enhancedError = rateLimit.getErrorMessage(error.message);
+          rateLimit.recordAttempt(false, error.message);
+          
           toast({
             title: "Sign in failed",
-            description: error.message,
+            description: enhancedError,
             variant: "destructive",
           });
           // Reset captcha on error
           setCaptchaToken(null);
           captchaRef.current?.resetCaptcha();
         } else {
+          rateLimit.recordAttempt(true);
           toast({
             title: "Welcome back!",
             description: "Successfully signed in to your employer account.",
@@ -98,15 +114,19 @@ const EmployerAuth = () => {
         const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
         
         if (error) {
+          const enhancedError = rateLimit.getErrorMessage(error.message);
+          rateLimit.recordAttempt(false, error.message);
+          
           toast({
             title: "Sign up failed",
-            description: error.message,
+            description: enhancedError,
             variant: "destructive",
           });
           // Reset captcha on error
           setCaptchaToken(null);
           captchaRef.current?.resetCaptcha();
         } else {
+          rateLimit.recordAttempt(true);
           toast({
             title: "Account created!",
             description: "Please check your email to verify your account. Once verified, you'll be redirected to your employer dashboard.",
@@ -154,6 +174,18 @@ const EmployerAuth = () => {
             </CardHeader>
             
             <CardContent>
+              {!rateLimit.canAttempt && (
+                <Alert className="mb-6 border-orange-200 bg-orange-50">
+                  <Clock className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">
+                    <div className="flex items-center gap-2">
+                      <span>Rate limited:</span>
+                      <span className="font-medium">{rateLimit.getCooldownMessage()}</span>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+              
               <form onSubmit={handleSubmit} className="space-y-6">
                 {!isLogin && (
                   <>
@@ -232,10 +264,19 @@ const EmployerAuth = () => {
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3"
-                  disabled={loading || !captchaToken}
+                  disabled={loading || !captchaToken || !rateLimit.canAttempt}
                   size="lg"
                 >
-                  {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Employer Account')}
+                  {loading ? (
+                    'Processing...'
+                  ) : !rateLimit.canAttempt ? (
+                    <>
+                      <Clock className="mr-2 h-4 w-4" />
+                      Wait {rateLimit.remainingCooldown}s
+                    </>
+                  ) : (
+                    isLogin ? 'Sign In' : 'Create Employer Account'
+                  )}
                 </Button>
               </form>
               
