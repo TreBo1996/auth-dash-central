@@ -53,6 +53,19 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Special handling for test user - always return premium
+    if (user.email === 'tcurry0725@gmail.com') {
+      logStep("Test user detected, returning premium status");
+      return new Response(JSON.stringify({
+        subscribed: true,
+        subscription_tier: 'premium',
+        subscription_end: '2026-07-05T17:15:00.000Z'
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
