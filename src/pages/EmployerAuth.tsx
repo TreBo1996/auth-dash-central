@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building, Mail, Lock, User, ArrowLeft, Briefcase, Clock, AlertTriangle } from 'lucide-react';
+import { Building, Mail, Lock, User, ArrowLeft, Briefcase, Clock, AlertTriangle, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,89 +21,106 @@ const EmployerAuth = () => {
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaResetting, setCaptchaResetting] = useState(false);
-  const [captchaTokenTimestamp, setCaptchaTokenTimestamp] = useState<number | null>(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
+  const [formStartTime] = useState<number>(Date.now());
+  const [honeypot, setHoneypot] = useState(''); // Bot trap field
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState<string>('');
+  
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const captchaRef = useRef<HCaptcha>(null);
   const rateLimit = useAuthRateLimit();
 
-  // Check if captcha token is fresh (not older than 5 minutes)
-  const isCaptchaTokenFresh = () => {
-    if (!captchaTokenTimestamp) return false;
-    const tokenAge = Date.now() - captchaTokenTimestamp;
-    return tokenAge < 5 * 60 * 1000; // 5 minutes
+  // Validate email format
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
-  // Enhanced captcha reset function with better error handling
-  const resetCaptcha = async () => {
-    setCaptchaResetting(true);
-    setCaptchaToken(null);
-    setCaptchaTokenTimestamp(null);
-    
-    // Wait longer for hCaptcha to fully reset
-    setTimeout(() => {
-      captchaRef.current?.resetCaptcha();
-      setCaptchaResetting(false);
-    }, 500);
+  // Check password strength
+  const checkPasswordStrength = (password: string) => {
+    if (password.length < 6) return 'Too short';
+    if (password.length < 8) return 'Weak';
+    if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password)) return 'Medium';
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return 'Good';
+    return 'Strong';
   };
 
-  // Check if enough time has passed since last submission to prevent rapid fire
-  const canSubmit = () => {
+  // Handle email change with validation
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (value) {
+      setEmailValid(validateEmail(value));
+    } else {
+      setEmailValid(null);
+    }
+  };
+
+  // Handle password change with strength check
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setPasswordStrength(checkPasswordStrength(value));
+  };
+
+  // Bot protection checks
+  const isValidSubmission = () => {
+    // Check honeypot (should be empty)
+    if (honeypot !== '') {
+      console.log('Bot detected: honeypot filled');
+      return false;
+    }
+
+    // Check timing (should take at least 3 seconds)
+    const timeSinceStart = Date.now() - formStartTime;
+    if (timeSinceStart < 3000) {
+      console.log('Bot detected: too fast submission');
+      return false;
+    }
+
+    // Check submission frequency
     const timeSinceLastSubmission = Date.now() - lastSubmissionTime;
-    return timeSinceLastSubmission > 2000; // 2 second minimum between submissions
+    if (timeSinceLastSubmission < 2000) {
+      console.log('Rate limited: too frequent submissions');
+      return false;
+    }
+
+    return true;
   };
 
-  // Enhanced error handling function
-  const handleAuthError = (error: any, isSignUp = false) => {
+  // Simplified error handling
+  const handleAuthError = (error: any) => {
     const errorMessage = error.message.toLowerCase();
     
-    if (errorMessage.includes('already-seen-response') || 
-        errorMessage.includes('captcha protection')) {
+    if (errorMessage.includes('invalid credentials') || errorMessage.includes('invalid login')) {
       toast({
-        title: "Captcha Already Used",
-        description: "The captcha has already been used. A fresh captcha is being loaded...",
+        title: "Sign in failed",
+        description: "Invalid email or password. Please try again.",
         variant: "destructive",
       });
-      resetCaptcha();
-    } else if (errorMessage.includes('captcha')) {
+    } else if (errorMessage.includes('user already registered')) {
       toast({
-        title: "Captcha Failed",
-        description: "Captcha verification failed. Please complete the captcha again.",
+        title: "Account exists",
+        description: "An account with this email already exists. Try signing in instead.",
         variant: "destructive",
       });
-      resetCaptcha();
-    } else if (errorMessage.includes('504') || 
-               errorMessage.includes('timeout') || 
-               errorMessage.includes('processing this request timed out')) {
-      if (isSignUp) {
-        toast({
-          title: "Request Timeout",
-          description: "Your signup request timed out, but your account may have been created. Please check your email for a verification link, or try signing in if the account was created.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Request Timeout",
-          description: "The request timed out. Please try again with a fresh captcha.",
-          variant: "destructive",
-        });
-      }
-      resetCaptcha();
-    } else if (errorMessage.includes('context deadline exceeded')) {
+    } else if (errorMessage.includes('email rate limit')) {
       toast({
-        title: "Server Timeout",
-        description: "The server is taking too long to respond. Please try again in a moment.",
+        title: "Rate limited",
+        description: "Too many emails sent. Please wait a few minutes before trying again.",
         variant: "destructive",
       });
-      resetCaptcha();
+    } else if (errorMessage.includes('timeout')) {
+      toast({
+        title: "Request timeout",
+        description: "Request timed out. Your account may have been created - check your email or try signing in.",
+        variant: "destructive",
+      });
     } else {
-      const enhancedError = rateLimit.getErrorMessage(error.message);
       toast({
         title: isLogin ? "Sign in failed" : "Sign up failed",
-        description: enhancedError,
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     }
@@ -137,32 +154,23 @@ const EmployerAuth = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaToken || captchaResetting) {
+    // Basic validation
+    if (!email || !password) {
       toast({
-        title: "Captcha Required",
-        description: "Please complete the captcha verification",
+        title: "Missing fields",
+        description: "Please fill in all fields.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!isCaptchaTokenFresh()) {
+    if (!captchaToken) {
       toast({
-        title: "Captcha Expired",
-        description: "Captcha has expired. Please complete a new captcha verification.",
-        variant: "destructive",
-      });
-      resetCaptcha();
-      return;
-    }
-
-    if (!canSubmit()) {
-      toast({
-        title: "Please Wait",
-        description: "Please wait a moment before trying again.",
+        title: "Captcha required",
+        description: "Please complete the captcha verification.",
         variant: "destructive",
       });
       return;
@@ -170,7 +178,7 @@ const EmployerAuth = () => {
 
     if (!rateLimit.canAttempt) {
       toast({
-        title: "Rate Limited",
+        title: "Rate limited",
         description: rateLimit.getCooldownMessage(),
         variant: "destructive",
       });
@@ -181,43 +189,23 @@ const EmployerAuth = () => {
     setLastSubmissionTime(Date.now());
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password, captchaToken);
-        if (error) {
-          handleAuthError(error, false);
-          rateLimit.recordAttempt(false, error.message);
-        } else {
-          rateLimit.recordAttempt(true);
-          toast({
-            title: "Welcome back!",
-            description: "Successfully signed in to your employer account.",
-          });
-          
-          // Get current user and check their roles
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await checkUserRoleAndRedirect(user.id);
-          } else {
-            navigate('/employer/dashboard', { replace: true });
-          }
-        }
+      const { error } = await signIn(email, password, captchaToken);
+      if (error) {
+        handleAuthError(error);
+        rateLimit.recordAttempt(false, error.message);
       } else {
-        // Use the employer dashboard as redirect URL for sign up
-        const redirectUrl = `${window.location.origin}/employer/dashboard`;
-        const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
+        rateLimit.recordAttempt(true);
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in to your employer account.",
+        });
         
-        if (error) {
-          handleAuthError(error, true);
-          rateLimit.recordAttempt(false, error.message);
+        // Get current user and check their roles
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await checkUserRoleAndRedirect(user.id);
         } else {
-          rateLimit.recordAttempt(true);
-          toast({
-            title: "Account created!",
-            description: "Please check your email to verify your account. Once verified, you'll be redirected to your employer dashboard.",
-          });
-          
-          // Navigate to verification page with employer context
-          navigate(`/verify-email?email=${encodeURIComponent(email)}&type=employer`);
+          navigate('/employer/dashboard', { replace: true });
         }
       }
     } catch (error) {
@@ -227,7 +215,91 @@ const EmployerAuth = () => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      resetCaptcha();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!email || !password || !fullName) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Weak password",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Bot protection
+    if (!isValidSubmission()) {
+      toast({
+        title: "Please wait",
+        description: "Please wait a moment before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!rateLimit.canAttempt) {
+      toast({
+        title: "Rate limited",
+        description: rateLimit.getCooldownMessage(),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setLoading(true);
+    setLastSubmissionTime(Date.now());
+
+    try {
+      // Use the employer dashboard as redirect URL for sign up
+      const redirectUrl = `${window.location.origin}/employer/dashboard`;
+      
+      // No captcha required for signup - frictionless experience
+      const { error } = await signUp(email, password, fullName, redirectUrl);
+      
+      if (error) {
+        handleAuthError(error);
+        rateLimit.recordAttempt(false, error.message);
+      } else {
+        rateLimit.recordAttempt(true);
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account. Once verified, you'll be redirected to your employer dashboard.",
+        });
+        
+        // Navigate to verification page with employer context
+        navigate(`/verify-email?email=${encodeURIComponent(email)}&type=employer`);
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -271,28 +343,42 @@ const EmployerAuth = () => {
                 </Alert>
               )}
               
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={isLogin ? handleSignIn : handleSignUp} className="space-y-6">
                 {!isLogin && (
                   <>
+                    {/* Honeypot field - hidden from users, visible to bots */}
+                    <input
+                      type="text"
+                      name="website"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      style={{ display: 'none' }}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                    
                     <div className="space-y-2">
                       <Label htmlFor="fullName" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Full Name
                       </Label>
-                      <Input
-                        id="fullName"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                        placeholder="Your full name"
-                      />
+                      <div className="relative">
+                        <Input
+                          id="fullName"
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          required
+                          placeholder="Your full name"
+                          className={`border-gray-200 focus:border-indigo-500 focus:ring-indigo-500`}
+                        />
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="companyName" className="flex items-center gap-2">
                         <Briefcase className="h-4 w-4" />
-                        Company Name
+                        Company Name (Optional)
                       </Label>
                       <Input
                         id="companyName"
@@ -300,6 +386,7 @@ const EmployerAuth = () => {
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="Your company name"
+                        className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
                       />
                     </div>
                   </>
@@ -310,14 +397,23 @@ const EmployerAuth = () => {
                     <Mail className="h-4 w-4" />
                     Email
                   </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="your@company.com"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => handleEmailChange(e.target.value)}
+                      required
+                      placeholder="your@company.com"
+                      className={`border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 ${
+                        emailValid === false ? 'border-red-300 focus:border-red-500' : 
+                        emailValid === true ? 'border-green-300 focus:border-green-500' : ''
+                      }`}
+                    />
+                    {emailValid === false && (
+                      <div className="text-red-500 text-sm mt-1">Please enter a valid email address</div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
@@ -325,38 +421,59 @@ const EmployerAuth = () => {
                     <Lock className="h-4 w-4" />
                     Password
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="Enter your password"
-                    minLength={6}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      required
+                      placeholder="Enter your password"
+                      minLength={6}
+                      className={`border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 ${
+                        password && passwordStrength === 'Too short' ? 'border-red-300' : 
+                        password && passwordStrength !== 'Too short' ? 'border-green-300' : ''
+                      }`}
+                    />
+                    {password && !isLogin && (
+                      <div className={`text-sm mt-1 ${
+                        passwordStrength === 'Too short' || passwordStrength === 'Weak' ? 'text-red-500' :
+                        passwordStrength === 'Medium' ? 'text-yellow-500' :
+                        passwordStrength === 'Good' || passwordStrength === 'Strong' ? 'text-green-500' : ''
+                      }`}>
+                        Password strength: {passwordStrength}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="flex justify-center">
-                <HCaptcha
-                  ref={captchaRef}
-                  sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
-                  onVerify={(token) => {
-                    setCaptchaToken(token);
-                    setCaptchaTokenTimestamp(Date.now());
-                  }}
-                  onExpire={() => {
-                    setCaptchaToken(null);
-                  }}
-                  onError={() => {
-                    setCaptchaToken(null);
-                  }}
-                />
-                </div>
+                {isLogin ? (
+                  <div className="flex justify-center">
+                    <HCaptcha
+                      ref={captchaRef}
+                      sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
+                      onVerify={(token) => {
+                        setCaptchaToken(token);
+                      }}
+                      onExpire={() => {
+                        setCaptchaToken(null);
+                      }}
+                      onError={() => {
+                        setCaptchaToken(null);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-green-50 p-3 rounded">
+                    <Shield className="h-4 w-4 text-green-600" />
+                    <span>Protected by smart bot detection - No captcha required!</span>
+                  </div>
+                )}
                 
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3"
-                  disabled={loading || !captchaToken || !rateLimit.canAttempt}
+                  disabled={loading || (isLogin && !captchaToken) || !rateLimit.canAttempt || (!isLogin && (emailValid === false || passwordStrength === 'Too short'))}
                   size="lg"
                 >
                   {loading ? (
@@ -367,7 +484,7 @@ const EmployerAuth = () => {
                       Wait {rateLimit.remainingCooldown}s
                     </>
                   ) : (
-                    isLogin ? 'Sign In' : 'Create Employer Account'
+                    isLogin ? 'Sign In' : 'Create Employer Account - Free & Instant'
                   )}
                 </Button>
               </form>

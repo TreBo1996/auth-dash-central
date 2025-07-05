@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, AlertTriangle, Sparkles, Star, Clock } from 'lucide-react';
+import { Loader2, AlertTriangle, Sparkles, Star, Clock, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -19,9 +19,12 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaResetting, setCaptchaResetting] = useState(false);
-  const [captchaTokenTimestamp, setCaptchaTokenTimestamp] = useState<number | null>(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
+  const [formStartTime] = useState<number>(Date.now());
+  const [honeypot, setHoneypot] = useState(''); // Bot trap field
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState<string>('');
+  
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,7 +38,6 @@ const Auth: React.FC = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      // Handle redirect after authentication
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
       } else {
@@ -44,78 +46,90 @@ const Auth: React.FC = () => {
     }
   }, [user, navigate, redirectParam]);
 
-  // Check if captcha token is fresh (not older than 5 minutes)
-  const isCaptchaTokenFresh = () => {
-    if (!captchaTokenTimestamp) return false;
-    const tokenAge = Date.now() - captchaTokenTimestamp;
-    return tokenAge < 5 * 60 * 1000; // 5 minutes
+  // Validate email format
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
-  // Enhanced captcha reset function with better error handling
-  const resetCaptcha = async () => {
-    setCaptchaResetting(true);
-    setCaptchaToken(null);
-    setCaptchaTokenTimestamp(null);
-    setError(null);
-    
-    // Wait longer for hCaptcha to fully reset
-    setTimeout(() => {
-      captchaRef.current?.resetCaptcha();
-      setCaptchaResetting(false);
-    }, 500);
+  // Check password strength
+  const checkPasswordStrength = (password: string) => {
+    if (password.length < 6) return 'Too short';
+    if (password.length < 8) return 'Weak';
+    if (!/(?=.*[a-z])(?=.*[A-Z])/.test(password)) return 'Medium';
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return 'Good';
+    return 'Strong';
   };
 
-  // Check if enough time has passed since last submission to prevent rapid fire
-  const canSubmit = () => {
+  // Handle email change with validation
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (value) {
+      setEmailValid(validateEmail(value));
+    } else {
+      setEmailValid(null);
+    }
+  };
+
+  // Handle password change with strength check
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setPasswordStrength(checkPasswordStrength(value));
+  };
+
+  // Bot protection checks
+  const isValidSubmission = () => {
+    // Check honeypot (should be empty)
+    if (honeypot !== '') {
+      console.log('Bot detected: honeypot filled');
+      return false;
+    }
+
+    // Check timing (should take at least 3 seconds)
+    const timeSinceStart = Date.now() - formStartTime;
+    if (timeSinceStart < 3000) {
+      console.log('Bot detected: too fast submission');
+      return false;
+    }
+
+    // Check submission frequency
     const timeSinceLastSubmission = Date.now() - lastSubmissionTime;
-    return timeSinceLastSubmission > 2000; // 2 second minimum between submissions
+    if (timeSinceLastSubmission < 2000) {
+      console.log('Rate limited: too frequent submissions');
+      return false;
+    }
+
+    return true;
   };
 
-  // Enhanced error handling function
-  const handleAuthError = (error: any, isSignUp = false) => {
+  // Simplified error handling
+  const handleAuthError = (error: any) => {
     const errorMessage = error.message.toLowerCase();
     
-    if (errorMessage.includes('already-seen-response') || 
-        errorMessage.includes('captcha protection')) {
-      setError('The captcha has already been used. A fresh captcha is being loaded...');
-      resetCaptcha();
-    } else if (errorMessage.includes('captcha')) {
-      setError('Captcha verification failed. Please complete the captcha again.');
-      resetCaptcha();
-    } else if (errorMessage.includes('504') || 
-               errorMessage.includes('timeout') || 
-               errorMessage.includes('processing this request timed out')) {
-      if (isSignUp) {
-        setError('Your signup request timed out, but your account may have been created. Please check your email for a verification link, or try signing in if the account was created.');
-      } else {
-        setError('The request timed out. Please try again with a fresh captcha.');
-      }
-      resetCaptcha();
-    } else if (errorMessage.includes('context deadline exceeded')) {
-      setError('The server is taking too long to respond. Please try again in a moment.');
-      resetCaptcha();
+    if (errorMessage.includes('invalid credentials') || errorMessage.includes('invalid login')) {
+      setError('Invalid email or password. Please try again.');
+    } else if (errorMessage.includes('user already registered')) {
+      setError('An account with this email already exists. Try signing in instead.');
+    } else if (errorMessage.includes('email rate limit')) {
+      setError('Too many emails sent. Please wait a few minutes before trying again.');
+    } else if (errorMessage.includes('timeout')) {
+      setError('Request timed out. Your account may have been created - check your email or try signing in.');
     } else {
-      const enhancedError = rateLimit.getErrorMessage(error.message);
-      setError(enhancedError);
+      setError('Something went wrong. Please try again.');
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaToken || captchaResetting) {
-      setError('Please complete the captcha verification');
+    // Basic validation
+    if (!email || !password) {
+      setError('Please fill in all fields.');
       return;
     }
 
-    if (!isCaptchaTokenFresh()) {
-      setError('Captcha has expired. Please complete a new captcha verification.');
-      resetCaptcha();
-      return;
-    }
-
-    if (!canSubmit()) {
-      setError('Please wait a moment before trying again.');
+    if (!captchaToken) {
+      setError('Please complete the captcha verification.');
       return;
     }
 
@@ -131,7 +145,7 @@ const Auth: React.FC = () => {
     const { error } = await signIn(email, password, captchaToken);
     
     if (error) {
-      handleAuthError(error, false);
+      handleAuthError(error);
       rateLimit.recordAttempt(false, error.message);
     } else {
       rateLimit.recordAttempt(true);
@@ -140,7 +154,6 @@ const Auth: React.FC = () => {
         description: "You have been signed in successfully.",
       });
       
-      // Handle redirect after successful sign in
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
       } else {
@@ -154,19 +167,25 @@ const Auth: React.FC = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaToken || captchaResetting) {
-      setError('Please complete the captcha verification');
+    // Basic validation
+    if (!email || !password) {
+      setError('Please fill in all fields.');
       return;
     }
 
-    if (!isCaptchaTokenFresh()) {
-      setError('Captcha has expired. Please complete a new captcha verification.');
-      resetCaptcha();
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
-    if (!canSubmit()) {
-      setError('Please wait a moment before trying again.');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    // Bot protection
+    if (!isValidSubmission()) {
+      setError('Please wait a moment before submitting.');
       return;
     }
 
@@ -184,14 +203,18 @@ const Auth: React.FC = () => {
       ? `${window.location.origin}/upload-resume`
       : `${window.location.origin}/dashboard`;
 
-    const { error } = await signUp(email, password, fullName, redirectUrl, captchaToken);
+    // No captcha required for signup - frictionless experience
+    const { error } = await signUp(email, password, fullName, redirectUrl);
     
     if (error) {
-      handleAuthError(error, true);
+      handleAuthError(error);
       rateLimit.recordAttempt(false, error.message);
     } else {
       rateLimit.recordAttempt(true);
-      // Redirect to verification screen with email in URL
+      toast({
+        title: "Account created!",
+        description: "Please check your email to verify your account.",
+      });
       navigate(`/verify-email?email=${encodeURIComponent(email)}`);
     }
     
@@ -300,7 +323,6 @@ const Auth: React.FC = () => {
                     sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
                     onVerify={(token) => {
                       setCaptchaToken(token);
-                      setCaptchaTokenTimestamp(Date.now());
                       setError(null);
                     }}
                     onExpire={() => {
@@ -338,8 +360,19 @@ const Auth: React.FC = () => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  {/* Honeypot field - hidden from users, visible to bots */}
+                  <input
+                    type="text"
+                    name="website"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    style={{ display: 'none' }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                  
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Label htmlFor="signup-name">Full Name (Optional)</Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -349,49 +382,66 @@ const Auth: React.FC = () => {
                       className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
                     />
                   </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="Create a password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => handleEmailChange(e.target.value)}
+                        className={`border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 ${
+                          emailValid === false ? 'border-red-300 focus:border-red-500' : 
+                          emailValid === true ? 'border-green-300 focus:border-green-500' : ''
+                        }`}
+                        required
+                      />
+                      {emailValid === false && (
+                        <div className="text-red-500 text-sm mt-1">Please enter a valid email address</div>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex justify-center">
-                  <HCaptcha
-                    ref={captchaRef}
-                    sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
-                      onVerify={(token) => {
-                        setCaptchaToken(token);
-                        setCaptchaTokenTimestamp(Date.now());
-                        setError(null);
-                      }}
-                      onExpire={() => setCaptchaToken(null)}
-                      onError={() => setCaptchaToken(null)}
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="Create a password (min 6 characters)"
+                        value={password}
+                        onChange={(e) => handlePasswordChange(e.target.value)}
+                        className={`border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 ${
+                          password && passwordStrength === 'Too short' ? 'border-red-300' : 
+                          password && passwordStrength !== 'Too short' ? 'border-green-300' : ''
+                        }`}
+                        required
+                        minLength={6}
+                      />
+                      {password && (
+                        <div className={`text-sm mt-1 ${
+                          passwordStrength === 'Too short' || passwordStrength === 'Weak' ? 'text-red-500' :
+                          passwordStrength === 'Medium' ? 'text-yellow-500' :
+                          passwordStrength === 'Good' || passwordStrength === 'Strong' ? 'text-green-500' : ''
+                        }`}>
+                          Password strength: {passwordStrength}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* No captcha for frictionless signup */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-green-50 p-3 rounded">
+                    <Shield className="h-4 w-4 text-green-600" />
+                    <span>Protected by smart bot detection</span>
                   </div>
                   
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading || !captchaToken || !rateLimit.canAttempt}
+                    disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short'}
                   >
                     {isLoading ? (
                       <>
@@ -404,9 +454,13 @@ const Auth: React.FC = () => {
                         Wait {rateLimit.remainingCooldown}s
                       </>
                     ) : (
-                      'Create Account'
+                      'Create Account - Free & Instant'
                     )}
                   </Button>
+                  
+                  <div className="text-xs text-gray-500 text-center">
+                    By creating an account, you agree to our Terms of Service and Privacy Policy
+                  </div>
                 </form>
               </TabsContent>
             </Tabs>
