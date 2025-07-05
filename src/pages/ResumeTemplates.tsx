@@ -94,7 +94,7 @@ const ResumeTemplates: React.FC = () => {
         jobTitle: data.job_descriptions?.title
       });
       setOptimizedResume(data);
-      
+
       // Set default color scheme for template
       const templateConfig = newTemplateConfigs[selectedTemplate];
       if (templateConfig && !selectedColorScheme) {
@@ -206,11 +206,7 @@ const ResumeTemplates: React.FC = () => {
         {/* Header */}
         <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
           <div className={`${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/dashboard')}
-              className={isMobile ? 'w-full sm:w-auto' : ''}
-            >
+            <Button variant="outline" onClick={() => navigate('/dashboard')} className={isMobile ? 'w-full sm:w-auto' : ''}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -230,18 +226,13 @@ const ResumeTemplates: React.FC = () => {
             </div>
           </div>
           {/* Desktop buttons only */}
-          {!isMobile && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Print
-              </Button>
+          {!isMobile && <div className="flex gap-2">
+              
               <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700">
                 <Download className="h-4 w-4 mr-2" />
                 {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
               </Button>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Mobile Template Selector - Shows on small screens */}
@@ -249,21 +240,17 @@ const ResumeTemplates: React.FC = () => {
           <Card>
             <CardContent className="p-4">
               <h3 className="font-semibold mb-4 text-center">Choose Template</h3>
-              <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={(templateId) => {
-                setSelectedTemplate(templateId);
-                const config = newTemplateConfigs[templateId];
-                setSelectedColorScheme(config.defaultColorScheme);
-              }} isMobile={true} />
+              <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={templateId => {
+              setSelectedTemplate(templateId);
+              const config = newTemplateConfigs[templateId];
+              setSelectedColorScheme(config.defaultColorScheme);
+            }} isMobile={true} />
             </CardContent>
           </Card>
           
           <Card>
             <CardContent className="p-4">
-              <ColorSchemeSelector
-                colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes}
-                selectedScheme={selectedColorScheme}
-                onSchemeSelect={setSelectedColorScheme}
-              />
+              <ColorSchemeSelector colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes} selectedScheme={selectedColorScheme} onSchemeSelect={setSelectedColorScheme} />
             </CardContent>
           </Card>
         </div>
@@ -282,12 +269,7 @@ const ResumeTemplates: React.FC = () => {
               <Card className="shadow-lg">
                 <CardContent className={`${isMobile ? 'p-2' : 'p-4'}`}>
                 <div className="bg-white border rounded-lg shadow-sm">
-                  <ResumePreview 
-                    template={selectedTemplate} 
-                    resumeData={optimizedResume.generated_text} 
-                    optimizedResumeId={resumeId}
-                    selectedColorScheme={selectedColorScheme}
-                  />
+                  <ResumePreview template={selectedTemplate} resumeData={optimizedResume.generated_text} optimizedResumeId={resumeId} selectedColorScheme={selectedColorScheme} />
                 </div>
                 </CardContent>
               </Card>
@@ -300,25 +282,17 @@ const ResumeTemplates: React.FC = () => {
               <Card className="h-fit">
                 <CardContent className="p-4 px-[4px]">
                   <h3 className="font-semibold mb-4 text-center">Templates</h3>
-                  <TemplateSelector 
-                    selectedTemplate={selectedTemplate} 
-                    onTemplateSelect={(templateId) => {
-                      setSelectedTemplate(templateId);
-                      const config = newTemplateConfigs[templateId];
-                      setSelectedColorScheme(config.defaultColorScheme);
-                    }} 
-                    isMobile={false} 
-                  />
+                  <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={templateId => {
+                  setSelectedTemplate(templateId);
+                  const config = newTemplateConfigs[templateId];
+                  setSelectedColorScheme(config.defaultColorScheme);
+                }} isMobile={false} />
                 </CardContent>
               </Card>
               
               <Card className="h-fit">
                 <CardContent className="p-4">
-                  <ColorSchemeSelector
-                    colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes}
-                    selectedScheme={selectedColorScheme}
-                    onSchemeSelect={setSelectedColorScheme}
-                  />
+                  <ColorSchemeSelector colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes} selectedScheme={selectedColorScheme} onSchemeSelect={setSelectedColorScheme} />
                 </CardContent>
               </Card>
             </div>
@@ -326,18 +300,11 @@ const ResumeTemplates: React.FC = () => {
         </div>
         
         {/* Mobile Floating Action Button */}
-        {isMobile && (
-          <div className="fixed bottom-6 right-6 z-50">
-            <Button 
-              onClick={handleDownloadPDF} 
-              disabled={isGeneratingPDF}
-              className="bg-blue-800 hover:bg-blue-700 shadow-lg rounded-full h-14 w-14 p-0"
-              size="lg"
-            >
+        {isMobile && <div className="fixed bottom-6 right-6 z-50">
+            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700 shadow-lg rounded-full h-14 w-14 p-0" size="lg">
               <Download className="h-6 w-6" />
             </Button>
-          </div>
-        )}
+          </div>}
       </div>
     </DashboardLayout>;
 };
