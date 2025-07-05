@@ -99,20 +99,20 @@ const Auth: React.FC = () => {
     return true;
   };
 
-  // Simplified error handling
+  // Simplified error handling with better timeout detection
   const handleAuthError = (error: any) => {
     const errorMessage = error.message.toLowerCase();
     
-    if (errorMessage.includes('invalid credentials') || errorMessage.includes('invalid login')) {
+    if (errorMessage.includes('timeout') || errorMessage.includes('504') || errorMessage.includes('upstream')) {
+      setError('Server timeout - this may be a temporary Supabase issue. Your account might still be created. Please check your email or try signing in after a few minutes.');
+    } else if (errorMessage.includes('invalid credentials') || errorMessage.includes('invalid login')) {
       setError('Invalid email or password. Please try again.');
     } else if (errorMessage.includes('user already registered')) {
-      setError('An account with this email already exists. Try signing in instead.');
+      setError('An account with this email already exists. Try signing in instead.');  
     } else if (errorMessage.includes('email rate limit')) {
       setError('Too many emails sent. Please wait a few minutes before trying again.');
-    } else if (errorMessage.includes('timeout')) {
-      setError('Request timed out. Your account may have been created - check your email or try signing in.');
     } else {
-      setError('Something went wrong. Please try again.');
+      setError(`Signup failed: ${error.message}. Please try again or contact support if this persists.`);
     }
   };
 
