@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthRateLimit } from '@/hooks/useAuthRateLimit';
 import { supabase } from '@/integrations/supabase/client';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const EmployerAuth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,7 +19,6 @@ const EmployerAuth = () => {
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
   const [formStartTime] = useState<number>(Date.now());
   const [honeypot, setHoneypot] = useState(''); // Bot trap field
@@ -30,7 +28,6 @@ const EmployerAuth = () => {
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const captchaRef = useRef<HCaptcha>(null);
   const rateLimit = useAuthRateLimit();
 
   // Validate email format
@@ -167,10 +164,11 @@ const EmployerAuth = () => {
       return;
     }
 
-    if (!captchaToken) {
+    // Bot protection
+    if (!isValidSubmission()) {
       toast({
-        title: "Captcha required",
-        description: "Please complete the captcha verification.",
+        title: "Please wait",
+        description: "Please wait a moment before submitting.",
         variant: "destructive",
       });
       return;
@@ -189,7 +187,8 @@ const EmployerAuth = () => {
     setLastSubmissionTime(Date.now());
 
     try {
-      const { error } = await signIn(email, password, captchaToken);
+      // No captcha needed - completely frictionless
+      const { error } = await signIn(email, password);
       if (error) {
         handleAuthError(error);
         rateLimit.recordAttempt(false, error.message);
@@ -447,33 +446,16 @@ const EmployerAuth = () => {
                   </div>
                 </div>
                 
-                {isLogin ? (
-                  <div className="flex justify-center">
-                    <HCaptcha
-                      ref={captchaRef}
-                      sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
-                      onVerify={(token) => {
-                        setCaptchaToken(token);
-                      }}
-                      onExpire={() => {
-                        setCaptchaToken(null);
-                      }}
-                      onError={() => {
-                        setCaptchaToken(null);
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-green-50 p-3 rounded">
-                    <Shield className="h-4 w-4 text-green-600" />
-                    <span>Protected by smart bot detection - No captcha required!</span>
-                  </div>
-                )}
+                {/* No captcha - completely frictionless for both signin and signup */}
+                <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                  <Shield className="h-4 w-4 text-blue-600" />
+                  <span>{isLogin ? 'Secure and instant sign in' : 'Protected by smart bot detection - No captcha required!'}</span>
+                </div>
                 
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3"
-                  disabled={loading || (isLogin && !captchaToken) || !rateLimit.canAttempt || (!isLogin && (emailValid === false || passwordStrength === 'Too short'))}
+                  disabled={loading || !rateLimit.canAttempt || (!isLogin && (emailValid === false || passwordStrength === 'Too short'))}
                   size="lg"
                 >
                   {loading ? (
@@ -484,7 +466,7 @@ const EmployerAuth = () => {
                       Wait {rateLimit.remainingCooldown}s
                     </>
                   ) : (
-                    isLogin ? 'Sign In' : 'Create Employer Account - Free & Instant'
+                    isLogin ? 'Sign In - Instant Access' : 'Create Employer Account - Free & Instant'
                   )}
                 </Button>
               </form>

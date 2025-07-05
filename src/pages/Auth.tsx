@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthRateLimit } from '@/hooks/useAuthRateLimit';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
 
 const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +17,6 @@ const Auth: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
   const [formStartTime] = useState<number>(Date.now());
   const [honeypot, setHoneypot] = useState(''); // Bot trap field
@@ -29,7 +27,6 @@ const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const captchaRef = useRef<HCaptcha>(null);
   const rateLimit = useAuthRateLimit();
 
   // Get redirect parameter from URL
@@ -128,8 +125,9 @@ const Auth: React.FC = () => {
       return;
     }
 
-    if (!captchaToken) {
-      setError('Please complete the captcha verification.');
+    // Bot protection
+    if (!isValidSubmission()) {
+      setError('Please wait a moment before submitting.');
       return;
     }
 
@@ -142,7 +140,8 @@ const Auth: React.FC = () => {
     setError(null);
     setLastSubmissionTime(Date.now());
 
-    const { error } = await signIn(email, password, captchaToken);
+    // No captcha needed - completely frictionless
+    const { error } = await signIn(email, password);
     
     if (error) {
       handleAuthError(error);
@@ -317,29 +316,16 @@ const Auth: React.FC = () => {
                     />
                   </div>
                   
-                  <div className="flex justify-center">
-                  <HCaptcha
-                    ref={captchaRef}
-                    sitekey="77fabb62-1a5e-4e3c-bf9e-1cda92a08514"
-                    onVerify={(token) => {
-                      setCaptchaToken(token);
-                      setError(null);
-                    }}
-                    onExpire={() => {
-                      setCaptchaToken(null);
-                      setError('Captcha expired. Please verify again.');
-                    }}
-                    onError={() => {
-                      setCaptchaToken(null);
-                      setError('Captcha verification failed. Please try again.');
-                    }}
-                  />
+                  {/* No captcha - completely frictionless signin */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                    <Shield className="h-4 w-4 text-blue-600" />
+                    <span>Secure and instant sign in</span>
                   </div>
                   
                   <Button 
                     type="submit" 
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading || !captchaToken || !rateLimit.canAttempt}
+                    disabled={isLoading || !rateLimit.canAttempt}
                   >
                     {isLoading ? (
                       <>
@@ -352,7 +338,7 @@ const Auth: React.FC = () => {
                         Wait {rateLimit.remainingCooldown}s
                       </>
                     ) : (
-                      'Sign In'
+                      'Sign In - Instant Access'
                     )}
                   </Button>
                 </form>

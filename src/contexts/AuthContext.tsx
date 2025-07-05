@@ -7,8 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string, redirectTo?: string, captchaToken?: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName?: string, redirectTo?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -67,22 +67,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []); // Remove handleAuthStateChange from dependencies to prevent re-runs
 
-  const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string, captchaToken?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string) => {
     const redirectUrl = redirectTo || `${window.location.origin}/dashboard`;
     
-    // Only include captchaToken if it's provided to avoid triggering captcha verification
-    const signUpOptions: any = {
+    const signUpOptions = {
       emailRedirectTo: redirectUrl,
       data: {
         full_name: fullName || '',
         intended_role: redirectTo?.includes('/employer') ? 'employer' : 'job_seeker'
       }
     };
-
-    // Only add captcha token if provided (for signin we still use captcha)
-    if (captchaToken) {
-      signUpOptions.captchaToken = captchaToken;
-    }
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -92,13 +86,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
-  const signIn = async (email: string, password: string, captchaToken?: string) => {
+  const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password,
-      options: {
-        captchaToken
-      }
+      password
+      // No captcha options - completely frictionless
     });
     return { error };
   };
