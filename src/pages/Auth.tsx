@@ -197,13 +197,8 @@ const Auth: React.FC = () => {
     setError(null);
     setLastSubmissionTime(Date.now());
 
-    // Include redirect in the signup redirect URL
-    const redirectUrl = redirectParam === 'upload-resume' 
-      ? `${window.location.origin}/upload-resume`
-      : `${window.location.origin}/dashboard`;
-
-    // No captcha required for signup - frictionless experience
-    const { error } = await signUp(email, password, fullName, redirectUrl);
+    // Simplified signup - no redirect complexity, roles handled after auth
+    const { error } = await signUp(email, password, fullName);
     
     if (error) {
       handleAuthError(error);

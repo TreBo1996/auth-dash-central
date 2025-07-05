@@ -13,7 +13,9 @@ interface RoleContextType {
   preferredRole: AppRole | null;
   isLoadingRoles: boolean;
   isInitializing: boolean;
+  needsRoleSelection: boolean; // New: indicates if user needs to select a role
   switchRole: (role: AppRole) => Promise<void>;
+  createRole: (role: AppRole) => Promise<boolean>; // New: create role function
   hasRole: (role: AppRole) => boolean;
   canSwitchRoles: boolean;
 }
@@ -42,8 +44,50 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [isLoadingRoles, setIsLoadingRoles] = useState(true);
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasNavigated, setHasNavigated] = useState(false);
+  const [needsRoleSelection, setNeedsRoleSelection] = useState(false);
 
-  // Load user roles and preferences
+  // Create role function - used during onboarding
+  const createRole = async (role: AppRole): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      console.log('Creating role:', role, 'for user:', user.id);
+      
+      // Insert user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          role: role
+        });
+
+      if (roleError) throw roleError;
+
+      // Set role preference
+      const { error: prefError } = await supabase
+        .from('user_role_preferences')
+        .upsert({
+          user_id: user.id,
+          preferred_role: role
+        });
+
+      if (prefError) throw prefError;
+
+      // Update local state
+      setUserRoles([role]);
+      setActiveRole(role);
+      setPreferredRole(role);
+      setNeedsRoleSelection(false);
+
+      console.log('Successfully created role:', role);
+      return true;
+    } catch (error) {
+      console.error('Error creating role:', error);
+      return false;
+    }
+  };
+
+  // Load user roles and preferences - now more graceful
   useEffect(() => {
     const loadUserRoles = async () => {
       if (!user) {
@@ -53,6 +97,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         setIsLoadingRoles(false);
         setIsInitializing(false);
         setHasNavigated(false);
+        setNeedsRoleSelection(false);
         return;
       }
 
@@ -70,54 +115,46 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
         let roles = rolesData?.map(r => r.role) || [];
 
-        // If user has no roles, create a default job_seeker role
+        // If user has no roles, they need to select one during onboarding
         if (roles.length === 0) {
-          console.log('User has no roles, creating default job_seeker role');
-          
-          const { error: insertRoleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: 'job_seeker'
-            });
+          console.log('User has no roles - will need role selection');
+          setNeedsRoleSelection(true);
+          setUserRoles([]);
+          setActiveRole(null);
+          setPreferredRole(null);
+        } else {
+          // User has roles - load preferences
+          setNeedsRoleSelection(false);
+          setUserRoles(roles);
 
-          if (insertRoleError) {
-            console.error('Error creating default role:', insertRoleError);
-          } else {
-            roles = ['job_seeker'];
-            console.log('Successfully created default job_seeker role');
-          }
+          // Get preferred role
+          const { data: prefData, error: prefError } = await supabase
+            .from('user_role_preferences')
+            .select('preferred_role')
+            .eq('user_id', user.id)
+            .single();
+
+          if (prefError && prefError.code !== 'PGRST116') throw prefError;
+
+          const preferred = prefData?.preferred_role || roles[0];
+          setPreferredRole(preferred);
+
+          // Set active role based on preferred role
+          const determinedRole = preferred && roles.includes(preferred) ? preferred : roles[0];
+          setActiveRole(determinedRole);
+
+          console.log('Roles loaded:', { roles, preferred, determinedRole });
         }
-
-        setUserRoles(roles);
-
-        // Get preferred role
-        const { data: prefData, error: prefError } = await supabase
-          .from('user_role_preferences')
-          .select('preferred_role')
-          .eq('user_id', user.id)
-          .single();
-
-        if (prefError && prefError.code !== 'PGRST116') throw prefError;
-
-        const preferred = prefData?.preferred_role || roles[0] || 'job_seeker';
-        setPreferredRole(preferred);
-
-        // Set active role based on preferred role
-        const determinedRole = preferred && roles.includes(preferred) ? preferred : roles[0] || 'job_seeker';
-        setActiveRole(determinedRole);
-
-        console.log('Roles loaded:', { roles, preferred, determinedRole });
 
       } catch (error) {
         console.error('Error loading user roles:', error);
-        // Fallback to job_seeker role if there's an error
-        setUserRoles(['job_seeker']);
-        setActiveRole('job_seeker');
-        setPreferredRole('job_seeker');
+        // On error, mark that they need role selection
+        setNeedsRoleSelection(true);
+        setUserRoles([]);
+        setActiveRole(null);
+        setPreferredRole(null);
       } finally {
         setIsLoadingRoles(false);
-        // Add a small delay to ensure everything is ready
         setTimeout(() => {
           setIsInitializing(false);
         }, 100);
@@ -206,7 +243,9 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     preferredRole,
     isLoadingRoles,
     isInitializing,
+    needsRoleSelection,
     switchRole,
+    createRole,
     hasRole,
     canSwitchRoles
   };

@@ -273,11 +273,8 @@ const EmployerAuth = () => {
     setLastSubmissionTime(Date.now());
 
     try {
-      // Use the employer dashboard as redirect URL for sign up
-      const redirectUrl = `${window.location.origin}/employer/dashboard`;
-      
-      // No captcha required for signup - frictionless experience
-      const { error } = await signUp(email, password, fullName, redirectUrl);
+      // Simplified signup - no complex redirect logic
+      const { error } = await signUp(email, password, fullName);
       
       if (error) {
         handleAuthError(error);
@@ -286,11 +283,11 @@ const EmployerAuth = () => {
         rateLimit.recordAttempt(true);
         toast({
           title: "Account created!",
-          description: "Please check your email to verify your account. Once verified, you'll be redirected to your employer dashboard.",
+          description: "Please check your email to verify your account. You'll be able to choose your role after verification.",
         });
         
-        // Navigate to verification page with employer context
-        navigate(`/verify-email?email=${encodeURIComponent(email)}&type=employer`);
+        // Navigate to verification page
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       console.error('Auth error:', error);
