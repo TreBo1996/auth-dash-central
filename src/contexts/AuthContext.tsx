@@ -68,17 +68,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []); // Remove handleAuthStateChange from dependencies to prevent re-runs
 
   const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string) => {
-    // Simplified signup - no role detection, just basic auth
-    const redirectUrl = redirectTo || `${window.location.origin}/onboarding`;
-    
+    // Remove redirect URL temporarily to avoid potential timeout issues
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName || ''
-          // No role metadata - roles will be handled after authentication
         }
       }
     });

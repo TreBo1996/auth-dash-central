@@ -99,12 +99,19 @@ const Auth: React.FC = () => {
     return true;
   };
 
-  // Simplified error handling with better timeout detection
+  // Enhanced error handling for signup issues
   const handleAuthError = (error: any) => {
+    console.log('Full error object:', error);
+    
+    if (!error || !error.message) {
+      setError('Signup request timed out. Supabase may be experiencing temporary issues. Please try again in a few minutes.');
+      return;
+    }
+    
     const errorMessage = error.message.toLowerCase();
     
     if (errorMessage.includes('timeout') || errorMessage.includes('504') || errorMessage.includes('upstream')) {
-      setError('Server timeout - this may be a temporary Supabase issue. Your account might still be created. Please check your email or try signing in after a few minutes.');
+      setError('Server timeout - Supabase is experiencing temporary issues. Your account might still be created. Please check your email or try signing in after a few minutes.');
     } else if (errorMessage.includes('invalid credentials') || errorMessage.includes('invalid login')) {
       setError('Invalid email or password. Please try again.');
     } else if (errorMessage.includes('user already registered')) {
