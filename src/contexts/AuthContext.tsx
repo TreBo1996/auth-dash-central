@@ -70,17 +70,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string, captchaToken?: string) => {
     const redirectUrl = redirectTo || `${window.location.origin}/dashboard`;
     
+    // Only include captchaToken if it's provided to avoid triggering captcha verification
+    const signUpOptions: any = {
+      emailRedirectTo: redirectUrl,
+      data: {
+        full_name: fullName || '',
+        intended_role: redirectTo?.includes('/employer') ? 'employer' : 'job_seeker'
+      }
+    };
+
+    // Only add captcha token if provided (for signin we still use captcha)
+    if (captchaToken) {
+      signUpOptions.captchaToken = captchaToken;
+    }
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        captchaToken,
-        data: {
-          full_name: fullName || '',
-          intended_role: redirectTo?.includes('/employer') ? 'employer' : 'job_seeker'
-        }
-      }
+      options: signUpOptions
     });
     return { error };
   };
