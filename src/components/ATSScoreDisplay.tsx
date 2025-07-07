@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
+import { JobFitIndicator } from '@/components/resume-editor/JobFitIndicator';
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -99,25 +100,25 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
         </Button>
       </div>;
   }
-  return <div className="space-y-3">
+  return <div className="space-y-4">
+      {/* Job Fit Indicator */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Target className="h-4 w-4" />
-          <div className="flex items-center gap-1">
-            <span className="text-sm font-medium">ATS Score:</span>
-            <ATSInfoTooltip />
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={cn("inline-flex items-center rounded-full border px-2.5 py-1 text-sm font-medium transition-colors", getScoreColor(atsScore))}>
-              {atsScore}/100
-            </div>
-            <span className={cn("text-xs font-medium", getScoreTextColor(atsScore))}>
-              {getScoreLabel(atsScore)}
-            </span>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Job Fit Assessment:</span>
+          <ATSInfoTooltip />
         </div>
-        
+        <Button 
+          size="sm" 
+          variant="outline" 
+          onClick={handleRescore} 
+          disabled={isRescoring}
+          className="h-7"
+        >
+          {isRescoring ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Rescore'}
+        </Button>
       </div>
+      
+      <JobFitIndicator atsScore={atsScore} />
 
       {atsFeedback && <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           <CollapsibleTrigger asChild>

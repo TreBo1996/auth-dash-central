@@ -640,6 +640,9 @@ export type Database = {
           generated_text: string
           id: string
           job_description_id: string
+          job_fit_level: string | null
+          keyword_enhancements: Json | null
+          original_content: string | null
           original_resume_id: string
           scored_at: string | null
           scoring_criteria: Json | null
@@ -653,6 +656,9 @@ export type Database = {
           generated_text: string
           id?: string
           job_description_id: string
+          job_fit_level?: string | null
+          keyword_enhancements?: Json | null
+          original_content?: string | null
           original_resume_id: string
           scored_at?: string | null
           scoring_criteria?: Json | null
@@ -666,6 +672,9 @@ export type Database = {
           generated_text?: string
           id?: string
           job_description_id?: string
+          job_fit_level?: string | null
+          keyword_enhancements?: Json | null
+          original_content?: string | null
           original_resume_id?: string
           scored_at?: string | null
           scoring_criteria?: Json | null

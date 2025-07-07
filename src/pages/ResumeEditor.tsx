@@ -489,6 +489,11 @@ const ResumeEditor: React.FC = () => {
             experiences={resumeData.experience}
             onChange={(experience) => setResumeData(prev => prev ? { ...prev, experience } : null)}
             jobDescriptionId={jobDescriptionId}
+            keywordData={atsFeedback?.keyword_analysis ? {
+              matchedKeywords: atsFeedback.keyword_analysis.matched_keywords || [],
+              addedKeywords: [], // TODO: Get from optimization metadata
+              missingKeywords: atsFeedback.keyword_analysis.missing_keywords || []
+            } : undefined}
           />
 
           {/* Skills Section */}

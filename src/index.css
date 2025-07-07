@@ -37,6 +37,28 @@
 
     --radius: 0.5rem;
 
+    /* Job Fit Indicator Colors */
+    --job-fit-excellent: 142 76% 36%;
+    --job-fit-excellent-bg: 142 76% 96%;
+    --job-fit-strong: 142 71% 45%;
+    --job-fit-strong-bg: 142 76% 96%;
+    --job-fit-good: 84 81% 44%;
+    --job-fit-good-bg: 84 81% 96%;
+    --job-fit-fair: 45 93% 47%;
+    --job-fit-fair-bg: 48 96% 95%;
+    --job-fit-weak: 21 90% 48%;
+    --job-fit-weak-bg: 24 100% 97%;
+    --job-fit-poor: 0 84% 60%;
+    --job-fit-poor-bg: 0 86% 97%;
+
+    /* Keyword Highlighting Colors */
+    --keyword-added: 214 100% 97%;
+    --keyword-added-text: 214 95% 27%;
+    --keyword-matched: 142 76% 96%;
+    --keyword-matched-text: 142 86% 28%;
+    --keyword-missing: 0 86% 97%;
+    --keyword-missing-text: 0 74% 42%;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -82,6 +104,28 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Dark mode Job Fit Indicator Colors */
+    --job-fit-excellent: 142 76% 50%;
+    --job-fit-excellent-bg: 142 76% 8%;
+    --job-fit-strong: 142 71% 60%;
+    --job-fit-strong-bg: 142 76% 8%;
+    --job-fit-good: 84 81% 60%;
+    --job-fit-good-bg: 84 81% 8%;
+    --job-fit-fair: 45 93% 65%;
+    --job-fit-fair-bg: 48 96% 10%;
+    --job-fit-weak: 21 90% 65%;
+    --job-fit-weak-bg: 24 100% 10%;
+    --job-fit-poor: 0 84% 70%;
+    --job-fit-poor-bg: 0 86% 10%;
+
+    /* Dark mode Keyword Highlighting Colors */
+    --keyword-added: 214 100% 15%;
+    --keyword-added-text: 214 95% 85%;
+    --keyword-matched: 142 76% 15%;
+    --keyword-matched-text: 142 86% 85%;
+    --keyword-missing: 0 86% 15%;
+    --keyword-missing-text: 0 74% 85%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
