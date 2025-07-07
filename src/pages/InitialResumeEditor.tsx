@@ -630,6 +630,8 @@ const InitialResumeEditor: React.FC = () => {
           <ExperienceSection
             experiences={parsedResume.experience}
             onChange={(experiences) => setParsedResume(prev => prev ? { ...prev, experience: experiences } : null)}
+            jobDescriptionId={undefined}
+            keywordData={undefined}
           />
 
           {/* Skills Section */}

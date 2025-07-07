@@ -137,9 +137,9 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
                   {Object.entries(atsFeedback.category_scores).map(([category, score]) => <div key={category} className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="capitalize">{category.replace('_', ' ')}</span>
-                        <span className={getScoreTextColor(score)}>{score}/100</span>
+                        <span className={getScoreTextColor(score as number)}>{(score as number)}/100</span>
                       </div>
-                      <Progress value={score} className="h-1" />
+                      <Progress value={score as number} className="h-1" />
                     </div>)}
                 </div>
 
