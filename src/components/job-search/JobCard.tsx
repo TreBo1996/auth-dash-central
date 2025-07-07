@@ -130,10 +130,10 @@ export const JobCard: React.FC<JobCardProps> = ({
   };
   const formatTextWithBreaks = (text: string) => {
     return text.split('\n').map((line, index) => (
-      <React.Fragment key={index}>
+      <span key={index}>
         {line}
         {index < text.split('\n').length - 1 && <br />}
-      </React.Fragment>
+      </span>
     ));
   };
   const parseStructuredData = (jsonString: string | string[] | undefined) => {

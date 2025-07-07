@@ -578,6 +578,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "job_search_results_cached_job_id_fkey"
+            columns: ["cached_job_id"]
+            isOneToOne: false
+            referencedRelation: "hot_job_searches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "job_search_results_job_search_id_fkey"
             columns: ["job_search_id"]
             isOneToOne: false
@@ -1179,7 +1186,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      hot_job_searches: {
+        Row: {
+          apply_url: string | null
+          company: string | null
+          company_size: string | null
+          description: string | null
+          employment_type: string | null
+          experience_level: string | null
+          id: string | null
+          industry: string | null
+          job_function: string | null
+          job_type: string | null
+          job_url: string | null
+          location: string | null
+          logo_url: string | null
+          posted_at: string | null
+          pre_calculated_relevance: number | null
+          quality_score: number | null
+          remote_type: string | null
+          salary: string | null
+          scraped_at: string | null
+          seniority_level: string | null
+          source: string | null
+          thumbnail: string | null
+          title: string | null
+          via: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       archive_old_jobs: {
@@ -1213,6 +1248,43 @@ export type Database = {
       extract_job_title_from_description: {
         Args: { description_text: string }
         Returns: string
+      }
+      fast_search_jobs: {
+        Args: {
+          search_query?: string
+          location_filter?: string
+          employment_type_filter?: string
+          seniority_filter?: string
+          company_filter?: string
+          result_limit?: number
+          result_offset?: number
+        }
+        Returns: {
+          id: string
+          title: string
+          company: string
+          location: string
+          description: string
+          salary: string
+          posted_at: string
+          job_url: string
+          apply_url: string
+          source: string
+          via: string
+          thumbnail: string
+          logo_url: string
+          job_type: string
+          employment_type: string
+          experience_level: string
+          seniority_level: string
+          remote_type: string
+          company_size: string
+          industry: string
+          job_function: string
+          scraped_at: string
+          quality_score: number
+          relevance_score: number
+        }[]
       }
       get_job_statistics: {
         Args: Record<PropertyKey, never>

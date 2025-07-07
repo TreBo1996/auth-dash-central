@@ -46,8 +46,8 @@ serve(async (req) => {
       query, location, remoteType, employmentType, seniorityLevel, company, maxAge, limit, offset 
     });
 
-    // Use the optimized fast_search_jobs function
-    const { data: jobs, error } = await supabase.rpc('fast_search_jobs', {
+    // Try the optimized fast_search_jobs function first
+    let { data: jobs, error } = await supabase.rpc('fast_search_jobs', {
       search_query: query,
       location_filter: location,
       employment_type_filter: employmentType,
@@ -57,9 +57,28 @@ serve(async (req) => {
       result_offset: offset
     });
 
+    // If fast_search_jobs fails, fallback to the regular search_jobs function
     if (error) {
-      console.error('Fast search error:', error);
-      throw error;
+      console.warn('Fast search failed, falling back to regular search:', error.message);
+      const fallbackResult = await supabase.rpc('search_jobs', {
+        search_query: query,
+        location_filter: location,
+        remote_filter: remoteType,
+        employment_type_filter: employmentType,
+        seniority_filter: seniorityLevel,
+        company_filter: company,
+        max_age_days: maxAge,
+        result_limit: limit,
+        result_offset: offset
+      });
+      
+      jobs = fallbackResult.data;
+      error = fallbackResult.error;
+      
+      if (error) {
+        console.error('Fallback search also failed:', error);
+        throw error;
+      }
     }
 
     console.log(`Fast search returned ${jobs?.length || 0} jobs`);
