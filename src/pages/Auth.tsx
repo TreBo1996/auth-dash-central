@@ -447,7 +447,7 @@ const Auth: React.FC = () => {
                   </Button>
                   
                   <div className="text-xs text-gray-500 text-center">
-                    By creating an account, you agree to our <Link to="/terms-of-service" className="text-primary hover:underline">Terms of Service</Link> and Privacy Policy
+                    By creating an account, you agree to our <Link to="/terms-of-service" className="text-primary hover:underline">Terms of Service</Link> and <Link to="/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link>
                   </div>
                 </form>
               </TabsContent>

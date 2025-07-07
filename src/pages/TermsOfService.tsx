@@ -102,7 +102,7 @@ const TermsOfService: React.FC = () => {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-4">10. Privacy</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Your use of the Platform is also governed by the RezLit Privacy Policy, which explains how we collect, use, and safeguard personal data.
+                  Your use of the Platform is also governed by the <a href="/privacy-policy" className="text-primary hover:underline">RezLit Privacy Policy</a>, which explains how we collect, use, and safeguard personal data.
                 </p>
               </section>
 

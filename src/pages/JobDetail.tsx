@@ -678,7 +678,7 @@ const JobDetail: React.FC = () => {
                 <h3 className="font-semibold mb-4">Company</h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li><Link to="/" className="hover:text-primary">About</Link></li>
-                  <li><Link to="/" className="hover:text-primary">Privacy</Link></li>
+                  <li><Link to="/privacy-policy" className="hover:text-primary">Privacy</Link></li>
                   <li><Link to="/terms-of-service" className="hover:text-primary">Terms</Link></li>
                 </ul>
               </div>
