@@ -19,7 +19,7 @@ export interface FeatureLimits {
 }
 
 const FREE_LIMITS: FeatureLimits = {
-  resume_optimizations: 3,
+  resume_optimizations: 2,
   interview_sessions: 1,
   cover_letters: 2,
   job_descriptions: 3,
