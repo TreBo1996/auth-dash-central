@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { JobDatabaseManager } from './JobDatabaseManager';
 import { 
   Settings, 
   Play, 
@@ -14,7 +16,8 @@ import {
   Loader2,
   Database,
   Calendar,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react';
 
 interface JobStatistics {
@@ -197,7 +200,16 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
   }
 
   return (
-    <Card className="border-orange-200 bg-orange-50">
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Shield className="h-6 w-6" />
+        <h1 className="text-2xl font-bold">Admin Tools</h1>
+        <Badge variant="destructive">Admin Only</Badge>
+      </div>
+
+      <JobDatabaseManager />
+
+      <Card className="border-orange-200 bg-orange-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-orange-800">
           <Settings className="h-5 w-5" />
@@ -331,5 +343,6 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
