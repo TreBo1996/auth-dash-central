@@ -331,7 +331,7 @@ const JobDetail: React.FC = () => {
               Perfect Your Resume for This {job.title} Position
             </h1>
             <p className="text-lg md:text-xl mb-6 text-blue-100">
-              Get 3x more interviews with AI-optimized resumes tailored to this exact job posting
+              Get 3x more interviews with AI-optimized resumes tailored to exact job postings
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
