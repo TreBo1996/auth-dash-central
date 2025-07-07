@@ -337,7 +337,7 @@ const JobDetail: React.FC = () => {
               <Button 
                 size="lg" 
                 onClick={() => user ? navigate('/upload-resume') : navigate('/auth')}
-                className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 hover:from-yellow-500 hover:via-orange-600 hover:to-red-600 text-white font-bold shadow-xl hover:shadow-2xl hover:scale-105 transform transition-all duration-300 focus:ring-4 focus:ring-orange-300"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl hover:scale-105 transform transition-all duration-300 focus:ring-4 focus:ring-blue-300"
               >
                 <Target className="h-5 w-5 mr-2" />
                 Optimize My Resume
