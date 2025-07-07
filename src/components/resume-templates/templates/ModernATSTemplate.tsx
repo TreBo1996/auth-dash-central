@@ -114,7 +114,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                 className="flex items-center"
                 style={{ color: colors.text }}
               >
-                <div className="w-1.5 h-1.5 rounded-full mr-2 mt-2" style={{ backgroundColor: colors.accent }}></div>
+                <div className="w-1.5 h-1.5 rounded-full mr-2 mt-1.5" style={{ backgroundColor: colors.accent }}></div>
                 {skill}
               </div>
             ))}
