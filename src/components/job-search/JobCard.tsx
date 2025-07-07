@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, ChevronDown, ChevronUp, Star, Briefcase } from 'lucide-react';
+import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, ChevronDown, ChevronUp, Star, Briefcase, Share2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { UnifiedJob } from '@/types/job';
 import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
@@ -92,6 +93,29 @@ export const JobCard: React.FC<JobCardProps> = ({
       setSaving(false);
     }
   };
+  const getJobUrl = () => {
+    if (job.source === 'employer') {
+      return `/job/employer/${job.id}`;
+    } else {
+      return `/job/database/${job.id}`;
+    }
+  };
+
+  const handleShareClick = async () => {
+    const url = `${window.location.origin}${getJobUrl()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link Copied!",
+        description: "Job posting link has been copied to clipboard"
+      });
+    } catch (error) {
+      toast({
+        title: "Share Link",
+        description: url,
+      });
+    }
+  };
   const handleViewJob = () => {
     if (job.source === 'employer') {
       window.location.href = job.job_url;
@@ -109,7 +133,9 @@ export const JobCard: React.FC<JobCardProps> = ({
         {index < text.split('\n').length - 1 && <br />}
       </React.Fragment>);
   };
-  const parseStructuredData = (jsonString: string) => {
+  const parseStructuredData = (jsonString: string | string[] | undefined) => {
+    if (!jsonString) return [];
+    if (Array.isArray(jsonString)) return jsonString;
     try {
       return JSON.parse(jsonString || '[]');
     } catch {
@@ -126,9 +152,9 @@ export const JobCard: React.FC<JobCardProps> = ({
       </div>;
   };
   const renderJobDescription = () => {
-    const requirements = parseStructuredData(job.requirements || '');
-    const responsibilities = parseStructuredData(job.responsibilities || '');
-    const benefits = parseStructuredData(job.benefits || '');
+    const requirements = parseStructuredData(job.requirements);
+    const responsibilities = parseStructuredData(job.responsibilities);
+    const benefits = parseStructuredData(job.benefits);
     const hasStructuredData = requirements.length > 0 || responsibilities.length > 0 || benefits.length > 0;
     if (!expanded) {
       const truncatedText = job.description.length > 300 ? job.description.slice(0, 300) + '...' : job.description;
@@ -152,13 +178,18 @@ export const JobCard: React.FC<JobCardProps> = ({
           </div>}
       </div>;
   };
-  const shouldShowToggle = job.description.length > 300 || parseStructuredData(job.requirements || '').length > 0 || parseStructuredData(job.responsibilities || '').length > 0 || parseStructuredData(job.benefits || '').length > 0;
+  const shouldShowToggle = job.description.length > 300 || 
+    parseStructuredData(job.requirements).length > 0 || 
+    parseStructuredData(job.responsibilities).length > 0 || 
+    parseStructuredData(job.benefits).length > 0;
   return <>
       <Card className={`hover:shadow-md transition-shadow ${job.source === 'employer' ? 'border-l-4 border-l-blue-500' : ''}`}>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
-              <CardTitle className="text-lg mb-2">{job.title}</CardTitle>
+              <Link to={getJobUrl()}>
+                <CardTitle className="text-lg mb-2 hover:text-blue-600 cursor-pointer">{job.title}</CardTitle>
+              </Link>
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Building className="h-4 w-4" />
@@ -208,6 +239,13 @@ export const JobCard: React.FC<JobCardProps> = ({
                 Posted {job.posted_at && `${job.posted_at}`}
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShareClick}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleSaveJob} disabled={saving || saved}>
                   {saved ? <>
                       <Check className="h-4 w-4 mr-1" />

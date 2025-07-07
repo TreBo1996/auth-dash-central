@@ -31,6 +31,7 @@ import Applications from '@/pages/employer/Applications';
 import EmployerAnalytics from '@/pages/employer/EmployerAnalytics';
 import EmployerSettings from '@/pages/employer/EmployerSettings';
 import JobPosting from '@/pages/JobPosting';
+import JobDetail from '@/pages/JobDetail';
 import CoverLetters from '@/pages/CoverLetters';
 
 function App() {
@@ -50,6 +51,12 @@ function App() {
               <Route 
                 path="/job-posting/:id" 
                 element={<JobPosting />} 
+              />
+              
+              {/* Public Job Detail Route */}
+              <Route 
+                path="/job/:source/:id" 
+                element={<JobDetail />} 
               />
               
               {/* Job Seeker Routes */}

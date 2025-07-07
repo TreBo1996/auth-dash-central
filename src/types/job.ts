@@ -13,6 +13,10 @@ export interface UnifiedJob {
   employer_profile?: {
     company_name: string;
     logo_url: string;
+    company_description?: string;
+    industry?: string;
+    company_size?: string;
+    website?: string;
   };
   employment_type?: string;
   experience_level?: string;
@@ -20,11 +24,12 @@ export interface UnifiedJob {
   salary_max?: number;
   salary_currency?: string;
   created_at?: string;
+  // Structured fields (can be arrays for employer jobs, strings for database jobs)
+  requirements?: string[] | string;
+  responsibilities?: string[] | string;
+  benefits?: string[] | string;
   // Database job fields
   via?: string;
   thumbnail?: string;
   job_type?: string | null;
-  requirements?: string;
-  responsibilities?: string;
-  benefits?: string;
 }
