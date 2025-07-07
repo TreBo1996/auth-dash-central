@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Briefcase, Plus, Trash2, ListOrdered, Sparkles, X } from 'lucide-react';
 import { BulletSuggestionsModal } from './BulletSuggestionsModal';
-import { KeywordHighlighter } from './KeywordHighlighter';
+
 
 interface Experience {
   title: string;
@@ -18,18 +18,12 @@ interface ExperienceSectionProps {
   experiences: Experience[];
   onChange: (experiences: Experience[]) => void;
   jobDescriptionId?: string;
-  keywordData?: {
-    matchedKeywords: string[];
-    addedKeywords: string[];
-    missingKeywords: string[];
-  };
 }
 
 export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   experiences,
   onChange,
-  jobDescriptionId,
-  keywordData
+  jobDescriptionId
 }) => {
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -246,15 +240,11 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                   {experience.bullets.map((bullet, bulletIndex) => (
                     <div key={bulletIndex} className="flex gap-2">
                       <span className="text-gray-500 mt-1">•</span>
-                      <KeywordHighlighter
+                      <Textarea
                         value={bullet}
-                        onChange={(value) => updateBulletPoint(index, bulletIndex, value)}
+                        onChange={(e) => updateBulletPoint(index, bulletIndex, e.target.value)}
                         placeholder="Describe your achievement or responsibility..."
-                        className="flex-1 resize-none"
-                        matchedKeywords={keywordData?.matchedKeywords || []}
-                        addedKeywords={keywordData?.addedKeywords || []}
-                        missingKeywords={keywordData?.missingKeywords || []}
-                        minHeight="60px"
+                        className="flex-1 resize-none min-h-[60px]"
                       />
                       {experience.bullets.length > 1 && (
                         <Button
