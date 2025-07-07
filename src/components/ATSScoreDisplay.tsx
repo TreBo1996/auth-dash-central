@@ -39,7 +39,7 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
   onScoreUpdate
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isRescoring, setIsRescoring] = useState(false);
+  const [isInitialScoring, setIsInitialScoring] = useState(false);
   const {
     toast
   } = useToast();
@@ -58,8 +58,8 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
     if (score >= 60) return 'Good';
     return 'Needs Improvement';
   };
-  const handleRescore = async () => {
-    setIsRescoring(true);
+  const handleInitialScore = async () => {
+    setIsInitialScoring(true);
     try {
       const {
         data,
@@ -73,19 +73,19 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
       if (data.success && onScoreUpdate) {
         onScoreUpdate(data.ats_score, data.ats_feedback);
         toast({
-          title: "Score Updated",
-          description: `New ATS score: ${data.ats_score}/100`
+          title: "Score Calculated",
+          description: `ATS score: ${data.ats_score}/100`
         });
       }
     } catch (error) {
-      console.error('Error rescoring:', error);
+      console.error('Error calculating score:', error);
       toast({
         title: "Error",
-        description: "Failed to recalculate ATS score.",
+        description: "Failed to calculate ATS score.",
         variant: "destructive"
       });
     } finally {
-      setIsRescoring(false);
+      setIsInitialScoring(false);
     }
   };
   if (!atsScore) {
@@ -95,27 +95,16 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
           <span>No ATS score available</span>
           <ATSInfoTooltip />
         </div>
-        <Button size="sm" variant="outline" onClick={handleRescore} disabled={isRescoring} className="h-7">
-          {isRescoring ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Score Now'}
+        <Button size="sm" variant="outline" onClick={handleInitialScore} disabled={isInitialScoring} className="h-7">
+          {isInitialScoring ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Score Now'}
         </Button>
       </div>;
   }
   return <div className="space-y-4">
       {/* Job Fit Indicator */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Job Fit Assessment:</span>
-          <ATSInfoTooltip />
-        </div>
-        <Button 
-          size="sm" 
-          variant="outline" 
-          onClick={handleRescore} 
-          disabled={isRescoring}
-          className="h-7"
-        >
-          {isRescoring ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Rescore'}
-        </Button>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium">Job Fit Assessment:</span>
+        <ATSInfoTooltip />
       </div>
       
       <JobFitIndicator atsScore={atsScore} />
