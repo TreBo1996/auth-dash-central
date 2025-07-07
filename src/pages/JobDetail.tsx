@@ -27,6 +27,34 @@ import {
   TrendingUp
 } from 'lucide-react';
 
+// Helper function to parse job attributes that might be JSON strings or arrays
+const parseJobAttribute = (value: string | string[] | null | undefined): string[] => {
+  if (!value) return [];
+  
+  // If it's already an array, return it
+  if (Array.isArray(value)) {
+    return value;
+  }
+  
+  // If it's a string, try to parse it as JSON
+  if (typeof value === 'string') {
+    // Check if it looks like a JSON array
+    if (value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [value];
+      } catch (error) {
+        // If parsing fails, return the original string as an array
+        return [value];
+      }
+    }
+    // If it's just a regular string, return it as an array
+    return [value];
+  }
+  
+  return [];
+};
+
 const JobDetail: React.FC = () => {
   const { source, id } = useParams<{ source: string; id: string }>();
   const navigate = useNavigate();
@@ -391,34 +419,20 @@ const JobDetail: React.FC = () => {
                       <div className="flex flex-wrap gap-2">
                         {job.employment_type && (
                           <>
-                            {Array.isArray(job.employment_type) 
-                              ? job.employment_type.map((type, index) => (
-                                  <div key={index} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
-                                    {type}
-                                  </div>
-                                ))
-                              : (
-                                  <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
-                                    {job.employment_type}
-                                  </div>
-                                )
-                            }
+                            {parseJobAttribute(job.employment_type).map((type, index) => (
+                              <div key={index} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
+                                {type}
+                              </div>
+                            ))}
                           </>
                         )}
                         {job.experience_level && (
                           <>
-                            {Array.isArray(job.experience_level) 
-                              ? job.experience_level.map((level, index) => (
-                                  <div key={index} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
-                                    {level}
-                                  </div>
-                                ))
-                              : (
-                                  <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
-                                    {job.experience_level}
-                                  </div>
-                                )
-                            }
+                            {parseJobAttribute(job.experience_level).map((level, index) => (
+                              <div key={index} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
+                                {level}
+                              </div>
+                            ))}
                           </>
                         )}
                       </div>
