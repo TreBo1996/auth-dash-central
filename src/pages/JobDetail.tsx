@@ -65,7 +65,7 @@ const JobDetail: React.FC = () => {
           `)
           .eq('id', id)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
@@ -93,13 +93,13 @@ const JobDetail: React.FC = () => {
 
         setJob(unifiedJob);
       } else if (source === 'database') {
-        // Load database job from cached_jobs table
+        // Load database job from cached_jobs table  
         const { data, error } = await supabase
           .from('cached_jobs')
-          .select('*')
+          .select('*') 
           .eq('id', id)
           .eq('is_expired', false)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 

@@ -165,14 +165,14 @@ export const JobSearch: React.FC = () => {
 
       // Transform database jobs to unified format
       const databaseJobs: UnifiedJob[] = (data.jobs || []).map((job: any) => ({
-        id: job.job_url || `${job.title}-${job.company}`,
+        id: job.id, // Use the actual UUID from database
         title: job.title,
         company: job.company,
         location: job.location,
         description: job.description,
         salary: job.salary,
         posted_at: job.posted_at,
-        job_url: job.job_url,
+        job_url: job.job_url, // Keep original URL for apply functionality
         source: 'database' as const,
         via: job.via,
         thumbnail: job.thumbnail,
