@@ -1198,6 +1198,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      extract_job_title_from_description: {
+        Args: { description_text: string }
+        Returns: string
+      }
       get_job_statistics: {
         Args: Record<PropertyKey, never>
         Returns: Json
