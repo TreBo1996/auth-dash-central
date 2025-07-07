@@ -346,7 +346,7 @@ const JobDetail: React.FC = () => {
                 size="lg" 
                 variant="outline" 
                 onClick={() => user ? navigate('/dashboard') : navigate('/auth')}
-                className="border-white text-white hover:bg-white/10"
+                className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 hover:text-white"
               >
                 <TrendingUp className="h-5 w-5 mr-2" />
                 View Dashboard
