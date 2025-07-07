@@ -128,82 +128,77 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase secrets.');
     }
 
-    console.log('Calling OpenAI API for aggressive ATS optimization...');
+    console.log('Calling OpenAI API for authentic resume enhancement...');
 
-    const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to significantly INCREASE the ATS score of this resume for the specific job description.
+    const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to enhance the existing resume content for better ATS compatibility while maintaining complete accuracy and authenticity.
 
-CRITICAL REQUIREMENTS FOR ATS SCORE IMPROVEMENT:
-1. **KEYWORD DENSITY**: Integrate ALL relevant keywords from the job description naturally throughout the resume
-2. **COMPREHENSIVE BULLET POINTS**: Each job position MUST have 5-7 detailed bullet points (not maximum, MINIMUM)
-3. **QUANTIFIABLE METRICS**: Include specific numbers, percentages, dollar amounts, team sizes in every bullet point possible
-4. **ACTION VERBS**: Start each bullet with powerful action verbs (Led, Developed, Implemented, Managed, Optimized, Delivered, etc.)
-5. **SKILL ALIGNMENT**: Ensure all mentioned skills directly match job requirements
-6. **PRESERVE ALL EXPERIENCES**: Keep every job, just enhance them dramatically for ATS compatibility
+CRITICAL AUTHENTICITY REQUIREMENTS:
+1. **PRESERVE ORIGINAL EXPERIENCES**: NEVER create, add, or invent new job positions, responsibilities, or achievements
+2. **ENHANCE EXISTING CONTENT ONLY**: Only improve the wording, structure, and keyword integration of existing bullet points
+3. **NO FABRICATED METRICS**: Only suggest quantifiable metrics where they can reasonably be inferred from existing content - NEVER invent specific numbers, percentages, or dollar amounts
+4. **MAINTAIN ORIGINAL STRUCTURE**: Keep the same number of experiences and preserve the essence of each role
+5. **NO NEW CERTIFICATIONS**: Only include certifications that already exist in the original resume
+6. **KEYWORD INTEGRATION**: Naturally integrate relevant job description keywords into existing content without changing the fundamental meaning
 
-ATS OPTIMIZATION STRATEGIES TO APPLY:
-- Match job description terminology exactly (don't use synonyms)
-- Include industry-specific keywords and technical terms
-- Use the exact job title keywords in experience descriptions
-- Add relevant skills mentioned in job description to skills section
-- Ensure formatting is ATS-friendly (simple, clean structure)
-- Include relevant certifications and education keywords
+ATS OPTIMIZATION STRATEGIES (WITHIN AUTHENTICITY BOUNDS):
+- Improve keyword density by rephrasing existing content with job description terminology
+- Enhance action verbs while preserving the original responsibilities
+- Restructure existing bullet points for better ATS readability
+- Organize existing skills to better match job requirements
+- Improve formatting for ATS compatibility
+- Enhance existing education and certification descriptions (if any exist)
 
-BULLET POINT ENHANCEMENT RULES:
-- Start with strong action verbs
-- Include specific metrics and achievements
-- Integrate job description keywords naturally
-- Show progression and impact
-- Use present tense for current roles, past tense for previous roles
-- Each bullet should demonstrate value and relevance to target role
+CONTENT ENHANCEMENT RULES:
+- Improve clarity and professional tone of existing bullet points
+- Integrate job description keywords naturally into existing responsibilities
+- Enhance action verbs but keep the same underlying activities
+- Maintain the original timeline and progression of roles
+- NEVER add responsibilities or achievements that weren't in the original resume
+- Focus on better articulation rather than content expansion
 
 CRITICAL OUTPUT FORMAT REQUIREMENTS:
-You MUST return ONLY valid JSON in exactly this structure:
+You MUST return ONLY valid JSON. The structure should match the original resume's sections exactly:
 
 {
-  "name": "Full Name",
+  "name": "Full Name (from original)",
   "contact": {
-    "email": "email@example.com",
-    "phone": "+1234567890",
-    "location": "City, State"
+    "email": "email@example.com (from original)",
+    "phone": "+1234567890 (from original)",
+    "location": "City, State (from original)"
   },
-  "summary": "Professional summary paragraph with job description keywords",
+  "summary": "Enhanced professional summary with job description keywords (based on original if it exists)",
   "experience": [
     {
-      "title": "Job Title",
-      "company": "Company Name",
-      "duration": "Start Date - End Date",
+      "title": "Job Title (exact from original)",
+      "company": "Company Name (exact from original)",
+      "duration": "Start Date - End Date (exact from original)",
       "bullets": [
-        "Enhanced achievement with metrics and job keywords",
-        "Enhanced achievement with metrics and job keywords",
-        "Enhanced achievement with metrics and job keywords",
-        "Enhanced achievement with metrics and job keywords",
-        "Enhanced achievement with metrics and job keywords",
-        "Enhanced achievement with metrics and job keywords",
-        "Enhanced achievement with metrics and job keywords"
+        "Enhanced version of original bullet point 1",
+        "Enhanced version of original bullet point 2",
+        "Enhanced version of original bullet point 3"
       ]
     }
   ],
   "skills": [
     {
-      "category": "Technical Skills",
-      "items": ["Skill 1 from job desc", "Skill 2 from job desc", "Skill 3 from job desc"]
+      "category": "Skills Category (reorganized from original)",
+      "items": ["Existing skill 1", "Existing skill 2", "Existing skill 3"]
     }
   ],
   "education": [
     {
-      "degree": "Degree Name",
-      "school": "Institution Name",
-      "year": "Year"
-    }
-  ],
-  "certifications": [
-    {
-      "name": "Certification Name",
-      "issuer": "Issuing Organization",
-      "year": "Year"
+      "degree": "Degree Name (from original)",
+      "school": "Institution Name (from original)", 
+      "year": "Year (from original)"
     }
   ]
 }
+
+IMPORTANT CONDITIONAL SECTIONS:
+- Only include "certifications" array if the original resume had certifications
+- NEVER add new certifications not present in the original resume
+- Maintain the same number of experiences as the original resume
+- Enhance existing bullet points rather than creating new ones
 
 TARGET JOB DESCRIPTION (Extract and integrate ALL relevant keywords):
 ${jobDescription.parsed_text}
@@ -211,7 +206,7 @@ ${jobDescription.parsed_text}
 ORIGINAL RESUME TO OPTIMIZE:
 ${resume.parsed_text}
 
-REMEMBER: Your goal is to DRAMATICALLY INCREASE the ATS score by making this resume perfectly aligned with the job description while preserving all original experiences. Return ONLY the optimized resume as valid JSON.`;
+REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improving existing content alignment with the job description while maintaining complete authenticity and accuracy. Return ONLY the enhanced resume as valid JSON.`;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -224,7 +219,7 @@ REMEMBER: Your goal is to DRAMATICALLY INCREASE the ATS score by making this res
         messages: [
           {
             role: 'system',
-            content: 'You are an expert ATS optimization specialist. Your primary goal is to dramatically increase ATS scores by optimizing resumes for specific job descriptions. Always return valid JSON only.'
+            content: 'You are an expert ATS optimization specialist focused on enhancing existing resume content for better compatibility while maintaining complete authenticity. Never fabricate experiences, achievements, or certifications. Always return valid JSON only.'
           },
           {
             role: 'user',
