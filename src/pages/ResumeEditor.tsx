@@ -376,7 +376,7 @@ const ResumeEditor: React.FC = () => {
             <p className="text-gray-600">Edit your AI-optimized resume</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleExport} variant="outline" title="Export to template">
+            <Button onClick={handleExport} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold" title="Export to template">
               <FileDown className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -445,7 +445,7 @@ const ResumeEditor: React.FC = () => {
             Back to Dashboard
           </Button>
           <div className="flex gap-2">
-            <Button onClick={handleExport} variant="outline" title="Export to template">
+            <Button onClick={handleExport} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold" title="Export to template">
               <FileDown className="h-4 w-4 mr-2" />
               Export
             </Button>
