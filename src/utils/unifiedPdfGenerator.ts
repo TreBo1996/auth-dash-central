@@ -312,10 +312,18 @@ export class ProfessionalResumeGenerator {
       this.pdf.setFont('helvetica', 'normal');
       exp.bullets.forEach(bullet => {
         this.checkPageBreak(30);
-        const lines = this.pdf.splitTextToSize(`• ${bullet}`, this.usableWidth - 12);
+        
+        const bulletX = this.margin + 3;
+        const textX = this.margin + 15;
+        const lines = this.pdf.splitTextToSize(bullet, this.usableWidth - 15);
+        
         lines.forEach((line: string, lineIndex: number) => {
-          const x = lineIndex === 0 ? this.margin : this.margin + 12;
-          this.pdf.text(line, x, this.currentY);
+          if (lineIndex === 0) {
+            // Draw visual bullet circle aligned with text baseline
+            this.pdf.circle(bulletX, this.currentY, 1.5, 'F');
+          }
+          // Position text aligned with bullet center
+          this.pdf.text(line, textX, this.currentY - 3);
           this.currentY += 16;
         });
       });
