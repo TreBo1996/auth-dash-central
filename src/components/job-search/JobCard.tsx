@@ -201,7 +201,6 @@ export const JobCard: React.FC<JobCardProps> = ({
             <div className="flex gap-2">
               {job.employment_type && <Badge variant="outline">{job.employment_type}</Badge>}
               {job.experience_level && <Badge variant="outline">{job.experience_level}</Badge>}
-              {job.source === 'database' && job.via}
             </div>
 
             <div className="flex justify-between items-center pt-2">
