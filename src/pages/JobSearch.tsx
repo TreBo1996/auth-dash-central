@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Search } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
+import { useOptimizedJobSearch } from '@/hooks/useOptimizedJobSearch';
 
 interface JobSearchFilters {
   query: string;
@@ -23,9 +24,11 @@ const JOBS_PER_PAGE = 10;
 export const JobSearch: React.FC = () => {
   const [allJobs, setAllJobs] = useState<UnifiedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
+  
+  // Use the optimized search hook
+  const { searchJobs, loading } = useOptimizedJobSearch();
 
 // Load employer jobs on component mount and implement basic caching
   useEffect(() => {
@@ -191,21 +194,9 @@ export const JobSearch: React.FC = () => {
   };
 
   const handleSearch = async (searchFilters: JobSearchFilters) => {
-    setLoading(true);
     setCurrentPage(1); // Reset to first page on new search
     
     try {
-      const cacheKey = getCacheKey(searchFilters);
-      const cachedResults = getCachedResults(cacheKey);
-      
-      if (cachedResults) {
-        setAllJobs(cachedResults);
-        setWarnings([]);
-        setSearchPerformed(true);
-        setLoading(false);
-        return;
-      }
-
       // Progressive loading: Load employer jobs first (faster)
       const employerJobs = await loadEmployerJobs(searchFilters);
       
@@ -213,22 +204,19 @@ export const JobSearch: React.FC = () => {
       setAllJobs(employerJobs);
       setSearchPerformed(true);
       
-      // Then load database jobs
-      const databaseResult = await loadDatabaseJobs(searchFilters);
+      // Then load optimized database search
+      const databaseResult = await searchJobs(searchFilters);
       
       // Combine jobs with employer jobs first, limit total to 150
       const combinedJobs = [...employerJobs, ...databaseResult.jobs].slice(0, 150);
       
       setAllJobs(combinedJobs);
       setWarnings(databaseResult.warnings);
-      setCachedResults(cacheKey, combinedJobs);
       
     } catch (error) {
       console.error('Search error:', error);
       setAllJobs([]);
       setWarnings(['Search failed. Please try again.']);
-    } finally {
-      setLoading(false);
     }
   };
 
