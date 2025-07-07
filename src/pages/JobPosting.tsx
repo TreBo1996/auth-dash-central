@@ -17,7 +17,13 @@ import {
   Users, 
   Globe,
   ArrowLeft,
-  Briefcase
+  Briefcase,
+  Star,
+  CheckCircle,
+  TrendingUp,
+  Shield,
+  Zap,
+  Target
 } from 'lucide-react';
 
 interface JobPosting {
@@ -393,6 +399,120 @@ const JobPosting: React.FC = () => {
             </Card>
           )}
 
+          {/* RezLit Value Proposition - For Non-Authenticated Users */}
+          {!user && (
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <CardContent className="py-8">
+                <div className="text-center space-y-6">
+                  <div className="flex justify-center">
+                    <div className="bg-blue-600 rounded-full p-3">
+                      <Zap className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-blue-900 mb-2">
+                      Stand Out with RezLit
+                    </h2>
+                    <p className="text-blue-700 text-lg">
+                      Get AI-powered resume optimization and personalized cover letters that make employers notice you
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                    <div className="text-center space-y-2">
+                      <div className="bg-white rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto">
+                        <Target className="h-8 w-8 text-blue-600" />
+                      </div>
+                      <h3 className="font-semibold text-blue-900">ATS-Optimized Resumes</h3>
+                      <p className="text-sm text-blue-600">Get past applicant tracking systems with AI-optimized keywords</p>
+                    </div>
+                    <div className="text-center space-y-2">
+                      <div className="bg-white rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto">
+                        <TrendingUp className="h-8 w-8 text-green-600" />
+                      </div>
+                      <h3 className="font-semibold text-blue-900">3x Higher Response Rate</h3>
+                      <p className="text-sm text-blue-600">Our users get significantly more interview invitations</p>
+                    </div>
+                    <div className="text-center space-y-2">
+                      <div className="bg-white rounded-full p-3 w-16 h-16 flex items-center justify-center mx-auto">
+                        <Shield className="h-8 w-8 text-purple-600" />
+                      </div>
+                      <h3 className="font-semibold text-blue-900">Personalized Cover Letters</h3>
+                      <p className="text-sm text-blue-600">AI generates tailored cover letters for each application</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-6 max-w-2xl mx-auto">
+                    <div className="flex items-center justify-center space-x-1 mb-3">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                      ))}
+                      <span className="ml-2 text-gray-600 font-medium">4.9/5 from 2,500+ users</span>
+                    </div>
+                    <blockquote className="text-gray-700 italic">
+                      "I got 3 interview calls within a week of using RezLit. The AI optimization made my resume stand out from hundreds of applications!"
+                    </blockquote>
+                    <cite className="text-sm text-gray-500 mt-2 block">- Sarah M., Software Engineer</cite>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* What Happens When You Apply */}
+          {!user && (
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader>
+                <CardTitle className="text-green-900 flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  What Happens When You Apply Through RezLit
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">1</div>
+                    <div>
+                      <h4 className="font-semibold text-green-900">Create Your Account (30 seconds)</h4>
+                      <p className="text-green-700 text-sm">Quick signup with your email - no lengthy forms</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                      <h4 className="font-semibold text-green-900">Upload Your Resume</h4>
+                      <p className="text-green-700 text-sm">Our AI analyzes and optimizes your resume for this specific job</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">3</div>
+                    <div>
+                      <h4 className="font-semibold text-green-900">Generate Personalized Cover Letter</h4>
+                      <p className="text-green-700 text-sm">AI creates a compelling cover letter tailored to this position</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">4</div>
+                    <div>
+                      <h4 className="font-semibold text-green-900">Apply with Confidence</h4>
+                      <p className="text-green-700 text-sm">Submit your optimized application and track your progress</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-white rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-2 text-green-800">
+                    <Shield className="h-4 w-4" />
+                    <span className="font-medium">100% Free to Start</span>
+                  </div>
+                  <p className="text-sm text-green-600 mt-1">
+                    No credit card required. Get 3 free resume optimizations to try RezLit risk-free.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Job Details */}
           <Card>
             <CardHeader>
@@ -499,6 +619,20 @@ const JobPosting: React.FC = () => {
             jobPosting={jobPosting}
             onApplicationSubmitted={handleApplicationSubmitted}
           />
+        )}
+
+        {/* Floating Mobile CTA for Non-Authenticated Users */}
+        {!user && !hasApplied && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg md:hidden z-50">
+            <Button 
+              onClick={() => navigate('/auth')}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 text-lg font-semibold shadow-lg"
+              size="lg"
+            >
+              <Zap className="h-5 w-5 mr-2" />
+              Apply with RezLit - Free to Start
+            </Button>
+          </div>
         )}
       </div>
     </div>
