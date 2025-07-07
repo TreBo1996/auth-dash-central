@@ -52,18 +52,96 @@ function extractJobUrl(job: IndeedJobData): string | null {
   return null;
 }
 
-// Helper function to extract job title from Apify's positionName field only
+// Helper function to extract and validate job title from Apify's positionName field ONLY
 function extractJobTitle(job: IndeedJobData): string | null {
   const titleFields = ['PositionName', 'positionName', 'jobTitle'];
   
   for (const field of titleFields) {
     const title = job[field as keyof IndeedJobData] as string;
     if (title && typeof title === 'string' && title.trim()) {
-      return title.trim();
+      const cleanTitle = title.trim();
+      
+      // Strict validation - only accept legitimate job titles
+      if (isValidJobTitle(cleanTitle)) {
+        return cleanTitle;
+      }
     }
   }
   
   return null;
+}
+
+// Strict validation function to ensure only legitimate job titles are accepted
+function isValidJobTitle(title: string): boolean {
+  // Length checks
+  if (title.length < 3 || title.length > 80) {
+    return false;
+  }
+  
+  // Reject location names as titles
+  if (title.match(/^[A-Za-z\s]+,\s*(FL|CA|NY|TX|WA|IL|PA|OH|GA|NC|MI|NJ|VA|WI|AZ|MA|TN|IN|MO|MD|WV|DE|UT|NV|NM|HI|AK|VT|WY|RI|CT|NH|ME|ND|SD|MT|ID|OR|KS|NE|IA|AR|LA|MS|AL|SC|KY|OK|CO|MN),?\s*(USA?)?$/i)) {
+    return false;
+  }
+  
+  // Reject state abbreviations only
+  if (title.match(/^(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)$/i)) {
+    return false;
+  }
+  
+  // Reject city names only
+  if (title.match(/^(Tampa|Orlando|Miami|Jacksonville|Atlanta|Charlotte|Raleigh|Nashville|Austin|Dallas|Houston|Phoenix|Los Angeles|San Francisco|Seattle|Portland|Chicago|Detroit|Boston|New York|Philadelphia|Washington)$/i)) {
+    return false;
+  }
+  
+  // Reject description patterns
+  if (title.match(/^(description|about|who you|what you|overview|summary|position|job|role):/i) ||
+      title.match(/^(description|about|who you|what you|overview|summary)/i) ||
+      title.match(/(description|overview|summary|about us|who you|what you)/i)) {
+    return false;
+  }
+  
+  // Reject company name patterns
+  if (title.match(/^(company|corporation|inc\.|llc|ltd\.|co\.)$/i)) {
+    return false;
+  }
+  
+  // Reject generic recruiting phrases
+  if (title.match(/^(looking for|seeking|hiring|we are|join our|opportunity|position available)/i) ||
+      title.match(/^(we|our|the|this|that|job|position|role|opportunity|candidate|applicant)/i)) {
+    return false;
+  }
+  
+  // Reject formatting artifacts
+  if (title.match(/^\*/) || 
+      title.match(/^Time Type:/i) ||
+      title.match(/^A Day in the Life/i) ||
+      title.match(/^(Benefits|Requirements|Responsibilities|Qualifications):/i)) {
+    return false;
+  }
+  
+  // Reject multiple sentences (descriptions)
+  if (title.includes('.') && title.split('.').length > 2) {
+    return false;
+  }
+  
+  // Reject exact search term matches
+  if (title.match(/^(marketing|sales|engineer|software engineer|developer|manager|analyst|business analyst|project manager|account executive|business development|account manager|senior|junior|entry level|remote|full time|part time)$/i)) {
+    return false;
+  }
+  
+  // Reject numbers only or mostly numbers
+  if (title.match(/^\d+$/) || title.match(/^\d+\s*-\s*\d+$/)) {
+    return false;
+  }
+  
+  // Reject common non-title patterns
+  if (title.match(/^(apply now|click here|learn more|view details|see description)$/i) ||
+      title.match(/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i) ||
+      title.match(/^(january|february|march|april|may|june|july|august|september|october|november|december)$/i)) {
+    return false;
+  }
+  
+  return true;
 }
 
 serve(async (req) => {
@@ -207,10 +285,12 @@ serve(async (req) => {
       }
 
       if (!jobTitle) {
-        console.log(`Skipping job ${index}: No valid positionName found`);
+        console.log(`Skipping job ${index}: No valid positionName found or failed validation. Raw title: "${job.PositionName || job.positionName || job.jobTitle || 'N/A'}"`);
         skippedCount++;
         continue;
       }
+      
+      console.log(`Accepted job ${index}: "${jobTitle}" from positionName field`);
 
       const transformedJob = {
         apify_job_id: job.id || `manual-${query}-${index}-${Date.now()}`,
