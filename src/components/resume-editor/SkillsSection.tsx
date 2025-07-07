@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Lightbulb, Plus, X, Trash2 } from 'lucide-react';
+import { Lightbulb, Plus, X, Trash2, Sparkles } from 'lucide-react';
+import { SkillSuggestionsModal } from './SkillSuggestionsModal';
 
 interface SkillGroup {
   category: string;
@@ -14,14 +15,17 @@ interface SkillGroup {
 interface SkillsSectionProps {
   skills: SkillGroup[];
   onChange: (skills: SkillGroup[]) => void;
+  jobDescriptionId?: string;
 }
 
 export const SkillsSection: React.FC<SkillsSectionProps> = ({
   skills,
-  onChange
+  onChange,
+  jobDescriptionId
 }) => {
   const [newSkillCategory, setNewSkillCategory] = useState('');
   const [newSkillItem, setNewSkillItem] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Ensure skills is always an array
   const safeSkills = skills || [];
@@ -72,6 +76,34 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
     }
   };
 
+  const handleSkillSuggestions = (selectedSkills: { [category: string]: string[] }) => {
+    const updatedSkills = [...safeSkills];
+    
+    Object.entries(selectedSkills).forEach(([categoryName, skillsList]) => {
+      // Find existing category or create new one
+      const existingCategoryIndex = updatedSkills.findIndex(
+        group => group.category.toLowerCase() === categoryName.toLowerCase()
+      );
+      
+      if (existingCategoryIndex >= 0) {
+        // Add to existing category, avoiding duplicates
+        const existingItems = updatedSkills[existingCategoryIndex].items || [];
+        const newItems = skillsList.filter(skill => 
+          !existingItems.some(existing => existing.toLowerCase() === skill.toLowerCase())
+        );
+        updatedSkills[existingCategoryIndex].items = [...existingItems, ...newItems];
+      } else {
+        // Create new category
+        updatedSkills.push({
+          category: categoryName,
+          items: skillsList
+        });
+      }
+    });
+    
+    onChange(updatedSkills);
+  };
+
   return (
     <Card className="rounded-xl shadow-md">
       <CardHeader>
@@ -92,6 +124,16 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
               <Plus className="h-4 w-4 mr-1" />
               Add Category
             </Button>
+            {jobDescriptionId && (
+              <Button 
+                onClick={() => setShowSuggestions(true)} 
+                size="sm"
+                variant="outline"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                AI Suggestions
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -162,6 +204,14 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
           </div>
         )}
       </CardContent>
+
+      <SkillSuggestionsModal
+        isOpen={showSuggestions}
+        onClose={() => setShowSuggestions(false)}
+        jobDescriptionId={jobDescriptionId || ''}
+        currentSkills={safeSkills}
+        onSelectSkills={handleSkillSuggestions}
+      />
     </Card>
   );
 };

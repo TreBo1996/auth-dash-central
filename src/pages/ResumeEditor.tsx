@@ -413,7 +413,7 @@ const ResumeEditor: React.FC = () => {
           <SkillsSection skills={resumeData.skills} onChange={skills => setResumeData(prev => prev ? {
           ...prev,
           skills
-        } : null)} />
+        } : null)} jobDescriptionId={jobDescriptionId} />
 
           {/* Education Section */}
           <EducationSection education={resumeData.education} onChange={education => setResumeData(prev => prev ? {
