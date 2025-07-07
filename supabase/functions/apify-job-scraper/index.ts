@@ -25,6 +25,9 @@ interface IndeedJobData {
   jobType?: string;
   remote?: boolean;
   id?: string;
+  PositionName?: string;
+  positionName?: string;
+  jobTitle?: string;
 }
 
 // Helper function to extract job URL from various possible fields
@@ -44,6 +47,20 @@ function extractJobUrl(job: IndeedJobData): string | null {
   }
   
   return null;
+}
+
+// Helper function to extract job title from various possible fields
+function extractJobTitle(job: IndeedJobData, fallbackTitle: string): string {
+  const titleFields = ['PositionName', 'positionName', 'jobTitle', 'title'];
+  
+  for (const field of titleFields) {
+    const title = job[field as keyof IndeedJobData] as string;
+    if (title && typeof title === 'string' && title.trim()) {
+      return title.trim();
+    }
+  }
+  
+  return fallbackTitle;
 }
 
 serve(async (req) => {
@@ -172,6 +189,11 @@ serve(async (req) => {
     const indeedJobs: IndeedJobData[] = await resultsResponse.json();
     console.log(`Retrieved ${indeedJobs.length} jobs from Apify`);
 
+    // Log a sample job to understand the data structure
+    if (indeedJobs.length > 0) {
+      console.log(`Sample job data for title analysis:`, JSON.stringify(indeedJobs[0], null, 2));
+    }
+
     // Transform and insert jobs into Supabase (using consistent logic)
     const insertedJobs = [];
     let skippedCount = 0;
@@ -189,7 +211,7 @@ serve(async (req) => {
 
       const transformedJob = {
         apify_job_id: job.id || `${query}-${index}-${Date.now()}`,
-        title: job.title || query,
+        title: extractJobTitle(job, query),
         company: job.company || 'Unknown Company',
         location: job.location || location || 'Remote',
         description: job.description || '',

@@ -24,6 +24,9 @@ interface IndeedJobData {
   jobType?: string;
   remote?: boolean;
   id?: string;
+  PositionName?: string;
+  positionName?: string;
+  jobTitle?: string;
 }
 
 interface JobTitleResult {
@@ -66,6 +69,20 @@ function extractJobUrl(job: IndeedJobData): string | null {
   }
   
   return null;
+}
+
+// Helper function to extract job title from various possible fields
+function extractJobTitle(job: IndeedJobData, fallbackTitle: string): string {
+  const titleFields = ['PositionName', 'positionName', 'jobTitle', 'title'];
+  
+  for (const field of titleFields) {
+    const title = job[field as keyof IndeedJobData] as string;
+    if (title && typeof title === 'string' && title.trim()) {
+      return title.trim();
+    }
+  }
+  
+  return fallbackTitle;
 }
 
 serve(async (req) => {
@@ -217,7 +234,7 @@ serve(async (req) => {
 
           const transformedJob = {
             apify_job_id: job.id || `${jobTitle}-${index}-${Date.now()}`, // Create unique identifier
-            title: job.title || jobTitle,
+            title: extractJobTitle(job, jobTitle),
             company: job.company || 'Unknown Company',
             location: job.location || location || 'Remote',
             description: job.description || '',
