@@ -71,19 +71,20 @@ function extractJobUrl(job: IndeedJobData): string | null {
   return null;
 }
 
-// Helper function to extract and validate job title from Apify's positionName field ONLY
+// Helper function to extract job title ONLY from Apify's positionName field
 function extractJobTitle(job: IndeedJobData): string | null {
-  const titleFields = ['PositionName', 'positionName', 'jobTitle'];
+  // ONLY use positionName field - the primary field from Apify
+  const title = job.positionName || job.PositionName;
   
-  for (const field of titleFields) {
-    const title = job[field as keyof IndeedJobData] as string;
-    if (title && typeof title === 'string' && title.trim()) {
-      const cleanTitle = title.trim();
-      
-      // Strict validation - only accept legitimate job titles
-      if (isValidJobTitle(cleanTitle)) {
-        return cleanTitle;
-      }
+  if (title && typeof title === 'string' && title.trim()) {
+    const cleanTitle = title.trim();
+    
+    // Strict validation - only accept legitimate job titles
+    if (isValidJobTitle(cleanTitle)) {
+      console.log(`✅ Accepted title: "${cleanTitle}"`);
+      return cleanTitle;
+    } else {
+      console.log(`❌ Rejected title: "${cleanTitle}" - failed validation`);
     }
   }
   
