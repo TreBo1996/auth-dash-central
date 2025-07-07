@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toTitleCase } from '@/lib/utils';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
 import { ExternalJobApplicationModal } from '@/components/job-application/ExternalJobApplicationModal';
 import { Header } from '@/components/layout/Header';
@@ -328,7 +329,7 @@ const JobDetail: React.FC = () => {
               <span className="text-sm font-medium">AI-POWERED OPTIMIZATION</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Perfect Your Resume for This {job.title} Position
+              Perfect Your Resume for This {toTitleCase(job.title)} Position
             </h1>
             <p className="text-lg md:text-xl mb-6 text-blue-100">
               Get 3x more interviews with AI-optimized resumes tailored to exact job postings
@@ -389,7 +390,7 @@ const JobDetail: React.FC = () => {
                           />
                         )}
                         <div>
-                          <CardTitle className="text-2xl">{job.title}</CardTitle>
+                          <CardTitle className="text-2xl">{toTitleCase(job.title)}</CardTitle>
                           <p className="text-lg text-muted-foreground flex items-center">
                             <Building className="h-4 w-4 mr-2" />
                             {job.company}

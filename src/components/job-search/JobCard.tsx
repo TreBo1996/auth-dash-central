@@ -8,6 +8,7 @@ import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, Chevron
 import { Link } from 'react-router-dom';
 import { UnifiedJob } from '@/types/job';
 import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
+import { toTitleCase } from '@/lib/utils';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 interface JobCardProps {
@@ -188,7 +189,7 @@ export const JobCard: React.FC<JobCardProps> = ({
           <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
               <Link to={getJobUrl()}>
-                <CardTitle className="text-lg mb-2 hover:text-blue-600 cursor-pointer">{job.title}</CardTitle>
+                <CardTitle className="text-lg mb-2 hover:text-blue-600 cursor-pointer">{toTitleCase(job.title)}</CardTitle>
               </Link>
               <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
