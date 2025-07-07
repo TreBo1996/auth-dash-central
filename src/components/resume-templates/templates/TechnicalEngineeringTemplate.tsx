@@ -240,13 +240,13 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                         className="bullet-point flex items-start"
                         style={{ color: colors.text }}
                       >
-                        <span 
-                          className="font-mono text-xs mt-1 mr-3 px-1.5 py-0.5 rounded flex-shrink-0"
-                          style={{ 
-                            backgroundColor: `${colors.accent}15`,
-                            color: colors.accent
-                          }}
-                        >
+                         <span 
+                           className="font-mono text-xs mt-1.5 mr-3 px-1.5 py-0.5 rounded flex-shrink-0"
+                           style={{ 
+                             backgroundColor: `${colors.accent}15`,
+                             color: colors.accent
+                           }}
+                         >
                           ▸
                         </span>
                         <span>{bullet}</span>
