@@ -27,10 +27,49 @@ export const JobSearch: React.FC = () => {
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  // Load employer jobs on component mount
+// Load employer jobs on component mount and implement basic caching
   useEffect(() => {
     loadEmployerJobs();
   }, []);
+
+  // Basic frontend caching
+  const getCacheKey = (filters: JobSearchFilters) => {
+    return JSON.stringify({
+      query: filters.query || '',
+      location: filters.location || '',
+      remoteType: filters.remoteType || '',
+      employmentType: filters.employmentType || '',
+      seniorityLevel: filters.seniorityLevel || '',
+      company: filters.company || ''
+    });
+  };
+
+  const getCachedResults = (cacheKey: string) => {
+    try {
+      const cached = sessionStorage.getItem(`job-search-${cacheKey}`);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        // Cache valid for 5 minutes
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          return data;
+        }
+      }
+    } catch (error) {
+      console.error('Cache read error:', error);
+    }
+    return null;
+  };
+
+  const setCachedResults = (cacheKey: string, data: UnifiedJob[]) => {
+    try {
+      sessionStorage.setItem(`job-search-${cacheKey}`, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Cache write error:', error);
+    }
+  };
 
   const loadEmployerJobs = async (searchFilters?: JobSearchFilters) => {
     try {
@@ -65,7 +104,7 @@ export const JobSearch: React.FC = () => {
         query = query.eq('experience_level', searchFilters.seniorityLevel);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.limit(75); // Limit to 75 for performance
       if (error) throw error;
 
       // Transform employer jobs to unified format
@@ -117,7 +156,7 @@ export const JobSearch: React.FC = () => {
           seniorityLevel: searchFilters.seniorityLevel || '',
           company: searchFilters.company || '',
           maxAge: searchFilters.maxAge || 30,
-          limit: 1000, // Get all matching jobs, we'll paginate on frontend
+          limit: 75, // Limit to 75 for performance
           offset: 0
         }
       });
@@ -156,18 +195,34 @@ export const JobSearch: React.FC = () => {
     setCurrentPage(1); // Reset to first page on new search
     
     try {
-      // Load both employer and database jobs
-      const [employerJobs, databaseResult] = await Promise.all([
-        loadEmployerJobs(searchFilters),
-        loadDatabaseJobs(searchFilters)
-      ]);
+      const cacheKey = getCacheKey(searchFilters);
+      const cachedResults = getCachedResults(cacheKey);
+      
+      if (cachedResults) {
+        setAllJobs(cachedResults);
+        setWarnings([]);
+        setSearchPerformed(true);
+        setLoading(false);
+        return;
+      }
 
-      // Combine jobs with employer jobs first
-      const combinedJobs = [...employerJobs, ...databaseResult.jobs];
+      // Progressive loading: Load employer jobs first (faster)
+      const employerJobs = await loadEmployerJobs(searchFilters);
+      
+      // Show employer jobs immediately
+      setAllJobs(employerJobs);
+      setSearchPerformed(true);
+      
+      // Then load database jobs
+      const databaseResult = await loadDatabaseJobs(searchFilters);
+      
+      // Combine jobs with employer jobs first, limit total to 150
+      const combinedJobs = [...employerJobs, ...databaseResult.jobs].slice(0, 150);
       
       setAllJobs(combinedJobs);
       setWarnings(databaseResult.warnings);
-      setSearchPerformed(true);
+      setCachedResults(cacheKey, combinedJobs);
+      
     } catch (error) {
       console.error('Search error:', error);
       setAllJobs([]);

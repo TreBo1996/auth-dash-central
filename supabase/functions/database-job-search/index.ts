@@ -27,7 +27,7 @@ serve(async (req) => {
       seniorityLevel = '',
       company = '',
       maxAge = 30,
-      limit = 50,
+      limit = 75,
       offset = 0
     } = await req.json();
 
