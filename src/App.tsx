@@ -33,6 +33,7 @@ import EmployerSettings from '@/pages/employer/EmployerSettings';
 import JobPosting from '@/pages/JobPosting';
 import JobDetail from '@/pages/JobDetail';
 import CoverLetters from '@/pages/CoverLetters';
+import TermsOfService from '@/pages/TermsOfService';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/employer/auth" element={<EmployerAuth />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
               
               {/* Public Job Posting Route */}
               <Route 

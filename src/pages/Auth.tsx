@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, AlertTriangle, Sparkles, Star, Clock, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthRateLimit } from '@/hooks/useAuthRateLimit';
 
@@ -447,7 +447,7 @@ const Auth: React.FC = () => {
                   </Button>
                   
                   <div className="text-xs text-gray-500 text-center">
-                    By creating an account, you agree to our Terms of Service and Privacy Policy
+                    By creating an account, you agree to our <Link to="/terms-of-service" className="text-primary hover:underline">Terms of Service</Link> and Privacy Policy
                   </div>
                 </form>
               </TabsContent>
