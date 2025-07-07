@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sparkles, Loader2, TrendingUp, AlertCircle, Target, Zap, FileText, CheckCircle } from 'lucide-react';
+import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -104,6 +105,7 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Current ATS Score Analysis
+            <ATSInfoTooltip size="md" />
           </DialogTitle>
           <DialogDescription>
             Review how your current resume performs against this job description before AI optimization
@@ -142,7 +144,10 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span>Current ATS Score</span>
+                      <div className="flex items-center gap-1">
+                        <span>Current ATS Score</span>
+                        <ATSInfoTooltip />
+                      </div>
                       <Badge variant={getScoreBadgeVariant(atsScore)}>
                         {atsScore}/100
                       </Badge>
@@ -180,7 +185,10 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
               {/* Category Scores */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Current Score Breakdown</CardTitle>
+                  <CardTitle className="flex items-center gap-1">
+                    Current Score Breakdown
+                    <ATSInfoTooltip />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {Object.entries(atsFeedback.category_scores).map(([category, score]) => <div key={category} className="space-y-2">
