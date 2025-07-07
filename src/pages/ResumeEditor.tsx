@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle, RefreshCw, FileDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ResumeSection } from '@/components/resume-editor/ResumeSection';
@@ -185,6 +185,10 @@ const ResumeEditor: React.FC = () => {
   const handleATSScoreUpdate = (newScore: number, newFeedback: any) => {
     setAtsScore(newScore);
     setAtsFeedback(newFeedback);
+  };
+
+  const handleExport = () => {
+    navigate(`/resume-templates/${resumeId}`);
   };
   const handleSave = async () => {
     if (!resumeData || !resumeId) {
@@ -371,10 +375,16 @@ const ResumeEditor: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
             <p className="text-gray-600">Edit your AI-optimized resume</p>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="bg-blue-800 hover:bg-blue-700">
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Save Changes
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExport} variant="outline" title="Export to template">
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-800 hover:bg-blue-700">
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </div>
         </div>
 
         {/* Dedicated ATS Banner */}
@@ -434,10 +444,16 @@ const ResumeEditor: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Save Changes
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleExport} variant="outline" title="Export to template">
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </div>
         </div>
       </div>
     </DashboardLayout>;
