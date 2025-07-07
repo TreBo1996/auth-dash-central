@@ -71,7 +71,7 @@ export const SubscriptionCard = () => {
           {!isSubscribed ? (
             <Button 
               onClick={handleUpgradeClick}
-              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
             >
               <Crown className="mr-2 h-4 w-4" />
               Upgrade to Premium

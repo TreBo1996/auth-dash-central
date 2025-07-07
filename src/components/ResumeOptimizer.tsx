@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, AlertTriangle, Crown } from 'lucide-react';
+import { Sparkles, Loader2, AlertTriangle, Crown, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -276,9 +276,9 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
                 <Button 
                   size="sm" 
                   onClick={() => setShowPaymentModal(true)}
-                  className="bg-gradient-primary hover:opacity-90"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                 >
-                  <Crown className="h-3 w-3 mr-1" />
+                  <Zap className="h-3 w-3 mr-1" />
                   Upgrade
                 </Button>
               )}
