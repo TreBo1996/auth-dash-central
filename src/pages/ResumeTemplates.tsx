@@ -16,6 +16,8 @@ import { fetchStructuredResumeData } from '@/components/resume-templates/utils/f
 import { parseResumeContent } from '@/components/resume-templates/utils/parseResumeContent';
 import { printResume } from '@/utils/pdfGenerator';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 interface OptimizedResume {
   id: string;
   generated_text: string;
@@ -42,7 +44,9 @@ const ResumeTemplates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const isMobile = useIsMobile();
+  const { subscriptionData } = useSubscription();
   useEffect(() => {
     console.log('ResumeTemplates: Component mounted with resumeId:', resumeId);
     if (!resumeId) {
@@ -147,6 +151,17 @@ const ResumeTemplates: React.FC = () => {
     if (isGeneratingPDF) {
       return;
     }
+
+    // Check if template requires premium and user doesn't have it
+    const templateConfig = newTemplateConfigs[selectedTemplate];
+    const isPremiumRequired = templateConfig?.premiumRequired;
+    const hasPremium = subscriptionData?.subscribed;
+
+    if (isPremiumRequired && !hasPremium) {
+      setShowPaymentModal(true);
+      return;
+    }
+
     const fileName = `${optimizedResume?.resumes?.file_name || 'resume'}-${newTemplateConfigs[selectedTemplate].name.toLowerCase().replace(/\s+/g, '-')}.pdf`;
     setIsGeneratingPDF(true);
     try {
@@ -230,7 +245,12 @@ const ResumeTemplates: React.FC = () => {
               
               <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700">
                 <Download className="h-4 w-4 mr-2" />
-                {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+                {isGeneratingPDF 
+                  ? 'Generating PDF...' 
+                  : newTemplateConfigs[selectedTemplate]?.premiumRequired && !subscriptionData?.subscribed
+                    ? 'Upgrade to Download'
+                    : 'Download PDF'
+                }
               </Button>
             </div>}
         </div>
@@ -305,6 +325,13 @@ const ResumeTemplates: React.FC = () => {
               <Download className="h-6 w-6" />
             </Button>
           </div>}
+
+        {/* Payment Modal */}
+        <PaymentModal 
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          returnUrl={window.location.href}
+        />
       </div>
     </DashboardLayout>;
 };

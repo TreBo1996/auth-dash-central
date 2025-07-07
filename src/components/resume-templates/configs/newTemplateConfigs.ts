@@ -18,6 +18,7 @@ export interface TemplateConfig {
   category: string;
   description: string;
   targetAudience: string;
+  premiumRequired?: boolean;
   colors: {
     primary: string;
     secondary: string;
@@ -214,6 +215,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
     category: 'Creative',
     description: 'Stylish design with strategic color use for creative industries',
     targetAudience: 'Marketing professionals, designers, communications specialists',
+    premiumRequired: true,
     colors: {
       primary: 'hsl(260, 30%, 25%)', // Deep purple
       secondary: 'hsl(260, 20%, 45%)', // Medium purple
@@ -296,6 +298,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
     category: 'Academic',
     description: 'Traditional academic CV format for researchers and professors',
     targetAudience: 'Researchers, professors, PhD candidates, academic professionals',
+    premiumRequired: true,
     colors: {
       primary: 'hsl(0, 0%, 10%)', // Near black
       secondary: 'hsl(0, 0%, 30%)', // Dark gray
@@ -365,6 +368,7 @@ export const newTemplateConfigs: Record<string, TemplateConfig> = {
     category: 'Technical',
     description: 'Structured, data-focused design for STEM professionals',
     targetAudience: 'Engineers, developers, technical specialists, STEM professionals',
+    premiumRequired: true,
     colors: {
       primary: 'hsl(195, 25%, 20%)', // Dark teal
       secondary: 'hsl(195, 20%, 40%)', // Medium teal

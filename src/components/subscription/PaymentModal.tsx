@@ -81,6 +81,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <li>• Unlimited resume optimizations</li>
               <li>• Unlimited interview sessions</li>
               <li>• Unlimited cover letters</li>
+              <li>• Premium resume templates</li>
               <li>• Priority support</li>
             </ul>
           </div>

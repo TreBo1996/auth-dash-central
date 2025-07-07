@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { newTemplateConfigs } from './configs/newTemplateConfigs';
+import { PremiumBadge } from './PremiumBadge';
 interface TemplateSelectorProps {
   selectedTemplate: string;
   onTemplateSelect: (templateId: string) => void;
@@ -17,7 +18,10 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         {Object.values(newTemplateConfigs).map(template => <div key={template.id} className="flex-shrink-0">
             <Button variant={selectedTemplate === template.id ? "default" : "outline"} className="h-auto p-3 min-w-[140px]" onClick={() => onTemplateSelect(template.id)}>
               <div className="space-y-1 text-center">
-                <div className="font-medium text-sm">{template.name}</div>
+                <div className="font-medium text-sm flex items-center gap-1 justify-center flex-wrap">
+                  {template.name}
+                  {template.premiumRequired && <PremiumBadge size="sm" />}
+                </div>
                 <Badge variant="secondary" className="text-xs">
                   {template.category}
                 </Badge>
@@ -43,7 +47,10 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           <Button variant={selectedTemplate === template.id ? "default" : "outline"} className="w-full justify-start h-auto p-3 text-left" onClick={() => onTemplateSelect(template.id)}>
             <div className="space-y-1 w-full">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-sm">{template.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{template.name}</span>
+                  {template.premiumRequired && <PremiumBadge size="sm" />}
+                </div>
                 <Badge variant="secondary" className="text-xs px-px">
                   {template.category}
                 </Badge>
