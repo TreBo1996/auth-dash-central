@@ -8,6 +8,7 @@ import { ChevronDown, RefreshCw, Target, CheckCircle, AlertCircle } from 'lucide
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -89,7 +90,10 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
   if (!atsScore) {
     return <div className="flex items-center gap-2 text-sm text-gray-500">
         <Target className="h-4 w-4" />
-        <span>No ATS score available</span>
+        <div className="flex items-center gap-1">
+          <span>No ATS score available</span>
+          <ATSInfoTooltip />
+        </div>
         <Button size="sm" variant="outline" onClick={handleRescore} disabled={isRescoring} className="h-7">
           {isRescoring ? <RefreshCw className="h-3 w-3 animate-spin" /> : 'Score Now'}
         </Button>
@@ -99,7 +103,10 @@ export const ATSScoreDisplay: React.FC<ATSScoreDisplayProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Target className="h-4 w-4" />
-          <span className="text-sm font-medium">ATS Score:</span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium">ATS Score:</span>
+            <ATSInfoTooltip />
+          </div>
           <div className="flex items-center gap-2">
             <div className={cn("inline-flex items-center rounded-full border px-2.5 py-1 text-sm font-medium transition-colors", getScoreColor(atsScore))}>
               {atsScore}/100

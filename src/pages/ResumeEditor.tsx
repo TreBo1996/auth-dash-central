@@ -16,6 +16,7 @@ import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
 import { fetchStructuredResumeData, StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
 
 interface ContactInfo {
   name: string;
@@ -453,7 +454,10 @@ const ResumeEditor: React.FC = () => {
         {resumeId && (
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 shadow-sm">
             <div className="max-w-full">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">ATS Performance</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-lg font-semibold text-gray-900">ATS Performance</h2>
+                <ATSInfoTooltip size="md" />
+              </div>
               <p className="text-sm text-gray-600 mb-4">Monitor how well your resume performs against applicant tracking systems</p>
               <ATSScoreDisplay
                 optimizedResumeId={resumeId}
