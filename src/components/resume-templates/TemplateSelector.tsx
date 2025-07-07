@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { newTemplateConfigs } from './configs/newTemplateConfigs';
 import { PremiumBadge } from './PremiumBadge';
+import { FreeBadge } from './FreeBadge';
 interface TemplateSelectorProps {
   selectedTemplate: string;
   onTemplateSelect: (templateId: string) => void;
@@ -20,7 +21,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               <div className="space-y-1 text-center">
                 <div className="font-medium text-sm flex items-center gap-1 justify-center flex-wrap">
                   {template.name}
-                  {template.premiumRequired && <PremiumBadge size="sm" />}
+                  {template.premiumRequired ? <PremiumBadge size="sm" /> : <FreeBadge size="sm" />}
                 </div>
                 {/* Compact Color Preview */}
                 <div className="flex gap-1 justify-center">
@@ -43,9 +44,9 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       {Object.values(newTemplateConfigs).map(template => <div key={template.id} className="space-y-1">
           <Button variant={selectedTemplate === template.id ? "default" : "outline"} className="w-full justify-start h-auto p-3 text-left" onClick={() => onTemplateSelect(template.id)}>
             <div className="space-y-1 w-full">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
                 <span className="font-medium text-sm">{template.name}</span>
-                {template.premiumRequired && <PremiumBadge size="sm" />}
+                {template.premiumRequired ? <PremiumBadge size="sm" /> : <FreeBadge size="sm" />}
               </div>
               <p className="text-xs text-muted-foreground line-clamp-2">
                 {template.description}
