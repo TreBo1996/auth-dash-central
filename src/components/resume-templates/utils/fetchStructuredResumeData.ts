@@ -50,7 +50,43 @@ const isSummaryData = (data: any): data is SummaryData => {
   return typeof data === 'object' && data !== null;
 };
 
-export const fetchStructuredResumeData = async (optimizedResumeId: string): Promise<StructuredResumeData> => {
+// Helper function to limit skills for PDF export
+const limitSkillsForExport = (skills: Array<{ category: string; items: string[] }>, limitSkills?: boolean) => {
+  if (!limitSkills) return skills;
+  
+  // Flatten all skills and take the first 6
+  const allSkills: string[] = [];
+  skills.forEach(group => allSkills.push(...group.items));
+  
+  if (allSkills.length <= 6) return skills;
+  
+  // Limit to 6 skills and reorganize into 1-2 categories
+  const limitedSkills = allSkills.slice(0, 6);
+  
+  // If we have many skills, split into two categories
+  if (limitedSkills.length > 3) {
+    const mid = Math.ceil(limitedSkills.length / 2);
+    return [
+      {
+        category: 'Technical Skills',
+        items: limitedSkills.slice(0, mid)
+      },
+      {
+        category: 'Professional Skills', 
+        items: limitedSkills.slice(mid)
+      }
+    ];
+  } else {
+    return [
+      {
+        category: 'Key Skills',
+        items: limitedSkills
+      }
+    ];
+  }
+};
+
+export const fetchStructuredResumeData = async (optimizedResumeId: string, options?: { limitSkills?: boolean }): Promise<StructuredResumeData> => {
   console.log('fetchStructuredResumeData: Starting fetch for ID:', optimizedResumeId);
 
   if (!optimizedResumeId) {
@@ -191,10 +227,10 @@ export const fetchStructuredResumeData = async (optimizedResumeId: string): Prom
         school: edu.school || 'University Name',
         year: edu.year || '2020'
       })),
-      skills: (skillsResult?.data || []).map(skill => ({
+      skills: limitSkillsForExport((skillsResult?.data || []).map(skill => ({
         category: skill.category || 'Skills',
         items: Array.isArray(skill.items) ? skill.items : []
-      })),
+      })), options?.limitSkills),
       certifications: (certificationsResult?.data || []).map(cert => ({
         name: cert.name || 'Certification Name',
         issuer: cert.issuer || 'Issuing Organization',

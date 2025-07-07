@@ -96,6 +96,17 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Skills optimization notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-700 font-medium mb-1">
+            💡 Skills Optimization Tip
+          </p>
+          <p className="text-sm text-blue-600">
+            For optimal ATS compatibility and clean PDF presentation, we recommend focusing on your 4-6 most relevant skills. 
+            Adding too many skills may affect resume formatting in certain templates.
+          </p>
+        </div>
+
         {safeSkills.map((skillGroup, groupIndex) => (
           <div key={groupIndex} className="p-4 border rounded-lg space-y-3">
             <div className="flex justify-between items-center">

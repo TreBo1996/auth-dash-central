@@ -168,7 +168,7 @@ const ResumeTemplates: React.FC = () => {
       // Get structured resume data
       let resumeData;
       try {
-        resumeData = await fetchStructuredResumeData(resumeId!);
+        resumeData = await fetchStructuredResumeData(resumeId!, { limitSkills: true });
       } catch (error) {
         console.log('Fallback to text parsing');
         resumeData = parseResumeContent(optimizedResume.generated_text);

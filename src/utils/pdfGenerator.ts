@@ -116,7 +116,7 @@ export const generatePDF = async (templateId: string, resumeContent: string, fil
     
     if (optimizedResumeId) {
       try {
-        resumeData = await fetchStructuredResumeData(optimizedResumeId);
+        resumeData = await fetchStructuredResumeData(optimizedResumeId, { limitSkills: true });
       } catch (error) {
         console.log('Fallback to text parsing');
         resumeData = parseResumeContent(resumeContent);

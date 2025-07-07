@@ -144,7 +144,8 @@ ATS OPTIMIZATION STRATEGIES (WITHIN AUTHENTICITY BOUNDS):
 - Improve keyword density by rephrasing existing content with job description terminology
 - Enhance action verbs while preserving the original responsibilities
 - Restructure existing bullet points for better ATS readability
-- Organize existing skills to better match job requirements
+- **SKILLS LIMITATION**: Select ONLY the top 6 most relevant skills from the original resume that match the job description - organize them into 1-2 skill categories maximum
+- Prioritize skills that appear in or closely relate to the job description requirements
 - Improve formatting for ATS compatibility
 - Enhance existing education and certification descriptions (if any exist)
 
@@ -154,6 +155,7 @@ CONTENT ENHANCEMENT RULES:
 - Enhance action verbs but keep the same underlying activities
 - Maintain the original timeline and progression of roles
 - NEVER add responsibilities or achievements that weren't in the original resume
+- **SKILLS SELECTION**: Choose MAXIMUM 6 individual skills from the original resume that are most relevant to the job description
 - Focus on better articulation rather than content expansion
 
 CRITICAL OUTPUT FORMAT REQUIREMENTS:
@@ -181,8 +183,8 @@ You MUST return ONLY valid JSON. The structure should match the original resume'
   ],
   "skills": [
     {
-      "category": "Skills Category (reorganized from original)",
-      "items": ["Existing skill 1", "Existing skill 2", "Existing skill 3"]
+      "category": "Most Relevant Skills",
+      "items": ["Top relevant skill 1", "Top relevant skill 2", "Top relevant skill 3"]
     }
   ],
   "education": [
@@ -198,6 +200,7 @@ IMPORTANT CONDITIONAL SECTIONS:
 - Only include "certifications" array if the original resume had certifications
 - NEVER add new certifications not present in the original resume
 - Maintain the same number of experiences as the original resume
+- **CRITICAL SKILLS REQUIREMENT**: Select ONLY the top 6 most relevant skills from the original resume - no more than 6 individual skill items total
 - Enhance existing bullet points rather than creating new ones
 
 TARGET JOB DESCRIPTION (Extract and integrate ALL relevant keywords):

@@ -211,6 +211,7 @@ export class ProfessionalResumeGenerator {
 
     this.addSectionHeader('SKILLS', template);
 
+    // Skills are already limited to 6 by fetchStructuredResumeData when limitSkills: true
     const allSkills: string[] = [];
     data.skills.forEach(group => allSkills.push(...group.items));
 
