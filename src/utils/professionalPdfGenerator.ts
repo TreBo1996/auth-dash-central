@@ -289,10 +289,19 @@ const generateExperience = async (state: GenerationState, data: StructuredResume
 
     // Bullets
     exp.bullets.forEach(bullet => {
-      const bulletLines = pdf.splitTextToSize(`• ${bullet}`, state.usableWidth - 12);
-      bulletLines.forEach((line: string, lineIndex: number) => {
-        const x = lineIndex === 0 ? options.marginLeft : options.marginLeft + 12;
-        pdf.text(line, x, state.currentY);
+      // Render bullet symbol separately
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('•', options.marginLeft, state.currentY);
+      
+      // Calculate text position after bullet (bullet width + spacing)
+      const bulletWidth = pdf.getTextWidth('•');
+      const textX = options.marginLeft + bulletWidth + 6; // 6pt spacing after bullet
+      const textWidth = state.usableWidth - bulletWidth - 6;
+      
+      // Split text without bullet symbol
+      const bulletLines = pdf.splitTextToSize(bullet, textWidth);
+      bulletLines.forEach((line: string) => {
+        pdf.text(line, textX, state.currentY);
         state.currentY += options.fontSize.body * options.lineHeight.body;
       });
     });
