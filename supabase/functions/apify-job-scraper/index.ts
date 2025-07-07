@@ -317,7 +317,6 @@ serve(async (req) => {
         remote_type: job.remote ? 'remote' : null,
         data_source: 'apify',
         job_board: 'Indeed',
-        quality_score: 7,
         scraped_at: new Date().toISOString()
       };
 

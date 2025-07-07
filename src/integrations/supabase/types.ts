@@ -1186,6 +1186,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      calculate_job_quality_score: {
+        Args: {
+          title: string
+          company: string
+          description: string
+          location: string
+          salary: string
+          employment_type: string
+          data_source: string
+        }
+        Returns: number
+      }
       can_use_feature: {
         Args: { p_user_id: string; p_feature_type: string }
         Returns: {
@@ -1220,6 +1232,10 @@ export type Database = {
       increment_feature_usage: {
         Args: { p_user_id: string; p_feature_type: string }
         Returns: number
+      }
+      is_valid_job_title: {
+        Args: { title: string }
+        Returns: boolean
       }
       normalize_search_query: {
         Args: { input_query: string }
