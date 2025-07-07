@@ -301,11 +301,11 @@ const generateExperience = async (state: GenerationState, data: StructuredResume
       bulletLines.forEach((line: string, lineIndex: number) => {
         if (lineIndex === 0) {
           // Draw visual bullet circle aligned with text baseline
-          pdf.circle(bulletX, state.currentY - 5, 1.5, 'F');
+          pdf.circle(bulletX, state.currentY, 1.5, 'F');
         }
         // All text lines use consistent positioning
         pdf.text(line, textX, state.currentY);
-        state.currentY += 14; // Fixed spacing to compensate for -5 Y offset
+        state.currentY += options.fontSize.body * options.lineHeight.body;
       });
     });
 
