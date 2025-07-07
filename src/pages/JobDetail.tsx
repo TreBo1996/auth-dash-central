@@ -390,10 +390,14 @@ const JobDetail: React.FC = () => {
 
                       <div className="flex flex-wrap gap-2">
                         {job.employment_type && (
-                          <Badge variant="secondary">{job.employment_type}</Badge>
+                          <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
+                            {job.employment_type}
+                          </div>
                         )}
                         {job.experience_level && (
-                          <Badge variant="outline">{job.experience_level}</Badge>
+                          <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
+                            {job.experience_level}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -436,7 +440,7 @@ const JobDetail: React.FC = () => {
                           <Button 
                             size="lg"
                             onClick={handleApplyClick}
-                            className="bg-primary hover:bg-primary/90"
+                            className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg"
                           >
                             <Briefcase className="h-4 w-4 mr-2" />
                             Apply Now
@@ -446,7 +450,7 @@ const JobDetail: React.FC = () => {
                         <Button 
                           size="lg"
                           onClick={handleApplyClick}
-                          className="bg-primary hover:bg-primary/90"
+                          className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg"
                         >
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Apply
@@ -586,7 +590,7 @@ const JobDetail: React.FC = () => {
                           <Button 
                             size="lg"
                             onClick={() => navigate('/auth')}
-                            className="bg-primary hover:bg-primary/90"
+                            className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg"
                           >
                             <Sparkles className="h-4 w-4 mr-2" />
                             Optimize Resume First
@@ -596,7 +600,7 @@ const JobDetail: React.FC = () => {
                           size="lg"
                           variant={user ? "default" : "outline"}
                           onClick={handleApplyClick}
-                          className={user ? "bg-primary hover:bg-primary/90" : ""}
+                          className={user ? "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg" : ""}
                         >
                           <Briefcase className="h-4 w-4 mr-2" />
                           {source === 'employer' ? 'Apply Directly' : 'Apply Now'}
