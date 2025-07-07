@@ -390,14 +390,36 @@ const JobDetail: React.FC = () => {
 
                       <div className="flex flex-wrap gap-2">
                         {job.employment_type && (
-                          <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
-                            {job.employment_type}
-                          </div>
+                          <>
+                            {Array.isArray(job.employment_type) 
+                              ? job.employment_type.map((type, index) => (
+                                  <div key={index} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
+                                    {type}
+                                  </div>
+                                ))
+                              : (
+                                  <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold shadow-sm">
+                                    {job.employment_type}
+                                  </div>
+                                )
+                            }
+                          </>
                         )}
                         {job.experience_level && (
-                          <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
-                            {job.experience_level}
-                          </div>
+                          <>
+                            {Array.isArray(job.experience_level) 
+                              ? job.experience_level.map((level, index) => (
+                                  <div key={index} className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
+                                    {level}
+                                  </div>
+                                ))
+                              : (
+                                  <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-sm">
+                                    {job.experience_level}
+                                  </div>
+                                )
+                            }
+                          </>
                         )}
                       </div>
                     </div>
