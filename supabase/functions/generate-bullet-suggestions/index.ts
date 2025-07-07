@@ -89,11 +89,11 @@ Example format:
 
     const generatedText = data.choices[0].message.content;
     
-    // Parse the bullet points
+    // Parse the bullet points and remove bullet symbols
     const bulletPoints = generatedText
       .split('\n')
       .filter((line: string) => line.trim().startsWith('•'))
-      .map((line: string) => line.trim())
+      .map((line: string) => line.trim().replace(/^•\s*/, '')) // Remove bullet symbol and whitespace
       .filter((line: string) => line.length > 10); // Filter out very short points
 
     console.log('Generated bullet points:', bulletPoints);
