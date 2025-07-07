@@ -291,10 +291,9 @@ const generateExperience = async (state: GenerationState, data: StructuredResume
     exp.bullets.forEach(bullet => {
       pdf.setFont('helvetica', 'normal');
       
-      // Calculate bullet width and text positioning
-      const bulletWidth = pdf.getTextWidth('• ');
-      const textX = options.marginLeft + bulletWidth;
-      const textWidth = state.usableWidth - bulletWidth;
+      // Use fixed indent for subsequent lines (simpler and more reliable)
+      const textIndent = 12; // Fixed 12pt indent for subsequent lines
+      const textWidth = state.usableWidth - textIndent;
       
       // Split text and add bullet to first line only
       const bulletLines = pdf.splitTextToSize(bullet, textWidth);
@@ -303,8 +302,8 @@ const generateExperience = async (state: GenerationState, data: StructuredResume
           // First line includes the bullet
           pdf.text(`• ${line}`, options.marginLeft, state.currentY);
         } else {
-          // Subsequent lines align with the text (indented past the bullet)
-          pdf.text(line, textX, state.currentY);
+          // Subsequent lines use fixed indent to align with text
+          pdf.text(line, options.marginLeft + textIndent, state.currentY);
         }
         state.currentY += options.fontSize.body * options.lineHeight.body;
       });
