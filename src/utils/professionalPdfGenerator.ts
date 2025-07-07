@@ -304,7 +304,7 @@ const generateExperience = async (state: GenerationState, data: StructuredResume
           pdf.circle(bulletX, state.currentY, 1.5, 'F');
         }
         // All text lines use consistent positioning - move text up to align with bullet center
-        pdf.text(line, textX, state.currentY - 3);
+        pdf.text(line, textX, state.currentY - 10);
         state.currentY += options.fontSize.body * options.lineHeight.body;
       });
     });
