@@ -49,9 +49,9 @@ function extractJobUrl(job: IndeedJobData): string | null {
   return null;
 }
 
-// Helper function to extract job title from various possible fields
-function extractJobTitle(job: IndeedJobData, fallbackTitle: string): string {
-  const titleFields = ['PositionName', 'positionName', 'jobTitle', 'title'];
+// Helper function to extract job title from Apify's positionName field only
+function extractJobTitle(job: IndeedJobData): string | null {
+  const titleFields = ['PositionName', 'positionName', 'jobTitle'];
   
   for (const field of titleFields) {
     const title = job[field as keyof IndeedJobData] as string;
@@ -60,7 +60,7 @@ function extractJobTitle(job: IndeedJobData, fallbackTitle: string): string {
     }
   }
   
-  return fallbackTitle;
+  return null;
 }
 
 serve(async (req) => {
@@ -202,6 +202,7 @@ serve(async (req) => {
       const job = indeedJobs[index];
       
       const jobUrl = extractJobUrl(job);
+      const jobTitle = extractJobTitle(job);
       
       if (!jobUrl) {
         console.log(`Skipping job ${index}: No valid URL found`);
@@ -209,9 +210,15 @@ serve(async (req) => {
         continue;
       }
 
+      if (!jobTitle) {
+        console.log(`Skipping job ${index}: No valid positionName found`);
+        skippedCount++;
+        continue;
+      }
+
       const transformedJob = {
         apify_job_id: job.id || `${query}-${index}-${Date.now()}`,
-        title: extractJobTitle(job, query),
+        title: jobTitle,
         company: job.company || 'Unknown Company',
         location: job.location || location || 'Remote',
         description: job.description || '',
