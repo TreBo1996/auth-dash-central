@@ -305,7 +305,7 @@ const generateExperience = async (state: GenerationState, data: StructuredResume
         }
         // All text lines use consistent positioning
         pdf.text(line, textX, state.currentY);
-        state.currentY += options.fontSize.body * options.lineHeight.body;
+        state.currentY += 14; // Fixed spacing to compensate for -5 Y offset
       });
     });
 
