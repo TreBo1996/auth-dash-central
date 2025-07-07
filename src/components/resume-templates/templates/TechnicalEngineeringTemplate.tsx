@@ -241,7 +241,7 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
                         style={{ color: colors.text }}
                       >
                          <span 
-                           className="font-mono text-xs mt-1.5 mr-3 px-1.5 py-0.5 rounded flex-shrink-0"
+                           className="font-mono text-xs mt-3 mr-3 px-1.5 py-0.5 rounded flex-shrink-0"
                            style={{ 
                              backgroundColor: `${colors.accent}15`,
                              color: colors.accent

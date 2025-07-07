@@ -75,7 +75,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
             {resumeData.skills.flatMap(group => group.items).map((skill, index) => <div key={index} style={{
           color: colors.text
         }} className="flex items-center px-0 mx-[30px]">
-                 <span className="w-2 h-2 rounded-full mr-3 mt-1.5" style={{
+                 <span className="w-2 h-2 rounded-full mr-3 mt-3" style={{
             backgroundColor: colors.accent
           }}></span>
                 {skill}
@@ -121,7 +121,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
                   {exp.bullets.map((bullet, bulletIndex) => <li key={bulletIndex} className="bullet-point flex items-start" style={{
               color: colors.text
             }}>
-                       <span className="w-1.5 h-1.5 rounded-full mt-1.5 mr-3 flex-shrink-0" style={{
+                       <span className="w-1.5 h-1.5 rounded-full mt-3 mr-3 flex-shrink-0" style={{
                 backgroundColor: colors.accent
               }}></span>
                       <span>{bullet}</span>
