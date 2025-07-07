@@ -147,7 +147,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
                   {exp.bullets.map((bullet, bulletIndex) => <li key={bulletIndex} className="bullet-point flex items-start" style={{
               color: colors.text
             }}>
-                       <span className="w-1.5 h-1.5 rounded-full mt-3 mr-3 flex-shrink-0" style={{
+                       <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{
                 backgroundColor: colors.accent
               }}></span>
                       <span>{bullet}</span>

@@ -61,6 +61,8 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string, colorScheme?:
         .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
         .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
         .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
+        .bullet-point span[class*="rounded-full"] { margin-top: 12px !important; }
+        span[class*="rounded-full"][class*="mt-"] { margin-top: 12px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
@@ -78,6 +80,9 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string, colorScheme?:
         .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
         .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
         .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
+        .bullet-point span[class*="rounded-full"] { margin-top: 12px !important; }
+        span[class*="rounded-full"][class*="mt-"] { margin-top: 12px !important; }
+        div[class*="rounded-full"][class*="mt-"] { margin-top: 12px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
@@ -94,6 +99,8 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string, colorScheme?:
         .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
         .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
         .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
+        .bullet-point span[class*="rounded-full"] { margin-top: 12px !important; }
+        span[class*="rounded-full"][class*="mt-"] { margin-top: 12px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
@@ -111,6 +118,8 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string, colorScheme?:
         .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
         .job-meta { page-break-before: avoid !important; margin-bottom: 6px !important; }
         .bullet-point { page-break-inside: avoid !important; margin-bottom: 3px !important; }
+        .bullet-point span[class*="rounded-full"] { margin-top: 12px !important; }
+        span[class*="rounded-full"][class*="mt-"] { margin-top: 12px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `,
@@ -128,6 +137,8 @@ const cleanHTMLForPDF = (element: HTMLElement, templateId: string, colorScheme?:
         .job-header { page-break-inside: avoid !important; page-break-after: avoid !important; }
         .job-meta { page-break-before: avoid !important; margin-bottom: 8px !important; }
         .bullet-point { page-break-inside: avoid !important; margin-bottom: 4px !important; }
+        .bullet-point span[class*="rounded-full"] { margin-top: 12px !important; }
+        span[class*="rounded-full"][class*="mt-"] { margin-top: 12px !important; }
         h1, h2, h3 { page-break-after: avoid !important; }
       </style>
     `

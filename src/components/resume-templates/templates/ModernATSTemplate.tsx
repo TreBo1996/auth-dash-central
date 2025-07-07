@@ -114,7 +114,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                 className="flex items-center"
                 style={{ color: colors.text }}
               >
-                <div className="w-1.5 h-1.5 rounded-full mr-2 mt-3" style={{ backgroundColor: colors.accent }}></div>
+                <div className="w-1.5 h-1.5 rounded-full mr-2 mt-2" style={{ backgroundColor: colors.accent }}></div>
                 {skill}
               </div>
             ))}
@@ -172,7 +172,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
                       className="bullet-point flex items-start"
                       style={{ color: colors.text }}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full mt-3 mr-3 flex-shrink-0" style={{ backgroundColor: colors.accent }}></span>
+                      <span className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0" style={{ backgroundColor: colors.accent }}></span>
                       <span>{bullet}</span>
                     </li>
                   ))}
