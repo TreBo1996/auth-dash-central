@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Brain, Wrench, AlertCircle, Play, TrendingUp, Calendar, Target, Award } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Brain, Wrench, AlertCircle, Play, TrendingUp, Calendar, Target, Award, CheckCircle, Star, Clock, BarChart3, Mic, ChevronDown, ChevronUp, HelpCircle, Lightbulb, Users, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +52,8 @@ const InterviewPrep: React.FC = () => {
   const [sessionActive, setSessionActive] = useState(false);
   const [activeTab, setActiveTab] = useState('new-interview');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showTipsGuide, setShowTipsGuide] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
 
   // Fetch user's job descriptions
   const { data: jobDescriptions, isLoading: isLoadingJobs, error: jobsError } = useQuery({
@@ -197,6 +200,175 @@ const InterviewPrep: React.FC = () => {
 
         {/* Usage Counter */}
         <ContextualUsageCounter features={['interview_sessions']} />
+
+        {/* Benefits Overview */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Star className="h-5 w-5" />
+              Why Use AI Interview Coach?
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              Master your interview skills with personalized AI feedback and practice
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Job-Specific Questions</h4>
+                  <p className="text-sm text-gray-600">AI generates questions tailored to your actual job descriptions</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <BarChart3 className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Real-Time Scoring</h4>
+                  <p className="text-sm text-gray-600">Get instant feedback with detailed 1-10 scoring on every response</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Clock className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">24/7 Practice</h4>
+                  <p className="text-sm text-gray-600">Practice anytime, anywhere at your own pace</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mic className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Voice Recording</h4>
+                  <p className="text-sm text-gray-600">Practice speaking your answers with audio transcription</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <TrendingUp className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Progress Tracking</h4>
+                  <p className="text-sm text-gray-600">Monitor improvement over time with detailed analytics</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Brain className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">AI-Powered Insights</h4>
+                  <p className="text-sm text-gray-600">Get specific feedback on clarity, examples, and job relevance</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tips & Features Section */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <Collapsible open={showTipsGuide} onOpenChange={setShowTipsGuide}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5" />
+                      How to Use Effectively
+                    </div>
+                    {showTipsGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </CardTitle>
+                  <CardDescription>
+                    Best practices for interview success
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4 pt-0">
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Behavioral Questions (STAR Method)</h4>
+                      <ul className="text-sm text-gray-600 space-y-1 ml-4">
+                        <li>• <strong>Situation:</strong> Set the context and background</li>
+                        <li>• <strong>Task:</strong> Describe your responsibility or challenge</li>
+                        <li>• <strong>Action:</strong> Explain the steps you took</li>
+                        <li>• <strong>Result:</strong> Share the outcome and impact</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Technical Questions</h4>
+                      <ul className="text-sm text-gray-600 space-y-1 ml-4">
+                        <li>• Think out loud to show your problem-solving process</li>
+                        <li>• Use specific examples from your experience</li>
+                        <li>• Explain trade-offs and alternatives</li>
+                        <li>• Ask clarifying questions when needed</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Best Practices</h4>
+                      <ul className="text-sm text-gray-600 space-y-1 ml-4">
+                        <li>• Practice 2-3 times per week for best results</li>
+                        <li>• Speak clearly and at a steady pace</li>
+                        <li>• Review feedback after each session</li>
+                        <li>• Focus on improving low-scoring areas</li>
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          <Collapsible open={showFeatures} onOpenChange={setShowFeatures}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Award className="h-5 w-5" />
+                      Success Metrics
+                    </div>
+                    {showFeatures ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </CardTitle>
+                  <CardDescription>
+                    What you can expect from practice
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4 pt-0">
+                  <div className="grid gap-4">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                      <Trophy className="h-8 w-8 text-green-600" />
+                      <div>
+                        <h4 className="font-medium text-green-900">Average Score Improvement</h4>
+                        <p className="text-sm text-green-700">Users see 2-3 point improvement after 5 sessions</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                      <Users className="h-8 w-8 text-blue-600" />
+                      <div>
+                        <h4 className="font-medium text-blue-900">Confidence Boost</h4>
+                        <p className="text-sm text-blue-700">85% of users report feeling more confident</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                      <Target className="h-8 w-8 text-purple-600" />
+                      <div>
+                        <h4 className="font-medium text-purple-900">Interview Success</h4>
+                        <p className="text-sm text-purple-700">Higher callback rates for consistent users</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <h4 className="font-medium text-gray-900 mb-2">Understanding Your Scores</h4>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p>• <strong>8-10:</strong> Excellent response with strong examples</p>
+                      <p>• <strong>6-7:</strong> Good response, room for improvement</p>
+                      <p>• <strong>4-5:</strong> Adequate but lacks depth or clarity</p>
+                      <p>• <strong>1-3:</strong> Needs significant improvement</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        </div>
 
         {sessionActive && selectedJob && questions ? (
           <InterviewSession
