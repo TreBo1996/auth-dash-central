@@ -57,6 +57,11 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
     setShowPaymentModal(false);
   };
 
+  const getProgressGradient = (percentage: number) => {
+    if (percentage >= 90) return 'bg-gradient-to-r from-blue-600 to-purple-600';
+    if (percentage >= 70) return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    return 'bg-gradient-to-r from-blue-400 to-purple-400';
+  };
 
   const hasLimitReached = features.some(feature => usage[feature]?.limit_reached);
 
@@ -91,10 +96,12 @@ export const ContextualUsageCounter: React.FC<ContextualUsageCounterProps> = ({
                   </span>
                 </div>
                 
-                <Progress 
-                  value={progressPercentage} 
-                  className="h-1.5"
-                />
+                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div 
+                    className={`h-full transition-all ${getProgressGradient(progressPercentage)}`}
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
                 
                 <div className="flex items-center justify-between">
                   <span className={`${compact ? 'text-xs' : 'text-sm'} text-muted-foreground`}>

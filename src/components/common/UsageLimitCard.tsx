@@ -34,6 +34,12 @@ export const UsageLimitCard: React.FC<UsageLimitCardProps> = ({
   const progressPercentage = isUnlimited ? 0 : (featureUsage?.current_usage || 0) / limit * 100;
   const remaining = isUnlimited ? 'Unlimited' : Math.max(0, limit - (featureUsage?.current_usage || 0));
 
+  const getProgressGradient = (percentage: number) => {
+    if (percentage >= 90) return 'bg-gradient-to-r from-blue-600 to-purple-600';
+    if (percentage >= 70) return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    return 'bg-gradient-to-r from-blue-400 to-purple-400';
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
@@ -70,10 +76,12 @@ export const UsageLimitCard: React.FC<UsageLimitCardProps> = ({
           )}
           
           {!isPremium && (
-            <Progress 
-              value={progressPercentage} 
-              className="h-2"
-            />
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div 
+                className={`h-full transition-all ${getProgressGradient(progressPercentage)}`}
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
           )}
           
           <div className="flex items-center justify-between">
