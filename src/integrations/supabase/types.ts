@@ -702,32 +702,65 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          desired_job_title: string | null
+          desired_salary_currency: string | null
+          desired_salary_max: number | null
+          desired_salary_min: number | null
           email: string | null
+          email_notifications_enabled: boolean | null
+          experience_level: string | null
           full_name: string | null
           id: string
+          industry_preferences: string[] | null
           is_admin: boolean | null
+          job_type_preference: string | null
+          newsletter_enabled: boolean | null
           plan_level: string | null
+          preferred_location: string | null
           updated_at: string
+          work_setting_preference: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          desired_job_title?: string | null
+          desired_salary_currency?: string | null
+          desired_salary_max?: number | null
+          desired_salary_min?: number | null
           email?: string | null
+          email_notifications_enabled?: boolean | null
+          experience_level?: string | null
           full_name?: string | null
           id: string
+          industry_preferences?: string[] | null
           is_admin?: boolean | null
+          job_type_preference?: string | null
+          newsletter_enabled?: boolean | null
           plan_level?: string | null
+          preferred_location?: string | null
           updated_at?: string
+          work_setting_preference?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          desired_job_title?: string | null
+          desired_salary_currency?: string | null
+          desired_salary_max?: number | null
+          desired_salary_min?: number | null
           email?: string | null
+          email_notifications_enabled?: boolean | null
+          experience_level?: string | null
           full_name?: string | null
           id?: string
+          industry_preferences?: string[] | null
           is_admin?: boolean | null
+          job_type_preference?: string | null
+          newsletter_enabled?: boolean | null
           plan_level?: string | null
+          preferred_location?: string | null
           updated_at?: string
+          work_setting_preference?: string | null
         }
         Relationships: []
       }
