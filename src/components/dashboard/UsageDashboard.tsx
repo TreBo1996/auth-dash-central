@@ -59,10 +59,10 @@ export const UsageDashboard: React.FC = () => {
     );
   }
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-green-500';
+  const getProgressGradient = (percentage: number) => {
+    if (percentage >= 90) return 'bg-gradient-to-r from-blue-600 to-purple-600';
+    if (percentage >= 70) return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    return 'bg-gradient-to-r from-blue-400 to-purple-400';
   };
 
   return (
@@ -120,10 +120,12 @@ export const UsageDashboard: React.FC = () => {
                 </div>
                 
                 {!isPremium && (
-                  <Progress 
-                    value={progressPercentage} 
-                    className="h-1.5 mb-1"
-                  />
+                  <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 mb-1">
+                    <div 
+                      className={`h-full transition-all ${getProgressGradient(progressPercentage)}`}
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
                 )}
                 
                 <div className="flex items-center justify-between">
