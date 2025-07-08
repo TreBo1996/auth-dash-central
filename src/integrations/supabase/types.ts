@@ -1146,6 +1146,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_resume_additions: {
+        Row: {
+          addition_type: string
+          content: string
+          created_at: string
+          id: string
+          optimized_resume_id: string | null
+          target_experience_company: string | null
+          target_experience_title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addition_type: string
+          content: string
+          created_at?: string
+          id?: string
+          optimized_resume_id?: string | null
+          target_experience_company?: string | null
+          target_experience_title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addition_type?: string
+          content?: string
+          created_at?: string
+          id?: string
+          optimized_resume_id?: string | null
+          target_experience_company?: string | null
+          target_experience_title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_role_preferences: {
         Row: {
           created_at: string
