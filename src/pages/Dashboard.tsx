@@ -360,21 +360,6 @@ const Dashboard: React.FC = () => {
         {/* Usage Overview */}
         <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
 
-        {/* AI Resume Optimizer Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              AI Resume Optimizer
-            </h2>
-          </div>
-          <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
-            <div className="bg-white rounded-lg">
-              <ResumeOptimizer resumes={resumes} jobDescriptions={jobDescriptions} onOptimizationComplete={handleOptimizationComplete} />
-            </div>
-          </div>
-        </div>
-
         {/* Three Column Layout with Collapsible Sections */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* My Resumes Column */}
@@ -433,13 +418,17 @@ const Dashboard: React.FC = () => {
                           </CardHeader>
                           <CardContent className="space-y-3 p-4 md:p-6 pt-0">
                             <div className="flex flex-col sm:flex-row gap-2">
-                              <Button size="sm" variant="outline" onClick={() => navigate(`/resume-editor/initial/${resume.id}`)} className="h-9 flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300">
-                                <Edit className="h-3 w-3 mr-1" />
-                                <span className="sm:inline">Edit</span>
+                              <Button size="sm" variant="outline" onClick={() => setPreviewContent({
+                              content: resume.parsed_text || '',
+                              title: resume.file_name || 'Untitled Resume',
+                              type: 'resume'
+                            })} className="flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300">
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleDelete(resume.id, 'resume')} className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(resume.id, 'resume')} className="flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
                                 <Trash2 className="h-3 w-3 mr-1" />
-                                <span className="sm:inline">Delete</span>
+                                Delete
                               </Button>
                             </div>
                           </CardContent>
@@ -450,7 +439,7 @@ const Dashboard: React.FC = () => {
             </Collapsible>
           </div>
 
-          {/* My Job Descriptions Column */}
+          {/* Job Descriptions Column */}
           <div className="bg-gradient-to-b from-white to-green-50/30 rounded-xl border border-green-200/50 shadow-xl-modern overflow-hidden backdrop-blur-sm">
             <Collapsible open={jobDescriptionsOpen} onOpenChange={setJobDescriptionsOpen}>
               <CollapsibleTrigger asChild>
@@ -460,7 +449,7 @@ const Dashboard: React.FC = () => {
                       <FileText className="h-5 w-5 text-white" />
                     </div>
                     <h2 className="text-lg md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                      My Job Descriptions
+                      Job Descriptions
                     </h2>
                     <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 font-semibold">
                       {jobDescriptions.length}
@@ -490,34 +479,29 @@ const Dashboard: React.FC = () => {
                           <CardHeader className="pb-3 p-4 md:p-6">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <CardTitle className="text-sm md:text-base flex items-center gap-2">
-                                  <FileText className="h-4 w-4 flex-shrink-0 text-green-600" />
-                                  <span className="truncate font-semibold text-gray-800">{jobDesc.title}</span>
+                                <CardTitle className="text-sm md:text-base font-semibold text-gray-800 truncate">
+                                  {jobDesc.title}
                                 </CardTitle>
-                                {jobDesc.company && (
-                                  <CardDescription className="text-sm text-muted-foreground font-medium">
-                                    {jobDesc.company}
-                                  </CardDescription>
-                                )}
                                 <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
                                   <Calendar className="h-3 w-3 flex-shrink-0" />
                                   {formatDate(jobDesc.created_at)}
                                 </CardDescription>
+                                {jobDesc.company && <p className="text-xs text-gray-600 mt-1 font-medium">{jobDesc.company}</p>}
                               </div>
-                              <Badge variant={jobDesc.source_file_url ? 'default' : 'outline'} className={`text-xs flex-shrink-0 ${jobDesc.source_file_url ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                                {jobDesc.source_file_url ? 'File' : 'Text'}
+                              <Badge variant="outline" className="text-xs flex-shrink-0 bg-green-50 text-green-700 border-green-200">
+                                Job Post
                               </Badge>
                             </div>
                           </CardHeader>
                           <CardContent className="space-y-3 p-4 md:p-6 pt-0">
                             <div className="flex flex-col sm:flex-row gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleJobDescriptionView(jobDesc)} className="h-9 flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300">
+                              <Button size="sm" variant="outline" onClick={() => handleJobDescriptionView(jobDesc)} className="flex-1 sm:flex-none border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300">
                                 <Eye className="h-3 w-3 mr-1" />
-                                <span className="sm:inline">View</span>
+                                View
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleDelete(jobDesc.id, 'job-description')} className="h-9 flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
+                              <Button size="sm" variant="outline" onClick={() => handleDelete(jobDesc.id, 'job-description')} className="flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300">
                                 <Trash2 className="h-3 w-3 mr-1" />
-                                <span className="sm:inline">Delete</span>
+                                Delete
                               </Button>
                             </div>
                           </CardContent>
@@ -549,15 +533,33 @@ const Dashboard: React.FC = () => {
               </CollapsibleTrigger>
               
               <CollapsibleContent className="p-6">
-                {optimizedResumes.length === 0 ? <Card className="border-2 border-dashed border-purple-300/50 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 hover:border-purple-400/50 transition-colors duration-300">
-                    <CardContent className="py-8 md:py-12 text-center px-4">
-                      <div className="p-3 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full w-fit mx-auto mb-4">
-                        <Sparkles className="h-10 w-10 md:h-12 md:w-12 text-purple-600" />
+                {optimizedResumes.length === 0 ? (
+                    <div className="space-y-4">
+                      <Card className="border-2 border-dashed border-purple-300/50 bg-gradient-to-br from-purple-50/50 to-indigo-50/30 hover:border-purple-400/50 transition-colors duration-300">
+                        <CardContent className="py-8 md:py-12 text-center px-4">
+                          <div className="p-3 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full w-fit mx-auto mb-4">
+                            <Sparkles className="h-10 w-10 md:h-12 md:w-12 text-purple-600" />
+                          </div>
+                          <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No optimized resumes yet</p>
+                        </CardContent>
+                      </Card>
+
+                      {/* AI Resume Optimizer Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Sparkles className="h-6 w-6 text-purple-600" />
+                          <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                            AI Resume Optimizer
+                          </h3>
+                        </div>
+                        <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
+                          <div className="bg-white rounded-lg">
+                            <ResumeOptimizer resumes={resumes} jobDescriptions={jobDescriptions} onOptimizationComplete={handleOptimizationComplete} navigateToEditor={false} />
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No optimized resumes yet</p>
-                      <p className="text-xs text-gray-500">Use the AI Resume Optimizer above to create your first optimized resume</p>
-                    </CardContent>
-                  </Card> : <ScrollArea className="h-[520px]">
+                    </div>
+                  ) : <ScrollArea className="h-[520px]">
                     <div className="space-y-4 pr-4">
                       {optimizedResumes.map(optimizedResume => <Card key={optimizedResume.id} className="bg-slate-50 shadow-md border border-purple-200/40 hover:shadow-card-hover hover:border-purple-400 hover:shadow-purple-200/50 transition-all duration-300">
                           <CardHeader className="pb-3 p-4 md:p-6 py-[5px]">
