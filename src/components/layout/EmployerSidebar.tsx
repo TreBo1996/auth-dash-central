@@ -56,7 +56,13 @@ export const EmployerSidebar: React.FC = () => {
   return (
     <div className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">
       <div className="p-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Employer Portal</h2>
+        <div className="flex items-center mb-4">
+          <img 
+            src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
+            alt="RezLit Logo" 
+            className="h-8 w-auto"
+          />
+        </div>
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;

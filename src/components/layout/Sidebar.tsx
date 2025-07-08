@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X, Sparkles, Mail, Lock } from 'lucide-react';
+import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -102,9 +102,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="flex h-screen w-64 flex-col bg-gradient-to-b from-white to-blue-50 border-r border-indigo-100 shadow-xl-modern">
       <div className="flex h-16 items-center justify-between px-6 border-b border-indigo-100 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="h-6 w-6 text-yellow-300" />
-          <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">RezLit</h1>
+        <div className="flex items-center">
+          <img 
+            src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
+            alt="RezLit Logo" 
+            className="h-8 w-auto"
+          />
         </div>
         {isMobile && onClose && (
           <Button variant="ghost" size="sm" onClick={onClose} className="p-2 text-white hover:bg-white/20">
