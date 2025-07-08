@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { useEmployerProfile } from '@/hooks/useEmployerProfile';
+import { ProfileCompletionCard } from '@/components/employer/ProfileCompletionCard';
 
 const PostJob: React.FC = () => {
   const { user } = useAuth();
@@ -20,7 +22,7 @@ const PostJob: React.FC = () => {
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
-  const [employerProfileId, setEmployerProfileId] = useState<string | null>(null);
+  const { profile, loading: profileLoading, profileCompleteness } = useEmployerProfile();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -47,30 +49,25 @@ const PostJob: React.FC = () => {
   const [newResponsibility, setNewResponsibility] = useState('');
   const [newBenefit, setNewBenefit] = useState('');
 
+  // Check profile completeness when profile data is loaded
   useEffect(() => {
-    const loadEmployerProfile = async () => {
-      if (!user) return;
-      
-      const { data: profile } = await supabase
-        .from('employer_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (profile) {
-        setEmployerProfileId(profile.id);
-      } else {
-        toast({
-          title: "Profile Required",
-          description: "Please complete your company profile first.",
-          variant: "destructive"
-        });
-        navigate('/employer/profile');
-      }
-    };
+    if (profileLoading) return;
     
-    loadEmployerProfile();
-  }, [user, navigate, toast]);
+    if (!profile) {
+      toast({
+        title: "Profile Required",
+        description: "Please create your company profile first.",
+        variant: "destructive"
+      });
+      navigate('/employer/profile');
+      return;
+    }
+
+    if (!profileCompleteness.isComplete) {
+      // Don't redirect immediately, let them see the completion card
+      return;
+    }
+  }, [profile, profileLoading, profileCompleteness, navigate, toast]);
 
   const addItem = (item: string, setter: React.Dispatch<React.SetStateAction<string[]>>, current: string[], inputSetter: React.Dispatch<React.SetStateAction<string>>) => {
     if (item.trim() && !current.includes(item.trim())) {
@@ -86,8 +83,17 @@ const PostJob: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!employerProfileId) {
+    if (!profile) {
       toast({ title: "Error", description: "Employer profile not found", variant: "destructive" });
+      return;
+    }
+
+    if (!profileCompleteness.isComplete) {
+      toast({ 
+        title: "Profile Incomplete", 
+        description: "Please complete your company profile before posting jobs.", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -95,7 +101,7 @@ const PostJob: React.FC = () => {
     
     try {
       const jobData = {
-        employer_id: employerProfileId,
+        employer_id: profile.id,
         title: formData.title,
         description: formData.description,
         location: formData.location || null,
@@ -154,6 +160,15 @@ const PostJob: React.FC = () => {
             <p className="text-muted-foreground">Create a detailed job posting to attract the right candidates</p>
           </div>
         </div>
+
+        {/* Show profile completion status if not complete */}
+        {!profileLoading && !profileCompleteness.isComplete && (
+          <ProfileCompletionCard
+            isComplete={profileCompleteness.isComplete}
+            missingFields={profileCompleteness.missingFields}
+            completionPercentage={profileCompleteness.completionPercentage}
+          />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
@@ -398,7 +413,10 @@ const PostJob: React.FC = () => {
             <Button type="button" variant="outline" onClick={() => navigate('/employer/dashboard')}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading || !profileCompleteness.isComplete}
+            >
               <Save className="h-4 w-4 mr-2" />
               {loading ? 'Posting...' : 'Post Job'}
             </Button>

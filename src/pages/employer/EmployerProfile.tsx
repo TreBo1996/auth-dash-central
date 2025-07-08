@@ -6,18 +6,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building, MapPin, Globe, Phone, Mail, Users, Save } from 'lucide-react';
+import { Building, MapPin, Globe, Phone, Mail, Users, Save, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { EmployerDashboardLayout } from '@/components/layout/EmployerDashboardLayout';
+import { useEmployerProfile } from '@/hooks/useEmployerProfile';
+import { ProfileCompletionCard } from '@/components/employer/ProfileCompletionCard';
 
 const EmployerProfile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
+  const { profile, loading: profileLoading, fetchProfile, profileCompleteness } = useEmployerProfile();
+  
   const [formData, setFormData] = useState({
     company_name: '',
     company_description: '',
@@ -33,6 +38,26 @@ const EmployerProfile = () => {
     logo_url: ''
   });
 
+  // Load existing profile data when it's available
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        company_name: profile.company_name || '',
+        company_description: profile.company_description || '',
+        industry: profile.industry || '',
+        company_size: profile.company_size || '',
+        website: profile.website || '',
+        address: profile.address || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        country: profile.country || 'United States',
+        contact_email: profile.contact_email || '',
+        contact_phone: profile.contact_phone || '',
+        logo_url: profile.logo_url || ''
+      });
+    }
+  }, [profile]);
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -43,25 +68,50 @@ const EmployerProfile = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('employer_profiles')
-        .insert({
-          user_id: user.id,
-          ...formData
+      if (profile) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('employer_profiles')
+          .update(formData)
+          .eq('id', profile.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Profile updated successfully!",
+          description: "Your company profile has been updated.",
         });
+      } else {
+        // Create new profile
+        const { error } = await supabase
+          .from('employer_profiles')
+          .insert({
+            user_id: user.id,
+            ...formData
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Profile created successfully!",
-        description: "Your company profile has been set up. You can now start posting jobs.",
-      });
+        toast({
+          title: "Profile created successfully!",
+          description: "Your company profile has been set up. You can now start posting jobs.",
+        });
+      }
 
-      navigate('/employer/dashboard');
+      // Refresh profile data
+      await fetchProfile();
+
+      // Check if we came from job posting and redirect back
+      const fromJobPost = searchParams.get('from') === 'job-post';
+      if (fromJobPost) {
+        navigate('/employer/post-job');
+      } else {
+        navigate('/employer/dashboard');
+      }
     } catch (error) {
-      console.error('Error creating employer profile:', error);
+      console.error('Error saving employer profile:', error);
       toast({
-        title: "Error creating profile",
+        title: profile ? "Error updating profile" : "Error creating profile",
         description: "Please try again later.",
         variant: "destructive",
       });
@@ -72,13 +122,36 @@ const EmployerProfile = () => {
 
   return (
     <EmployerDashboardLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Create Company Profile</h1>
-          <p className="text-muted-foreground">
-            Set up your company profile to start posting jobs and attract top talent.
-          </p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <Link to="/employer/dashboard">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">
+              {profile ? 'Update Company Profile' : 'Create Company Profile'}
+            </h1>
+            <p className="text-muted-foreground">
+              {profile 
+                ? 'Update your company information and profile details.'
+                : 'Set up your company profile to start posting jobs and attract top talent.'
+              }
+            </p>
+          </div>
         </div>
+
+        {/* Show profile completion status */}
+        {!profileLoading && (
+          <ProfileCompletionCard
+            isComplete={profileCompleteness.isComplete}
+            missingFields={profileCompleteness.missingFields}
+            completionPercentage={profileCompleteness.completionPercentage}
+            showAction={false}
+          />
+        )}
 
         <Card>
           <CardHeader>
@@ -91,7 +164,9 @@ const EmployerProfile = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="company_name">Company Name *</Label>
+                  <Label htmlFor="company_name">
+                    Company Name <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="company_name"
                     value={formData.company_name}
@@ -102,7 +177,9 @@ const EmployerProfile = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="industry">Industry</Label>
+                  <Label htmlFor="industry">
+                    Industry <span className="text-red-500">*</span>
+                  </Label>
                   <Select value={formData.industry} onValueChange={(value) => handleChange('industry', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select industry" />
@@ -121,7 +198,9 @@ const EmployerProfile = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="company_size">Company Size</Label>
+                  <Label htmlFor="company_size">
+                    Company Size <span className="text-red-500">*</span>
+                  </Label>
                   <Select value={formData.company_size} onValueChange={(value) => handleChange('company_size', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select company size" />
@@ -150,25 +229,31 @@ const EmployerProfile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company_description">Company Description</Label>
+                <Label htmlFor="company_description">
+                  Company Description <span className="text-red-500">*</span>
+                </Label>
                 <Textarea
                   id="company_description"
                   value={formData.company_description}
                   onChange={(e) => handleChange('company_description', e.target.value)}
                   placeholder="Tell us about your company, mission, and culture..."
                   rows={4}
+                  required
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="contact_email">Contact Email</Label>
+                  <Label htmlFor="contact_email">
+                    Contact Email <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="contact_email"
                     type="email"
                     value={formData.contact_email}
                     onChange={(e) => handleChange('contact_email', e.target.value)}
                     placeholder="hr@yourcompany.com"
+                    required
                   />
                 </div>
 
@@ -224,7 +309,10 @@ const EmployerProfile = () => {
               <div className="flex justify-end">
                 <Button type="submit" disabled={loading} size="lg">
                   <Save className="mr-2 h-4 w-4" />
-                  {loading ? 'Creating Profile...' : 'Create Profile'}
+                  {loading 
+                    ? (profile ? 'Updating Profile...' : 'Creating Profile...') 
+                    : (profile ? 'Update Profile' : 'Create Profile')
+                  }
                 </Button>
               </div>
             </form>
