@@ -213,6 +213,16 @@ function App() {
                 } 
               />
               <Route 
+                path="/employer/edit-job/:jobId" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="employer">
+                      <PostJob />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
                 path="/employer/job-postings" 
                 element={
                   <ProtectedRoute>
