@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { AdminTools } from '@/components/admin/AdminTools';
 import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
+import { SubscriptionCard } from '@/components/subscription/SubscriptionCard';
 
 interface UserProfile {
   email: string;
@@ -119,6 +120,13 @@ const Profile: React.FC = () => {
 
         {/* Admin Tools - Only visible to admin users */}
         <AdminTools isAdmin={profile?.is_admin || false} />
+
+        {/* Subscription & Billing */}
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold text-gray-900">Subscription & Billing</h2>
+          <p className="text-gray-600">Manage your subscription plan and billing information</p>
+        </div>
+        <SubscriptionCard />
 
         {/* Usage Overview */}
         <UsageDashboard />
