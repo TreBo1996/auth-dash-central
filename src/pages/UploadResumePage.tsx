@@ -337,7 +337,7 @@ const UploadResumePage: React.FC = () => {
                 </p>
                 
                 <Input type="file" accept=".pdf,.docx" onChange={handleFileInputChange} className="hidden" id="resume-upload" />
-                <Button asChild>
+                <Button asChild className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
                   <label htmlFor="resume-upload" className="cursor-pointer">
                     <FileText className="h-4 w-4 mr-2" />
                     Choose File
