@@ -278,8 +278,10 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            AI Resume Optimizer
+            <Sparkles className="h-5 w-5 text-purple-600" />
+            <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              AI Resume Optimizer
+            </span>
           </CardTitle>
           <CardDescription>
             Select a resume and job description to see your current ATS score and create an optimized version
