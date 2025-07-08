@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,7 @@ export const JobSearch: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const resultsRef = useRef<HTMLDivElement>(null);
   
   // Use the optimized search hook
   const { searchJobs, loading } = useOptimizedJobSearch();
@@ -222,8 +223,8 @@ export const JobSearch: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of results
-    window.scrollTo({ top: 300, behavior: 'smooth' });
+    // Scroll to the results section
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // Calculate pagination
@@ -254,7 +255,7 @@ export const JobSearch: React.FC = () => {
           <JobSearchForm onSearch={handleSearch} loading={loading} />
         </div>
 
-        <div className="space-y-8">
+        <div ref={resultsRef} className="space-y-8 scroll-mt-4">
           <JobSearchResults 
             jobs={currentJobs}
             loading={loading} 
