@@ -273,7 +273,7 @@ export const JobCard: React.FC<JobCardProps> = ({
                       {saving ? 'Saving...' : 'Save'}
                     </>}
                 </Button>
-                <Button onClick={handleViewJob} className={job.source === 'employer' ? '' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg'}>
+                <Button onClick={handleViewJob} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
                   {job.source === 'employer' ? <>
                       <Briefcase className="h-4 w-4 mr-1" />
                       View & Apply
