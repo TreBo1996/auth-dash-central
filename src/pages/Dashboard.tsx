@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye } from 'lucide-react';
+import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
@@ -548,14 +548,21 @@ const Dashboard: React.FC = () => {
                                   <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5" />
                                    <div className="min-w-0 flex-1">
                                      <div className="truncate font-semibold text-gray-800">
-                                       Optimized for {optimizedResume.job_descriptions?.title}
-                                       {optimizedResume.job_descriptions?.company && ` at ${optimizedResume.job_descriptions.company}`}
+                                       {optimizedResume.job_descriptions?.title || 'Job Position'}
                                      </div>
                                    </div>
                                 </CardTitle>
-                                <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
-                                  <Calendar className="h-3 w-3 flex-shrink-0" />
-                                  {formatDate(optimizedResume.created_at)}
+                                <CardDescription className="flex flex-col gap-1 mt-1 text-xs md:text-sm text-gray-500">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3 w-3 flex-shrink-0" />
+                                    {formatDate(optimizedResume.created_at)}
+                                  </div>
+                                  {optimizedResume.job_descriptions?.company && (
+                                    <Badge variant="outline" className="text-xs w-fit bg-slate-50 text-slate-600 border-slate-200">
+                                      <Building2 className="h-3 w-3 mr-1" />
+                                      {optimizedResume.job_descriptions.company}
+                                    </Badge>
+                                  )}
                                 </CardDescription>
                               </div>
                               <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs flex-shrink-0 font-semibold">
