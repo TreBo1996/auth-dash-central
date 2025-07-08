@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Briefcase, Plus, Trash2, ListOrdered, Sparkles, X } from 'lucide-react';
-import { BulletSuggestionsModal } from './BulletSuggestionsModal';
 import { AISuggestionsModal } from './AISuggestionsModal';
 
 
@@ -26,19 +25,6 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   onChange,
   jobDescriptionId
 }) => {
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    experienceIndex: number;
-    companyName: string;
-    role: string;
-    currentBullets: string[];
-  }>({
-    isOpen: false,
-    experienceIndex: -1,
-    companyName: '',
-    role: '',
-    currentBullets: []
-  });
 
   const [aiSuggestionsModal, setAiSuggestionsModal] = useState<{
     isOpen: boolean;
@@ -105,18 +91,6 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     }
   };
 
-  const openAISuggestions = (experienceIndex: number) => {
-    const experience = experiences[experienceIndex];
-    if (experience && jobDescriptionId) {
-      setModalState({
-        isOpen: true,
-        experienceIndex,
-        companyName: experience.company,
-        role: experience.title,
-        currentBullets: experience.bullets || []
-      });
-    }
-  };
 
   const openAIExperienceSuggestions = (experienceIndex: number) => {
     const experience = experiences[experienceIndex];
@@ -131,16 +105,6 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     }
   };
 
-  const handleSelectBullets = (bullets: string[]) => {
-    const experience = experiences[modalState.experienceIndex];
-    if (experience) {
-      const currentBullets = experience.bullets || [];
-      const newBullets = [...currentBullets, ...bullets];
-      updateExperience(modalState.experienceIndex, 'bullets', newBullets);
-    }
-    
-    setModalState(prev => ({ ...prev, isOpen: false }));
-  };
 
   const handleSelectSuggestions = (suggestions: string[]) => {
     const experience = experiences[aiSuggestionsModal.experienceIndex];
@@ -266,26 +230,15 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                       Add Bullet
                     </Button>
                     {jobDescriptionId && experience.company && experience.title && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openAISuggestions(index)}
-                          className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 h-8"
-                        >
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          AI Bullets
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openAIExperienceSuggestions(index)}
-                          className="text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100 h-8"
-                        >
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Job-Fit Ideas
-                        </Button>
-                      </>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openAIExperienceSuggestions(index)}
+                        className="text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100 h-8"
+                      >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Job-Fit Ideas
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -352,17 +305,6 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
           )}
         </CardContent>
       </Card>
-
-      <BulletSuggestionsModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
-        experienceId={modalState.experienceIndex.toString()}
-        jobDescriptionId={jobDescriptionId || ''}
-        companyName={modalState.companyName}
-        role={modalState.role}
-        currentDescription={modalState.currentBullets.join('\n')}
-        onSelectBullets={handleSelectBullets}
-      />
 
       <AISuggestionsModal
         isOpen={aiSuggestionsModal.isOpen}
