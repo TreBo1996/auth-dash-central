@@ -153,7 +153,7 @@ export const UserAdditionsForm: React.FC<UserAdditionsFormProps> = ({
             />
           </div>
 
-          <Button onClick={addUserAddition} className="w-full">
+          <Button onClick={addUserAddition} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
             <Plus className="h-4 w-4 mr-2" />
             Add to Resume
           </Button>
