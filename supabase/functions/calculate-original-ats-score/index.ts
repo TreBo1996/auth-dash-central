@@ -93,12 +93,74 @@ serve(async (req) => {
 
     console.log('Successfully fetched resume and job description for original ATS scoring');
 
-    // Call OpenAI API for ATS scoring
+    // Get OpenAI API key for all operations
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
+
+    // Parse resume to extract structured data for user additions form
+    console.log('Parsing resume for structured data...');
+    
+    const parsePrompt = `Extract structured data from this resume text. Return ONLY valid JSON in this exact format:
+
+{
+  "experience": [
+    {
+      "title": "Job Title",
+      "company": "Company Name", 
+      "duration": "Date Range",
+      "bullets": ["responsibility 1", "responsibility 2"]
+    }
+  ]
+}
+
+Resume text:
+${resume.parsed_text}
+
+Return ONLY the JSON structure above, no additional text.`;
+
+    let parsedResumeData = null;
+    try {
+      const parseResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a resume parser. Always return valid JSON only, never include markdown or additional text.'
+            },
+            {
+              role: 'user',
+              content: parsePrompt
+            }
+          ],
+          max_tokens: 1500,
+          temperature: 0.1,
+        }),
+      });
+
+      if (parseResponse.ok) {
+        const parseData = await parseResponse.json();
+        const parseResult = parseData.choices[0].message.content;
+        try {
+          parsedResumeData = JSON.parse(parseResult);
+          console.log('Successfully parsed resume data:', parsedResumeData);
+        } catch (parseError) {
+          console.warn('Failed to parse resume structure:', parseError);
+        }
+      }
+    } catch (parseError) {
+      console.warn('Error parsing resume structure:', parseError);
+    }
+
+    // Call OpenAI API for ATS scoring
 
     const prompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume against the job description and provide a comprehensive ATS compatibility score.
 
@@ -197,7 +259,8 @@ Return ONLY the JSON structure above, no additional text.`;
     return new Response(JSON.stringify({ 
       success: true, 
       ats_score: atsScoring.overall_score,
-      ats_feedback: atsScoring
+      ats_feedback: atsScoring,
+      parsed_resume_data: parsedResumeData
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

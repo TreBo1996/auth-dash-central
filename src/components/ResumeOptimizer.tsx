@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
+import type { UserAddition } from './UserAdditionsForm';
 
 interface Resume {
   id: string;
@@ -60,6 +61,7 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const [originalATSScore, setOriginalATSScore] = useState<number | undefined>();
   const [originalATSFeedback, setOriginalATSFeedback] = useState<ATSFeedback | undefined>();
   const [isLoadingATS, setIsLoadingATS] = useState(false);
+  const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const { usage, checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
   const { toast } = useToast();
   const handleAnalyzeATS = async () => {
@@ -108,6 +110,12 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       }
       setOriginalATSScore(data.ats_score);
       setOriginalATSFeedback(data.ats_feedback);
+      
+      // Parse resume data for user additions form
+      if (data.parsed_resume_data) {
+        setParsedResumeData(data.parsed_resume_data);
+      }
+      
       console.log('Original ATS score calculated:', data.ats_score);
     } catch (error) {
       console.error('ATS scoring error:', error);
@@ -121,7 +129,7 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       setIsLoadingATS(false);
     }
   };
-  const handleOptimize = async () => {
+  const handleOptimize = async (userAdditions?: UserAddition[]) => {
     if (!selectedResumeId || !selectedJobDescId) {
       return;
     }
@@ -130,10 +138,35 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       setIsOptimizing(true);
       console.log('Starting resume optimization...');
       
+      // Store user additions in database if provided
+      let storedAdditions = null;
+      if (userAdditions && userAdditions.length > 0) {
+        const { data: userData } = await supabase.auth.getUser();
+        const additionsToStore = userAdditions.map(addition => ({
+          user_id: userData.user?.id,
+          addition_type: addition.addition_type,
+          content: addition.content,
+          target_experience_title: addition.target_experience_title,
+          target_experience_company: addition.target_experience_company
+        }));
+
+        const { data: additions, error: additionsError } = await supabase
+          .from('user_resume_additions')
+          .insert(additionsToStore)
+          .select();
+
+        if (additionsError) {
+          console.warn('Failed to store user additions:', additionsError);
+        } else {
+          storedAdditions = additions;
+        }
+      }
+      
       const { data, error } = await supabase.functions.invoke('optimize-resume', {
         body: {
           resumeId: selectedResumeId,
-          jobDescriptionId: selectedJobDescId
+          jobDescriptionId: selectedJobDescId,
+          userAdditions: userAdditions || []
         }
       });
 
@@ -355,7 +388,18 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
         </CardContent>
       </Card>
 
-      <ATSPreviewModal isOpen={showATSModal} onClose={() => setShowATSModal(false)} onOptimize={handleOptimize} resumeName={selectedResume?.file_name || 'Untitled Resume'} jobTitle={selectedJobDesc?.title || 'Job Position'} atsScore={originalATSScore} atsFeedback={originalATSFeedback} isLoading={isLoadingATS} isOptimizing={isOptimizing} />
+      <ATSPreviewModal 
+        isOpen={showATSModal} 
+        onClose={() => setShowATSModal(false)} 
+        onOptimize={handleOptimize} 
+        resumeName={selectedResume?.file_name || 'Untitled Resume'} 
+        jobTitle={selectedJobDesc?.title || 'Job Position'} 
+        atsScore={originalATSScore} 
+        atsFeedback={originalATSFeedback} 
+        isLoading={isLoadingATS} 
+        isOptimizing={isOptimizing}
+        resumeData={parsedResumeData}
+      />
       
       <PaymentModal 
         isOpen={showPaymentModal}

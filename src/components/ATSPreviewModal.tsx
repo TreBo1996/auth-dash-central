@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sparkles, Loader2, TrendingUp, AlertCircle, Target, Zap, FileText, CheckCircle } from 'lucide-react';
 import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
+import { UserAdditionsForm, UserAddition } from './UserAdditionsForm';
+import { supabase } from '@/integrations/supabase/client';
 interface ATSFeedback {
   overall_score: number;
   category_scores: {
@@ -25,13 +27,21 @@ interface ATSFeedback {
 interface ATSPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOptimize: () => void;
+  onOptimize: (userAdditions?: UserAddition[]) => void;
   resumeName: string;
   jobTitle: string;
   atsScore?: number;
   atsFeedback?: ATSFeedback;
   isLoading: boolean;
   isOptimizing: boolean;
+  resumeData?: {
+    experience?: Array<{
+      title: string;
+      company: string;
+      duration: string;
+      bullets: string[];
+    }>;
+  };
 }
 export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
   isOpen,
@@ -42,9 +52,15 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
   atsScore,
   atsFeedback,
   isLoading,
-  isOptimizing
+  isOptimizing,
+  resumeData
 }) => {
   const [optimizationStep, setOptimizationStep] = useState(0);
+  const [userAdditions, setUserAdditions] = useState<UserAddition[]>([]);
+
+  const handleOptimize = () => {
+    onOptimize(userAdditions);
+  };
 
   const optimizationSteps = [
     { icon: <TrendingUp className="h-5 w-5" />, text: "Analyzing resume content..." },
@@ -261,7 +277,14 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                   </CardContent>
                 </Card>}
 
-              {/* AI Optimization Promise */}
+              {/* User Additions Form */}
+              {resumeData?.experience && resumeData.experience.length > 0 && (
+                <UserAdditionsForm
+                  experiences={resumeData.experience}
+                  additions={userAdditions}
+                  onAdditionsChange={setUserAdditions}
+                />
+              )}
               
             </> : <Card>
               <CardContent className="py-12 text-center">
@@ -275,13 +298,18 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
             <Button variant="outline" onClick={onClose} disabled={isOptimizing}>
               Cancel
             </Button>
-            <Button onClick={onOptimize} disabled={isOptimizing || isLoading} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={handleOptimize} disabled={isOptimizing || isLoading} className="bg-purple-600 hover:bg-purple-700">
               {isOptimizing ? <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Optimizing Resume...
                 </> : <>
                   <Sparkles className="h-4 w-4 mr-2" />
                   Optimize Resume with AI
+                  {userAdditions.length > 0 && (
+                    <Badge className="ml-2 bg-green-600">
+                      +{userAdditions.length}
+                    </Badge>
+                  )}
                 </>}
             </Button>
           </div>

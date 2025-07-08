@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const { resumeId, jobDescriptionId } = await req.json();
+    const { resumeId, jobDescriptionId, userAdditions = [] } = await req.json();
 
     if (!resumeId || !jobDescriptionId) {
       throw new Error('Resume ID and Job Description ID are required');
@@ -129,6 +129,19 @@ serve(async (req) => {
     }
 
     console.log('Calling OpenAI API for authentic resume enhancement...');
+    console.log('User additions provided:', userAdditions.length);
+
+    // Build user additions section for prompt
+    let userAdditionsSection = '';
+    if (userAdditions && userAdditions.length > 0) {
+      userAdditionsSection = `\n\nUSER-PROVIDED ADDITIONS TO INCORPORATE:
+The user has specified these additional experiences/skills to include in specific roles:
+${userAdditions.map(addition => 
+  `- ADD "${addition.content}" to the "${addition.target_experience_title}" role${addition.target_experience_company ? ` at ${addition.target_experience_company}` : ''} (Type: ${addition.addition_type})`
+).join('\n')}
+
+CRITICAL: You MUST incorporate these user-provided additions into the specified roles naturally and authentically. These are legitimate experiences the user wants highlighted.`;
+    }
 
     const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to enhance the existing resume content for better ATS compatibility while maintaining complete accuracy and authenticity.
 
@@ -208,8 +221,9 @@ ${jobDescription.parsed_text}
 
 ORIGINAL RESUME TO OPTIMIZE:
 ${resume.parsed_text}
+${userAdditionsSection}
 
-REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improving existing content alignment with the job description while maintaining complete authenticity and accuracy. Return ONLY the enhanced resume as valid JSON.`;
+REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improving existing content alignment with the job description while maintaining complete authenticity and accuracy${userAdditions.length > 0 ? ' AND incorporating the user-provided additions into the specified roles naturally' : ''}. Return ONLY the enhanced resume as valid JSON.`;
 
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
