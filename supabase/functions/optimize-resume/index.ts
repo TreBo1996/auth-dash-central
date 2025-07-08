@@ -134,13 +134,25 @@ serve(async (req) => {
     // Build user additions section for prompt
     let userAdditionsSection = '';
     if (userAdditions && userAdditions.length > 0) {
-      userAdditionsSection = `\n\nUSER-PROVIDED ADDITIONS TO INCORPORATE:
+      userAdditionsSection = `\n\nUSER-PROVIDED ADDITIONS TO INCORPORATE AND OPTIMIZE:
 The user has specified these additional experiences/skills to include in specific roles:
 ${userAdditions.map(addition => 
   `- ADD "${addition.content}" to the "${addition.target_experience_title}" role${addition.target_experience_company ? ` at ${addition.target_experience_company}` : ''} (Type: ${addition.addition_type})`
 ).join('\n')}
 
-CRITICAL: You MUST incorporate these user-provided additions into the specified roles naturally and authentically. These are legitimate experiences the user wants highlighted.`;
+CRITICAL OPTIMIZATION INSTRUCTIONS FOR USER ADDITIONS:
+1. **PROFESSIONALLY REWORD**: Transform each user addition from casual language into professional, industry-standard terminology
+2. **KEYWORD INTEGRATION**: Seamlessly integrate relevant keywords from the job description into each addition
+3. **ENHANCE ACTION VERBS**: Use strong, ATS-friendly action verbs that match the job requirements
+4. **QUANTIFY WHEN POSSIBLE**: If the user provides any numbers or metrics, emphasize them professionally
+5. **MATCH TONE & STYLE**: Ensure additions flow naturally with the optimized resume's professional tone
+6. **TYPE-SPECIFIC HANDLING**:
+   - Skills: Use industry-standard terminology and group with related skills
+   - Experience/Responsibilities: Transform into impactful bullet points with strong action verbs
+   - Achievements: Emphasize measurable impact and results
+7. **SEAMLESS INTEGRATION**: Make additions appear as natural parts of the original experience, not obvious insertions
+
+These are legitimate experiences the user wants highlighted - treat them as raw material that needs professional enhancement and optimization, not just insertion.`;
     }
 
     const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to enhance the existing resume content for better ATS compatibility while maintaining complete accuracy and authenticity.
