@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { CoverLetterGenerator } from '@/components/CoverLetterGenerator';
 import { ContentPreview } from '@/components/ContentPreview';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, Plus, Building, Calendar } from 'lucide-react';
+import { Mail, Plus, Building, Calendar, Target, Zap, FileText, Clock, Award, Users, TrendingUp, Lightbulb, ChevronDown, ChevronUp, Rocket, Star, CheckCircle, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 
@@ -25,6 +26,8 @@ export const CoverLetters: React.FC = () => {
   const [showGenerator, setShowGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedCoverLetter, setSelectedCoverLetter] = useState<CoverLetterWithJob | null>(null);
+  const [showUsageGuide, setShowUsageGuide] = useState(false);
+  const [showSuccessMetrics, setShowSuccessMetrics] = useState(false);
 
   useEffect(() => {
     loadCoverLetters();
@@ -106,6 +109,166 @@ export const CoverLetters: React.FC = () => {
             <Plus className="h-4 w-4 mr-2" />
             Create Cover Letter
           </Button>
+        </div>
+
+        {/* Benefits Overview */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Rocket className="h-5 w-5" />
+              Why Use AI Cover Letters?
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              Create personalized, professional cover letters that get you noticed
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex items-start gap-3">
+                <Target className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Job-Specific Personalization</h4>
+                  <p className="text-sm text-gray-600">Tailored content that matches job requirements and company culture</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Clock className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Save Time & Effort</h4>
+                  <p className="text-sm text-gray-600">Generate professional letters in minutes instead of hours</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Brain className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">AI-Powered Content</h4>
+                  <p className="text-sm text-gray-600">Intelligent matching of your skills to job requirements</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Professional Formatting</h4>
+                  <p className="text-sm text-gray-600">Perfect structure and tone for any industry</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <TrendingUp className="h-5 w-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Higher Response Rates</h4>
+                  <p className="text-sm text-gray-600">Stand out from generic applications with personalized content</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-gray-900">Easy Management</h4>
+                  <p className="text-sm text-gray-600">Store, edit, and reuse cover letters for future applications</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* How It Works & Tips */}
+        <div className="grid gap-6 md:grid-cols-2 mb-6">
+          <Collapsible open={showUsageGuide} onOpenChange={setShowUsageGuide}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between text-lg">
+                    <div className="flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5 text-yellow-600" />
+                      How to Create Perfect Cover Letters
+                    </div>
+                    {showUsageGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">1</div>
+                      <div>
+                        <h4 className="font-medium mb-1">Upload Your Resume</h4>
+                        <p className="text-sm text-muted-foreground">Start with an up-to-date resume that reflects your current skills and experience.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">2</div>
+                      <div>
+                        <h4 className="font-medium mb-1">Add Job Description</h4>
+                        <p className="text-sm text-muted-foreground">Paste or upload the complete job posting for accurate matching.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-medium">3</div>
+                      <div>
+                        <h4 className="font-medium mb-1">Generate & Customize</h4>
+                        <p className="text-sm text-muted-foreground">Our AI creates a personalized letter that you can further edit and refine.</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Pro Tip:</strong> Use optimized resumes for even better results. The AI will leverage improved keywords and formatting.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+
+          <Collapsible open={showSuccessMetrics} onOpenChange={setShowSuccessMetrics}>
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                  <CardTitle className="flex items-center justify-between text-lg">
+                    <div className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-green-600" />
+                      Success Metrics & Best Practices
+                    </div>
+                    {showSuccessMetrics ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </CardTitle>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">65%</div>
+                        <div className="text-sm text-green-700">Higher Response Rate</div>
+                      </div>
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">15min</div>
+                        <div className="text-sm text-blue-700">Average Time Saved</div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm">Always customize the greeting with hiring manager's name when available</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm">Include specific achievements and metrics from your experience</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm">Research the company culture and incorporate relevant values</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span className="text-sm">Keep letters concise - aim for 3-4 paragraphs maximum</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         </div>
 
         {/* Usage Counter */}
