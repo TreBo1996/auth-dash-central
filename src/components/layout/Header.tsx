@@ -2,10 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { LogOut, User, Sparkles } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { RoleSwitcher } from './RoleSwitcher';
+
 
 export const Header: React.FC = () => {
   const {
@@ -26,9 +27,12 @@ export const Header: React.FC = () => {
     <header className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 sticky top-0 z-50">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-yellow-300" />
-            <h1 className="text-xl font-bold text-white">RezLit</h1>
+          <Link to={user ? "/dashboard" : "/"} className="flex items-center">
+            <img 
+              src="/lovable-uploads/bffd4ce2-c7b1-4966-b4b9-f8b293c0f01a.png" 
+              alt="RezLit Logo" 
+              className="h-8 w-auto"
+            />
           </Link>
           
           <div className="flex items-center gap-4">
