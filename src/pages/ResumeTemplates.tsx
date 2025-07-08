@@ -243,7 +243,7 @@ const ResumeTemplates: React.FC = () => {
           {/* Desktop buttons only */}
           {!isMobile && <div className="flex gap-2">
               
-              <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700">
+              <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
                 <Download className="h-4 w-4 mr-2" />
                 {isGeneratingPDF 
                   ? 'Generating PDF...' 
@@ -321,7 +321,7 @@ const ResumeTemplates: React.FC = () => {
         
         {/* Mobile Floating Action Button */}
         {isMobile && <div className="fixed bottom-6 right-6 z-50">
-            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-blue-800 hover:bg-blue-700 shadow-lg rounded-full h-14 w-14 p-0" size="lg">
+            <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg rounded-full h-14 w-14 p-0" size="lg">
               <Download className="h-6 w-6" />
             </Button>
           </div>}

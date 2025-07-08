@@ -83,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Button 
             onClick={() => window.location.href = '/auth'}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
           >
             Sign Up
           </Button>
@@ -160,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="space-y-2">
             <Button 
               onClick={() => window.location.href = '/auth'}
-              className="w-full justify-start h-11 bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full justify-start h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
             >
               <User className="mr-3 h-4 w-4" />
               Sign Up / Login

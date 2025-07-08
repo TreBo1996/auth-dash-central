@@ -361,7 +361,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 key={num}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   num <= getProgressStep()
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                     : 'bg-gray-200 text-gray-600'
                 }`}
               >
@@ -486,7 +486,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                   {selectedResumeId && (
                     <Button 
                       onClick={() => setStep('submit')}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                     >
                       Continue to Application
                     </Button>

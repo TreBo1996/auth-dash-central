@@ -385,7 +385,7 @@ const ResumeEditor: React.FC = () => {
                 <FileDown className="h-4 w-4 mr-2" />
                 Export
               </Button>
-              <Button onClick={handleSave} disabled={saving} className="bg-blue-800 hover:bg-blue-700">
+              <Button onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                 Save Changes
               </Button>
@@ -479,7 +479,7 @@ const ResumeEditor: React.FC = () => {
             <Button 
               onClick={handleSave} 
               disabled={saving}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm py-3"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-sm py-3 shadow-lg"
             >
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Save

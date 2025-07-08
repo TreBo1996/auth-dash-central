@@ -345,7 +345,7 @@ const JobPosting: React.FC = () => {
                     <Button 
                       size="lg"
                       onClick={handleApplyClick}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 text-lg font-semibold shadow-lg"
                     >
                       <Briefcase className="h-5 w-5 mr-2" />
                       Apply Now
@@ -405,7 +405,7 @@ const JobPosting: React.FC = () => {
               <CardContent className="py-8">
                 <div className="text-center space-y-6">
                   <div className="flex justify-center">
-                    <div className="bg-blue-600 rounded-full p-3">
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full p-3 shadow-lg">
                       <Zap className="h-8 w-8 text-white" />
                     </div>
                   </div>
@@ -581,7 +581,7 @@ const JobPosting: React.FC = () => {
                       <Button 
                         size="lg"
                         onClick={() => navigate('/auth')}
-                        className="bg-blue-600 hover:bg-blue-700"
+                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                       >
                         <Briefcase className="h-4 w-4 mr-2" />
                         Sign Up / Login to Apply
@@ -595,7 +595,7 @@ const JobPosting: React.FC = () => {
                       <Button 
                         size="lg"
                         onClick={handleApplyClick}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                       >
                         <Briefcase className="h-4 w-4 mr-2" />
                         Start Application

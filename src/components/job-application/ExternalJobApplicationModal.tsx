@@ -224,7 +224,7 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
                 key={num}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   num <= getProgressStep()
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                     : 'bg-gray-200 text-gray-600'
                 }`}
               >
@@ -452,7 +452,7 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
                     onClick={handleRedirectToJob}
                     disabled={redirecting}
                     size="lg"
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                   >
                     {redirecting ? (
                       <>
