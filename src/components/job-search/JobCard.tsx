@@ -232,8 +232,23 @@ export const JobCard: React.FC<JobCardProps> = ({
                   </>}
               </Button>}
             
-            <div className="flex gap-2">
-              {job.employment_type && <Badge variant="outline">{job.employment_type}</Badge>}
+            <div className="flex flex-wrap gap-2">
+              {job.employment_type && (() => {
+                const types = Array.isArray(job.employment_type) 
+                  ? job.employment_type 
+                  : typeof job.employment_type === 'string' && job.employment_type.startsWith('[')
+                    ? JSON.parse(job.employment_type)
+                    : [job.employment_type];
+                
+                return types.map((type: string, index: number) => (
+                  <span 
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm"
+                  >
+                    {type}
+                  </span>
+                ));
+              })()}
               {job.experience_level && <Badge variant="outline">{job.experience_level}</Badge>}
             </div>
 
