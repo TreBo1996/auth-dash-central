@@ -234,11 +234,12 @@ const Auth: React.FC = () => {
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Sparkles className="h-10 w-10 text-yellow-300" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              RezLit
-            </h1>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
+              alt="RezLit Logo" 
+              className="h-12 w-auto"
+            />
           </div>
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-4">
             <Star className="h-4 w-4 text-yellow-300" />

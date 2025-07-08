@@ -312,8 +312,12 @@ const EmployerAuth = () => {
           
           <Card className="shadow-xl border-0">
             <CardHeader className="text-center pb-8">
-              <div className="mx-auto mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full w-16 h-16 flex items-center justify-center">
-                <Building className="h-8 w-8 text-white" />
+              <div className="mx-auto mb-4 flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
+                  alt="RezLit Logo" 
+                  className="h-12 w-auto"
+                />
               </div>
               <CardTitle className="text-2xl font-bold">
                 {isLogin ? 'Employer Sign In' : 'Join as an Employer'}
