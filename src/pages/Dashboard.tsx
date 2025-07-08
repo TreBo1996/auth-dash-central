@@ -17,8 +17,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-
-
 interface Resume {
   id: string;
   original_file_url: string | null;
@@ -66,12 +64,16 @@ interface OptimizedResume {
     title: string;
   };
 }
-
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoadingRoles, isInitializing } = useRole();
-  const { refreshSubscription } = useSubscription();
+  const {
+    isLoadingRoles,
+    isInitializing
+  } = useRole();
+  const {
+    refreshSubscription
+  } = useSubscription();
   const [user, setUser] = useState<User | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [jobDescriptions, setJobDescriptions] = useState<JobDescription[]>([]);
@@ -86,24 +88,25 @@ const Dashboard: React.FC = () => {
     title: string;
     type: 'resume' | 'job-description';
   } | null>(null);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Handle Stripe return URLs
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const paymentStatus = urlParams.get('payment');
     const sessionId = urlParams.get('session_id');
-
     if (paymentStatus === 'success') {
       toast({
         title: "Payment Successful!",
         description: "Welcome to RezLit Premium! Your subscription is now active.",
         variant: "default"
       });
-      
+
       // Refresh subscription status
       refreshSubscription();
-      
+
       // Clear URL parameters
       window.history.replaceState({}, '', location.pathname);
     } else if (paymentStatus === 'cancelled') {
@@ -112,31 +115,23 @@ const Dashboard: React.FC = () => {
         description: "No worries! You can upgrade to Premium anytime.",
         variant: "default"
       });
-      
+
       // Clear URL parameters
       window.history.replaceState({}, '', location.pathname);
     }
   }, [location.search, toast, refreshSubscription]);
-
   useEffect(() => {
     const initializeDashboard = async () => {
       // Wait for roles to be fully loaded before proceeding
       if (isLoadingRoles || isInitializing) {
         return;
       }
-
       try {
         console.log('Initializing dashboard data...');
         setLoading(true);
 
         // Fetch all data concurrently
-        await Promise.all([
-          fetchUserData(),
-          fetchResumes(),
-          fetchJobDescriptions(),
-          fetchOptimizedResumes()
-        ]);
-
+        await Promise.all([fetchUserData(), fetchResumes(), fetchJobDescriptions(), fetchOptimizedResumes()]);
         setDataLoaded(true);
         console.log('Dashboard data loaded successfully');
       } catch (error) {
@@ -150,11 +145,9 @@ const Dashboard: React.FC = () => {
         setLoading(false);
       }
     };
-
     initializeDashboard();
   }, [isLoadingRoles, isInitializing]);
   const showLoadingScreen = isLoadingRoles || isInitializing || loading || !dataLoaded;
-
   const fetchUserData = async () => {
     try {
       const {
@@ -362,12 +355,7 @@ const Dashboard: React.FC = () => {
 
         {/* AI Resume Optimizer Section */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-6 w-6 text-purple-600" />
-            <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              AI Resume Optimizer
-            </h2>
-          </div>
+          
           <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
             <div className="bg-white rounded-lg">
               <ResumeOptimizer resumes={resumes} jobDescriptions={jobDescriptions} onOptimizationComplete={handleOptimizationComplete} />
@@ -404,10 +392,7 @@ const Dashboard: React.FC = () => {
                         <FileText className="h-10 w-10 md:h-12 md:w-12 text-blue-600" />
                       </div>
                       <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No resumes uploaded yet</p>
-                      <Button 
-                        onClick={() => navigate('/upload-resume')}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg"
-                      >
+                      <Button onClick={() => navigate('/upload-resume')} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg">
                         Upload Your First Resume
                       </Button>
                     </CardContent>
@@ -477,10 +462,7 @@ const Dashboard: React.FC = () => {
                         <FileText className="h-10 w-10 md:h-12 md:w-12 text-green-600" />
                       </div>
                       <p className="text-gray-600 mb-4 text-sm md:text-base font-medium">No job descriptions added yet</p>
-                      <Button 
-                        onClick={() => navigate('/upload-job')}
-                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg"
-                      >
+                      <Button onClick={() => navigate('/upload-job')} className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg">
                         Add Your First Job Description
                       </Button>
                     </CardContent>
@@ -494,11 +476,9 @@ const Dashboard: React.FC = () => {
                                   <FileText className="h-4 w-4 flex-shrink-0 text-green-600" />
                                   <span className="truncate font-semibold text-gray-800">{jobDesc.title}</span>
                                 </CardTitle>
-                                {jobDesc.company && (
-                                  <CardDescription className="text-sm text-muted-foreground font-medium">
+                                {jobDesc.company && <CardDescription className="text-sm text-muted-foreground font-medium">
                                     {jobDesc.company}
-                                  </CardDescription>
-                                )}
+                                  </CardDescription>}
                                 <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
                                   <Calendar className="h-3 w-3 flex-shrink-0" />
                                   {formatDate(jobDesc.created_at)}
@@ -615,5 +595,4 @@ const Dashboard: React.FC = () => {
       {previewContent && <ContentPreview content={previewContent.content} title={previewContent.title} type={previewContent.type} onClose={() => setPreviewContent(null)} />}
     </DashboardLayout>;
 };
-
 export default Dashboard;
