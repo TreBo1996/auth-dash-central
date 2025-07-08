@@ -20,6 +20,7 @@ interface JobDescription {
   id: string;
   title: string;
   parsed_text: string;
+  company?: string | null;
 }
 interface ATSFeedback {
   overall_score: number;
@@ -313,7 +314,7 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {jobDescriptions.map(jobDesc => <SelectItem key={jobDesc.id} value={jobDesc.id}>
-                      {jobDesc.title}
+                      {jobDesc.company ? `${jobDesc.title} at ${jobDesc.company}` : jobDesc.title}
                     </SelectItem>)}
                 </SelectContent>
               </Select>
