@@ -62,6 +62,7 @@ interface OptimizedResume {
   };
   job_descriptions?: {
     title: string;
+    company: string | null;
   };
 }
 const Dashboard: React.FC = () => {
@@ -208,7 +209,7 @@ const Dashboard: React.FC = () => {
       } = await supabase.from('optimized_resumes').select(`
           *,
           resumes(file_name),
-          job_descriptions(title)
+          job_descriptions(title, company)
         `).order('created_at', {
         ascending: false
       });
@@ -545,14 +546,12 @@ const Dashboard: React.FC = () => {
                               <div className="flex-1 min-w-0">
                                 <CardTitle className="text-sm md:text-base flex items-start gap-2">
                                   <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5" />
-                                  <div className="min-w-0 flex-1">
-                                    <div className="truncate font-semibold text-gray-800">
-                                      {optimizedResume.resumes?.file_name || 'Untitled Resume'}
-                                    </div>
-                                    <div className="text-xs text-gray-500 mt-1 flex items-center">
-                                      <span className="truncate">for {optimizedResume.job_descriptions?.title}</span>
-                                    </div>
-                                  </div>
+                                   <div className="min-w-0 flex-1">
+                                     <div className="truncate font-semibold text-gray-800">
+                                       Optimized for {optimizedResume.job_descriptions?.title}
+                                       {optimizedResume.job_descriptions?.company && ` at ${optimizedResume.job_descriptions.company}`}
+                                     </div>
+                                   </div>
                                 </CardTitle>
                                 <CardDescription className="flex items-center gap-2 mt-1 text-xs md:text-sm text-gray-500">
                                   <Calendar className="h-3 w-3 flex-shrink-0" />
