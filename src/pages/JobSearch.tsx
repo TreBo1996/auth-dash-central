@@ -31,11 +31,6 @@ export const JobSearch: React.FC = () => {
   // Use the optimized search hook
   const { searchJobs, loading } = useOptimizedJobSearch();
 
-// Load employer jobs on component mount and implement basic caching
-  useEffect(() => {
-    loadEmployerJobs();
-  }, []);
-
   // Basic frontend caching
   const getCacheKey = (filters: JobSearchFilters) => {
     return JSON.stringify({
@@ -75,69 +70,6 @@ export const JobSearch: React.FC = () => {
     }
   };
 
-  const loadEmployerJobs = async (searchFilters?: JobSearchFilters) => {
-    try {
-      let query = supabase.from('job_postings').select(`
-          id,
-          title,
-          description,
-          location,
-          employment_type,
-          experience_level,
-          salary_min,
-          salary_max,
-          salary_currency,
-          created_at,
-          employer_profile:employer_profiles(
-            company_name,
-            logo_url
-          )
-        `).eq('is_active', true).order('created_at', { ascending: false });
-
-      // Apply filters if provided
-      if (searchFilters?.query) {
-        query = query.or(`title.ilike.%${searchFilters.query}%,description.ilike.%${searchFilters.query}%`);
-      }
-      if (searchFilters?.location) {
-        query = query.ilike('location', `%${searchFilters.location}%`);
-      }
-      if (searchFilters?.employmentType) {
-        query = query.eq('employment_type', searchFilters.employmentType);
-      }
-      if (searchFilters?.seniorityLevel) {
-        query = query.eq('experience_level', searchFilters.seniorityLevel);
-      }
-
-      const { data, error } = await query.limit(75); // Limit to 75 for performance
-      if (error) throw error;
-
-      // Transform employer jobs to unified format
-      const employerJobs: UnifiedJob[] = (data || []).map(job => ({
-        id: job.id,
-        title: job.title,
-        company: job.employer_profile?.company_name || 'Company Name Not Available',
-        location: job.location || '',
-        description: job.description,
-        salary: formatSalary(job.salary_min, job.salary_max, job.salary_currency),
-        posted_at: new Date(job.created_at).toLocaleDateString(),
-        job_url: `/job-posting/${job.id}`,
-        source: 'employer' as const,
-        employer_profile: job.employer_profile,
-        employment_type: job.employment_type,
-        experience_level: job.experience_level,
-        salary_min: job.salary_min,
-        salary_max: job.salary_max,
-        salary_currency: job.salary_currency,
-        created_at: job.created_at
-      }));
-
-      return employerJobs;
-    } catch (error) {
-      console.error('Error loading employer jobs:', error);
-      return [];
-    }
-  };
-
   const formatSalary = (min: number, max: number, currency: string) => {
     if (min && max) {
       return `${currency} ${min.toLocaleString()} - ${max.toLocaleString()}`;
@@ -149,75 +81,36 @@ export const JobSearch: React.FC = () => {
     return null;
   };
 
-  const loadDatabaseJobs = async (searchFilters: JobSearchFilters) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('database-job-search', {
-        body: {
-          query: searchFilters.query || '',
-          location: searchFilters.location || '',
-          remoteType: searchFilters.remoteType || '',
-          employmentType: searchFilters.employmentType || '',
-          seniorityLevel: searchFilters.seniorityLevel || '',
-          company: searchFilters.company || '',
-          maxAge: searchFilters.maxAge || 30,
-          limit: 75, // Limit to 75 for performance
-          offset: 0
-        }
-      });
-
-      if (error) throw error;
-
-      // Transform database jobs to unified format
-      const databaseJobs: UnifiedJob[] = (data.jobs || []).map((job: any) => ({
-        id: job.id, // Use the actual UUID from database
-        title: job.title,
-        company: job.company,
-        location: job.location,
-        description: job.description,
-        salary: job.salary,
-        posted_at: job.posted_at,
-        job_url: job.job_url, // Keep original URL for apply functionality
-        source: 'database' as const,
-        via: job.via,
-        thumbnail: job.thumbnail,
-        job_type: job.job_type,
-        experience_level: job.experience_level,
-        requirements: job.requirements,
-        responsibilities: job.responsibilities,
-        benefits: job.benefits
-      }));
-
-      return { jobs: databaseJobs, warnings: data.warnings || [] };
-    } catch (error) {
-      console.error('Database job search error:', error);
-      return { jobs: [], warnings: ['Failed to search jobs. Please try again.'] };
-    }
-  };
-
   const handleSearch = async (searchFilters: JobSearchFilters) => {
     setCurrentPage(1); // Reset to first page on new search
     
     try {
-      // Progressive loading: Load employer jobs first (faster)
-      const employerJobs = await loadEmployerJobs(searchFilters);
+      // Check cache first
+      const cacheKey = getCacheKey(searchFilters);
+      const cachedResults = getCachedResults(cacheKey);
       
-      // Show employer jobs immediately
-      setAllJobs(employerJobs);
+      if (cachedResults) {
+        setAllJobs(cachedResults);
+        setSearchPerformed(true);
+        setWarnings([]);
+        return;
+      }
+      
+      // Use unified search that includes employer jobs with highest priority
+      const searchResult = await searchJobs(searchFilters);
+      
+      // Cache the results
+      setCachedResults(cacheKey, searchResult.jobs);
+      
+      setAllJobs(searchResult.jobs);
+      setWarnings(searchResult.warnings);
       setSearchPerformed(true);
-      
-      // Then load optimized database search
-      const databaseResult = await searchJobs(searchFilters);
-      
-      // Combine jobs with employer jobs first, limit total to 150
-      const combinedJobs = [...employerJobs, ...databaseResult.jobs].slice(0, 150);
-      
-      setAllJobs(combinedJobs);
-      setWarnings(databaseResult.warnings);
       
     } catch (error) {
       console.error('Search error:', error);
       setAllJobs([]);
       setWarnings(['Search failed. Please try again.']);
+      setSearchPerformed(true);
     }
   };
 
