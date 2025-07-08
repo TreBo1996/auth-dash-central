@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Briefcase, Plus, Trash2, ListOrdered, Sparkles, X } from 'lucide-react';
 import { BulletSuggestionsModal } from './BulletSuggestionsModal';
+import { AISuggestionsModal } from './AISuggestionsModal';
 
 
 interface Experience {
@@ -37,6 +38,20 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     companyName: '',
     role: '',
     currentBullets: []
+  });
+
+  const [aiSuggestionsModal, setAiSuggestionsModal] = useState<{
+    isOpen: boolean;
+    experienceIndex: number;
+    companyName: string;
+    role: string;
+    currentDescription: string;
+  }>({
+    isOpen: false,
+    experienceIndex: -1,
+    companyName: '',
+    role: '',
+    currentDescription: ''
   });
 
   const addExperience = () => {
@@ -103,6 +118,19 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     }
   };
 
+  const openAIExperienceSuggestions = (experienceIndex: number) => {
+    const experience = experiences[experienceIndex];
+    if (experience && jobDescriptionId) {
+      setAiSuggestionsModal({
+        isOpen: true,
+        experienceIndex,
+        companyName: experience.company,
+        role: experience.title,
+        currentDescription: experience.bullets.join('\n')
+      });
+    }
+  };
+
   const handleSelectBullets = (bullets: string[]) => {
     const experience = experiences[modalState.experienceIndex];
     if (experience) {
@@ -112,6 +140,17 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
     }
     
     setModalState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleSelectSuggestions = (suggestions: string[]) => {
+    const experience = experiences[aiSuggestionsModal.experienceIndex];
+    if (experience) {
+      const currentBullets = experience.bullets || [];
+      const newBullets = [...currentBullets, ...suggestions];
+      updateExperience(aiSuggestionsModal.experienceIndex, 'bullets', newBullets);
+    }
+    
+    setAiSuggestionsModal(prev => ({ ...prev, isOpen: false }));
   };
 
   const hasOptimizedBullets = (bullets: string[]) => {
@@ -227,15 +266,26 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                       Add Bullet
                     </Button>
                     {jobDescriptionId && experience.company && experience.title && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openAISuggestions(index)}
-                        className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 h-8"
-                      >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        AI Suggestions
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAISuggestions(index)}
+                          className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 h-8"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          AI Bullets
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAIExperienceSuggestions(index)}
+                          className="text-xs bg-green-50 border-green-200 text-green-700 hover:bg-green-100 h-8"
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Job-Fit Ideas
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -312,6 +362,17 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
         role={modalState.role}
         currentDescription={modalState.currentBullets.join('\n')}
         onSelectBullets={handleSelectBullets}
+      />
+
+      <AISuggestionsModal
+        isOpen={aiSuggestionsModal.isOpen}
+        onClose={() => setAiSuggestionsModal(prev => ({ ...prev, isOpen: false }))}
+        experienceId={aiSuggestionsModal.experienceIndex.toString()}
+        jobDescriptionId={jobDescriptionId || ''}
+        companyName={aiSuggestionsModal.companyName}
+        role={aiSuggestionsModal.role}
+        currentDescription={aiSuggestionsModal.currentDescription}
+        onSelectSuggestions={handleSelectSuggestions}
       />
     </>
   );
