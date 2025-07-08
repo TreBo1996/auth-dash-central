@@ -364,43 +364,51 @@ const ResumeEditor: React.FC = () => {
       </DashboardLayout>;
   }
   return <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Clean Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-2">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Resume Editor</h1>
-            <p className="text-gray-600">Edit your AI-optimized resume</p>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleExport} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold" title="Export to template">
-              <FileDown className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-blue-800 hover:bg-blue-700">
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              Save Changes
-            </Button>
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
+        {/* Mobile-Optimized Header */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="space-y-2">
+              <Button variant="ghost" onClick={() => navigate('/dashboard')} className="p-0 h-auto text-sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Resume Editor</h1>
+                <p className="text-sm sm:text-base text-gray-600">Edit your AI-optimized resume</p>
+              </div>
+            </div>
+            
+            {/* Desktop Actions */}
+            <div className="hidden sm:flex gap-2">
+              <Button onClick={handleExport} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold" title="Export to template">
+                <FileDown className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button onClick={handleSave} disabled={saving} className="bg-blue-800 hover:bg-blue-700">
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Save Changes
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Dedicated ATS Banner */}
-        {resumeId && <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6 shadow-sm">
+        {/* Mobile-Optimized ATS Banner */}
+        {resumeId && <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6 shadow-sm">
             <div className="max-w-full">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-lg font-semibold text-gray-900">ATS Performance</h2>
-                <ATSInfoTooltip size="md" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">ATS Performance</h2>
+                  <ATSInfoTooltip size="md" />
+                </div>
               </div>
-              <p className="text-sm text-gray-600 mb-4">Monitor how well your resume performs against applicant tracking systems</p>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Monitor how well your resume performs against applicant tracking systems</p>
               <ATSScoreDisplay optimizedResumeId={resumeId} atsScore={atsScore} atsFeedback={atsFeedback} onScoreUpdate={handleATSScoreUpdate} />
             </div>
           </div>}
 
         {/* Resume Sections */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Contact Information */}
           <ContactSection contactInfo={resumeData.contactInfo} onChange={contactInfo => setResumeData(prev => prev ? {
           ...prev,
@@ -438,8 +446,8 @@ const ResumeEditor: React.FC = () => {
         } : null)} />
         </div>
 
-        {/* Bottom Actions */}
-        <div className="flex justify-between items-center pt-6 border-t">
+        {/* Desktop Bottom Actions - Hidden on Mobile */}
+        <div className="hidden sm:flex justify-between items-center pt-6 border-t">
           <Button variant="outline" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
@@ -455,6 +463,32 @@ const ResumeEditor: React.FC = () => {
             </Button>
           </div>
         </div>
+
+        {/* Mobile Sticky Action Bar */}
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+          <div className="flex gap-3 max-w-sm mx-auto">
+            <Button 
+              onClick={handleExport} 
+              variant="outline"
+              className="flex-1 text-sm py-3"
+              title="Export to template"
+            >
+              <FileDown className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm py-3"
+            >
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Save
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Padding */}
+        <div className="sm:hidden h-20" />
       </div>
     </DashboardLayout>;
 };

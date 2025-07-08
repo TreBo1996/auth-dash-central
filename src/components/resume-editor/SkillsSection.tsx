@@ -106,62 +106,66 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
 
   return (
     <Card className="rounded-xl shadow-md">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <CardTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
             Skills
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               value={newSkillCategory}
               onChange={(e) => setNewSkillCategory(e.target.value)}
               onKeyPress={(e) => handleKeyPress(e, addSkillGroup)}
               placeholder="Skill category..."
-              className="w-40"
+              className="flex-1 sm:max-w-40 h-10"
             />
-            <Button onClick={addSkillGroup} size="sm">
-              <Plus className="h-4 w-4 mr-1" />
-              Add Category
-            </Button>
-            {jobDescriptionId && (
-              <Button 
-                onClick={() => setShowSuggestions(true)} 
-                size="sm"
-                variant="outline"
-              >
-                <Sparkles className="h-4 w-4 mr-1" />
-                AI Suggestions
+            <div className="flex gap-2">
+              <Button onClick={addSkillGroup} size="sm" className="flex-1 sm:flex-none h-10">
+                <Plus className="h-4 w-4 mr-1" />
+                Add Category
               </Button>
-            )}
+              {jobDescriptionId && (
+                <Button 
+                  onClick={() => setShowSuggestions(true)} 
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 sm:flex-none h-10"
+                >
+                  <Sparkles className="h-4 w-4 mr-1" />
+                  AI Suggestions
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
         {/* Skills optimization notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
           <p className="text-sm text-blue-700 font-medium mb-1">
             💡 Skills Optimization Tip
           </p>
-          <p className="text-sm text-blue-600">
+          <p className="text-xs sm:text-sm text-blue-600">
             For optimal ATS compatibility and clean PDF presentation, we recommend focusing on your 4-6 most relevant skills. 
             Adding too many skills may affect resume formatting in certain templates.
           </p>
         </div>
 
         {safeSkills.map((skillGroup, groupIndex) => (
-          <div key={groupIndex} className="p-4 border rounded-lg space-y-3">
-            <div className="flex justify-between items-center">
+          <div key={groupIndex} className="p-3 sm:p-4 border rounded-lg space-y-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center">
               <Input
                 value={skillGroup.category}
                 onChange={(e) => updateSkillCategory(groupIndex, e.target.value)}
-                className="font-medium"
+                className="font-medium h-10"
                 placeholder="Category name"
               />
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => removeSkillGroup(groupIndex)}
+                className="self-end sm:self-auto p-2 h-8 w-8"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -173,20 +177,20 @@ export const SkillsSection: React.FC<SkillsSectionProps> = ({
                 onChange={(e) => setNewSkillItem(e.target.value)}
                 onKeyPress={(e) => handleKeyPress(e, () => addSkillItem(groupIndex))}
                 placeholder="Add a skill..."
-                className="flex-1"
+                className="flex-1 h-10"
               />
-              <Button onClick={() => addSkillItem(groupIndex)} size="sm">
+              <Button onClick={() => addSkillItem(groupIndex)} size="sm" className="h-10 px-3">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
             
             <div className="flex flex-wrap gap-2">
               {(skillGroup.items || []).map((item, itemIndex) => (
-                <Badge key={itemIndex} variant="secondary" className="px-3 py-1">
+                <Badge key={itemIndex} variant="secondary" className="px-2 sm:px-3 py-1 text-xs">
                   {item}
                   <button
                     onClick={() => removeSkillItem(groupIndex, itemIndex)}
-                    className="ml-2 hover:text-red-600"
+                    className="ml-1 sm:ml-2 hover:text-red-600"
                   >
                     <X className="h-3 w-3" />
                   </button>

@@ -32,20 +32,21 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           Contact Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid md:grid-cols-2 gap-4">
+      <CardContent className="space-y-4 p-4 sm:p-6">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
+            <label className="text-sm font-medium text-gray-700 block mb-2">
               Full Name
             </label>
             <Input
               value={contactInfo.name}
               onChange={(e) => updateField('name', e.target.value)}
               placeholder="Your full name"
+              className="h-11"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
+            <label className="text-sm font-medium text-gray-700 block mb-2">
               Email Address
             </label>
             <Input
@@ -53,29 +54,32 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               value={contactInfo.email}
               onChange={(e) => updateField('email', e.target.value)}
               placeholder="your.email@example.com"
+              className="h-11"
             />
           </div>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
+            <label className="text-sm font-medium text-gray-700 block mb-2">
               Phone Number
             </label>
             <Input
               value={contactInfo.phone}
               onChange={(e) => updateField('phone', e.target.value)}
               placeholder="(555) 123-4567"
+              className="h-11"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-gray-700 block mb-1">
+            <label className="text-sm font-medium text-gray-700 block mb-2">
               Location
             </label>
             <Input
               value={contactInfo.location}
               onChange={(e) => updateField('location', e.target.value)}
               placeholder="City, State"
+              className="h-11"
             />
           </div>
         </div>

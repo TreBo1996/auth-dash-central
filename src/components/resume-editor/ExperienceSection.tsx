@@ -139,26 +139,26 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   return (
     <>
       <Card className="rounded-xl shadow-md">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <CardTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
               Work Experience
             </CardTitle>
-            <Button onClick={addExperience} size="sm">
+            <Button onClick={addExperience} size="sm" className="self-start sm:self-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Experience
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           {safeExperiences.map((experience, index) => (
-            <div key={index} className="p-4 border rounded-lg space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-gray-900">Experience {index + 1}</h4>
+            <div key={index} className="p-3 sm:p-4 border rounded-lg space-y-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">Experience {index + 1}</h4>
                   {hasOptimizedBullets(experience.bullets) && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full self-start">
                       <Sparkles className="h-3 w-3 text-blue-600" />
                       <span className="text-xs text-blue-600 font-medium">AI Optimized</span>
                     </div>
@@ -168,56 +168,60 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => removeExperience(index)}
+                  className="self-end sm:self-auto"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
               
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                  <label className="text-sm font-medium text-gray-700 block mb-2">
                     Company
                   </label>
                   <Input
                     value={experience.company}
                     onChange={(e) => updateExperience(index, 'company', e.target.value)}
                     placeholder="Company name"
+                    className="h-11"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                  <label className="text-sm font-medium text-gray-700 block mb-2">
                     Job Title
                   </label>
                   <Input
                     value={experience.title}
                     onChange={(e) => updateExperience(index, 'title', e.target.value)}
                     placeholder="Job title"
+                    className="h-11"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">
+                <label className="text-sm font-medium text-gray-700 block mb-2">
                   Duration
                 </label>
                 <Input
                   value={experience.duration}
                   onChange={(e) => updateExperience(index, 'duration', e.target.value)}
                   placeholder="Jan 2020 - Present"
+                  className="h-11"
                 />
               </div>
               
               <div>
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
                   <label className="text-sm font-medium text-gray-700">
                     Key Achievements & Responsibilities
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => addBulletPoint(index)}
-                      className="text-xs"
+                      className="text-xs h-8"
                     >
                       <ListOrdered className="h-3 w-3 mr-1" />
                       Add Bullet
@@ -227,7 +231,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => openAISuggestions(index)}
-                        className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                        className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 h-8"
                       >
                         <Sparkles className="h-3 w-3 mr-1" />
                         AI Suggestions
@@ -236,24 +240,24 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                   </div>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {experience.bullets.map((bullet, bulletIndex) => (
                     <div key={bulletIndex} className="flex gap-2">
-                      <span className="text-gray-500 mt-1">•</span>
+                      <span className="text-gray-500 mt-2 text-sm">•</span>
                       <Textarea
                         value={bullet}
                         onChange={(e) => updateBulletPoint(index, bulletIndex, e.target.value)}
                         placeholder="Describe your achievement or responsibility..."
-                        className="flex-1 resize-none min-h-[60px]"
+                        className="flex-1 resize-none min-h-[70px] text-sm"
                       />
                       {experience.bullets.length > 1 && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => removeBulletPoint(index, bulletIndex)}
-                          className="mt-1"
+                          className="mt-1 p-2 h-8 w-8"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
