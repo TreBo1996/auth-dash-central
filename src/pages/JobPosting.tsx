@@ -96,7 +96,7 @@ const JobPosting: React.FC = () => {
         .from('job_postings')
         .select(`
           *,
-          employer_profile:employer_profiles(
+          employer_profiles!inner(
             company_name,
             company_description,
             industry,
@@ -114,8 +114,15 @@ const JobPosting: React.FC = () => {
         throw error;
       }
       
-      console.log('✅ Job posting loaded successfully:', data?.title);
-      setJobPosting(data);
+      // Transform the data to match expected structure
+      const transformedData = {
+        ...data,
+        employer_profile: data.employer_profiles
+      };
+      
+      console.log('✅ Job posting loaded successfully:', transformedData?.title);
+      console.log('✅ Employer profile data:', transformedData?.employer_profile);
+      setJobPosting(transformedData);
     } catch (error) {
       console.error('Error loading job posting:', error);
       toast({
