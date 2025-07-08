@@ -59,8 +59,6 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const [originalATSScore, setOriginalATSScore] = useState<number | undefined>();
   const [originalATSFeedback, setOriginalATSFeedback] = useState<ATSFeedback | undefined>();
   const [isLoadingATS, setIsLoadingATS] = useState(false);
-  const [showBenefitsGuide, setShowBenefitsGuide] = useState(false);
-  const [showUsageGuide, setShowUsageGuide] = useState(false);
   const { usage, checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
   const { toast } = useToast();
   const handleAnalyzeATS = async () => {
@@ -276,115 +274,6 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
         </CardContent>
       </Card>
 
-      {/* How It Works & Usage Tips */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Collapsible open={showUsageGuide} onOpenChange={setShowUsageGuide}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5" />
-                    How Resume Optimization Works
-                  </div>
-                  {showUsageGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </CardTitle>
-                <CardDescription>
-                  Understanding the optimization process
-                </CardDescription>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="space-y-4 pt-0">
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">ATS Analysis Process</h4>
-                    <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                      <li>• AI scans job description for key requirements</li>
-                      <li>• Analyzes your resume for keyword density and relevance</li>
-                      <li>• Identifies gaps between your skills and job needs</li>
-                      <li>• Scores compatibility on a 1-10 scale</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">What Gets Optimized</h4>
-                    <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                      <li>• Strategic keyword placement and density</li>
-                      <li>• Skills section alignment with job requirements</li>
-                      <li>• Experience bullet points for maximum impact</li>
-                      <li>• Professional summary customization</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Best Practices</h4>
-                    <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                      <li>• Use your most relevant resume as the base</li>
-                      <li>• Ensure job descriptions are complete and detailed</li>
-                      <li>• Review and customize optimized content before applying</li>
-                      <li>• Create separate optimizations for different roles</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-
-        <Collapsible open={showBenefitsGuide} onOpenChange={setShowBenefitsGuide}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Award className="h-5 w-5" />
-                    Success Metrics & Results
-                  </div>
-                  {showBenefitsGuide ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </CardTitle>
-                <CardDescription>
-                  What you can expect from optimization
-                </CardDescription>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent className="space-y-4 pt-0">
-                <div className="grid gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <Trophy className="h-8 w-8 text-green-600" />
-                    <div>
-                      <h4 className="font-medium text-green-900">Average ATS Score Boost</h4>
-                      <p className="text-sm text-green-700">Users see 3-5 point improvements on average</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                    <Users className="h-8 w-8 text-blue-600" />
-                    <div>
-                      <h4 className="font-medium text-blue-900">Interview Callback Rate</h4>
-                      <p className="text-sm text-blue-700">40% higher response rates from recruiters</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-                    <Shield className="h-8 w-8 text-purple-600" />
-                    <div>
-                      <h4 className="font-medium text-purple-900">ATS Compatibility</h4>
-                      <p className="text-sm text-purple-700">99% compatibility with major ATS systems</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-2 border-t">
-                  <h4 className="font-medium text-gray-900 mb-2">Understanding ATS Scores</h4>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p>• <strong>8-10:</strong> Excellent match, high interview likelihood</p>
-                    <p>• <strong>6-7:</strong> Good match, competitive for the role</p>
-                    <p>• <strong>4-5:</strong> Moderate match, needs improvement</p>
-                    <p>• <strong>1-3:</strong> Poor match, significant optimization needed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      </div>
 
       <Card>
         <CardHeader>
