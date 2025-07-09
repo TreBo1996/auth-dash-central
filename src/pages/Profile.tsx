@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { User, Save, Mail, Briefcase, DollarSign, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Save, Mail, Briefcase, DollarSign, Lock, Eye, EyeOff, Check, Clock, AlertCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -66,6 +66,9 @@ const Profile: React.FC = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [newsletter, setNewsletter] = useState(true);
   const [isSavingEmploymentPrefs, setIsSavingEmploymentPrefs] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
   
   const { toast } = useToast();
 
@@ -210,6 +213,7 @@ const Profile: React.FC = () => {
 
     try {
       setIsSavingEmploymentPrefs(true);
+      setHasUnsavedChanges(false);
       
       console.log('Saving employment preferences:', {
         desired_job_title: desiredJobTitle || null,
@@ -245,14 +249,34 @@ const Profile: React.FC = () => {
 
       if (error) {
         console.error('Error saving employment preferences:', error);
-        throw error;
+        // Handle specific constraint violations
+        if (error.message.includes('constraint')) {
+          toast({
+            title: "Invalid Data",
+            description: "Please check your selections and try again. Some values may not be valid.",
+            variant: "destructive"
+          });
+        } else {
+          throw error;
+        }
+        return;
       }
 
       console.log('Employment preferences saved successfully');
+      
+      // Set success state
+      setLastSavedAt(new Date());
+      setShowSuccessBanner(true);
+      
+      // Hide success banner after 3 seconds
+      setTimeout(() => {
+        setShowSuccessBanner(false);
+      }, 3000);
 
       toast({
-        title: "Employment Preferences Saved",
-        description: "Your job preferences have been updated successfully."
+        title: "Employment Preferences Saved ✓",
+        description: `Your job preferences have been updated successfully at ${new Date().toLocaleTimeString()}.`,
+        duration: 5000
       });
     } catch (error) {
       console.error('Error saving employment preferences:', error);
@@ -264,6 +288,11 @@ const Profile: React.FC = () => {
     } finally {
       setIsSavingEmploymentPrefs(false);
     }
+  };
+
+  // Track unsaved changes
+  const markAsUnsaved = () => {
+    setHasUnsavedChanges(true);
   };
 
   const handleChangePassword = async () => {
@@ -581,9 +610,21 @@ const Profile: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
               Employment Preferences
+              {showSuccessBanner && (
+                <div className="flex items-center gap-1 text-green-600 text-sm font-normal">
+                  <Check className="h-4 w-4" />
+                  Saved successfully!
+                </div>
+              )}
             </CardTitle>
             <CardDescription>
               Set your job preferences for personalized job matching and notifications
+              {lastSavedAt && (
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                  <Clock className="h-3 w-3" />
+                  Last saved: {lastSavedAt.toLocaleString()}
+                </div>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -595,29 +636,38 @@ const Profile: React.FC = () => {
                   type="text"
                   placeholder="e.g., Software Engineer, Product Manager"
                   value={desiredJobTitle}
-                  onChange={(e) => setDesiredJobTitle(e.target.value)}
+                  onChange={(e) => {
+                    setDesiredJobTitle(e.target.value);
+                    markAsUnsaved();
+                  }}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="experienceLevel">Experience Level</Label>
-                <Select value={experienceLevel} onValueChange={setExperienceLevel}>
+                <Select value={experienceLevel} onValueChange={(value) => {
+                  setExperienceLevel(value);
+                  markAsUnsaved();
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select experience level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Entry Level">Entry Level</SelectItem>
-                    <SelectItem value="Mid Level">Mid Level</SelectItem>
-                    <SelectItem value="Senior Level">Senior Level</SelectItem>
-                    <SelectItem value="Lead/Principal">Lead/Principal</SelectItem>
-                    <SelectItem value="Executive">Executive</SelectItem>
+                    <SelectItem value="entry">Entry Level</SelectItem>
+                    <SelectItem value="mid">Mid Level</SelectItem>
+                    <SelectItem value="senior">Senior Level</SelectItem>
+                    <SelectItem value="lead">Lead/Principal</SelectItem>
+                    <SelectItem value="executive">Executive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="workSetting">Work Setting Preference</Label>
-                <Select value={workSetting} onValueChange={setWorkSetting}>
+                <Select value={workSetting} onValueChange={(value) => {
+                  setWorkSetting(value);
+                  markAsUnsaved();
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select work setting" />
                   </SelectTrigger>
@@ -632,7 +682,10 @@ const Profile: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="jobType">Job Type</Label>
-                <Select value={jobType} onValueChange={setJobType}>
+                <Select value={jobType} onValueChange={(value) => {
+                  setJobType(value);
+                  markAsUnsaved();
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select job type" />
                   </SelectTrigger>
@@ -653,13 +706,19 @@ const Profile: React.FC = () => {
                   type="text"
                   placeholder="e.g., San Francisco, CA or Remote"
                   value={preferredLocation}
-                  onChange={(e) => setPreferredLocation(e.target.value)}
+                  onChange={(e) => {
+                    setPreferredLocation(e.target.value);
+                    markAsUnsaved();
+                  }}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="salaryCurrency">Currency</Label>
-                <Select value={salaryCurrency} onValueChange={setSalaryCurrency}>
+                <Select value={salaryCurrency} onValueChange={(value) => {
+                  setSalaryCurrency(value);
+                  markAsUnsaved();
+                }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -686,7 +745,10 @@ const Profile: React.FC = () => {
                     type="number"
                     placeholder="50000"
                     value={salaryMin || ''}
-                    onChange={(e) => setSalaryMin(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => {
+                      setSalaryMin(e.target.value ? Number(e.target.value) : undefined);
+                      markAsUnsaved();
+                    }}
                   />
                 </div>
                 <div className="space-y-1">
@@ -696,7 +758,10 @@ const Profile: React.FC = () => {
                     type="number"
                     placeholder="100000"
                     value={salaryMax || ''}
-                    onChange={(e) => setSalaryMax(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => {
+                      setSalaryMax(e.target.value ? Number(e.target.value) : undefined);
+                      markAsUnsaved();
+                    }}
                   />
                 </div>
               </div>
@@ -722,6 +787,7 @@ const Profile: React.FC = () => {
                         } else {
                           setIndustryPreferences(prev => prev.filter(i => i !== industry));
                         }
+                        markAsUnsaved();
                       }}
                     />
                     <label 
@@ -746,7 +812,10 @@ const Profile: React.FC = () => {
                 <Switch
                   id="emailNotifications"
                   checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
+                  onCheckedChange={(checked) => {
+                    setEmailNotifications(checked);
+                    markAsUnsaved();
+                  }}
                 />
               </div>
 
@@ -758,21 +827,46 @@ const Profile: React.FC = () => {
                 <Switch
                   id="newsletter"
                   checked={newsletter}
-                  onCheckedChange={setNewsletter}
+                  onCheckedChange={(checked) => {
+                    setNewsletter(checked);
+                    markAsUnsaved();
+                  }}
                 />
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="pt-4 space-y-2">
+              {hasUnsavedChanges && (
+                <div className="flex items-center gap-2 text-amber-600 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  You have unsaved changes
+                </div>
+              )}
               <Button
                 onClick={handleSaveEmploymentPreferences}
                 disabled={isSavingEmploymentPrefs}
-                className="w-full bg-indigo-900 hover:bg-indigo-800"
+                className={`w-full transition-all duration-200 ${
+                  hasUnsavedChanges 
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white' 
+                    : showSuccessBanner 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-indigo-900 hover:bg-indigo-800'
+                }`}
               >
                 {isSavingEmploymentPrefs ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Saving Employment Preferences...
+                  </>
+                ) : showSuccessBanner ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Saved Successfully!
+                  </>
+                ) : hasUnsavedChanges ? (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
                   </>
                 ) : (
                   <>
