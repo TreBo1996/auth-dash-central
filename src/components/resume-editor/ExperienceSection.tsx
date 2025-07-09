@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Briefcase, Plus, Trash2, ListOrdered, Sparkles, X } from 'lucide-react';
+import { Briefcase, Plus, Trash2, ListOrdered, Sparkles, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { AISuggestionsModal } from './AISuggestionsModal';
 
 
@@ -58,6 +58,22 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
 
   const removeExperience = (index: number) => {
     onChange(experiences.filter((_, i) => i !== index));
+  };
+
+  const moveExperienceUp = (index: number) => {
+    if (index > 0) {
+      const newExperiences = [...experiences];
+      [newExperiences[index - 1], newExperiences[index]] = [newExperiences[index], newExperiences[index - 1]];
+      onChange(newExperiences);
+    }
+  };
+
+  const moveExperienceDown = (index: number) => {
+    if (index < experiences.length - 1) {
+      const newExperiences = [...experiences];
+      [newExperiences[index], newExperiences[index + 1]] = [newExperiences[index + 1], newExperiences[index]];
+      onChange(newExperiences);
+    }
   };
 
   const addBulletPoint = (experienceIndex: number) => {
@@ -167,14 +183,37 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                     </div>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeExperience(index)}
-                  className="self-end sm:self-auto"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveExperienceUp(index)}
+                    disabled={index === 0}
+                    className="p-2 h-8 w-8"
+                    title="Move up"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => moveExperienceDown(index)}
+                    disabled={index === safeExperiences.length - 1}
+                    className="p-2 h-8 w-8"
+                    title="Move down"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeExperience(index)}
+                    className="p-2 h-8 w-8 text-red-500 hover:text-red-700"
+                    title="Delete experience"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
               <div className="grid sm:grid-cols-2 gap-4">
