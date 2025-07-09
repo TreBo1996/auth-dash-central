@@ -10,10 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthRateLimit } from '@/hooks/useAuthRateLimit';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +27,7 @@ const Auth: React.FC = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
   
   const { signIn, signUp, user, resetPassword } = useAuth();
   const navigate = useNavigate();
@@ -35,16 +38,24 @@ const Auth: React.FC = () => {
   // Get redirect parameter from URL
   const redirectParam = searchParams.get('redirect');
 
+  // Check if this is a password reset flow
+  useEffect(() => {
+    const isReset = searchParams.get('reset') === 'true';
+    if (isReset) {
+      setIsPasswordReset(true);
+    }
+  }, [searchParams]);
+
   // Redirect if already authenticated
   useEffect(() => {
-    if (user) {
+    if (user && !isPasswordReset) {
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
       } else {
         navigate('/dashboard');
       }
     }
-  }, [user, navigate, redirectParam]);
+  }, [user, navigate, redirectParam, isPasswordReset]);
 
   // Validate email format
   const validateEmail = (email: string) => {
@@ -252,6 +263,130 @@ const Auth: React.FC = () => {
     setResetLoading(false);
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!password) {
+      setError('New password is required');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: password 
+      });
+      
+      if (error) {
+        handleAuthError(error);
+      } else {
+        toast({
+          title: "Password updated!",
+          description: "Your password has been successfully updated.",
+        });
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      handleAuthError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // If this is a password reset flow, show the reset form
+  if (isPasswordReset) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="relative z-10 w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <img 
+                src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
+                alt="RezLit Logo" 
+                className="h-12 w-auto"
+              />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Reset Password</h2>
+            <p className="text-blue-100">Enter your new password below</p>
+          </div>
+
+          <Card className="backdrop-blur-md bg-white/95 border-0 shadow-xl">
+            <CardContent className="p-6">
+              {error && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <form onSubmit={handlePasswordReset} className="space-y-4">
+                <div>
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    placeholder="Enter your new password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating Password...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
@@ -283,7 +418,7 @@ const Auth: React.FC = () => {
           </p>
         </div>
 
-        <Card className="backdrop-blur-md bg-white/95 border-0 shadow-xl-modern">
+        <Card className="backdrop-blur-md bg-white/95 border-0 shadow-xl">
           <CardHeader className="text-center pb-6">
             <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Welcome
