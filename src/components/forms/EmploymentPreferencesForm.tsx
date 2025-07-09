@@ -34,28 +34,27 @@ interface EmploymentPreferencesFormProps {
 }
 
 // Value mappings between UI display and database values
+// These MUST match the database CHECK constraints exactly
 const EXPERIENCE_LEVEL_MAP = {
   // UI Display -> Database Value
   'Entry Level': 'entry',
   'Mid Level': 'mid', 
   'Senior Level': 'senior',
-  'Lead/Principal': 'lead',
   'Executive': 'executive'
 } as const;
 
 const WORK_SETTING_MAP = {
   'Remote': 'remote',
   'Hybrid': 'hybrid',
-  'On-site': 'onsite',
-  'Flexible': 'flexible'
+  'On-site': 'on-site',
+  'Any': 'any'
 } as const;
 
 const JOB_TYPE_MAP = {
-  'Full-time': 'full_time',
-  'Part-time': 'part_time',
+  'Full-time': 'full-time',
+  'Part-time': 'part-time',
   'Contract': 'contract',
-  'Freelance': 'freelance',
-  'Internship': 'internship'
+  'Any': 'any'
 } as const;
 
 // Reverse mappings for display
@@ -114,12 +113,12 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
     'Energy'
   ];
 
-  // Load initial data on mount
+  // Load initial data on mount and map database values to display values
   useEffect(() => {
     if (Object.keys(initialData).length > 0) {
-      console.log('Loading initial data:', initialData);
+      console.log('Loading initial data from database:', initialData);
       
-      // Map database values to display values for dropdowns
+      // Map database values back to display values for the form
       const mappedData = {
         ...initialData,
         experience_level: initialData.experience_level 
@@ -133,6 +132,7 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
           : ''
       };
       
+      console.log('Mapped data for form display:', mappedData);
       setPreferences(prev => ({ ...prev, ...mappedData }));
     }
   }, [initialData]);
