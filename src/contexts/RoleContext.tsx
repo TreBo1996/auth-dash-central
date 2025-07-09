@@ -249,11 +249,24 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const canSwitchRoles = userRoles.includes('both') || userRoles.length > 1;
 
   const setEmploymentPreferencesComplete = (fromParam?: string | null) => {
+    console.log('setEmploymentPreferencesComplete called with fromParam:', fromParam);
     setNeedsEmploymentPreferences(false);
     
     // Redirect to original page if provided
     if (fromParam) {
-      navigate(fromParam);
+      try {
+        // Decode the URL parameter in case it was encoded
+        const decodedParam = decodeURIComponent(fromParam);
+        console.log('Attempting to navigate to:', decodedParam);
+        navigate(decodedParam);
+      } catch (error) {
+        console.error('Error navigating to fromParam:', error);
+        // Fallback to dashboard if redirect fails
+        console.log('Falling back to dashboard redirect');
+        navigate('/dashboard');
+      }
+    } else {
+      console.log('No fromParam provided, staying on current page');
     }
   };
 

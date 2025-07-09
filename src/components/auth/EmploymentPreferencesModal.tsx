@@ -25,6 +25,9 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
+  // Debug logging for fromParam
+  console.log('EmploymentPreferencesModal - fromParam received:', fromParam);
+  
   const [preferences, setPreferences] = useState({
     desired_job_title: '',
     experience_level: '',
@@ -114,6 +117,7 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
         description: "We'll use these to find better job matches for you.",
       });
       
+      console.log('EmploymentPreferencesModal - calling onComplete with fromParam:', fromParam);
       onComplete();
     } catch (error) {
       console.error('Error saving preferences:', error);
