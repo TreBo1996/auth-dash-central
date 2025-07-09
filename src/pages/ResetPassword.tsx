@@ -22,39 +22,49 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Check for valid reset link - Supabase automatically establishes session from reset link
+  // Extract tokens from URL hash fragments for password reset
   useEffect(() => {
-    const validateResetLink = async () => {
-      // Check for required URL parameters
-      const tokenHash = searchParams.get('token_hash');
-      const type = searchParams.get('type');
+    const validateToken = async () => {
+      // Parse hash fragment instead of search params (Supabase uses #access_token=...&token_hash=...)
+      const hash = window.location.hash.substring(1); // Remove the # 
+      const params = new URLSearchParams(hash);
       
-      if (!tokenHash || type !== 'recovery') {
+      const tokenHash = params.get('token_hash');
+      const accessToken = params.get('access_token');
+      const type = params.get('type');
+      
+      // Also check query params as fallback (current email template format)
+      const queryTokenHash = searchParams.get('token_hash');
+      const queryType = searchParams.get('type');
+      
+      const finalTokenHash = tokenHash || queryTokenHash;
+      const finalType = type || queryType;
+      
+      if (!finalTokenHash || finalType !== 'recovery') {
         setIsValidToken(false);
         return;
       }
 
       try {
-        // Check if Supabase has established a session from the reset link
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        // Verify the OTP token for password recovery
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: finalTokenHash,
+          type: 'recovery'
+        });
+
         if (error) {
-          console.error('Session check error:', error);
+          console.error('Token validation error:', error);
           setIsValidToken(false);
-        } else if (session) {
-          // Valid session means the reset link worked
-          setIsValidToken(true);
         } else {
-          // No session means the reset link is invalid or expired
-          setIsValidToken(false);
+          setIsValidToken(true);
         }
       } catch (error) {
-        console.error('Reset link validation failed:', error);
+        console.error('Error validating token:', error);
         setIsValidToken(false);
       }
     };
 
-    validateResetLink();
+    validateToken();
   }, [searchParams]);
 
   // Password validation
