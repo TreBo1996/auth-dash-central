@@ -22,10 +22,10 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Extract token from URL search params for password reset
+  // Check for valid reset link - Supabase automatically establishes session from reset link
   useEffect(() => {
-    const validateToken = async () => {
-      // Check for token_hash in search params (password reset format)
+    const validateResetLink = async () => {
+      // Check for required URL parameters
       const tokenHash = searchParams.get('token_hash');
       const type = searchParams.get('type');
       
@@ -35,25 +35,26 @@ const ResetPassword = () => {
       }
 
       try {
-        // Verify the OTP token for password recovery
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: 'recovery'
-        });
-
+        // Check if Supabase has established a session from the reset link
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
-          console.error('Token validation error:', error);
+          console.error('Session check error:', error);
           setIsValidToken(false);
-        } else {
+        } else if (session) {
+          // Valid session means the reset link worked
           setIsValidToken(true);
+        } else {
+          // No session means the reset link is invalid or expired
+          setIsValidToken(false);
         }
       } catch (error) {
-        console.error('Error validating token:', error);
+        console.error('Reset link validation failed:', error);
         setIsValidToken(false);
       }
     };
 
-    validateToken();
+    validateResetLink();
   }, [searchParams]);
 
   // Password validation
