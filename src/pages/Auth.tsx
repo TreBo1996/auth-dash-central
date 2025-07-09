@@ -38,24 +38,28 @@ const Auth: React.FC = () => {
   // Get redirect parameter from URL
   const redirectParam = searchParams.get('redirect');
 
-  // Check if this is a password reset flow
+  // Check if this is a password reset flow FIRST (before redirect logic)
   useEffect(() => {
     const isReset = searchParams.get('reset') === 'true';
-    if (isReset) {
+    const hasAccessToken = window.location.hash.includes('access_token=');
+    
+    // If this is a password reset flow, set the state immediately
+    if (isReset || hasAccessToken) {
       setIsPasswordReset(true);
     }
   }, [searchParams]);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (but NOT during password reset)
   useEffect(() => {
-    if (user && !isPasswordReset) {
+    // Don't redirect during password reset flow
+    if (user && !isPasswordReset && !searchParams.get('reset')) {
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
       } else {
         navigate('/dashboard');
       }
     }
-  }, [user, navigate, redirectParam, isPasswordReset]);
+  }, [user, navigate, redirectParam, isPasswordReset, searchParams]);
 
   // Validate email format
   const validateEmail = (email: string) => {
@@ -658,21 +662,31 @@ const Auth: React.FC = () => {
                       required
                     />
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                    disabled={resetLoading}
-                  >
-                    {resetLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Reset Email'
-                    )}
-                  </Button>
-                </form>
+                   <Button 
+                     type="submit" 
+                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                     disabled={resetLoading}
+                   >
+                     {resetLoading ? (
+                       <>
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                         Sending...
+                       </>
+                     ) : (
+                       'Send Reset Email'
+                     )}
+                   </Button>
+                 </form>
+                 
+                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                   <h4 className="text-sm font-medium text-blue-900 mb-2">Email Delivery Tips:</h4>
+                   <ul className="text-xs text-blue-700 space-y-1">
+                     <li>• Check your spam/junk folder</li>
+                     <li>• Check promotions tab (Gmail)</li>
+                     <li>• Wait up to 5 minutes for delivery</li>
+                     <li>• Add no-reply@yourdomain.com to contacts</li>
+                   </ul>
+                 </div>
               </div>
             )}
           </CardContent>
