@@ -11,6 +11,12 @@ import { SkillsSection } from '@/components/resume-editor/SkillsSection';
 import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  fetchInitialResumeStructuredData, 
+  saveInitialResumeStructuredData, 
+  updateInitialResumeSection,
+  convertStructuredDataToEditorFormat 
+} from '@/utils/initialResumeStorage';
 
 interface Resume {
   id: string;
@@ -142,15 +148,8 @@ const InitialResumeEditor: React.FC = () => {
       
       setResume(data);
       
-      // Parse the resume text
-      const resumeText = data.parsed_text || '';
-      if (resumeText.trim()) {
-        console.log('InitialResumeEditor: Starting AI parsing for text:', resumeText.substring(0, 100) + '...');
-        await parseResumeWithAI(resumeText);
-      } else {
-        console.warn('InitialResumeEditor: No resume text to parse, using default structure');
-        setParsedResume(getDefaultResumeStructure());
-      }
+      // Try to load structured data first, fall back to AI parsing if not available
+      await loadResumeData(data.id, data.parsed_text || '');
     } catch (error) {
       console.error('InitialResumeEditor: Error in fetchResume:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to load resume';
@@ -163,6 +162,48 @@ const InitialResumeEditor: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadResumeData = async (resumeId: string, resumeText: string) => {
+    try {
+      console.log('InitialResumeEditor: Checking for existing structured data...');
+      
+      // Try to load existing structured data first
+      const structuredData = await fetchInitialResumeStructuredData(resumeId);
+      
+      if (structuredData && structuredData.length > 0) {
+        console.log('InitialResumeEditor: Found existing structured data, loading instantly');
+        const convertedData = convertStructuredDataToEditorFormat(structuredData);
+        setParsedResume(convertedData);
+        
+        toast({
+          title: "Resume Loaded",
+          description: "Your resume data loaded instantly from saved structure.",
+        });
+        return;
+      }
+      
+      console.log('InitialResumeEditor: No structured data found, parsing with AI...');
+      
+      // If no structured data exists, parse with AI and save the result
+      if (resumeText.trim()) {
+        await parseResumeWithAI(resumeText, resumeId);
+      } else {
+        console.warn('InitialResumeEditor: No resume text to parse, using default structure');
+        const defaultStructure = getDefaultResumeStructure();
+        setParsedResume(defaultStructure);
+        // Save the default structure for future loads
+        await saveInitialResumeStructuredData(resumeId, defaultStructure);
+      }
+    } catch (error) {
+      console.error('InitialResumeEditor: Error loading resume data:', error);
+      // Fall back to AI parsing
+      if (resumeText.trim()) {
+        await parseResumeWithAI(resumeText, resumeId);
+      } else {
+        setParsedResume(getDefaultResumeStructure());
+      }
     }
   };
 
@@ -256,7 +297,7 @@ const InitialResumeEditor: React.FC = () => {
     };
   };
 
-  const parseResumeWithAI = async (text: string) => {
+  const parseResumeWithAI = async (text: string, resumeId?: string) => {
     try {
       console.log('InitialResumeEditor: Starting AI parsing...');
       setParsing(true);
@@ -287,6 +328,16 @@ const InitialResumeEditor: React.FC = () => {
       console.log('InitialResumeEditor: AI parsing successful, converting data...');
       const convertedData = convertAIResponseToEditorFormat(data);
       setParsedResume(convertedData);
+      
+      // Save the structured data for future fast loading
+      if (resumeId) {
+        try {
+          await saveInitialResumeStructuredData(resumeId, convertedData);
+          console.log('InitialResumeEditor: Structured data saved for future use');
+        } catch (saveError) {
+          console.error('InitialResumeEditor: Error saving structured data:', saveError);
+        }
+      }
       
       toast({
         title: "Resume Parsed",
@@ -430,6 +481,10 @@ const InitialResumeEditor: React.FC = () => {
       console.log('InitialResumeEditor: Starting save operation...');
       setSaving(true);
       
+      // Save structured data to initial_resume_sections
+      await saveInitialResumeStructuredData(resume.id, parsedResume);
+      
+      // Also update the parsed_text for backward compatibility
       const updatedText = generateResumeText(parsedResume);
       console.log('InitialResumeEditor: Generated resume text length:', updatedText.length);
       

@@ -247,6 +247,41 @@ export type Database = {
         }
         Relationships: []
       }
+      initial_resume_sections: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          resume_id: string
+          section_type: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          resume_id: string
+          section_type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          resume_id?: string
+          section_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "initial_resume_sections_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_responses: {
         Row: {
           audio_file_url: string | null
