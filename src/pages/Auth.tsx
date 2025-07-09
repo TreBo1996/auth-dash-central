@@ -38,28 +38,27 @@ const Auth: React.FC = () => {
   // Get redirect parameter from URL
   const redirectParam = searchParams.get('redirect');
 
-  // Check if this is a password reset flow FIRST (before redirect logic)
+  // Check for success message from password reset
   useEffect(() => {
-    const isReset = searchParams.get('reset') === 'true';
-    const hasAccessToken = window.location.hash.includes('access_token=');
-    
-    // If this is a password reset flow, set the state immediately
-    if (isReset || hasAccessToken) {
-      setIsPasswordReset(true);
+    const message = searchParams.get('message');
+    if (message === 'password-updated') {
+      toast({
+        title: 'Password Updated',
+        description: 'Your password has been successfully updated. You can now sign in with your new password.',
+      });
     }
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
-  // Redirect if already authenticated (but NOT during password reset)
+  // Redirect if already authenticated
   useEffect(() => {
-    // Don't redirect during password reset flow
-    if (user && !isPasswordReset && !searchParams.get('reset')) {
+    if (user) {
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
       } else {
         navigate('/dashboard');
       }
     }
-  }, [user, navigate, redirectParam, isPasswordReset, searchParams]);
+  }, [user, navigate, redirectParam]);
 
   // Validate email format
   const validateEmail = (email: string) => {

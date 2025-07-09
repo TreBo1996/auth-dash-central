@@ -35,6 +35,7 @@ import JobDetail from '@/pages/JobDetail';
 import CoverLetters from '@/pages/CoverLetters';
 import TermsOfService from '@/pages/TermsOfService';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import ResetPassword from '@/pages/ResetPassword';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/employer/auth" element={<EmployerAuth />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
