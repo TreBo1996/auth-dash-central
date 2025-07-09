@@ -22,8 +22,11 @@ const Auth: React.FC = () => {
   const [honeypot, setHoneypot] = useState(''); // Bot trap field
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const [passwordStrength, setPasswordStrength] = useState<string>('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, resetPassword } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -222,6 +225,33 @@ const Auth: React.FC = () => {
     setIsLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail || !validateEmail(resetEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    setResetLoading(true);
+    setError(null);
+
+    const { error } = await resetPassword(resetEmail);
+    
+    if (error) {
+      setError(`Failed to send reset email: ${error.message}`);
+    } else {
+      toast({
+        title: "Password reset email sent!",
+        description: "Check your email for instructions to reset your password.",
+      });
+      setShowForgotPassword(false);
+      setResetEmail('');
+    }
+    
+    setResetLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
@@ -317,13 +347,23 @@ const Auth: React.FC = () => {
                       className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
                       required
                     />
-                  </div>
-                  
-                  {/* No captcha - completely frictionless signin */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    <span>Secure and instant sign in</span>
-                  </div>
+                   </div>
+                   
+                   <div className="flex items-center justify-between">
+                     <button
+                       type="button"
+                       onClick={() => setShowForgotPassword(true)}
+                       className="text-sm text-indigo-600 hover:text-indigo-800 hover:underline"
+                     >
+                       Forgot Password?
+                     </button>
+                   </div>
+                   
+                   {/* No captcha - completely frictionless signin */}
+                   <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded">
+                     <Shield className="h-4 w-4 text-blue-600" />
+                     <span>Secure and instant sign in</span>
+                   </div>
                   
                   <Button 
                     type="submit" 
@@ -453,6 +493,53 @@ const Auth: React.FC = () => {
                 </form>
               </TabsContent>
             </Tabs>
+
+            {/* Forgot Password Modal */}
+            {showForgotPassword && (
+              <div className="mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Reset Password</h3>
+                  <button
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetEmail('');
+                      setError(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </button>
+                </div>
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email Address</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                    disabled={resetLoading}
+                  >
+                    {resetLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Reset Email'
+                    )}
+                  </Button>
+                </form>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
