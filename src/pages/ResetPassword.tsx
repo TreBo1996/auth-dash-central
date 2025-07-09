@@ -27,17 +27,24 @@ const ResetPassword = () => {
     const validateResetLink = async () => {
       try {
         // Check if Supabase has established a session from the reset link
-        // When users click {{ .ConfirmationURL }}, Supabase automatically validates the token and creates a session
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        // Check for recovery parameters to confirm this is a password reset
+        const hash = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hash);
+        const type = hashParams.get('type') || searchParams.get('type');
         
         if (error) {
           console.error('Session check error:', error);
           setIsValidToken(false);
-        } else if (session) {
-          // Valid session means the reset link worked
+        } else if (session && type === 'recovery') {
+          // Valid session from password reset link
+          setIsValidToken(true);
+        } else if (session && !type) {
+          // User is authenticated but didn't come from reset link - treat as valid for password reset
           setIsValidToken(true);
         } else {
-          // No session means the reset link is invalid, expired, or user accessed page directly
+          // No session or wrong type means invalid/expired reset link
           setIsValidToken(false);
         }
       } catch (error) {
@@ -47,7 +54,7 @@ const ResetPassword = () => {
     };
 
     validateResetLink();
-  }, []);
+  }, [searchParams]);
 
   // Password validation
   const validatePassword = (pwd: string) => {
