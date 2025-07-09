@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { User, Save, Mail, Briefcase, DollarSign } from 'lucide-react';
+import { User, Save, Mail, Briefcase, DollarSign, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -42,6 +42,15 @@ const Profile: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   
   // Employment preferences state
   const [desiredJobTitle, setDesiredJobTitle] = useState('');
@@ -166,6 +175,111 @@ const Profile: React.FC = () => {
     }
   };
 
+  const validatePassword = (password: string) => {
+    const errors = [];
+    if (password.length < 8) errors.push('At least 8 characters');
+    if (!/[A-Z]/.test(password)) errors.push('One uppercase letter');
+    if (!/[a-z]/.test(password)) errors.push('One lowercase letter');
+    if (!/\d/.test(password)) errors.push('One number');
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) errors.push('One special character');
+    return errors;
+  };
+
+  const handleChangePassword = async () => {
+    if (!user) return;
+
+    // Validation
+    if (!currentPassword) {
+      toast({
+        title: "Current Password Required",
+        description: "Please enter your current password to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all password fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "New password and confirmation do not match.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const passwordErrors = validatePassword(newPassword);
+    if (passwordErrors.length > 0) {
+      toast({
+        title: "Password Too Weak",
+        description: `Password must include: ${passwordErrors.join(', ')}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+
+      // First verify current password by attempting to sign in
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: currentPassword
+      });
+
+      if (verifyError) {
+        toast({
+          title: "Incorrect Password",
+          description: "Your current password is incorrect.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update to new password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) {
+        toast({
+          title: "Password Update Failed",
+          description: updateError.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been changed successfully."
+      });
+
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while changing your password.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -257,6 +371,123 @@ const Profile: React.FC = () => {
                   <>
                     <Save className="h-4 w-4 mr-2" />
                     Save Profile
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Security Settings
+            </CardTitle>
+            <CardDescription>
+              Change your password to keep your account secure
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  placeholder="Enter your current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="Enter your new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {newPassword && (
+                <div className="text-sm space-y-1">
+                  {validatePassword(newPassword).map((error, index) => (
+                    <div key={index} className="text-red-600">• {error}</div>
+                  ))}
+                  {validatePassword(newPassword).length === 0 && (
+                    <div className="text-green-600">• Password meets all requirements</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {confirmPassword && newPassword !== confirmPassword && (
+                <div className="text-sm text-red-600">• Passwords do not match</div>
+              )}
+              {confirmPassword && newPassword === confirmPassword && (
+                <div className="text-sm text-green-600">• Passwords match</div>
+              )}
+            </div>
+
+            <div className="pt-4">
+              <Button
+                onClick={handleChangePassword}
+                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword || validatePassword(newPassword).length > 0}
+                variant="outline"
+                className="w-full"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                    Changing Password...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Change Password
                   </>
                 )}
               </Button>
