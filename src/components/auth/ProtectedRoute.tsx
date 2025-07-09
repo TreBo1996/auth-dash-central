@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
 import { Loader2 } from 'lucide-react';
 import { RoleSelection } from './RoleSelection';
+import { EmploymentPreferencesModal } from './EmploymentPreferencesModal';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,7 +13,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
-  const { isLoadingRoles, needsRoleSelection } = useRole();
+  const { isLoadingRoles, needsRoleSelection, needsEmploymentPreferences, setEmploymentPreferencesComplete } = useRole();
 
   // Show loading while auth is initializing
   if (authLoading) {
@@ -46,6 +47,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // Show role selection if user needs to choose a role
   if (needsRoleSelection) {
     return <RoleSelection />;
+  }
+
+  // Show employment preferences modal if job seeker needs to set preferences
+  if (needsEmploymentPreferences) {
+    return (
+      <EmploymentPreferencesModal
+        onComplete={setEmploymentPreferencesComplete}
+        onSkip={setEmploymentPreferencesComplete}
+      />
+    );
   }
 
   // User is authenticated and has roles - show protected content

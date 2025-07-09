@@ -14,8 +14,10 @@ interface RoleContextType {
   isLoadingRoles: boolean;
   isInitializing: boolean;
   needsRoleSelection: boolean; // New: indicates if user needs to select a role
+  needsEmploymentPreferences: boolean; // New: indicates if job seeker needs to set preferences
   switchRole: (role: AppRole) => Promise<void>;
   createRole: (role: AppRole) => Promise<boolean>; // New: create role function
+  setEmploymentPreferencesComplete: () => void; // New: mark preferences as complete
   hasRole: (role: AppRole) => boolean;
   canSwitchRoles: boolean;
 }
@@ -45,6 +47,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasNavigated, setHasNavigated] = useState(false);
   const [needsRoleSelection, setNeedsRoleSelection] = useState(false);
+  const [needsEmploymentPreferences, setNeedsEmploymentPreferences] = useState(false);
 
   // Create role function - used during onboarding
   const createRole = async (role: AppRole): Promise<boolean> => {
@@ -78,6 +81,11 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       setActiveRole(role);
       setPreferredRole(role);
       setNeedsRoleSelection(false);
+      
+      // If job seeker, show employment preferences modal
+      if (role === 'job_seeker') {
+        setNeedsEmploymentPreferences(true);
+      }
 
       console.log('Successfully created role:', role);
       return true;
@@ -98,6 +106,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         setIsInitializing(false);
         setHasNavigated(false);
         setNeedsRoleSelection(false);
+        setNeedsEmploymentPreferences(false);
         return;
       }
 
@@ -122,6 +131,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
           setUserRoles([]);
           setActiveRole(null);
           setPreferredRole(null);
+          setNeedsEmploymentPreferences(false);
         } else {
           // User has roles - load preferences
           setNeedsRoleSelection(false);
@@ -153,6 +163,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
         setUserRoles([]);
         setActiveRole(null);
         setPreferredRole(null);
+        setNeedsEmploymentPreferences(false);
       } finally {
         setIsLoadingRoles(false);
         setTimeout(() => {
@@ -166,7 +177,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
   // Handle role-based navigation after roles are loaded
   useEffect(() => {
-    if (!user || isLoadingRoles || isInitializing || hasNavigated || !activeRole) {
+    if (!user || isLoadingRoles || isInitializing || hasNavigated || !activeRole || needsEmploymentPreferences) {
       return;
     }
 
@@ -237,6 +248,10 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
   const canSwitchRoles = userRoles.includes('both') || userRoles.length > 1;
 
+  const setEmploymentPreferencesComplete = () => {
+    setNeedsEmploymentPreferences(false);
+  };
+
   const value: RoleContextType = {
     userRoles,
     activeRole,
@@ -244,8 +259,10 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
     isLoadingRoles,
     isInitializing,
     needsRoleSelection,
+    needsEmploymentPreferences,
     switchRole,
     createRole,
+    setEmploymentPreferencesComplete,
     hasRole,
     canSwitchRoles
   };
