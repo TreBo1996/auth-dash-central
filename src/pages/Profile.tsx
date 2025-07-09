@@ -79,8 +79,10 @@ const Profile: React.FC = () => {
         setUser(user);
         setFullName(user.user_metadata?.full_name || '');
         
+        console.log('Fetching profile data for user:', user.id);
+        
         // Fetch profile data including admin status and employment preferences
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select(`
             email, full_name, is_admin,
@@ -91,10 +93,23 @@ const Profile: React.FC = () => {
           .eq('id', user.id)
           .single();
           
+        if (profileError) {
+          console.error('Error fetching profile data:', profileError);
+          throw profileError;
+        }
+        
+        console.log('Profile data retrieved:', profileData);
         setProfile(profileData);
         
         // Set employment preferences state if data exists
         if (profileData) {
+          console.log('Setting employment preferences from profile data:', {
+            desired_job_title: profileData.desired_job_title,
+            experience_level: profileData.experience_level,
+            work_setting_preference: profileData.work_setting_preference,
+            industry_preferences: profileData.industry_preferences
+          });
+          
           setDesiredJobTitle(profileData.desired_job_title || '');
           setSalaryMin(profileData.desired_salary_min || undefined);
           setSalaryMax(profileData.desired_salary_max || undefined);

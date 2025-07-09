@@ -112,6 +112,8 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
 
       if (error) throw error;
 
+      console.log('Employment preferences saved successfully:', updateData);
+      
       toast({
         title: "Preferences saved!",
         description: "We'll use these to find better job matches for you.",
@@ -126,6 +128,7 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
         description: "Could not save preferences. You can set them later in your profile.",
         variant: "destructive",
       });
+      console.log('EmploymentPreferencesModal - error occurred, calling onSkip with fromParam:', fromParam);
       onSkip(); // Fall back to skipping on error
     } finally {
       setIsLoading(false);
