@@ -132,7 +132,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                       </div>
                       <div className="ml-3">
                         {selectedSuggestions.has(index) ? (
-                          <Badge variant="default" className="bg-blue-600">
+                          <Badge variant="default" className="bg-gradient-to-r from-blue-600 to-indigo-600">
                             Selected
                           </Badge>
                         ) : (
@@ -157,7 +157,7 @@ export const AISuggestionsModal: React.FC<AISuggestionsModalProps> = ({
                   <Button 
                     onClick={addSelectedSuggestions}
                     disabled={selectedSuggestions.size === 0}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
                   >
                     Add Selected ({selectedSuggestions.size})
                   </Button>

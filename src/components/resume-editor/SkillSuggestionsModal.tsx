@@ -201,6 +201,7 @@ export const SkillSuggestionsModal: React.FC<SkillSuggestionsModalProps> = ({
           <Button
             onClick={handleAddSelected}
             disabled={selectedSkills.size === 0 || loading}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
           >
             Add {selectedSkills.size} Selected Skill{selectedSkills.size !== 1 ? 's' : ''}
           </Button>

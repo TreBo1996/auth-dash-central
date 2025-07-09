@@ -182,6 +182,7 @@ export const BulletSuggestionsModal: React.FC<BulletSuggestionsModalProps> = ({
           <Button
             onClick={handleAddSelected}
             disabled={selectedBullets.size === 0 || loading}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
           >
             Add {selectedBullets.size} Selected Bullet{selectedBullets.size !== 1 ? 's' : ''}
           </Button>
