@@ -631,7 +631,7 @@ const InitialResumeEditor: React.FC = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Button>
-          <Button onClick={handleSave} disabled={saving || parsing}>
+          <Button onClick={handleSave} disabled={saving || parsing} className="bg-blue-800 hover:bg-blue-700">
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Save Changes
           </Button>
