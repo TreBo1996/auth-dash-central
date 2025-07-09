@@ -18,12 +18,14 @@ interface ExperienceSectionProps {
   experiences: Experience[];
   onChange: (experiences: Experience[]) => void;
   jobDescriptionId?: string;
+  showOptimizedBadges?: boolean;
 }
 
 export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   experiences,
   onChange,
-  jobDescriptionId
+  jobDescriptionId,
+  showOptimizedBadges = true
 }) => {
 
   const [aiSuggestionsModal, setAiSuggestionsModal] = useState<{
@@ -176,7 +178,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <h4 className="font-medium text-gray-900 text-sm sm:text-base">Experience {index + 1}</h4>
-                  {hasOptimizedBullets(experience.bullets) && (
+                  {showOptimizedBadges && hasOptimizedBullets(experience.bullets) && (
                     <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded-full self-start">
                       <Sparkles className="h-3 w-3 text-blue-600" />
                       <span className="text-xs text-blue-600 font-medium">AI Optimized</span>
@@ -307,7 +309,7 @@ export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
                 </div>
                 
                 <div className="mt-2 space-y-1">
-                  {hasOptimizedBullets(experience.bullets) ? (
+                  {showOptimizedBadges && hasOptimizedBullets(experience.bullets) ? (
                     <div className="space-y-1">
                       <p className="text-xs text-green-600 flex items-center gap-1">
                         <Sparkles className="h-3 w-3" />
