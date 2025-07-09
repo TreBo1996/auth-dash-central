@@ -5,16 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { User, Save, Mail, Briefcase, DollarSign, Lock, Eye, EyeOff, Check, Clock, AlertCircle } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { User, Save, Mail, Briefcase, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { AdminTools } from '@/components/admin/AdminTools';
 import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
 import { SubscriptionCard } from '@/components/subscription/SubscriptionCard';
+import { EmploymentPreferencesForm } from '@/components/forms/EmploymentPreferencesForm';
 
 interface UserProfile {
   email: string;
@@ -53,23 +51,6 @@ const Profile: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   
-  // Employment preferences state
-  const [desiredJobTitle, setDesiredJobTitle] = useState('');
-  const [salaryMin, setSalaryMin] = useState<number | undefined>();
-  const [salaryMax, setSalaryMax] = useState<number | undefined>();
-  const [salaryCurrency, setSalaryCurrency] = useState('USD');
-  const [workSetting, setWorkSetting] = useState('');
-  const [experienceLevel, setExperienceLevel] = useState('');
-  const [preferredLocation, setPreferredLocation] = useState('');
-  const [jobType, setJobType] = useState('');
-  const [industryPreferences, setIndustryPreferences] = useState<string[]>([]);
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [newsletter, setNewsletter] = useState(true);
-  const [isSavingEmploymentPrefs, setIsSavingEmploymentPrefs] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
-  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,28 +85,6 @@ const Profile: React.FC = () => {
         
         console.log('Profile data retrieved:', profileData);
         setProfile(profileData);
-        
-        // Set employment preferences state if data exists
-        if (profileData) {
-          console.log('Setting employment preferences from profile data:', {
-            desired_job_title: profileData.desired_job_title,
-            experience_level: profileData.experience_level,
-            work_setting_preference: profileData.work_setting_preference,
-            industry_preferences: profileData.industry_preferences
-          });
-          
-          setDesiredJobTitle(profileData.desired_job_title || '');
-          setSalaryMin(profileData.desired_salary_min || undefined);
-          setSalaryMax(profileData.desired_salary_max || undefined);
-          setSalaryCurrency(profileData.desired_salary_currency || 'USD');
-          setWorkSetting(profileData.work_setting_preference || '');
-          setExperienceLevel(profileData.experience_level || '');
-          setPreferredLocation(profileData.preferred_location || '');
-          setJobType(profileData.job_type_preference || '');
-          setIndustryPreferences(profileData.industry_preferences || []);
-          setEmailNotifications(profileData.email_notifications_enabled ?? true);
-          setNewsletter(profileData.newsletter_enabled ?? true);
-        }
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -152,22 +111,11 @@ const Profile: React.FC = () => {
 
       if (authError) throw authError;
 
-      // Update profile in database including employment preferences
+      // Update profile in database
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          full_name: fullName,
-          desired_job_title: desiredJobTitle || null,
-          desired_salary_min: salaryMin || null,
-          desired_salary_max: salaryMax || null,
-          desired_salary_currency: salaryCurrency,
-          work_setting_preference: workSetting || null,
-          experience_level: experienceLevel || null,
-          preferred_location: preferredLocation || null,
-          job_type_preference: jobType || null,
-          industry_preferences: industryPreferences.length > 0 ? industryPreferences : null,
-          email_notifications_enabled: emailNotifications,
-          newsletter_enabled: newsletter
+          full_name: fullName
         })
         .eq('id', user.id);
 
@@ -184,7 +132,7 @@ const Profile: React.FC = () => {
 
       toast({
         title: "Profile Updated",
-        description: "Your profile and employment preferences have been updated successfully."
+        description: "Your profile has been updated successfully."
       });
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -208,91 +156,14 @@ const Profile: React.FC = () => {
     return errors;
   };
 
-  const handleSaveEmploymentPreferences = async () => {
-    if (!user) return;
-
-    try {
-      setIsSavingEmploymentPrefs(true);
-      setHasUnsavedChanges(false);
-      
-      console.log('Saving employment preferences:', {
-        desired_job_title: desiredJobTitle || null,
-        desired_salary_min: salaryMin || null,
-        desired_salary_max: salaryMax || null,
-        desired_salary_currency: salaryCurrency,
-        work_setting_preference: workSetting || null,
-        experience_level: experienceLevel || null,
-        preferred_location: preferredLocation || null,
-        job_type_preference: jobType || null,
-        industry_preferences: industryPreferences.length > 0 ? industryPreferences : null,
-        email_notifications_enabled: emailNotifications,
-        newsletter_enabled: newsletter
-      });
-
-      // Update employment preferences in database
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          desired_job_title: desiredJobTitle || null,
-          desired_salary_min: salaryMin || null,
-          desired_salary_max: salaryMax || null,
-          desired_salary_currency: salaryCurrency,
-          work_setting_preference: workSetting || null,
-          experience_level: experienceLevel || null,
-          preferred_location: preferredLocation || null,
-          job_type_preference: jobType || null,
-          industry_preferences: industryPreferences.length > 0 ? industryPreferences : null,
-          email_notifications_enabled: emailNotifications,
-          newsletter_enabled: newsletter
-        })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Error saving employment preferences:', error);
-        // Handle specific constraint violations
-        if (error.message.includes('constraint')) {
-          toast({
-            title: "Invalid Data",
-            description: "Please check your selections and try again. Some values may not be valid.",
-            variant: "destructive"
-          });
-        } else {
-          throw error;
-        }
-        return;
-      }
-
-      console.log('Employment preferences saved successfully');
-      
-      // Set success state
-      setLastSavedAt(new Date());
-      setShowSuccessBanner(true);
-      
-      // Hide success banner after 3 seconds
-      setTimeout(() => {
-        setShowSuccessBanner(false);
-      }, 3000);
-
-      toast({
-        title: "Employment Preferences Saved ✓",
-        description: `Your job preferences have been updated successfully at ${new Date().toLocaleTimeString()}.`,
-        duration: 5000
-      });
-    } catch (error) {
-      console.error('Error saving employment preferences:', error);
-      toast({
-        title: "Save Failed",
-        description: "There was an error saving your employment preferences. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSavingEmploymentPrefs(false);
-    }
+  const handleEmploymentPreferencesSave = (data: any) => {
+    console.log('Employment preferences saved:', data);
+    // Refresh profile data
+    fetchUserProfile();
   };
 
-  // Track unsaved changes
-  const markAsUnsaved = () => {
-    setHasUnsavedChanges(true);
+  const handleEmploymentPreferencesError = (error: Error) => {
+    console.error('Employment preferences error:', error);
   };
 
   const handleChangePassword = async () => {
@@ -610,272 +481,33 @@ const Profile: React.FC = () => {
             <CardTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
               Employment Preferences
-              {showSuccessBanner && (
-                <div className="flex items-center gap-1 text-green-600 text-sm font-normal">
-                  <Check className="h-4 w-4" />
-                  Saved successfully!
-                </div>
-              )}
             </CardTitle>
             <CardDescription>
               Set your job preferences for personalized job matching and notifications
-              {lastSavedAt && (
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                  <Clock className="h-3 w-3" />
-                  Last saved: {lastSavedAt.toLocaleString()}
-                </div>
-              )}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="desiredJobTitle">Desired Job Title</Label>
-                <Input
-                  id="desiredJobTitle"
-                  type="text"
-                  placeholder="e.g., Software Engineer, Product Manager"
-                  value={desiredJobTitle}
-                  onChange={(e) => {
-                    setDesiredJobTitle(e.target.value);
-                    markAsUnsaved();
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="experienceLevel">Experience Level</Label>
-                <Select value={experienceLevel} onValueChange={(value) => {
-                  setExperienceLevel(value);
-                  markAsUnsaved();
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select experience level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="entry">Entry Level</SelectItem>
-                    <SelectItem value="mid">Mid Level</SelectItem>
-                    <SelectItem value="senior">Senior Level</SelectItem>
-                    <SelectItem value="lead">Lead/Principal</SelectItem>
-                    <SelectItem value="executive">Executive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="workSetting">Work Setting Preference</Label>
-                <Select value={workSetting} onValueChange={(value) => {
-                  setWorkSetting(value);
-                  markAsUnsaved();
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select work setting" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Remote">Remote</SelectItem>
-                    <SelectItem value="Hybrid">Hybrid</SelectItem>
-                    <SelectItem value="On-site">On-site</SelectItem>
-                    <SelectItem value="Flexible">Flexible</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="jobType">Job Type</Label>
-                <Select value={jobType} onValueChange={(value) => {
-                  setJobType(value);
-                  markAsUnsaved();
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select job type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full-time">Full-time</SelectItem>
-                    <SelectItem value="Part-time">Part-time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Freelance">Freelance</SelectItem>
-                    <SelectItem value="Internship">Internship</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="preferredLocation">Preferred Location</Label>
-                <Input
-                  id="preferredLocation"
-                  type="text"
-                  placeholder="e.g., San Francisco, CA or Remote"
-                  value={preferredLocation}
-                  onChange={(e) => {
-                    setPreferredLocation(e.target.value);
-                    markAsUnsaved();
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="salaryCurrency">Currency</Label>
-                <Select value={salaryCurrency} onValueChange={(value) => {
-                  setSalaryCurrency(value);
-                  markAsUnsaved();
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                    <SelectItem value="CAD">CAD (C$)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Desired Salary Range
-              </Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="salaryMin" className="text-sm text-gray-600">Minimum</Label>
-                  <Input
-                    id="salaryMin"
-                    type="number"
-                    placeholder="50000"
-                    value={salaryMin || ''}
-                    onChange={(e) => {
-                      setSalaryMin(e.target.value ? Number(e.target.value) : undefined);
-                      markAsUnsaved();
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="salaryMax" className="text-sm text-gray-600">Maximum</Label>
-                  <Input
-                    id="salaryMax"
-                    type="number"
-                    placeholder="100000"
-                    value={salaryMax || ''}
-                    onChange={(e) => {
-                      setSalaryMax(e.target.value ? Number(e.target.value) : undefined);
-                      markAsUnsaved();
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Industry Preferences */}
-            <div className="space-y-3">
-              <Label>Industry Preferences</Label>
-              <p className="text-sm text-gray-600">Select industries you're interested in working in</p>
-              <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                {[
-                  'Technology', 'Healthcare', 'Finance', 'Education', 'Marketing',
-                  'Sales', 'Manufacturing', 'Retail', 'Consulting', 'Government',
-                  'Non-profit', 'Media', 'Real Estate', 'Transportation', 'Energy'
-                ].map(industry => (
-                  <div key={industry} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={industry}
-                      checked={industryPreferences.includes(industry)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setIndustryPreferences(prev => [...prev, industry]);
-                        } else {
-                          setIndustryPreferences(prev => prev.filter(i => i !== industry));
-                        }
-                        markAsUnsaved();
-                      }}
-                    />
-                    <label 
-                      htmlFor={industry} 
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {industry}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-4 border-t">
-              <h4 className="font-medium text-gray-900">Notification Preferences</h4>
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="emailNotifications">Job Match Notifications</Label>
-                  <p className="text-sm text-gray-600">Receive email notifications for matching job opportunities</p>
-                </div>
-                <Switch
-                  id="emailNotifications"
-                  checked={emailNotifications}
-                  onCheckedChange={(checked) => {
-                    setEmailNotifications(checked);
-                    markAsUnsaved();
-                  }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="newsletter">Weekly Newsletter</Label>
-                  <p className="text-sm text-gray-600">Get weekly career insights and job market updates</p>
-                </div>
-                <Switch
-                  id="newsletter"
-                  checked={newsletter}
-                  onCheckedChange={(checked) => {
-                    setNewsletter(checked);
-                    markAsUnsaved();
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="pt-4 space-y-2">
-              {hasUnsavedChanges && (
-                <div className="flex items-center gap-2 text-amber-600 text-sm">
-                  <AlertCircle className="h-4 w-4" />
-                  You have unsaved changes
-                </div>
-              )}
-              <Button
-                onClick={handleSaveEmploymentPreferences}
-                disabled={isSavingEmploymentPrefs}
-                className={`w-full transition-all duration-200 ${
-                  hasUnsavedChanges 
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white' 
-                    : showSuccessBanner 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-indigo-900 hover:bg-indigo-800'
-                }`}
-              >
-                {isSavingEmploymentPrefs ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Saving Employment Preferences...
-                  </>
-                ) : showSuccessBanner ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Saved Successfully!
-                  </>
-                ) : hasUnsavedChanges ? (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Employment Preferences
-                  </>
-                )}
-              </Button>
-            </div>
+          <CardContent>
+            {user && (
+              <EmploymentPreferencesForm
+                userId={user.id}
+                initialData={profile ? {
+                  desired_job_title: profile.desired_job_title || '',
+                  experience_level: profile.experience_level || '',
+                  work_setting_preference: profile.work_setting_preference || '',
+                  preferred_location: profile.preferred_location || '',
+                  job_type_preference: profile.job_type_preference || '',
+                  desired_salary_min: profile.desired_salary_min || null,
+                  desired_salary_max: profile.desired_salary_max || null,
+                  desired_salary_currency: profile.desired_salary_currency || 'USD',
+                  industry_preferences: profile.industry_preferences || [],
+                  email_notifications_enabled: profile.email_notifications_enabled ?? true,
+                  newsletter_enabled: profile.newsletter_enabled ?? true
+                } : {}}
+                onSave={handleEmploymentPreferencesSave}
+                onError={handleEmploymentPreferencesError}
+                showNotificationSettings={true}
+              />
+            )}
           </CardContent>
         </Card>
 
