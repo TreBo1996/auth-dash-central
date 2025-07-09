@@ -17,7 +17,7 @@ interface RoleContextType {
   needsEmploymentPreferences: boolean; // New: indicates if job seeker needs to set preferences
   switchRole: (role: AppRole) => Promise<void>;
   createRole: (role: AppRole) => Promise<boolean>; // New: create role function
-  setEmploymentPreferencesComplete: () => void; // New: mark preferences as complete
+  setEmploymentPreferencesComplete: (fromParam?: string | null) => void; // New: mark preferences as complete
   hasRole: (role: AppRole) => boolean;
   canSwitchRoles: boolean;
 }
@@ -248,8 +248,13 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
   const canSwitchRoles = userRoles.includes('both') || userRoles.length > 1;
 
-  const setEmploymentPreferencesComplete = () => {
+  const setEmploymentPreferencesComplete = (fromParam?: string | null) => {
     setNeedsEmploymentPreferences(false);
+    
+    // Redirect to original page if provided
+    if (fromParam) {
+      navigate(fromParam);
+    }
   };
 
   const value: RoleContextType = {

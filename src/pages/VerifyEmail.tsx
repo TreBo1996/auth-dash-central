@@ -1,21 +1,78 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, CheckCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const VerifyEmail: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [isResending, setIsResending] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const email = searchParams.get('email') || user?.email || '';
   const isEmployer = searchParams.get('type') === 'employer';
+  const fromParam = searchParams.get('from');
+
+  // Listen for real-time verification status
+  useEffect(() => {
+    if (!user) return;
+
+    const checkVerificationStatus = () => {
+      // Check if user is verified and redirect if so
+      if (user.email_confirmed_at && !isVerified) {
+        setIsVerified(true);
+        toast({
+          title: "Email verified!",
+          description: "Your email has been verified successfully.",
+        });
+
+        // Redirect to original page or continue with onboarding
+        setTimeout(() => {
+          if (fromParam) {
+            navigate(fromParam);
+          } else {
+            // Let ProtectedRoute handle the role selection flow
+            navigate('/dashboard');
+          }
+        }, 1500);
+      }
+    };
+
+    // Check immediately
+    checkVerificationStatus();
+
+    // Set up auth state listener for real-time verification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        const user = session?.user;
+        if (user?.email_confirmed_at && !isVerified) {
+          setIsVerified(true);
+          toast({
+            title: "Email verified!",
+            description: "Your email has been verified successfully.",
+          });
+
+          setTimeout(() => {
+            if (fromParam) {
+              navigate(fromParam);
+            } else {
+              navigate('/dashboard');
+            }
+          }, 1500);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [user, isVerified, fromParam, navigate, toast]);
 
   const handleResendVerification = async () => {
     if (!email) return;
@@ -55,12 +112,24 @@ const VerifyEmail: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
+          <Alert className={isVerified ? "border-green-200 bg-green-50" : ""}>
+            <CheckCircle className={`h-4 w-4 ${isVerified ? "text-green-600" : ""}`} />
             <AlertDescription>
-              A verification email has been sent to <strong>{email}</strong>
+              {isVerified ? (
+                <>Email verified! Redirecting you back to where you left off...</>
+              ) : (
+                <>A verification email has been sent to <strong>{email}</strong></>
+              )}
             </AlertDescription>
           </Alert>
+
+          {fromParam && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertDescription className="text-blue-800">
+                Once verified, you'll be redirected back to continue where you left off.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="text-center space-y-4">
             <p className="text-sm text-gray-600">

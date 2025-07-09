@@ -9,7 +9,11 @@ import { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-export const RoleSelection: React.FC = () => {
+interface RoleSelectionProps {
+  fromParam?: string | null;
+}
+
+export const RoleSelection: React.FC<RoleSelectionProps> = ({ fromParam }) => {
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const { createRole } = useRole();
@@ -29,11 +33,17 @@ export const RoleSelection: React.FC = () => {
           description: `Your ${selectedRole === 'job_seeker' ? 'job seeker' : 'employer'} account is ready.`,
         });
         
-        // Navigate to appropriate dashboard
+        // Navigate to appropriate destination
         if (selectedRole === 'employer') {
-          navigate('/employer/dashboard');
+          // Employers go to their dashboard (no employment preferences needed)
+          navigate(fromParam || '/employer/dashboard');
         } else {
-          navigate('/dashboard');
+          // Job seekers will be handled by employment preferences modal
+          // If no fromParam, let the normal flow continue to dashboard
+          if (!fromParam) {
+            navigate('/dashboard');
+          }
+          // If there's a fromParam, the employment preferences modal will handle the redirect
         }
       } else {
         toast({
@@ -58,7 +68,12 @@ export const RoleSelection: React.FC = () => {
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">Welcome to RezLit!</h1>
-          <p className="text-blue-100 text-lg">Choose how you'd like to use our platform</p>
+          <p className="text-blue-100 text-lg">
+            {fromParam 
+              ? 'Choose your role to continue where you left off'
+              : 'Choose how you\'d like to use our platform'
+            }
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">

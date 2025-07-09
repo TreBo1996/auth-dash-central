@@ -35,8 +35,9 @@ const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
   const rateLimit = useAuthRateLimit();
 
-  // Get redirect parameter from URL
+  // Get redirect and from parameters from URL
   const redirectParam = searchParams.get('redirect');
+  const fromParam = searchParams.get('from');
 
   // Check for success message from password reset
   useEffect(() => {
@@ -233,7 +234,14 @@ const Auth: React.FC = () => {
         title: "Account created!",
         description: "Please check your email to verify your account.",
       });
-      navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+      
+      // Preserve the from parameter through the verification flow
+      const verifyUrl = new URLSearchParams();
+      verifyUrl.set('email', email);
+      if (fromParam) {
+        verifyUrl.set('from', fromParam);
+      }
+      navigate(`/verify-email?${verifyUrl.toString()}`);
     }
     
     setIsLoading(false);
@@ -427,7 +435,10 @@ const Auth: React.FC = () => {
               Welcome
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Sign in to your account or create a new one
+              {fromParam 
+                ? 'Sign in to continue where you left off'
+                : 'Sign in to your account or create a new one'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>

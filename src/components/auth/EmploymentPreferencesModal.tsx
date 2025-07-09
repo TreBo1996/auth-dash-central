@@ -11,11 +11,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface EmploymentPreferencesModalProps {
+  fromParam?: string | null;
   onComplete: () => void;
   onSkip: () => void;
 }
 
 export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProps> = ({
+  fromParam,
   onComplete,
   onSkip
 }) => {
@@ -135,7 +137,10 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
           </div>
           <CardTitle className="text-2xl">Set Your Job Preferences</CardTitle>
           <CardDescription className="text-base">
-            Help us find the perfect job matches for you. You can update these anytime in your profile.
+            {fromParam 
+              ? 'Set your preferences to get better job matches, then we\'ll take you back to where you left off.'
+              : 'Help us find the perfect job matches for you. You can update these anytime in your profile.'
+            }
           </CardDescription>
         </CardHeader>
         

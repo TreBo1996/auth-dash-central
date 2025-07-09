@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRole } from '@/contexts/RoleContext';
 import { Loader2 } from 'lucide-react';
@@ -14,6 +14,8 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
   const { isLoadingRoles, needsRoleSelection, needsEmploymentPreferences, setEmploymentPreferencesComplete } = useRole();
+  const [searchParams] = useSearchParams();
+  const fromParam = searchParams.get('from');
 
   // Show loading while auth is initializing
   if (authLoading) {
@@ -46,15 +48,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Show role selection if user needs to choose a role
   if (needsRoleSelection) {
-    return <RoleSelection />;
+    return <RoleSelection fromParam={fromParam} />;
   }
 
   // Show employment preferences modal if job seeker needs to set preferences
   if (needsEmploymentPreferences) {
     return (
       <EmploymentPreferencesModal
-        onComplete={setEmploymentPreferencesComplete}
-        onSkip={setEmploymentPreferencesComplete}
+        fromParam={fromParam}
+        onComplete={() => setEmploymentPreferencesComplete(fromParam)}
+        onSkip={() => setEmploymentPreferencesComplete(fromParam)}
       />
     );
   }
