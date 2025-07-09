@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { User, Save, Mail, Briefcase, DollarSign, Lock, Eye, EyeOff } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -61,6 +62,7 @@ const Profile: React.FC = () => {
   const [experienceLevel, setExperienceLevel] = useState('');
   const [preferredLocation, setPreferredLocation] = useState('');
   const [jobType, setJobType] = useState('');
+  const [industryPreferences, setIndustryPreferences] = useState<string[]>([]);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [newsletter, setNewsletter] = useState(true);
   
@@ -101,6 +103,7 @@ const Profile: React.FC = () => {
           setExperienceLevel(profileData.experience_level || '');
           setPreferredLocation(profileData.preferred_location || '');
           setJobType(profileData.job_type_preference || '');
+          setIndustryPreferences(profileData.industry_preferences || []);
           setEmailNotifications(profileData.email_notifications_enabled ?? true);
           setNewsletter(profileData.newsletter_enabled ?? true);
         }
@@ -143,6 +146,7 @@ const Profile: React.FC = () => {
           experience_level: experienceLevel || null,
           preferred_location: preferredLocation || null,
           job_type_preference: jobType || null,
+          industry_preferences: industryPreferences.length > 0 ? industryPreferences : null,
           email_notifications_enabled: emailNotifications,
           newsletter_enabled: newsletter
         })
@@ -525,10 +529,11 @@ const Profile: React.FC = () => {
                     <SelectValue placeholder="Select experience level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="entry">Entry Level</SelectItem>
-                    <SelectItem value="mid">Mid Level</SelectItem>
-                    <SelectItem value="senior">Senior Level</SelectItem>
-                    <SelectItem value="executive">Executive</SelectItem>
+                    <SelectItem value="Entry Level">Entry Level</SelectItem>
+                    <SelectItem value="Mid Level">Mid Level</SelectItem>
+                    <SelectItem value="Senior Level">Senior Level</SelectItem>
+                    <SelectItem value="Lead/Principal">Lead/Principal</SelectItem>
+                    <SelectItem value="Executive">Executive</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -540,10 +545,10 @@ const Profile: React.FC = () => {
                     <SelectValue placeholder="Select work setting" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="remote">Remote</SelectItem>
-                    <SelectItem value="hybrid">Hybrid</SelectItem>
-                    <SelectItem value="on-site">On-Site</SelectItem>
-                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="Remote">Remote</SelectItem>
+                    <SelectItem value="Hybrid">Hybrid</SelectItem>
+                    <SelectItem value="On-site">On-site</SelectItem>
+                    <SelectItem value="Flexible">Flexible</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -555,10 +560,11 @@ const Profile: React.FC = () => {
                     <SelectValue placeholder="Select job type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full-time">Full-time</SelectItem>
-                    <SelectItem value="part-time">Part-time</SelectItem>
-                    <SelectItem value="contract">Contract</SelectItem>
-                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="Full-time">Full-time</SelectItem>
+                    <SelectItem value="Part-time">Part-time</SelectItem>
+                    <SelectItem value="Contract">Contract</SelectItem>
+                    <SelectItem value="Freelance">Freelance</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -616,6 +622,39 @@ const Profile: React.FC = () => {
                     onChange={(e) => setSalaryMax(e.target.value ? Number(e.target.value) : undefined)}
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Industry Preferences */}
+            <div className="space-y-3">
+              <Label>Industry Preferences</Label>
+              <p className="text-sm text-gray-600">Select industries you're interested in working in</p>
+              <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                {[
+                  'Technology', 'Healthcare', 'Finance', 'Education', 'Marketing',
+                  'Sales', 'Manufacturing', 'Retail', 'Consulting', 'Government',
+                  'Non-profit', 'Media', 'Real Estate', 'Transportation', 'Energy'
+                ].map(industry => (
+                  <div key={industry} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={industry}
+                      checked={industryPreferences.includes(industry)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setIndustryPreferences(prev => [...prev, industry]);
+                        } else {
+                          setIndustryPreferences(prev => prev.filter(i => i !== industry));
+                        }
+                      }}
+                    />
+                    <label 
+                      htmlFor={industry} 
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {industry}
+                    </label>
+                  </div>
+                ))}
               </div>
             </div>
 
