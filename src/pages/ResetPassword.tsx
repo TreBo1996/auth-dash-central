@@ -22,23 +22,23 @@ const ResetPassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  // Extract token from URL hash or search params
+  // Extract token from URL search params for password reset
   useEffect(() => {
     const validateToken = async () => {
-      // Check for access_token in URL hash (Supabase format)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
+      // Check for token_hash in search params (password reset format)
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
       
-      if (!accessToken) {
+      if (!tokenHash || type !== 'recovery') {
         setIsValidToken(false);
         return;
       }
 
       try {
-        // Set the session with the access token
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: hashParams.get('refresh_token') || ''
+        // Verify the OTP token for password recovery
+        const { data, error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery'
         });
 
         if (error) {
@@ -54,7 +54,7 @@ const ResetPassword = () => {
     };
 
     validateToken();
-  }, []);
+  }, [searchParams]);
 
   // Password validation
   const validatePassword = (pwd: string) => {
