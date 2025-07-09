@@ -205,7 +205,7 @@ const JobDetail: React.FC = () => {
         description: "Please log in to apply for this job",
         variant: "destructive"
       });
-      navigate('/auth');
+      navigate(`/auth?from=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
