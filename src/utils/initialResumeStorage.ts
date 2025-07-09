@@ -36,20 +36,18 @@ export const saveInitialResumeStructuredData = async (resumeId: string, parsedDa
     { resume_id: resumeId, section_type: 'certifications', content: { certifications: parsedData.certifications || [] } }
   ];
 
-  // Delete existing sections first
-  await supabase
-    .from('initial_resume_sections')
-    .delete()
-    .eq('resume_id', resumeId);
+  // Use upsert to handle the unique constraint properly
+  for (const section of sections) {
+    const { error } = await supabase
+      .from('initial_resume_sections')
+      .upsert(section, {
+        onConflict: 'resume_id, section_type'
+      });
 
-  // Insert new sections
-  const { error } = await supabase
-    .from('initial_resume_sections')
-    .insert(sections);
-
-  if (error) {
-    console.error('Error saving initial resume structured data:', error);
-    throw error;
+    if (error) {
+      console.error('Error saving initial resume section:', error);
+      throw error;
+    }
   }
 };
 
