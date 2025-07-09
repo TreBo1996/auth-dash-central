@@ -65,6 +65,7 @@ const Profile: React.FC = () => {
   const [industryPreferences, setIndustryPreferences] = useState<string[]>([]);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [newsletter, setNewsletter] = useState(true);
+  const [isSavingEmploymentPrefs, setIsSavingEmploymentPrefs] = useState(false);
   
   const { toast } = useToast();
 
@@ -202,6 +203,67 @@ const Profile: React.FC = () => {
     if (!/\d/.test(password)) errors.push('One number');
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) errors.push('One special character');
     return errors;
+  };
+
+  const handleSaveEmploymentPreferences = async () => {
+    if (!user) return;
+
+    try {
+      setIsSavingEmploymentPrefs(true);
+      
+      console.log('Saving employment preferences:', {
+        desired_job_title: desiredJobTitle || null,
+        desired_salary_min: salaryMin || null,
+        desired_salary_max: salaryMax || null,
+        desired_salary_currency: salaryCurrency,
+        work_setting_preference: workSetting || null,
+        experience_level: experienceLevel || null,
+        preferred_location: preferredLocation || null,
+        job_type_preference: jobType || null,
+        industry_preferences: industryPreferences.length > 0 ? industryPreferences : null,
+        email_notifications_enabled: emailNotifications,
+        newsletter_enabled: newsletter
+      });
+
+      // Update employment preferences in database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          desired_job_title: desiredJobTitle || null,
+          desired_salary_min: salaryMin || null,
+          desired_salary_max: salaryMax || null,
+          desired_salary_currency: salaryCurrency,
+          work_setting_preference: workSetting || null,
+          experience_level: experienceLevel || null,
+          preferred_location: preferredLocation || null,
+          job_type_preference: jobType || null,
+          industry_preferences: industryPreferences.length > 0 ? industryPreferences : null,
+          email_notifications_enabled: emailNotifications,
+          newsletter_enabled: newsletter
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving employment preferences:', error);
+        throw error;
+      }
+
+      console.log('Employment preferences saved successfully');
+
+      toast({
+        title: "Employment Preferences Saved",
+        description: "Your job preferences have been updated successfully."
+      });
+    } catch (error) {
+      console.error('Error saving employment preferences:', error);
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your employment preferences. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSavingEmploymentPrefs(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -699,6 +761,26 @@ const Profile: React.FC = () => {
                   onCheckedChange={setNewsletter}
                 />
               </div>
+            </div>
+
+            <div className="pt-4">
+              <Button
+                onClick={handleSaveEmploymentPreferences}
+                disabled={isSavingEmploymentPrefs}
+                className="w-full bg-indigo-900 hover:bg-indigo-800"
+              >
+                {isSavingEmploymentPrefs ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving Employment Preferences...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Employment Preferences
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
