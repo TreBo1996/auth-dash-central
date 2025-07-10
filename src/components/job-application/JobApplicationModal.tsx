@@ -30,6 +30,8 @@ interface Resume {
   id: string;
   file_name: string | null;
   parsed_text: string | null;
+  type: 'original' | 'optimized';
+  job_title?: string;
 }
 
 interface JobPosting {
@@ -130,22 +132,56 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       setLoadingResumes(true);
       console.log('📋 Loading resumes for user:', user.id);
       
-      const { data, error } = await supabase
+      // Fetch original resumes
+      const { data: originalResumes, error: originalError } = await supabase
         .from('resumes')
         .select('id, file_name, parsed_text')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('❌ Error loading resumes:', error);
-        throw error;
+      if (originalError) {
+        console.error('❌ Error loading original resumes:', originalError);
+        throw originalError;
       }
+
+      // Fetch optimized resumes with job description titles
+      const { data: optimizedResumes, error: optimizedError } = await supabase
+        .from('optimized_resumes')
+        .select(`
+          id, 
+          generated_text,
+          job_descriptions!inner(title)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (optimizedError) {
+        console.error('❌ Error loading optimized resumes:', optimizedError);
+        throw optimizedError;
+      }
+
+      // Combine and format all resumes
+      const allResumes: Resume[] = [
+        ...(originalResumes || []).map(resume => ({
+          id: resume.id,
+          file_name: resume.file_name,
+          parsed_text: resume.parsed_text,
+          type: 'original' as const
+        })),
+        ...(optimizedResumes || []).map(resume => ({
+          id: resume.id,
+          file_name: `${resume.job_descriptions?.title || 'Optimized Resume'}`,
+          parsed_text: resume.generated_text,
+          type: 'optimized' as const,
+          job_title: resume.job_descriptions?.title
+        }))
+      ];
       
-      console.log('✅ Loaded resumes:', data?.length || 0);
-      setResumes(data || []);
+      console.log('✅ Loaded all resumes:', allResumes.length);
+      setResumes(allResumes);
       
       // Check if user has no resumes - redirect to upload with optimize intent
-      if ((data?.length || 0) === 0) {
+      if (allResumes.length === 0) {
         console.log('⚠️ No resumes found on apply, redirecting to upload with optimize intent');
         setOriginalIntent('optimize');
         setStep('upload');
@@ -707,18 +743,34 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   }] : [];
 
   const getProgressStep = () => {
-    switch (step) {
-      case 'choose': return 1;
-      case 'upload': return 2;
-      case 'ats-score': return 3;
-      case 'optimize': return 4;
-      case 'edit-resume': return 5;
-      case 'templates': return 6;
-      case 'cover-letter': return 7;
-      case 'submit': return 8;
-      case 'final-submit': return 8;
-      case 'success': return 9;
-      default: return 1;
+    // Adjust progress based on workflow type
+    if (originalIntent === 'existing') {
+      // Quick apply workflow: choose -> ats-score -> cover-letter -> final-submit
+      switch (step) {
+        case 'choose': return 1;
+        case 'ats-score': return 2;
+        case 'cover-letter': return 3;
+        case 'final-submit': 
+        case 'external-apply': return 4;
+        case 'success': return 5;
+        default: return 1;
+      }
+    } else {
+      // Full optimization workflow
+      switch (step) {
+        case 'choose': return 1;
+        case 'upload': return 2;
+        case 'ats-score': return 3;
+        case 'optimize': return 4;
+        case 'edit-resume': return 5;
+        case 'templates': return 6;
+        case 'cover-letter': return 7;
+        case 'submit': return 8;
+        case 'final-submit': 
+        case 'external-apply': return 8;
+        case 'success': return 9;
+        default: return 1;
+      }
     }
   };
 
@@ -735,7 +787,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
           
           {/* Progress Indicator */}
           <div className="flex items-center space-x-1 mt-4 overflow-x-auto">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+            {Array.from({ length: originalIntent === 'existing' ? 5 : 9 }, (_, i) => i + 1).map((num) => (
               <div
                 key={num}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
@@ -854,21 +906,24 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                       <SelectValue placeholder="Choose a resume" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableResumes.map(resume => (
-                        <SelectItem key={resume.id} value={resume.id}>
-                          {resume.file_name || 'Untitled Resume'}
-                        </SelectItem>
-                      ))}
+                       {availableResumes.map(resume => (
+                         <SelectItem key={resume.id} value={resume.id}>
+                           {resume.type === 'optimized' 
+                             ? `${resume.file_name} (Optimized)`
+                             : `${resume.file_name || 'Untitled Resume'} (Original)`
+                           }
+                         </SelectItem>
+                       ))}
                     </SelectContent>
                   </Select>
 
                    {selectedResumeId && (
-                     <Button 
-                       onClick={handleProceedWithExistingResume}
-                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
-                     >
-                       Continue with This Resume
-                     </Button>
+                      <Button 
+                        onClick={handleProceedWithExistingResume}
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                      >
+                        Quick Apply with This Resume
+                      </Button>
                    )}
                 </>
               )}
