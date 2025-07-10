@@ -32,4 +32,6 @@ export interface UnifiedJob {
   via?: string;
   thumbnail?: string;
   job_type?: string | null;
+  apply_url?: string | null;
+  external_job_url?: string | null;
 }

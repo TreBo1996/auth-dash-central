@@ -153,6 +153,8 @@ const JobDetail: React.FC = () => {
           job_type: data.job_type,
           employment_type: data.employment_type,
           experience_level: data.experience_level,
+          apply_url: data.apply_url,
+          external_job_url: data.job_url,
           // Note: cached_jobs doesn't have structured requirements/responsibilities/benefits
           // These would be parsed from description if needed
         };
@@ -800,20 +802,32 @@ const JobDetail: React.FC = () => {
       </main>
 
       {/* Application Modals */}
-      {showApplicationModal && (
+      {showApplicationModal && job && (
         <JobApplicationModal
           isOpen={showApplicationModal}
           onClose={() => setShowApplicationModal(false)}
-          jobPosting={job as any}
+          jobPosting={{
+            ...job,
+            source: job.source,
+            apply_url: job.apply_url || job.external_job_url,
+            job_url: job.job_url,
+            requirements: (job as any).requirements || []
+          } as any}
           onApplicationSubmitted={handleApplicationSubmitted}
         />
       )}
 
-      {showNoResumeModal && (
+      {showNoResumeModal && job && (
         <JobApplicationModalNoResume
           isOpen={showNoResumeModal}
           onClose={() => setShowNoResumeModal(false)}
-          jobPosting={job as any}
+          jobPosting={{
+            ...job,
+            source: job.source,
+            apply_url: job.apply_url || job.external_job_url,
+            job_url: job.job_url,
+            requirements: (job as any).requirements || []
+          } as any}
           onApplicationSubmitted={handleApplicationSubmitted}
         />
       )}

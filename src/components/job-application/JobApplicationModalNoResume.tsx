@@ -23,13 +23,16 @@ import { fetchStructuredResumeData } from '@/components/resume-templates/utils/f
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InlineFileUpload } from './InlineFileUpload';
-import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, Upload, Save, Download, Edit, Target, Palette } from 'lucide-react';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, Upload, Save, Download, Edit, Target, Palette, ExternalLink, AlertCircle } from 'lucide-react';
 
 interface JobPosting {
   id: string;
   title: string;
   description: string;
   requirements: string[];
+  source?: string;
+  job_url?: string;
+  apply_url?: string;
   employer_profile: {
     company_name: string;
   } | null;
@@ -52,7 +55,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'success'>('upload');
+  const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'external-apply' | 'success'>('upload');
   
   // Resume management
   const [uploadedResumeId, setUploadedResumeId] = useState<string>('');
@@ -456,9 +459,15 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
       return;
     }
 
+    // Handle external jobs differently
+    if (jobPosting.source === 'database') {
+      handleExternalJobApplication();
+      return;
+    }
+
     setSubmitting(true);
     try {
-      console.log('📤 Submitting application...', {
+      console.log('📤 Submitting internal job application...', {
         jobId: jobPosting.id,
         userId: user?.id,
         resumeId: resumeToUse,
@@ -493,7 +502,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
         jobDescriptionId = newJobDesc.id;
       }
 
-      // Submit application
+      // Submit application to internal job
       const { error: applicationError } = await supabase
         .from('job_applications')
         .insert({
@@ -509,7 +518,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
         throw applicationError;
       }
 
-      console.log('✅ Application submitted successfully');
+      console.log('✅ Internal job application submitted successfully');
       setStep('success');
       
       toast({
@@ -532,6 +541,37 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleExternalJobApplication = () => {
+    // Save resume and cover letter data are already saved
+    // Just show external application step
+    setStep('external-apply');
+  };
+
+  const handleExternalApply = () => {
+    const externalUrl = jobPosting.apply_url || jobPosting.job_url;
+    
+    if (externalUrl) {
+      // Open external application in new tab
+      window.open(externalUrl, '_blank');
+      
+      // Redirect current tab to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+      
+      toast({
+        title: "Application Opened",
+        description: "External application opened in new tab. Your resume and cover letter are saved to your dashboard.",
+      });
+    } else {
+      toast({
+        title: "No Application URL",
+        description: "This job posting doesn't have an application URL.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -937,7 +977,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      Submit Application
+                      {jobPosting.source === 'database' ? 'Continue to External Site' : 'Submit Application'}
                     </>
                   )}
                 </Button>

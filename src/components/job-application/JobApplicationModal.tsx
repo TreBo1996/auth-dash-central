@@ -24,7 +24,7 @@ import { fetchStructuredResumeData } from '@/components/resume-templates/utils/f
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InlineFileUpload } from './InlineFileUpload';
-import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload, Save, Download, Edit, Target, Palette } from 'lucide-react';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload, Save, Download, Edit, Target, Palette, ExternalLink } from 'lucide-react';
 
 interface Resume {
   id: string;
@@ -37,6 +37,9 @@ interface JobPosting {
   title: string;
   description: string;
   requirements: string[];
+  source?: string;
+  job_url?: string;
+  apply_url?: string;
   employer_profile: {
     company_name: string;
   } | null;
@@ -59,7 +62,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'success'>('choose');
+  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'external-apply' | 'success'>('choose');
   const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
   
   // Resume management
@@ -537,9 +540,15 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       return;
     }
 
+    // Handle external jobs differently
+    if (jobPosting.source === 'database') {
+      handleExternalJobApplication();
+      return;
+    }
+
     setSubmitting(true);
     try {
-      console.log('📤 Submitting application...', {
+      console.log('📤 Submitting internal job application...', {
         jobId: jobPosting.id,
         userId: user?.id,
         resumeId: selectedResumeId || optimizedResumeId,
@@ -574,7 +583,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         jobDescriptionId = newJobDesc.id;
       }
 
-      // Submit application
+      // Submit application to internal job
       const { error: applicationError } = await supabase
         .from('job_applications')
         .insert({
@@ -590,7 +599,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         throw applicationError;
       }
 
-      console.log('✅ Application submitted successfully');
+      console.log('✅ Internal job application submitted successfully');
       setStep('success');
       
       toast({
@@ -613,6 +622,37 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleExternalJobApplication = () => {
+    // Save resume and cover letter data are already saved
+    // Just show external application step
+    setStep('external-apply');
+  };
+
+  const handleExternalApply = () => {
+    const externalUrl = jobPosting.apply_url || jobPosting.job_url;
+    
+    if (externalUrl) {
+      // Open external application in new tab
+      window.open(externalUrl, '_blank');
+      
+      // Redirect current tab to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+      
+      toast({
+        title: "Application Opened",
+        description: "External application opened in new tab. Your resume and cover letter are saved to your dashboard.",
+      });
+    } else {
+      toast({
+        title: "No Application URL",
+        description: "This job posting doesn't have an application URL.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1189,23 +1229,96 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     'No resume selected'
                   )}
                 </div>
+                  <Button 
+                    onClick={submitApplication}
+                    disabled={submitting || (!selectedResumeId && !optimizedResumeId)}
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        {jobPosting.source === 'database' ? 'Continue to External Site' : 'Submit Application'}
+                      </>
+                    )}
+                  </Button>
+              </div>
+            </div>
+          )}
+
+          {/* External Application Step */}
+          {step === 'external-apply' && (
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+                  <ExternalLink className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold">External Application</h3>
+                  <p className="text-muted-foreground">
+                    You'll be taken to the company's website to complete your application
+                  </p>
+                </div>
+              </div>
+
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-600" />
+                      <h4 className="font-semibold text-blue-900">What happens next:</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-blue-800">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        Your resume and cover letter are saved to your RezLit dashboard
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 text-blue-600" />
+                        A new tab will open with the job application page
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4 text-gray-600" />
+                        This tab will redirect to your dashboard
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Important</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      This will take you outside of RezLit to complete your application on the company's website.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
                 <Button 
-                  onClick={submitApplication}
-                  disabled={submitting || (!selectedResumeId && !optimizedResumeId)}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  variant="outline" 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1"
                 >
-                  {submitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Submit Application
-                    </>
-                  )}
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <Button 
+                  onClick={handleExternalApply}
+                  size="lg"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Apply on Company Site
                 </Button>
               </div>
             </div>
