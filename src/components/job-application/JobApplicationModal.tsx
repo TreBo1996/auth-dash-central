@@ -9,8 +9,22 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
+import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
+import { ContactSection } from '@/components/resume-editor/ContactSection';
+import { ExperienceSection } from '@/components/resume-editor/ExperienceSection';
+import { SkillsSection } from '@/components/resume-editor/SkillsSection';
+import { EducationSection } from '@/components/resume-editor/EducationSection';
+import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
+import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
+import { ResumePreview } from '@/components/resume-templates/ResumePreview';
+import { CoverLetterGenerator } from '@/components/CoverLetterGenerator';
+import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { InlineFileUpload } from './InlineFileUpload';
-import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload } from 'lucide-react';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload, Save, Download, Edit, Target, Palette } from 'lucide-react';
 
 interface Resume {
   id: string;
@@ -44,18 +58,42 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [step, setStep] = useState<'choose' | 'upload' | 'existing' | 'optimize' | 'review' | 'submit' | 'success'>('choose');
+  // Comprehensive workflow step management
+  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'success'>('choose');
   const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
+  
+  // Resume management
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
-  const [coverLetter, setCoverLetter] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
   const [optimizedResumeContent, setOptimizedResumeContent] = useState<string>('');
+  const [loadingResumes, setLoadingResumes] = useState(false);
+  
+  // Job description management
   const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
   const [creatingJobDescription, setCreatingJobDescription] = useState(false);
-  const [loadingResumes, setLoadingResumes] = useState(false);
-
+  
+  // ATS and optimization
+  const [atsScore, setAtsScore] = useState<number | undefined>();
+  const [atsFeedback, setAtsFeedback] = useState<any>(undefined);
+  
+  // Resume editing
+  const [editableResumeData, setEditableResumeData] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Template selection
+  const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
+  const [selectedColorScheme, setSelectedColorScheme] = useState('professional');
+  const [isExporting, setIsExporting] = useState(false);
+  
+  // Cover letter
+  const [coverLetter, setCoverLetter] = useState('');
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  
+  // Application submission
+  const [submitting, setSubmitting] = useState(false);
+  
+  const isMobile = useIsMobile();
   const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
 
   useEffect(() => {
@@ -200,15 +238,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const handleOptimizationComplete = async () => {
-    console.log('✅ Optimization complete, reloading resumes...');
-    // Reload resumes to get the newly created optimized resume
-    await loadResumes();
+    console.log('✅ Optimization complete, loading optimized resume...');
     
-    // Get the most recent optimized resume
+    // Get the most recent optimized resume and load its structured data
     try {
       const { data } = await supabase
         .from('optimized_resumes')
-        .select('id, generated_text')
+        .select('id, generated_text, ats_score, ats_feedback')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -218,7 +254,17 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         console.log('✅ Found optimized resume:', data.id);
         setOptimizedResumeId(data.id);
         setOptimizedResumeContent(data.generated_text || '');
-        setStep('review');
+        
+        // Set ATS data if available
+        if (data.ats_score) {
+          setAtsScore(data.ats_score);
+          setAtsFeedback(data.ats_feedback);
+        }
+        
+        // Load editable resume data for editor
+        await loadEditableResumeData(data.id);
+        
+        setStep('edit-resume');
       } else {
         console.log('⚠️ No optimized resume found, going to submit');
         setStep('submit');
@@ -229,9 +275,178 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     }
   };
 
-  const handleAcceptOptimizedResume = () => {
-    console.log('✅ User accepted optimized resume');
+  const loadEditableResumeData = async (resumeId: string) => {
+    try {
+      const structuredData = await fetchStructuredResumeData(resumeId);
+      setEditableResumeData(structuredData);
+      console.log('✅ Loaded structured resume data for editing');
+    } catch (error) {
+      console.error('Error loading structured resume data:', error);
+      // Fallback to basic structure
+      setEditableResumeData({
+        contact: { name: '', email: '', phone: '', location: '' },
+        experiences: [],
+        skills: [],
+        education: [],
+        certifications: []
+      });
+    }
+  };
+
+  const handleATSScoreUpdate = (newScore: number, newFeedback: any) => {
+    setAtsScore(newScore);
+    setAtsFeedback(newFeedback);
+  };
+
+  const handleResumeDataChange = (newData: any) => {
+    setEditableResumeData(newData);
+  };
+
+  const handleSaveResumeChanges = async () => {
+    if (!optimizedResumeId || !editableResumeData) return;
+    
+    setIsSaving(true);
+    try {
+      // Save all resume sections
+      await Promise.all([
+        // Save contact info by updating the main resume text
+        supabase
+          .from('optimized_resumes')
+          .update({ generated_text: JSON.stringify(editableResumeData) })
+          .eq('id', optimizedResumeId),
+        
+        // Save structured sections
+        editableResumeData.experiences?.length > 0 && 
+          supabase.from('resume_experiences').upsert(
+            editableResumeData.experiences.map((exp: any, index: number) => ({
+              optimized_resume_id: optimizedResumeId,
+              title: exp.title,
+              company: exp.company,
+              duration: exp.duration,
+              bullets: exp.bullets,
+              display_order: index
+            }))
+          ),
+        
+        editableResumeData.skills?.length > 0 &&
+          supabase.from('resume_skills').upsert(
+            editableResumeData.skills.map((skill: any, index: number) => ({
+              optimized_resume_id: optimizedResumeId,
+              category: skill.category,
+              items: skill.items,
+              display_order: index
+            }))
+          ),
+        
+        editableResumeData.education?.length > 0 &&
+          supabase.from('resume_education').upsert(
+            editableResumeData.education.map((edu: any, index: number) => ({
+              optimized_resume_id: optimizedResumeId,
+              school: edu.institution,
+              degree: edu.degree,
+              year: edu.year,
+              display_order: index
+            }))
+          ),
+        
+        editableResumeData.certifications?.length > 0 &&
+          supabase.from('resume_certifications').upsert(
+            editableResumeData.certifications.map((cert: any, index: number) => ({
+              optimized_resume_id: optimizedResumeId,
+              name: cert.name,
+              issuer: cert.issuer,
+              year: cert.year,
+              display_order: index
+            }))
+          )
+      ]);
+      
+      toast({
+        title: "Resume Saved",
+        description: "Your resume changes have been saved successfully."
+      });
+      
+      setStep('templates');
+    } catch (error) {
+      console.error('Error saving resume changes:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save resume changes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+  };
+
+  const handleColorSchemeSelect = (schemeId: string) => {
+    setSelectedColorScheme(schemeId);
+  };
+
+  const handleExportPDF = async () => {
+    if (!optimizedResumeId || !editableResumeData) {
+      toast({
+        title: "Export Error",
+        description: "No resume data available for export.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      const templateConfig = newTemplateConfigs[selectedTemplate];
+      const colorScheme = templateConfig.colorSchemes.find(
+        scheme => scheme.id === selectedColorScheme
+      );
+      
+      await generateNewProfessionalPDF(
+        selectedTemplate,
+        editableResumeData,
+        `${jobPosting.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_resume.pdf`,
+        selectedColorScheme
+      );
+      
+      toast({
+        title: "Resume Exported!",
+        description: "Your resume has been downloaded successfully."
+      });
+      
+      setStep('cover-letter');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export resume. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCoverLetterGenerated = (generatedLetter: string) => {
+    setCoverLetter(generatedLetter);
     setStep('submit');
+  };
+
+  const handleProceedWithExistingResume = async () => {
+    if (!selectedResumeId) return;
+    
+    console.log('✅ User chose existing resume, loading data for editing...');
+    try {
+      // Load the selected resume for editing
+      await loadEditableResumeData(selectedResumeId);
+      setOptimizedResumeId(selectedResumeId); // Use selected resume as the working resume
+      setStep('edit-resume');
+    } catch (error) {
+      console.error('Error loading resume data:', error);
+      setStep('submit'); // Fallback to direct submission
+    }
   };
 
   const handleViewFullResume = () => {
@@ -385,11 +600,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     switch (step) {
       case 'choose': return 1;
       case 'upload': return 2;
-      case 'existing': return 2;
-      case 'optimize': return 2;
-      case 'review': return 3;
-      case 'submit': return 4;
-      case 'success': return 5;
+      case 'ats-score': return 3;
+      case 'optimize': return 4;
+      case 'edit-resume': return 5;
+      case 'templates': return 6;
+      case 'cover-letter': return 7;
+      case 'submit': return 8;
+      case 'success': return 9;
       default: return 1;
     }
   };
@@ -406,11 +623,11 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
           </DialogDescription>
           
           {/* Progress Indicator */}
-          <div className="flex items-center space-x-2 mt-4">
-            {[1, 2, 3, 4, 5].map((num) => (
+          <div className="flex items-center space-x-1 mt-4 overflow-x-auto">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <div
                 key={num}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                   num <= getProgressStep()
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                     : 'bg-gray-200 text-gray-600'
@@ -436,7 +653,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card 
                     className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-blue-200"
-                    onClick={() => setStep('existing')}
+                    onClick={() => setStep('ats-score')}
                   >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -480,7 +697,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             </div>
           )}
 
-          {step === 'existing' && (
+          {step === 'ats-score' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Select Resume</h3>
@@ -534,14 +751,14 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     </SelectContent>
                   </Select>
 
-                  {selectedResumeId && (
-                    <Button 
-                      onClick={() => setStep('submit')}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
-                    >
-                      Continue to Application
-                    </Button>
-                  )}
+                   {selectedResumeId && (
+                     <Button 
+                       onClick={handleProceedWithExistingResume}
+                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                     >
+                       Continue with This Resume
+                     </Button>
+                   )}
                 </>
               )}
             </div>
@@ -582,14 +799,186 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             </div>
           )}
 
-          {
-            step === 'review' && (
-            <div className="space-y-4">
+
+          {step === 'edit-resume' && editableResumeData && (
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Review Optimized Resume</h3>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  Edit Resume
+                </h3>
                 <Button variant="outline" onClick={() => setStep('choose')}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
+                </Button>
+              </div>
+
+              {/* ATS Score Display */}
+              {atsScore && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-blue-700">
+                      <Target className="h-5 w-5" />
+                      Current ATS Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ATSScoreDisplay
+                      optimizedResumeId={optimizedResumeId}
+                      atsScore={atsScore}
+                      atsFeedback={atsFeedback}
+                      onScoreUpdate={handleATSScoreUpdate}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Resume Editor Sections */}
+              <div className="space-y-4">
+                <ContactSection
+                  contactInfo={editableResumeData.contact || { name: '', email: '', phone: '', location: '' }}
+                  onChange={(contact) => handleResumeDataChange({ ...editableResumeData, contact })}
+                />
+
+                <ExperienceSection
+                  experiences={editableResumeData.experiences || []}
+                  onChange={(experiences) => handleResumeDataChange({ ...editableResumeData, experiences })}
+                />
+
+                <SkillsSection
+                  skills={editableResumeData.skills || []}
+                  onChange={(skills) => handleResumeDataChange({ ...editableResumeData, skills })}
+                  jobDescriptionId={jobDescriptionId}
+                />
+
+                <EducationSection
+                  education={editableResumeData.education || []}
+                  onChange={(education) => handleResumeDataChange({ ...editableResumeData, education })}
+                />
+
+                <CertificationsSection
+                  certifications={editableResumeData.certifications || []}
+                  onChange={(certifications) => handleResumeDataChange({ ...editableResumeData, certifications })}
+                />
+              </div>
+
+              {/* Save and Continue */}
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  onClick={handleSaveResumeChanges} 
+                  disabled={isSaving}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-blue-600"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving Changes...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save & Continue to Templates
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 'templates' && editableResumeData && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Choose Template & Export
+                </h3>
+                <Button variant="outline" onClick={() => setStep('edit-resume')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Editor
+                </Button>
+              </div>
+
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
+                {/* Template and Color Selection */}
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Select Template</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TemplateSelector
+                        selectedTemplate={selectedTemplate}
+                        onTemplateSelect={handleTemplateSelect}
+                        isMobile={isMobile}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Color Scheme</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ColorSchemeSelector
+                        colorSchemes={newTemplateConfigs[selectedTemplate]?.colorSchemes || []}
+                        selectedScheme={selectedColorScheme}
+                        onSchemeSelect={handleColorSchemeSelect}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Button 
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    size="lg"
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Resume PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Resume Preview */}
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      <div className="border rounded-lg overflow-hidden">
+                        <ResumePreview
+                          template={selectedTemplate}
+                          resumeData={JSON.stringify(editableResumeData)}
+                          optimizedResumeId={optimizedResumeId}
+                          selectedColorScheme={selectedColorScheme}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 'cover-letter' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Generate Cover Letter
+                </h3>
+                <Button variant="outline" onClick={() => setStep('templates')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Templates
                 </Button>
               </div>
 
@@ -597,32 +986,30 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-5 w-5" />
-                    Resume Successfully Optimized!
+                    Resume Downloaded Successfully!
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Your resume has been optimized for this position. Here's a preview of the key changes:
+                <CardContent>
+                  <p className="text-sm text-green-700">
+                    Your optimized resume has been downloaded. Now let's create a personalized cover letter for this position.
                   </p>
-                  
-                  <div className="bg-white rounded-lg p-4 border max-h-60 overflow-y-auto">
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {optimizedResumeContent.slice(0, 500)}
-                      {optimizedResumeContent.length > 500 && '...'}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button onClick={handleViewFullResume} variant="outline" className="flex-1">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Full Resume
-                    </Button>
-                    <Button onClick={handleAcceptOptimizedResume} className="flex-1">
-                      Continue with Optimized Resume
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
+
+              <CoverLetterGenerator
+                onComplete={() => setStep('submit')}
+                onCancel={() => setStep('templates')}
+              />
+
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStep('submit')}
+                  className="flex-1"
+                >
+                  Skip Cover Letter
+                </Button>
+              </div>
             </div>
           )}
 
