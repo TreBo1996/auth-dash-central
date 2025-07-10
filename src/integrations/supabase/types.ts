@@ -1399,6 +1399,10 @@ export type Database = {
           relevance_score: number
         }[]
       }
+      get_employer_profile_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_job_statistics: {
         Args: Record<PropertyKey, never>
         Returns: Json
