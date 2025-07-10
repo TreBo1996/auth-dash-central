@@ -226,30 +226,8 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   console.log('Available job descriptions:', jobDescriptions.length);
   console.log('Selected resume ID:', selectedResumeId);
   console.log('Selected job desc ID:', selectedJobDescId);
-  if (availableResumes.length === 0) {
-    return <Card className="border-2 border-dashed border-gray-300">
-        <CardContent className="py-12 text-center">
-          <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500 mb-4">Upload a resume to get started with AI optimization</p>
-          <Button asChild>
-            <a href="/upload-resume">Upload Resume</a>
-          </Button>
-        </CardContent>
-      </Card>;
-  }
-  if (jobDescriptions.length === 0) {
-    return <Card className="border-2 border-dashed border-gray-300">
-        <CardContent className="py-12 text-center">
-          <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500 mb-4">Add a job description to optimize your resume</p>
-          <Button asChild>
-            <a href="/upload-job">Add Job Description</a>
-          </Button>
-        </CardContent>
-      </Card>;
-  }
   return <>
-      {/* Benefits Overview */}
+      {/* Benefits Overview - Always visible */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-900">
@@ -308,85 +286,107 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
         </CardContent>
       </Card>
 
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-600" />
-            <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              AI Resume Optimizer
-            </span>
-          </CardTitle>
-          <CardDescription>
-            Select a resume and job description to see your current ATS score and create an optimized version
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Select Resume</label>
-            <div className="relative z-[10]">
-              <Select value={selectedResumeId} onValueChange={handleResumeSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a resume to optimize" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableResumes.map(resume => <SelectItem key={resume.id} value={resume.id}>
-                      {resume.file_name || 'Untitled Resume'}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Select Job Description</label>
-            <div className="relative z-[9]">
-              <Select value={selectedJobDescId} onValueChange={handleJobDescSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a job description" />
-                </SelectTrigger>
-                <SelectContent>
-                  {jobDescriptions.map(jobDesc => <SelectItem key={jobDesc.id} value={jobDesc.id}>
-                      {jobDesc.company ? `${jobDesc.title} at ${jobDesc.company}` : jobDesc.title}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button onClick={handleAnalyzeATS} disabled={!selectedResumeId || !selectedJobDescId || isLoadingATS} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
-            {isLoadingATS ? <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Analyzing Current Score...
-              </> : <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Analyze & Optimize Resume
-              </>}
-          </Button>
-
-          {/* Usage limit info for free users */}
-          {!isPremium && usage.resume_optimizations && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                <span>
-                  {usage.resume_optimizations.current_usage}/{usage.resume_optimizations.limit} optimizations used this month
-                </span>
+      {/* Conditional content based on uploads */}
+      {availableResumes.length === 0 ? (
+        <Card className="border-2 border-dashed border-gray-300">
+          <CardContent className="py-12 text-center">
+            <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-4">Upload a resume to get started with AI optimization</p>
+            <Button asChild>
+              <a href="/upload-resume">Upload Resume</a>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : jobDescriptions.length === 0 ? (
+        <Card className="border-2 border-dashed border-gray-300">
+          <CardContent className="py-12 text-center">
+            <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-500 mb-4">Add a job description to optimize your resume</p>
+            <Button asChild>
+              <a href="/upload-job">Add Job Description</a>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                AI Resume Optimizer
+              </span>
+            </CardTitle>
+            <CardDescription>
+              Select a resume and job description to see your current ATS score and create an optimized version
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Resume</label>
+              <div className="relative z-[10]">
+                <Select value={selectedResumeId} onValueChange={handleResumeSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a resume to optimize" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableResumes.map(resume => <SelectItem key={resume.id} value={resume.id}>
+                        {resume.file_name || 'Untitled Resume'}
+                      </SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
-              {usage.resume_optimizations.limit_reached && (
-                <Button 
-                  size="sm" 
-                  onClick={() => setShowPaymentModal(true)}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                >
-                  <Zap className="h-3 w-3 mr-1" />
-                  Upgrade
-                </Button>
-              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Job Description</label>
+              <div className="relative z-[9]">
+                <Select value={selectedJobDescId} onValueChange={handleJobDescSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a job description" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {jobDescriptions.map(jobDesc => <SelectItem key={jobDesc.id} value={jobDesc.id}>
+                        {jobDesc.company ? `${jobDesc.title} at ${jobDesc.company}` : jobDesc.title}
+                      </SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button onClick={handleAnalyzeATS} disabled={!selectedResumeId || !selectedJobDescId || isLoadingATS} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
+              {isLoadingATS ? <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Analyzing Current Score...
+                </> : <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Analyze & Optimize Resume
+                </>}
+            </Button>
+
+            {/* Usage limit info for free users */}
+            {!isPremium && usage.resume_optimizations && (
+              <div className="flex items-center justify-between text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>
+                    {usage.resume_optimizations.current_usage}/{usage.resume_optimizations.limit} optimizations used this month
+                  </span>
+                </div>
+                {usage.resume_optimizations.limit_reached && (
+                  <Button 
+                    size="sm" 
+                    onClick={() => setShowPaymentModal(true)}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                  >
+                    <Zap className="h-3 w-3 mr-1" />
+                    Upgrade
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <ATSPreviewModal 
         isOpen={showATSModal} 
