@@ -57,6 +57,9 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   // Comprehensive workflow step management
   const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'external-apply' | 'success'>('upload');
   
+  // Track workflow intent for streamlined paths
+  const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
+  
   // Resume management
   const [uploadedResumeId, setUploadedResumeId] = useState<string>('');
   const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
@@ -161,6 +164,10 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
 
   const handleOptimizeClick = async () => {
     console.log('🎯 Optimize button clicked');
+    
+    // Mark this as an optimization workflow
+    setOriginalIntent('optimize');
+    
     const jobDescId = await createJobDescription();
     if (jobDescId) {
       console.log('✅ Job description ready, moving to optimize step');
@@ -169,16 +176,16 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   };
 
   const handleSkipOptimization = async () => {
-    console.log('⏭️ User chose to skip optimization, loading uploaded resume for editing...');
-    try {
-      // Load the uploaded resume for editing
-      await loadEditableResumeData(uploadedResumeId);
-      setOptimizedResumeId(uploadedResumeId); // Use uploaded resume as the working resume
-      setStep('edit-resume');
-    } catch (error) {
-      console.error('Error loading resume data:', error);
-      setStep('submit'); // Fallback to direct submission
-    }
+    console.log('⏭️ User chose to use existing resume, going directly to cover letter...');
+    
+    // Set the uploaded resume as our working resume
+    setOptimizedResumeId(uploadedResumeId);
+    
+    // Mark this as an existing resume workflow to skip editing steps
+    setOriginalIntent('existing');
+    
+    // Skip directly to cover letter generation
+    setStep('cover-letter');
   };
 
   const handleOptimizationComplete = async () => {
@@ -583,9 +590,24 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
     setOptimizedResumeId('');
     setOptimizedResumeContent('');
     setJobDescriptionId('');
+    setOriginalIntent(null);
   };
 
   const getProgressStep = () => {
+    // For existing resume workflow, use shorter progress
+    if (originalIntent === 'existing') {
+      switch (step) {
+        case 'upload': return 1;
+        case 'choose-optimization': return 2;
+        case 'cover-letter': return 3;
+        case 'submit': return 4;
+        case 'final-submit': return 4;
+        case 'success': return 4;
+        default: return 1;
+      }
+    }
+    
+    // Full optimization workflow
     switch (step) {
       case 'upload': return 1;
       case 'choose-optimization': return 2;
@@ -613,7 +635,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
           
           {/* Progress Indicator */}
           <div className="flex items-center space-x-1 mt-4 overflow-x-auto">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+            {(originalIntent === 'existing' ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 8]).map((num) => (
               <div
                 key={num}
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
@@ -685,12 +707,12 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
-                      Use As-Is
+                      Quick Apply
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      Apply with your uploaded resume without optimization
+                      Apply with your uploaded resume directly (Skip editing & templates)
                     </p>
                   </CardContent>
                 </Card>
@@ -861,7 +883,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                   <FileText className="h-5 w-5" />
                   Generate Cover Letter
                 </h3>
-                <Button variant="outline" onClick={() => setStep('templates')}>
+                <Button variant="outline" onClick={() => setStep(originalIntent === 'existing' ? 'choose-optimization' : 'templates')}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
