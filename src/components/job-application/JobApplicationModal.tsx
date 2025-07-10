@@ -103,6 +103,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       
       console.log('✅ Loaded resumes:', data?.length || 0);
       setResumes(data || []);
+      
+      // Check if user has no resumes - redirect to upload with optimize intent
+      if ((data?.length || 0) === 0) {
+        console.log('⚠️ No resumes found on apply, redirecting to upload with optimize intent');
+        setOriginalIntent('optimize');
+        setStep('upload');
+      }
     } catch (error) {
       console.error('Error loading resumes:', error);
       toast({
