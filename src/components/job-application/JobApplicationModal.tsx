@@ -9,7 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
-import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle } from 'lucide-react';
+import { InlineFileUpload } from './InlineFileUpload';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload } from 'lucide-react';
 
 interface Resume {
   id: string;
@@ -43,7 +44,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [step, setStep] = useState<'choose' | 'existing' | 'optimize' | 'review' | 'submit' | 'success'>('choose');
+  const [step, setStep] = useState<'choose' | 'upload' | 'existing' | 'optimize' | 'review' | 'submit' | 'success'>('choose');
+  const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [coverLetter, setCoverLetter] = useState('');
@@ -314,6 +316,38 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     }
   };
 
+  const handleUploadSuccess = async (resumeId: string) => {
+    console.log('✅ Resume uploaded successfully:', resumeId);
+    
+    // Reload resumes to include the new one
+    await loadResumes();
+    
+    // Set the newly uploaded resume as selected
+    setSelectedResumeId(resumeId);
+    
+    // Determine next step based on original intent
+    if (originalIntent === 'optimize') {
+      // User wanted to optimize, so proceed with optimization
+      const jobDescId = await createJobDescription();
+      if (jobDescId) {
+        setStep('optimize');
+      }
+    } else {
+      // User just wanted to upload, so go to submit step
+      setStep('submit');
+    }
+  };
+
+  const handleUploadAndOptimize = async () => {
+    setOriginalIntent('optimize');
+    setStep('upload');
+  };
+
+  const handleUploadOnly = () => {
+    setOriginalIntent('existing');
+    setStep('upload');
+  };
+
   const resetModal = () => {
     console.log('🔄 Resetting modal state');
     setStep('choose');
@@ -322,6 +356,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     setOptimizedResumeId('');
     setOptimizedResumeContent('');
     setJobDescriptionId('');
+    setOriginalIntent(null);
   };
 
   const availableResumes = resumes.filter(resume => resume.parsed_text);
@@ -334,6 +369,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const getProgressStep = () => {
     switch (step) {
       case 'choose': return 1;
+      case 'upload': return 2;
       case 'existing': return 2;
       case 'optimize': return 2;
       case 'review': return 3;
@@ -449,21 +485,21 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     </p>
                     <div className="space-y-2">
                       <Button 
-                        onClick={() => window.open('/upload-resume', '_blank')}
+                        onClick={handleUploadOnly}
                         className="bg-orange-600 hover:bg-orange-700"
                       >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Upload Resume
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Resume Here
                       </Button>
                       <p className="text-sm text-orange-600">or</p>
                       <Button 
-                        onClick={handleOptimizeClick} 
+                        onClick={handleUploadAndOptimize} 
                         disabled={creatingJobDescription}
                         variant="outline"
                         className="border-purple-200 text-purple-700 hover:bg-purple-50"
                       >
                         <Sparkles className="h-4 w-4 mr-2" />
-                        {creatingJobDescription ? 'Preparing...' : 'Create Optimized Resume Instead'}
+                        {creatingJobDescription ? 'Preparing...' : 'Upload & Optimize Resume'}
                       </Button>
                     </div>
                   </CardContent>
@@ -494,6 +530,13 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 </>
               )}
             </div>
+          )}
+
+          {step === 'upload' && (
+            <InlineFileUpload
+              onUploadSuccess={handleUploadSuccess}
+              onCancel={() => setStep('choose')}
+            />
           )}
 
           {step === 'optimize' && (
