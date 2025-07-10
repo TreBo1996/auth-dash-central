@@ -177,6 +177,15 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
   const handleOptimizeClick = async () => {
     console.log('🎯 Optimize button clicked');
+    
+    // Check if user has any resumes
+    if (availableResumes.length === 0) {
+      console.log('⚠️ No resumes available, redirecting to upload with optimize intent');
+      setOriginalIntent('optimize');
+      setStep('upload');
+      return;
+    }
+    
     const jobDescId = await createJobDescription();
     if (jobDescId) {
       console.log('✅ Job description ready, moving to optimize step');
