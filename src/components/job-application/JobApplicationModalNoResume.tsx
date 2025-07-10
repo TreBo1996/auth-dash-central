@@ -563,7 +563,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${step === 'templates' ? 'max-w-[95vw]' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle className="text-xl">Apply to {jobPosting.title}</DialogTitle>
           <DialogDescription className="text-lg">
