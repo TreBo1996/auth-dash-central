@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName?: string, redirectTo?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, redirectTo?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -72,14 +72,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, []); // Remove handleAuthStateChange from dependencies to prevent re-runs
 
-  const signUp = async (email: string, password: string, fullName?: string, redirectTo?: string) => {
+  const signUp = async (email: string, password: string, fullName: string, redirectTo?: string) => {
     // Remove redirect URL temporarily to avoid potential timeout issues
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: fullName || ''
+          full_name: fullName
         }
       }
     });

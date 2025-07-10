@@ -192,8 +192,8 @@ const Auth: React.FC = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!email || !password) {
-      setError('Please fill in all fields.');
+    if (!email || !password || !fullName.trim()) {
+      setError('Please fill in all required fields.');
       return;
     }
 
@@ -550,7 +550,7 @@ const Auth: React.FC = () => {
                   />
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name (Optional)</Label>
+                    <Label htmlFor="signup-name">Full Name *</Label>
                     <Input
                       id="signup-name"
                       type="text"
@@ -558,6 +558,7 @@ const Auth: React.FC = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
+                      required
                     />
                   </div>
                   
@@ -616,11 +617,11 @@ const Auth: React.FC = () => {
                     <span>Protected by smart bot detection</span>
                   </div>
                   
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
-                    disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short'}
-                  >
+                   <Button 
+                     type="submit" 
+                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
+                     disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short' || !fullName.trim()}
+                   >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

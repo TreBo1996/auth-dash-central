@@ -223,7 +223,7 @@ const EmployerAuth = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName.trim()) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
@@ -360,7 +360,7 @@ const EmployerAuth = () => {
                     <div className="space-y-2">
                       <Label htmlFor="fullName" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        Full Name
+                        Full Name *
                       </Label>
                       <div className="relative">
                         <Input
@@ -456,7 +456,7 @@ const EmployerAuth = () => {
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3"
-                  disabled={loading || !rateLimit.canAttempt || (!isLogin && (emailValid === false || passwordStrength === 'Too short'))}
+                  disabled={loading || !rateLimit.canAttempt || (!isLogin && (emailValid === false || passwordStrength === 'Too short' || !fullName.trim()))}
                   size="lg"
                 >
                   {loading ? (
