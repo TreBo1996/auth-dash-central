@@ -550,7 +550,7 @@ const Auth: React.FC = () => {
                   />
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name *</Label>
+                    <Label htmlFor="signup-name">Name *</Label>
                     <Input
                       id="signup-name"
                       type="text"
