@@ -57,6 +57,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const [loadingResumes, setLoadingResumes] = useState(false);
 
   const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
+  const availableResumes = resumes.filter(resume => resume.parsed_text);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -73,12 +74,14 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       step,
       userId: user?.id,
       resumesCount: resumes.length,
+      availableResumesCount: availableResumes.length,
       selectedResumeId,
       optimizedResumeId,
       jobDescriptionId,
+      originalIntent,
       submitting
     });
-  }, [isOpen, step, user, resumes.length, selectedResumeId, optimizedResumeId, jobDescriptionId, submitting]);
+  }, [isOpen, step, user, resumes.length, availableResumes.length, selectedResumeId, optimizedResumeId, jobDescriptionId, originalIntent, submitting]);
 
   const loadResumes = async () => {
     if (!user) {
@@ -176,7 +179,19 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const handleOptimizeClick = async () => {
-    console.log('🎯 Optimize button clicked');
+    console.log('🎯 Optimize button clicked - checking if user has resumes');
+    console.log('Available resumes:', availableResumes.length);
+    
+    // If user has no resumes, they need to upload one first
+    if (availableResumes.length === 0) {
+      console.log('No resumes found, redirecting to upload step');
+      setOriginalIntent('optimize');
+      setStep('upload');
+      return;
+    }
+    
+    // User has resumes, proceed with optimization
+    console.log('User has resumes, proceeding to optimize step');
     const jobDescId = await createJobDescription();
     if (jobDescId) {
       console.log('✅ Job description ready, moving to optimize step');
@@ -359,7 +374,6 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     setOriginalIntent(null);
   };
 
-  const availableResumes = resumes.filter(resume => resume.parsed_text);
   const jobDescriptions = jobDescriptionId ? [{
     id: jobDescriptionId,
     title: jobPosting.title,
