@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toTitleCase } from '@/lib/utils';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
 import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
-import { ExternalJobApplicationModal } from '@/components/job-application/ExternalJobApplicationModal';
+
 import { Header } from '@/components/layout/Header';
 import { UnifiedJob } from '@/types/job';
 import { 
@@ -67,7 +67,6 @@ const JobDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showNoResumeModal, setShowNoResumeModal] = useState(false);
-  const [showExternalModal, setShowExternalModal] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -242,47 +241,45 @@ const JobDetail: React.FC = () => {
       return;
     }
 
-    if (source === 'employer') {
-      if (hasApplied) {
-        toast({
-          title: "Already Applied",
-          description: "You have already applied for this position",
-        });
-        return;
-      }
+    // For employer jobs, check if already applied
+    if (source === 'employer' && hasApplied) {
+      toast({
+        title: "Already Applied",
+        description: "You have already applied for this position",
+      });
+      return;
+    }
+    
+    // Reset both modal states first
+    setShowApplicationModal(false);
+    setShowNoResumeModal(false);
+    
+    setCheckingResumes(true);
+    try {
+      const resumeCount = await checkUserResumes();
+      console.log('🔍 RESUME COUNT CHECK:', { 
+        userId: user.id, 
+        resumeCount, 
+        type: typeof resumeCount,
+        source: source
+      });
       
-      // Reset both modal states first
-      setShowApplicationModal(false);
-      setShowNoResumeModal(false);
-      
-      setCheckingResumes(true);
-      try {
-        const resumeCount = await checkUserResumes();
-        console.log('🔍 RESUME COUNT CHECK:', { 
-          userId: user.id, 
-          resumeCount, 
-          type: typeof resumeCount 
-        });
-        
-        if (resumeCount > 0) {
-          console.log('✅ SETTING: Application Modal (with resumes)');
-          setShowApplicationModal(true);
-        } else {
-          console.log('✅ SETTING: No-Resume Modal (no resumes)');
-          setShowNoResumeModal(true);
-        }
-      } catch (error) {
-        console.error('Error checking resumes:', error);
-        toast({
-          title: "Error",
-          description: "Failed to check your resumes. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setCheckingResumes(false);
+      if (resumeCount > 0) {
+        console.log('✅ SETTING: Application Modal (with resumes)');
+        setShowApplicationModal(true);
+      } else {
+        console.log('✅ SETTING: No-Resume Modal (no resumes)');
+        setShowNoResumeModal(true);
       }
-    } else {
-      setShowExternalModal(true);
+    } catch (error) {
+      console.error('Error checking resumes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check your resumes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setCheckingResumes(false);
     }
   };
 
@@ -803,7 +800,7 @@ const JobDetail: React.FC = () => {
       </main>
 
       {/* Application Modals */}
-      {source === 'employer' && showApplicationModal && (
+      {showApplicationModal && (
         <JobApplicationModal
           isOpen={showApplicationModal}
           onClose={() => setShowApplicationModal(false)}
@@ -812,20 +809,12 @@ const JobDetail: React.FC = () => {
         />
       )}
 
-      {source === 'employer' && showNoResumeModal && (
+      {showNoResumeModal && (
         <JobApplicationModalNoResume
           isOpen={showNoResumeModal}
           onClose={() => setShowNoResumeModal(false)}
           jobPosting={job as any}
           onApplicationSubmitted={handleApplicationSubmitted}
-        />
-      )}
-
-      {source === 'database' && showExternalModal && (
-        <ExternalJobApplicationModal
-          isOpen={showExternalModal}
-          onClose={() => setShowExternalModal(false)}
-          job={job}
         />
       )}
     </div>
