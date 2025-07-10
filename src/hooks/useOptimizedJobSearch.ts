@@ -24,9 +24,9 @@ interface UseOptimizedJobSearchReturn {
   clearCache: () => void;
 }
 
-// In-memory cache for search results
-const searchCache = new Map<string, { data: SearchResult; timestamp: number }>();
+// SessionStorage-based cache for persistence across tab switches
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_PREFIX = 'job-search-cache-';
 
 export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
   const [loading, setLoading] = useState(false);
@@ -44,16 +44,31 @@ export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
   };
 
   const getCachedResult = (cacheKey: string): SearchResult | null => {
-    const cached = searchCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      return cached.data;
+    try {
+      const cached = sessionStorage.getItem(CACHE_PREFIX + cacheKey);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          return data;
+        }
+        // Remove expired cache
+        sessionStorage.removeItem(CACHE_PREFIX + cacheKey);
+      }
+    } catch (error) {
+      console.error('Cache read error:', error);
     }
-    searchCache.delete(cacheKey);
     return null;
   };
 
   const setCachedResult = (cacheKey: string, data: SearchResult): void => {
-    searchCache.set(cacheKey, { data, timestamp: Date.now() });
+    try {
+      sessionStorage.setItem(CACHE_PREFIX + cacheKey, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (error) {
+      console.error('Cache write error:', error);
+    }
   };
 
   const searchJobs = useCallback(async (filters: SearchFilters): Promise<SearchResult> => {
@@ -146,7 +161,17 @@ export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
   }, []);
 
   const clearCache = useCallback(() => {
-    searchCache.clear();
+    try {
+      // Clear all job search cache entries
+      const keys = Object.keys(sessionStorage);
+      keys.forEach(key => {
+        if (key.startsWith(CACHE_PREFIX)) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.error('Cache clear error:', error);
+    }
   }, []);
 
   return {

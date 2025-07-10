@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { JobSearchForm } from '@/components/job-search/JobSearchForm';
 import { JobSearchResults } from '@/components/job-search/JobSearchResults';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,54 +21,81 @@ interface JobSearchFilters {
 }
 
 const JOBS_PER_PAGE = 10;
+const SEARCH_STATE_KEY = 'job-search-state';
 
 export const JobSearch: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [allJobs, setAllJobs] = useState<UnifiedJob[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [currentFilters, setCurrentFilters] = useState<JobSearchFilters | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   
   // Use the optimized search hook
   const { searchJobs, loading } = useOptimizedJobSearch();
 
-  // Basic frontend caching
-  const getCacheKey = (filters: JobSearchFilters) => {
-    return JSON.stringify({
-      query: filters.query || '',
-      location: filters.location || '',
-      remoteType: filters.remoteType || '',
-      employmentType: filters.employmentType || '',
-      seniorityLevel: filters.seniorityLevel || '',
-      company: filters.company || ''
-    });
+  // State persistence utilities
+  const saveSearchState = (filters: JobSearchFilters, jobs: UnifiedJob[], page: number, performed: boolean, warnings: string[]) => {
+    try {
+      const state = {
+        filters,
+        jobs,
+        currentPage: page,
+        searchPerformed: performed,
+        warnings,
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem(SEARCH_STATE_KEY, JSON.stringify(state));
+    } catch (error) {
+      console.error('Failed to save search state:', error);
+    }
   };
 
-  const getCachedResults = (cacheKey: string) => {
+  const loadSearchState = () => {
     try {
-      const cached = sessionStorage.getItem(`job-search-${cacheKey}`);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        // Cache valid for 5 minutes
-        if (Date.now() - timestamp < 5 * 60 * 1000) {
-          return data;
+      const saved = sessionStorage.getItem(SEARCH_STATE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        // Return state if it's less than 30 minutes old
+        if (Date.now() - state.timestamp < 30 * 60 * 1000) {
+          return state;
         }
       }
     } catch (error) {
-      console.error('Cache read error:', error);
+      console.error('Failed to load search state:', error);
     }
     return null;
   };
 
-  const setCachedResults = (cacheKey: string, data: UnifiedJob[]) => {
-    try {
-      sessionStorage.setItem(`job-search-${cacheKey}`, JSON.stringify({
-        data,
-        timestamp: Date.now()
-      }));
-    } catch (error) {
-      console.error('Cache write error:', error);
+  const updateURLParams = (filters: JobSearchFilters, page: number) => {
+    const newParams = new URLSearchParams();
+    if (filters.query) newParams.set('q', filters.query);
+    if (filters.location) newParams.set('location', filters.location);
+    if (filters.remoteType) newParams.set('remote', filters.remoteType);
+    if (filters.employmentType) newParams.set('type', filters.employmentType);
+    if (filters.seniorityLevel) newParams.set('level', filters.seniorityLevel);
+    if (filters.company) newParams.set('company', filters.company);
+    if (page > 1) newParams.set('page', page.toString());
+    
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const getFiltersFromURL = (): JobSearchFilters | null => {
+    const query = searchParams.get('q');
+    const location = searchParams.get('location');
+    
+    if (query || location) {
+      return {
+        query: query || '',
+        location: location || '',
+        remoteType: searchParams.get('remote') || undefined,
+        employmentType: searchParams.get('type') || undefined,
+        seniorityLevel: searchParams.get('level') || undefined,
+        company: searchParams.get('company') || undefined
+      };
     }
+    return null;
   };
 
   const formatSalary = (min: number, max: number, currency: string) => {
@@ -82,43 +110,74 @@ export const JobSearch: React.FC = () => {
   };
 
   const handleSearch = async (searchFilters: JobSearchFilters) => {
-    setCurrentPage(1); // Reset to first page on new search
+    const newPage = 1;
+    setCurrentPage(newPage);
+    setCurrentFilters(searchFilters);
     
     try {
-      // Check cache first
-      const cacheKey = getCacheKey(searchFilters);
-      const cachedResults = getCachedResults(cacheKey);
-      
-      if (cachedResults) {
-        setAllJobs(cachedResults);
-        setSearchPerformed(true);
-        setWarnings([]);
-        return;
-      }
-      
-      // Use unified search that includes employer jobs with highest priority
+      // Use optimized search
       const searchResult = await searchJobs(searchFilters);
-      
-      // Cache the results
-      setCachedResults(cacheKey, searchResult.jobs);
       
       setAllJobs(searchResult.jobs);
       setWarnings(searchResult.warnings);
       setSearchPerformed(true);
       
+      // Save state and update URL
+      saveSearchState(searchFilters, searchResult.jobs, newPage, true, searchResult.warnings);
+      updateURLParams(searchFilters, newPage);
+      
     } catch (error) {
       console.error('Search error:', error);
+      const errorWarnings = ['Search failed. Please try again.'];
       setAllJobs([]);
-      setWarnings(['Search failed. Please try again.']);
+      setWarnings(errorWarnings);
       setSearchPerformed(true);
+      
+      // Save error state
+      saveSearchState(searchFilters, [], newPage, true, errorWarnings);
     }
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    
+    // Update URL and save state
+    if (currentFilters) {
+      updateURLParams(currentFilters, page);
+      saveSearchState(currentFilters, allJobs, page, searchPerformed, warnings);
+    }
+    
     // Scroll to the results section
     resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  // Restore state on component mount
+  useEffect(() => {
+    // Check URL parameters first
+    const urlFilters = getFiltersFromURL();
+    const urlPage = parseInt(searchParams.get('page') || '1');
+    
+    if (urlFilters) {
+      // User came with URL parameters - perform search
+      setCurrentFilters(urlFilters);
+      setCurrentPage(urlPage);
+      handleSearch(urlFilters);
+      return;
+    }
+    
+    // Check saved state
+    const savedState = loadSearchState();
+    if (savedState) {
+      setCurrentFilters(savedState.filters);
+      setAllJobs(savedState.jobs);
+      setCurrentPage(savedState.currentPage);
+      setSearchPerformed(savedState.searchPerformed);
+      setWarnings(savedState.warnings);
+      
+      // Update URL to match restored state
+      updateURLParams(savedState.filters, savedState.currentPage);
+    }
+  }, []); // Only run on mount
 
   // Calculate pagination
   const totalJobs = allJobs.length;
