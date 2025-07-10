@@ -546,16 +546,16 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const handleProceedWithExistingResume = async () => {
     if (!selectedResumeId) return;
     
-    console.log('✅ User chose existing resume, loading data for editing...');
-    try {
-      // Load the selected resume for editing
-      await loadEditableResumeData(selectedResumeId);
-      setOptimizedResumeId(selectedResumeId); // Use selected resume as the working resume
-      setStep('edit-resume');
-    } catch (error) {
-      console.error('Error loading resume data:', error);
-      setStep('submit'); // Fallback to direct submission
-    }
+    console.log('✅ User chose existing resume, going directly to cover letter...');
+    
+    // Set the selected resume as our working resume
+    setOptimizedResumeId(selectedResumeId);
+    
+    // Mark this as an existing resume workflow to skip editing steps
+    setOriginalIntent('existing');
+    
+    // Skip directly to cover letter generation
+    setStep('cover-letter');
   };
 
   const handleViewFullResume = () => {
