@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toTitleCase } from '@/lib/utils';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
+import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
 import { ExternalJobApplicationModal } from '@/components/job-application/ExternalJobApplicationModal';
 import { Header } from '@/components/layout/Header';
 import { UnifiedJob } from '@/types/job';
@@ -65,10 +66,12 @@ const JobDetail: React.FC = () => {
   const [job, setJob] = useState<UnifiedJob | null>(null);
   const [loading, setLoading] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showNoResumeModal, setShowNoResumeModal] = useState(false);
   const [showExternalModal, setShowExternalModal] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [checkingResumes, setCheckingResumes] = useState(false);
 
   useEffect(() => {
     if (source && id) {
@@ -198,7 +201,24 @@ const JobDetail: React.FC = () => {
     return null;
   };
 
-  const handleApplyClick = () => {
+  const checkUserResumes = async () => {
+    if (!user) return 0;
+    
+    try {
+      const { data, error } = await supabase
+        .from('resumes')
+        .select('id')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Error checking user resumes:', error);
+      return 0;
+    }
+  };
+
+  const handleApplyClick = async () => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -217,7 +237,30 @@ const JobDetail: React.FC = () => {
         });
         return;
       }
-      setShowApplicationModal(true);
+      
+      // Check if user has resumes for employer jobs
+      setCheckingResumes(true);
+      try {
+        const resumeCount = await checkUserResumes();
+        console.log('📋 User has', resumeCount, 'resumes');
+        
+        if (resumeCount > 0) {
+          console.log('✅ Opening application modal (with resumes)');
+          setShowApplicationModal(true);
+        } else {
+          console.log('✅ Opening no-resume modal (no resumes)');
+          setShowNoResumeModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking resumes:', error);
+        toast({
+          title: "Error",
+          description: "Failed to check your resumes. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setCheckingResumes(false);
+      }
     } else {
       setShowExternalModal(true);
     }
@@ -284,6 +327,7 @@ const JobDetail: React.FC = () => {
   const handleApplicationSubmitted = () => {
     setHasApplied(true);
     setShowApplicationModal(false);
+    setShowNoResumeModal(false);
     toast({
       title: "Application Submitted!",
       description: "Your application has been sent to the employer."
@@ -477,20 +521,40 @@ const JobDetail: React.FC = () => {
                           <Button 
                             size="lg"
                             onClick={handleApplyClick}
+                            disabled={checkingResumes}
                             className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg"
                           >
-                            <Briefcase className="h-4 w-4 mr-2" />
-                            Apply Now
+                            {checkingResumes ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <Briefcase className="h-4 w-4 mr-2" />
+                                Apply Now
+                              </>
+                            )}
                           </Button>
                         )
                       ) : (
                         <Button 
                           size="lg"
                           onClick={handleApplyClick}
+                          disabled={checkingResumes}
                           className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg"
                         >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Apply
+                          {checkingResumes ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Apply
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -637,10 +701,20 @@ const JobDetail: React.FC = () => {
                           size="lg"
                           variant={user ? "default" : "outline"}
                           onClick={handleApplyClick}
+                          disabled={checkingResumes}
                           className={user ? "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white hover:from-blue-700 hover:via-indigo-700 hover:to-purple-800 shadow-lg" : ""}
                         >
-                          <Briefcase className="h-4 w-4 mr-2" />
-                          {source === 'employer' ? 'Apply Directly' : 'Apply Now'}
+                          {checkingResumes ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <Briefcase className="h-4 w-4 mr-2" />
+                              {source === 'employer' ? 'Apply Directly' : 'Apply Now'}
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -713,6 +787,15 @@ const JobDetail: React.FC = () => {
         <JobApplicationModal
           isOpen={showApplicationModal}
           onClose={() => setShowApplicationModal(false)}
+          jobPosting={job as any}
+          onApplicationSubmitted={handleApplicationSubmitted}
+        />
+      )}
+
+      {source === 'employer' && showNoResumeModal && (
+        <JobApplicationModalNoResume
+          isOpen={showNoResumeModal}
+          onClose={() => setShowNoResumeModal(false)}
           jobPosting={job as any}
           onApplicationSubmitted={handleApplicationSubmitted}
         />

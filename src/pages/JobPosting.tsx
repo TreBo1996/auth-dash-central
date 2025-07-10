@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
+import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
 import { 
   MapPin, 
   Building, 
@@ -61,7 +62,9 @@ const JobPosting: React.FC = () => {
   const [jobPosting, setJobPosting] = useState<JobPosting | null>(null);
   const [loading, setLoading] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showNoResumeModal, setShowNoResumeModal] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
+  const [checkingResumes, setCheckingResumes] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -169,7 +172,24 @@ const JobPosting: React.FC = () => {
     }
   };
 
-  const handleApplyClick = () => {
+  const checkUserResumes = async () => {
+    if (!user) return 0;
+    
+    try {
+      const { data, error } = await supabase
+        .from('resumes')
+        .select('id')
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Error checking user resumes:', error);
+      return 0;
+    }
+  };
+
+  const handleApplyClick = async () => {
     console.log('🎯 Apply button clicked:', {
       userId: user?.id,
       jobId: id,
@@ -196,14 +216,36 @@ const JobPosting: React.FC = () => {
       return;
     }
     
-    console.log('✅ Opening application modal');
-    setShowApplicationModal(true);
+    // Check if user has resumes
+    setCheckingResumes(true);
+    try {
+      const resumeCount = await checkUserResumes();
+      console.log('📋 User has', resumeCount, 'resumes');
+      
+      if (resumeCount > 0) {
+        console.log('✅ Opening application modal (with resumes)');
+        setShowApplicationModal(true);
+      } else {
+        console.log('✅ Opening no-resume modal (no resumes)');
+        setShowNoResumeModal(true);
+      }
+    } catch (error) {
+      console.error('Error checking resumes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check your resumes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setCheckingResumes(false);
+    }
   };
 
   const handleApplicationSubmitted = () => {
     console.log('✅ Application submitted successfully');
     setHasApplied(true);
     setShowApplicationModal(false);
+    setShowNoResumeModal(false);
     toast({
       title: "Application Submitted!",
       description: "Your application has been sent to the employer."
@@ -352,10 +394,20 @@ const JobPosting: React.FC = () => {
                     <Button 
                       size="lg"
                       onClick={handleApplyClick}
+                      disabled={checkingResumes}
                       className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 text-lg font-semibold shadow-lg"
                     >
-                      <Briefcase className="h-5 w-5 mr-2" />
-                      Apply Now
+                      {checkingResumes ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Checking...
+                        </>
+                      ) : (
+                        <>
+                          <Briefcase className="h-5 w-5 mr-2" />
+                          Apply Now
+                        </>
+                      )}
                     </Button>
                   )}
                 </div>
@@ -615,13 +667,25 @@ const JobPosting: React.FC = () => {
           )}
         </div>
 
-        {/* Application Modal */}
+        {/* Application Modals */}
         {showApplicationModal && jobPosting && (
           <JobApplicationModal
             isOpen={showApplicationModal}
             onClose={() => {
               console.log('🔄 Closing application modal');
               setShowApplicationModal(false);
+            }}
+            jobPosting={jobPosting}
+            onApplicationSubmitted={handleApplicationSubmitted}
+          />
+        )}
+        
+        {showNoResumeModal && jobPosting && (
+          <JobApplicationModalNoResume
+            isOpen={showNoResumeModal}
+            onClose={() => {
+              console.log('🔄 Closing no-resume modal');
+              setShowNoResumeModal(false);
             }}
             jobPosting={jobPosting}
             onApplicationSubmitted={handleApplicationSubmitted}
