@@ -60,8 +60,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
   useEffect(() => {
     if (isOpen && user) {
-      console.log('🔄 Modal opened, resetting modal and loading user resumes...');
-      resetModal();
+      console.log('🔄 Modal opened, loading user resumes...');
       loadResumes();
     }
   }, [isOpen, user]);
