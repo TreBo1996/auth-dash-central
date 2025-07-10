@@ -969,9 +969,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 </Button>
               </div>
 
-              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
-                {/* Template and Color Selection */}
-                <div className="space-y-4">
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-8`}>
+                {/* Template and Color Selection - Left Column */}
+                <div className="space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Select Template</CardTitle>
@@ -1018,8 +1018,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                   </Button>
                 </div>
 
-                {/* Resume Preview */}
-                <div className="space-y-4">
+                {/* Resume Preview - Takes up 2 columns */}
+                <div className="col-span-2 space-y-4">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Preview</CardTitle>

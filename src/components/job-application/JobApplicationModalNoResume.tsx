@@ -742,44 +742,73 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Template & Color Selection</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <TemplateSelector
-                      selectedTemplate={selectedTemplate}
-                      onTemplateSelect={handleTemplateSelect}
-                      isMobile={isMobile}
-                    />
-                    
-                    <ColorSchemeSelector
-                      colorSchemes={newTemplateConfigs[selectedTemplate]?.colorSchemes || []}
-                      selectedScheme={selectedColorScheme}
-                      onSchemeSelect={handleColorSchemeSelect}
-                    />
-                  </CardContent>
-                </Card>
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-8`}>
+                {/* Template and Color Selection - Left Column */}
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Select Template</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TemplateSelector
+                        selectedTemplate={selectedTemplate}
+                        onTemplateSelect={handleTemplateSelect}
+                        isMobile={isMobile}
+                      />
+                    </CardContent>
+                  </Card>
 
-                <Button 
-                  onClick={handleExportPDF}
-                  disabled={isExporting}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
-                  size="lg"
-                >
-                  {isExporting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Generating PDF...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Resume PDF
-                    </>
-                  )}
-                </Button>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Color Scheme</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ColorSchemeSelector
+                        colorSchemes={newTemplateConfigs[selectedTemplate]?.colorSchemes || []}
+                        selectedScheme={selectedColorScheme}
+                        onSchemeSelect={handleColorSchemeSelect}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Button 
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    size="lg"
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Resume PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Resume Preview - Takes up 2 columns */}
+                <div className="col-span-2 space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      <div className="border rounded-lg overflow-hidden">
+                        <ResumePreview
+                          template={selectedTemplate}
+                          resumeData={JSON.stringify(editableResumeData)}
+                          optimizedResumeId={optimizedResumeId}
+                          selectedColorScheme={selectedColorScheme}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </div>
           )}
