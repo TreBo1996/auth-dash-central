@@ -33,6 +33,7 @@ interface JobPosting {
   source?: string;
   job_url?: string;
   apply_url?: string;
+  company?: string;
   employer_profile: {
     company_name: string;
   } | null;
@@ -87,7 +88,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   const [submitting, setSubmitting] = useState(false);
   
   const isMobile = useIsMobile();
-  const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
+  const companyName = jobPosting.employer_profile?.company_name || jobPosting.company || 'Company Name Not Available';
 
   useEffect(() => {
     if (isOpen && user) {
@@ -606,6 +607,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
         case 'cover-letter': return 3;
         case 'submit': return 4;
         case 'final-submit': return 4;
+        case 'external-apply': return 4;
         case 'success': return 4;
         default: return 1;
       }
@@ -621,6 +623,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
       case 'cover-letter': return 6;
       case 'submit': return 7;
       case 'final-submit': return 7;
+      case 'external-apply': return 7;
       case 'success': return 8;
       default: return 1;
     }
@@ -1006,6 +1009,79 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                       {jobPosting.source === 'database' ? 'Continue to External Site' : 'Submit Application'}
                     </>
                   )}
+                </Button>
+              </div>
+            </div>
+           )}
+
+          {/* External Application Step */}
+          {step === 'external-apply' && (
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+                  <ExternalLink className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold">External Application</h3>
+                  <p className="text-muted-foreground">
+                    You'll be taken to the company's website to complete your application
+                  </p>
+                </div>
+              </div>
+
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-600" />
+                      <h4 className="font-semibold text-blue-900">What happens next:</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-blue-800">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        Your resume and cover letter are saved to your RezLit dashboard
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 text-blue-600" />
+                        A new tab will open with the job application page
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4 text-gray-600" />
+                        This tab will redirect to your dashboard
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Important</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      This will take you outside of RezLit to complete your application on the company's website.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <Button 
+                  onClick={handleExternalApply}
+                  size="lg"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Apply on Company Site
                 </Button>
               </div>
             </div>

@@ -42,6 +42,7 @@ interface JobPosting {
   source?: string;
   job_url?: string;
   apply_url?: string;
+  company?: string;
   employer_profile: {
     company_name: string;
   } | null;
@@ -99,7 +100,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   
   const isMobile = useIsMobile();
-  const companyName = jobPosting.employer_profile?.company_name || 'Company Name Not Available';
+  const companyName = jobPosting.employer_profile?.company_name || jobPosting.company || 'Company Name Not Available';
 
   useEffect(() => {
     if (isOpen && user) {
