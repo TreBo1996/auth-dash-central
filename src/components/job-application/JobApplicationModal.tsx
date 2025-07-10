@@ -277,15 +277,48 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
   const loadEditableResumeData = async (resumeId: string) => {
     try {
+      console.log('🔄 Loading structured resume data for editing...');
       const structuredData = await fetchStructuredResumeData(resumeId);
-      setEditableResumeData(structuredData);
-      console.log('✅ Loaded structured resume data for editing');
+      
+      // Transform StructuredResumeData to EditableResumeData format (same as ResumeEditor.tsx)
+      const editableData = {
+        contactInfo: {
+          name: structuredData.name || 'Professional Name',
+          email: structuredData.email || '',
+          phone: structuredData.phone || '',
+          location: structuredData.location || ''
+        },
+        summary: structuredData.summary || '',
+        experience: structuredData.experience.map(exp => ({
+          title: exp.title || 'Job Title',
+          company: exp.company || 'Company Name',
+          duration: exp.duration || '2023 - 2024',
+          bullets: exp.bullets || ['Job responsibility']
+        })),
+        skills: structuredData.skills || [],
+        education: structuredData.education.map(edu => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          institution: edu.school || 'University Name',
+          degree: edu.degree || 'Degree',
+          year: edu.year || '2020'
+        })),
+        certifications: structuredData.certifications?.map(cert => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: cert.name || 'Certification Name',
+          issuer: cert.issuer || 'Issuing Organization',
+          year: cert.year || '2023'
+        })) || []
+      };
+      
+      setEditableResumeData(editableData);
+      console.log('✅ Loaded and transformed resume data for editing');
     } catch (error) {
       console.error('Error loading structured resume data:', error);
       // Fallback to basic structure
       setEditableResumeData({
-        contact: { name: '', email: '', phone: '', location: '' },
-        experiences: [],
+        contactInfo: { name: '', email: '', phone: '', location: '' },
+        summary: '',
+        experience: [],
         skills: [],
         education: [],
         certifications: []
@@ -307,59 +340,96 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     
     setIsSaving(true);
     try {
-      // Save all resume sections
-      await Promise.all([
-        // Save contact info by updating the main resume text
-        supabase
-          .from('optimized_resumes')
-          .update({ generated_text: JSON.stringify(editableResumeData) })
-          .eq('id', optimizedResumeId),
-        
-        // Save structured sections
-        editableResumeData.experiences?.length > 0 && 
-          supabase.from('resume_experiences').upsert(
-            editableResumeData.experiences.map((exp: any, index: number) => ({
-              optimized_resume_id: optimizedResumeId,
-              title: exp.title,
-              company: exp.company,
-              duration: exp.duration,
-              bullets: exp.bullets,
-              display_order: index
-            }))
-          ),
-        
-        editableResumeData.skills?.length > 0 &&
-          supabase.from('resume_skills').upsert(
-            editableResumeData.skills.map((skill: any, index: number) => ({
-              optimized_resume_id: optimizedResumeId,
-              category: skill.category,
-              items: skill.items,
-              display_order: index
-            }))
-          ),
-        
-        editableResumeData.education?.length > 0 &&
-          supabase.from('resume_education').upsert(
-            editableResumeData.education.map((edu: any, index: number) => ({
-              optimized_resume_id: optimizedResumeId,
-              school: edu.institution,
-              degree: edu.degree,
-              year: edu.year,
-              display_order: index
-            }))
-          ),
-        
-        editableResumeData.certifications?.length > 0 &&
-          supabase.from('resume_certifications').upsert(
-            editableResumeData.certifications.map((cert: any, index: number) => ({
-              optimized_resume_id: optimizedResumeId,
-              name: cert.name,
-              issuer: cert.issuer,
-              year: cert.year,
-              display_order: index
-            }))
-          )
-      ]);
+      // Save contact info to resume_sections
+      const { error: contactError } = await supabase
+        .from('resume_sections')
+        .upsert({
+          optimized_resume_id: optimizedResumeId,
+          section_type: 'contact',
+          content: {
+            name: editableResumeData.contactInfo.name,
+            email: editableResumeData.contactInfo.email,
+            phone: editableResumeData.contactInfo.phone,
+            location: editableResumeData.contactInfo.location
+          }
+        }, {
+          onConflict: 'optimized_resume_id,section_type'
+        });
+      if (contactError) throw contactError;
+
+      // Save summary to resume_sections
+      const { error: summaryError } = await supabase
+        .from('resume_sections')
+        .upsert({
+          optimized_resume_id: optimizedResumeId,
+          section_type: 'summary',
+          content: {
+            summary: editableResumeData.summary
+          }
+        }, {
+          onConflict: 'optimized_resume_id,section_type'
+        });
+      if (summaryError) throw summaryError;
+
+      // Delete existing experiences and insert new ones
+      await supabase.from('resume_experiences').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.experience.length > 0) {
+        const { error: expError } = await supabase
+          .from('resume_experiences')
+          .insert(editableResumeData.experience.map((exp: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            title: exp.title,
+            company: exp.company,
+            duration: exp.duration,
+            bullets: exp.bullets,
+            display_order: index
+          })));
+        if (expError) throw expError;
+      }
+
+      // Delete existing skills and insert new ones
+      await supabase.from('resume_skills').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.skills.length > 0) {
+        const { error: skillsError } = await supabase
+          .from('resume_skills')
+          .insert(editableResumeData.skills.map((skill: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            category: skill.category,
+            items: skill.items,
+            display_order: index
+          })));
+        if (skillsError) throw skillsError;
+      }
+
+      // Delete existing education and insert new ones
+      await supabase.from('resume_education').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.education.length > 0) {
+        const { error: eduError } = await supabase
+          .from('resume_education')
+          .insert(editableResumeData.education.map((edu: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            degree: edu.degree,
+            school: edu.institution,
+            year: edu.year,
+            display_order: index
+          })));
+        if (eduError) throw eduError;
+      }
+
+      // Delete existing certifications and insert new ones
+      await supabase.from('resume_certifications').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.certifications.length > 0) {
+        const { error: certError } = await supabase
+          .from('resume_certifications')
+          .insert(editableResumeData.certifications.map((cert: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            name: cert.name,
+            issuer: cert.issuer,
+            year: cert.year,
+            display_order: index
+          })));
+        if (certError) throw certError;
+      }
       
       toast({
         title: "Resume Saved",
@@ -835,15 +905,16 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
               {/* Resume Editor Sections */}
               <div className="space-y-4">
-                <ContactSection
-                  contactInfo={editableResumeData.contact || { name: '', email: '', phone: '', location: '' }}
-                  onChange={(contact) => handleResumeDataChange({ ...editableResumeData, contact })}
-                />
+                 <ContactSection
+                   contactInfo={editableResumeData.contactInfo || { name: '', email: '', phone: '', location: '' }}
+                   onChange={(contactInfo) => handleResumeDataChange({ ...editableResumeData, contactInfo })}
+                 />
 
-                <ExperienceSection
-                  experiences={editableResumeData.experiences || []}
-                  onChange={(experiences) => handleResumeDataChange({ ...editableResumeData, experiences })}
-                />
+                 <ExperienceSection
+                   experiences={editableResumeData.experience || []}
+                   onChange={(experience) => handleResumeDataChange({ ...editableResumeData, experience })}
+                   jobDescriptionId={jobDescriptionId}
+                 />
 
                 <SkillsSection
                   skills={editableResumeData.skills || []}
