@@ -184,8 +184,12 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
     // Mark this as an existing resume workflow to skip editing steps
     setOriginalIntent('existing');
     
-    // Skip directly to cover letter generation
-    setStep('cover-letter');
+    // Create job description for cover letter generation
+    const jobDescId = await createJobDescription();
+    if (jobDescId) {
+      console.log('✅ Job description ready for cover letter generation');
+      setStep('cover-letter');
+    }
   };
 
   const handleOptimizationComplete = async () => {
