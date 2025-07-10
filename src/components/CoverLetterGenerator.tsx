@@ -32,7 +32,7 @@ interface JobDescription {
 }
 
 interface CoverLetterGeneratorProps {
-  onComplete: () => void;
+  onComplete: (generatedText: string) => void;
   onCancel: () => void;
 }
 
@@ -330,7 +330,7 @@ export const CoverLetterGenerator: React.FC<CoverLetterGeneratorProps> = ({
         title: "Success",
         description: "Cover letter saved successfully!"
       });
-      onComplete();
+      onComplete(generatedText);
     } catch (error) {
       console.error('Error saving cover letter:', error);
       toast({

@@ -59,7 +59,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'success'>('choose');
+  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'success'>('choose');
   const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
   
   // Resume management
@@ -499,9 +499,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     }
   };
 
-  const handleCoverLetterGenerated = (generatedLetter: string) => {
-    setCoverLetter(generatedLetter);
-    setStep('submit');
+  const handleCoverLetterGenerated = (generatedText: string) => {
+    setCoverLetter(generatedText);
+    setStep('final-submit');
   };
 
   const handleProceedWithExistingResume = async () => {
@@ -676,6 +676,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       case 'templates': return 6;
       case 'cover-letter': return 7;
       case 'submit': return 8;
+      case 'final-submit': return 8;
       case 'success': return 9;
       default: return 1;
     }
@@ -1068,7 +1069,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
               </Card>
 
               <CoverLetterGenerator
-                onComplete={() => setStep('submit')}
+                onComplete={handleCoverLetterGenerated}
                 onCancel={() => setStep('templates')}
               />
 
@@ -1087,8 +1088,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
           {step === 'submit' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Finalize Application</h3>
-                <Button variant="outline" onClick={() => setStep('choose')}>
+                <h3 className="text-lg font-semibold">Write Cover Letter (Optional)</h3>
+                <Button variant="outline" onClick={() => setStep('cover-letter')}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
@@ -1137,6 +1138,75 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     )}
                   </Button>
                 </div>
+              </div>
+            </div>
+           )}
+
+          {step === 'final-submit' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Finalize Application</h3>
+                <Button variant="outline" onClick={() => setStep('cover-letter')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              {coverLetter && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      AI-Generated Cover Letter Ready
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-white rounded p-4 border border-green-200 max-h-48 overflow-y-auto">
+                      <p className="text-sm whitespace-pre-wrap">{coverLetter}</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => setStep('submit')}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Cover Letter
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between items-center pt-4">
+                <div className="text-sm text-muted-foreground">
+                  {optimizedResumeId ? (
+                    <span className="text-green-600 font-medium">✓ Using AI-optimized resume</span>
+                  ) : selectedResumeId ? (
+                    'Using selected resume'
+                  ) : (
+                    'No resume selected'
+                  )}
+                </div>
+                <Button 
+                  onClick={submitApplication}
+                  disabled={submitting || (!selectedResumeId && !optimizedResumeId)}
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Submit Application
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           )}

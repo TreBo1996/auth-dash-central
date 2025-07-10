@@ -52,7 +52,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'success'>('upload');
+  const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'success'>('upload');
   
   // Resume management
   const [uploadedResumeId, setUploadedResumeId] = useState<string>('');
@@ -554,6 +554,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
       case 'templates': return 5;
       case 'cover-letter': return 6;
       case 'submit': return 7;
+      case 'final-submit': return 7;
       case 'success': return 8;
       default: return 1;
     }
@@ -827,7 +828,10 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
               </div>
 
               <CoverLetterGenerator
-                onComplete={() => setStep('submit')}
+                onComplete={(generatedText: string) => {
+                  setCoverLetter(generatedText);
+                  setStep('final-submit');
+                }}
                 onCancel={() => setStep('templates')}
               />
             </div>
@@ -869,6 +873,75 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                   </>
                 )}
               </Button>
+            </div>
+           )}
+
+          {step === 'final-submit' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Finalize Application</h3>
+                <Button variant="outline" onClick={() => setStep('cover-letter')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              {coverLetter && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      AI-Generated Cover Letter Ready
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-white rounded p-4 border border-green-200 max-h-48 overflow-y-auto">
+                      <p className="text-sm whitespace-pre-wrap">{coverLetter}</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => setStep('submit')}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Cover Letter
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between items-center pt-4">
+                <div className="text-sm text-muted-foreground">
+                  {optimizedResumeId ? (
+                    <span className="text-green-600 font-medium">✓ Using AI-optimized resume</span>
+                  ) : uploadedResumeId ? (
+                    'Using uploaded resume'
+                  ) : (
+                    'No resume selected'
+                  )}
+                </div>
+                <Button 
+                  onClick={submitApplication}
+                  disabled={submitting || (!uploadedResumeId && !optimizedResumeId)}
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Submit Application
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
