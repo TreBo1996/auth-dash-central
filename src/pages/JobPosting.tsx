@@ -173,7 +173,12 @@ const JobPosting: React.FC = () => {
   };
 
   const checkUserResumes = async () => {
-    if (!user) return 0;
+    if (!user) {
+      console.log('🔍 No user found, returning 0 resumes');
+      return 0;
+    }
+    
+    console.log('🔍 Checking resumes for user:', user.id);
     
     try {
       const { data, error } = await supabase
@@ -181,10 +186,18 @@ const JobPosting: React.FC = () => {
         .select('id')
         .eq('user_id', user.id);
       
-      if (error) throw error;
-      return data?.length || 0;
+      console.log('🔍 Resume query result:', { data, error, count: data?.length });
+      
+      if (error) {
+        console.error('❌ Resume check error:', error);
+        throw error;
+      }
+      
+      const count = data?.length || 0;
+      console.log('🔍 Final resume count:', count);
+      return count;
     } catch (error) {
-      console.error('Error checking user resumes:', error);
+      console.error('❌ Error checking user resumes:', error);
       return 0;
     }
   };
@@ -216,17 +229,24 @@ const JobPosting: React.FC = () => {
       return;
     }
     
-    // Check if user has resumes
+    // Reset both modal states first
+    setShowApplicationModal(false);
+    setShowNoResumeModal(false);
+    
     setCheckingResumes(true);
     try {
       const resumeCount = await checkUserResumes();
-      console.log('📋 User has', resumeCount, 'resumes');
+      console.log('🔍 RESUME COUNT CHECK:', { 
+        userId: user.id, 
+        resumeCount, 
+        type: typeof resumeCount 
+      });
       
       if (resumeCount > 0) {
-        console.log('✅ Opening application modal (with resumes)');
+        console.log('✅ SETTING: Application Modal (with resumes)');
         setShowApplicationModal(true);
       } else {
-        console.log('✅ Opening no-resume modal (no resumes)');
+        console.log('✅ SETTING: No-Resume Modal (no resumes)');
         setShowNoResumeModal(true);
       }
     } catch (error) {
