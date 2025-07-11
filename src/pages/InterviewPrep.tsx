@@ -471,13 +471,13 @@ const InterviewPrep: React.FC = () => {
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="new-interview" className="flex items-center gap-2">
-                <Play className="h-4 w-4" />
-                New Interview
-              </TabsTrigger>
               <TabsTrigger value="tips" className="flex items-center gap-2">
                 <Lightbulb className="h-4 w-4" />
                 Interview Tips
+              </TabsTrigger>
+              <TabsTrigger value="new-interview" className="flex items-center gap-2">
+                <Play className="h-4 w-4" />
+                New Mock Interview
               </TabsTrigger>
               <TabsTrigger value="history" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
