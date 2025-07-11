@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -378,10 +377,14 @@ const InterviewPrep: React.FC = () => {
           />
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="new-interview" className="flex items-center gap-2">
                 <Play className="h-4 w-4" />
                 New Interview
+              </TabsTrigger>
+              <TabsTrigger value="tips" className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                Interview Tips
               </TabsTrigger>
               <TabsTrigger value="history" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
@@ -470,6 +473,263 @@ const InterviewPrep: React.FC = () => {
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
+
+            <TabsContent value="tips" className="space-y-6">
+              {/* Interview Tips Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Interview Tips & Insights</CardTitle>
+                  <CardDescription>
+                    Get strategic advice for your job interviews based on selected job descriptions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!jobDescriptions || jobDescriptions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">
+                        Upload a job description first to get personalized interview tips.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Select value={selectedJobId} onValueChange={setSelectedJobId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a job description for tips..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {jobDescriptions.map((job) => (
+                            <SelectItem key={job.id} value={job.id}>
+                              {job.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {selectedJob && (
+                        <div className="space-y-4 mt-6">
+                          {/* Job Analysis Section */}
+                          <Collapsible defaultOpen={true}>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                  <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Target className="h-5 w-5 text-blue-600" />
+                                      Job Analysis & Key Focus Areas
+                                    </div>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </CardTitle>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="space-y-4">
+                                  <div className="bg-blue-50 p-4 rounded-lg">
+                                    <h4 className="font-semibold text-blue-900 mb-3">Role: {selectedJob.title}</h4>
+                                    <div className="grid gap-3 md:grid-cols-2">
+                                      <div>
+                                        <h5 className="font-medium text-blue-800 mb-2">Key Preparation Areas:</h5>
+                                        <ul className="text-sm text-blue-700 space-y-1">
+                                          <li>• Research the company's mission and recent news</li>
+                                          <li>• Review technical skills mentioned in the job description</li>
+                                          <li>• Prepare examples showcasing relevant experience</li>
+                                          <li>• Practice explaining complex projects simply</li>
+                                        </ul>
+                                      </div>
+                                      <div>
+                                        <h5 className="font-medium text-blue-800 mb-2">What to Emphasize:</h5>
+                                        <ul className="text-sm text-blue-700 space-y-1">
+                                          <li>• Problem-solving abilities and methodology</li>
+                                          <li>• Team collaboration and communication skills</li>
+                                          <li>• Adaptability and learning agility</li>
+                                          <li>• Results and measurable achievements</li>
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+
+                          {/* Question Categories */}
+                          <Collapsible>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                  <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <HelpCircle className="h-5 w-5 text-purple-600" />
+                                      Expected Question Categories
+                                    </div>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </CardTitle>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="space-y-4">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="bg-purple-50 p-4 rounded-lg">
+                                      <h5 className="font-medium text-purple-900 mb-2">Behavioral Questions</h5>
+                                      <ul className="text-sm text-purple-700 space-y-1">
+                                        <li>• "Tell me about a time when..."</li>
+                                        <li>• Leadership and teamwork scenarios</li>
+                                        <li>• Conflict resolution examples</li>
+                                        <li>• Failure and learning experiences</li>
+                                      </ul>
+                                    </div>
+                                    <div className="bg-green-50 p-4 rounded-lg">
+                                      <h5 className="font-medium text-green-900 mb-2">Technical/Role-Specific</h5>
+                                      <ul className="text-sm text-green-700 space-y-1">
+                                        <li>• Industry knowledge and trends</li>
+                                        <li>• Tools and technologies you've used</li>
+                                        <li>• Problem-solving methodologies</li>
+                                        <li>• Best practices in your field</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+
+                          {/* Talking Points */}
+                          <Collapsible>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                  <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-5 w-5 text-orange-600" />
+                                      Your Talking Points & Stories
+                                    </div>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </CardTitle>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="space-y-4">
+                                  <div className="bg-orange-50 p-4 rounded-lg">
+                                    <h5 className="font-medium text-orange-900 mb-3">Prepare 3-5 STAR Stories</h5>
+                                    <div className="space-y-3">
+                                      <div>
+                                        <h6 className="font-medium text-orange-800">1. Leadership Example</h6>
+                                        <p className="text-sm text-orange-700">A time you led a project or team to success</p>
+                                      </div>
+                                      <div>
+                                        <h6 className="font-medium text-orange-800">2. Problem-Solving Achievement</h6>
+                                        <p className="text-sm text-orange-700">How you overcame a significant challenge</p>
+                                      </div>
+                                      <div>
+                                        <h6 className="font-medium text-orange-800">3. Collaboration Success</h6>
+                                        <p className="text-sm text-orange-700">Working effectively with others</p>
+                                      </div>
+                                      <div>
+                                        <h6 className="font-medium text-orange-800">4. Learning & Growth</h6>
+                                        <p className="text-sm text-orange-700">How you adapted or learned new skills</p>
+                                      </div>
+                                      <div>
+                                        <h6 className="font-medium text-orange-800">5. Quantifiable Impact</h6>
+                                        <p className="text-sm text-orange-700">Results with specific numbers/metrics</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+
+                          {/* Questions to Ask */}
+                          <Collapsible>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                  <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Lightbulb className="h-5 w-5 text-yellow-600" />
+                                      Smart Questions to Ask Interviewers
+                                    </div>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </CardTitle>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="space-y-4">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="bg-yellow-50 p-4 rounded-lg">
+                                      <h5 className="font-medium text-yellow-900 mb-2">About the Role</h5>
+                                      <ul className="text-sm text-yellow-700 space-y-1">
+                                        <li>• "What does a typical day look like?"</li>
+                                        <li>• "What are the biggest challenges?"</li>
+                                        <li>• "How do you measure success?"</li>
+                                        <li>• "What opportunities for growth exist?"</li>
+                                      </ul>
+                                    </div>
+                                    <div className="bg-indigo-50 p-4 rounded-lg">
+                                      <h5 className="font-medium text-indigo-900 mb-2">About the Team & Culture</h5>
+                                      <ul className="text-sm text-indigo-700 space-y-1">
+                                        <li>• "How would you describe the team dynamic?"</li>
+                                        <li>• "What do you enjoy most about working here?"</li>
+                                        <li>• "How does the company support professional development?"</li>
+                                        <li>• "What are the company's priorities this year?"</li>
+                                      </ul>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+
+                          {/* Final Tips */}
+                          <Collapsible>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                  <CardTitle className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <TrendingUp className="h-5 w-5 text-green-600" />
+                                      Final Interview Tips
+                                    </div>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </CardTitle>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="space-y-4">
+                                  <div className="bg-green-50 p-4 rounded-lg">
+                                    <h5 className="font-medium text-green-900 mb-3">Day-of-Interview Checklist</h5>
+                                    <div className="grid gap-3 md:grid-cols-2">
+                                      <div>
+                                        <h6 className="font-medium text-green-800 mb-2">Before the Interview:</h6>
+                                        <ul className="text-sm text-green-700 space-y-1">
+                                          <li>• Research recent company news</li>
+                                          <li>• Review your resume and their job posting</li>
+                                          <li>• Prepare physical/digital copies of materials</li>
+                                          <li>• Plan your route and arrive 10-15 min early</li>
+                                        </ul>
+                                      </div>
+                                      <div>
+                                        <h6 className="font-medium text-green-800 mb-2">During the Interview:</h6>
+                                        <ul className="text-sm text-green-700 space-y-1">
+                                          <li>• Make eye contact and smile genuinely</li>
+                                          <li>• Listen actively and ask clarifying questions</li>
+                                          <li>• Take notes to show engagement</li>
+                                          <li>• End by asking about next steps</li>
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="history" className="space-y-6">
