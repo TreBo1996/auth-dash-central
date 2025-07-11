@@ -155,27 +155,20 @@ const InterviewPrep: React.FC = () => {
     setSessionActive(true);
   };
 
-  const generateInterviewTips = async (jobId: string, retryCount = 0) => {
-    const MAX_CLIENT_RETRIES = 2;
-    
-    console.log('🎯 generateInterviewTips called with jobId:', jobId, retryCount > 0 ? `(retry ${retryCount})` : '');
+  const generateInterviewTips = async (jobId: string) => {
+    console.log('Starting interview tips generation for job:', jobId);
     
     const selectedJob = jobDescriptions?.find(job => job.id === jobId);
     if (!selectedJob) {
-      console.error('❌ No job found for jobId:', jobId);
+      toast({
+        title: "Error",
+        description: "Selected job description not found.",
+        variant: "destructive",
+      });
       return;
     }
 
-    console.log('📋 Selected job:', {
-      id: selectedJob.id,
-      title: selectedJob.title,
-      company: selectedJob.company,
-      parsedTextLength: selectedJob.parsed_text?.length || 0,
-      parsedTextPreview: selectedJob.parsed_text?.substring(0, 200) + '...'
-    });
-
     if (!selectedJob.parsed_text || selectedJob.parsed_text.trim().length < 50) {
-      console.error('❌ Job description too short or empty:', selectedJob.parsed_text?.length);
       toast({
         title: "Job Description Too Short",
         description: "This job description is too short to generate meaningful tips. Please try with a more detailed job posting.",
@@ -184,46 +177,31 @@ const InterviewPrep: React.FC = () => {
       return;
     }
 
-    if (retryCount === 0) {
-      setTipsLoading(true);
-    }
+    setTipsLoading(true);
+    
+    toast({
+      title: "Generating Tips...",
+      description: "Creating personalized interview tips for your selected role.",
+    });
     
     try {
-      console.log('🚀 Invoking generate-interview-tips function...');
+      console.log('Calling edge function with job description length:', selectedJob.parsed_text?.length);
       
       const response = await supabase.functions.invoke('generate-interview-tips', {
         body: { jobDescription: selectedJob.parsed_text }
       });
 
-      console.log('📤 Edge function response:', {
-        error: response.error,
-        dataExists: !!response.data,
-        dataKeys: response.data ? Object.keys(response.data) : []
-      });
+      console.log('Edge function response:', response);
 
       if (response.error) {
-        console.error('❌ Edge function returned error:', response.error);
-        throw new Error(response.error.message || 'Edge function returned an error');
+        console.error('Edge function returned error:', response.error);
+        throw new Error(response.error.message || 'Failed to generate interview tips');
       }
 
-      if (!response.data) {
-        console.error('❌ No data returned from edge function');
-        throw new Error('No data returned from interview tips service');
+      if (!response.data || !response.data.tips) {
+        console.error('Invalid response data:', response.data);
+        throw new Error('Invalid response from interview tips service');
       }
-
-      if (!response.data.tips) {
-        console.error('❌ No tips in response data:', response.data);
-        throw new Error('Interview tips service returned invalid data format');
-      }
-
-      console.log('✅ Tips generated successfully:', {
-        tipsKeys: Object.keys(response.data.tips),
-        hasJobAnalysis: !!response.data.tips.jobAnalysis,
-        hasExpectedQuestions: !!response.data.tips.expectedQuestions,
-        hasTalkingPoints: !!response.data.tips.talkingPoints,
-        hasQuestionsToAsk: !!response.data.tips.questionsToAsk,
-        hasIndustryInsights: !!response.data.tips.industryInsights
-      });
 
       setInterviewTips(response.data.tips);
       setTipsLoading(false);
@@ -233,46 +211,12 @@ const InterviewPrep: React.FC = () => {
       });
       
     } catch (error) {
-      console.error('💥 Error generating tips:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        attempt: retryCount + 1
-      });
-      
-      // Retry logic for client-side failures
-      const isRetriableError = error instanceof Error && 
-        (error.message.includes('timeout') || 
-         error.message.includes('network') || 
-         error.message.includes('fetch') ||
-         error.message.includes('Failed to fetch') ||
-         error.message.includes('NetworkError') ||
-         error.message.includes('500') ||
-         error.message.includes('502') ||
-         error.message.includes('503') ||
-         error.message.includes('504'));
-      
-      if (retryCount < MAX_CLIENT_RETRIES && isRetriableError) {
-        const delay = (retryCount + 1) * 3000; // 3s, 6s delays
-        console.log(`⏳ Retrying interview tips generation in ${delay}ms... (attempt ${retryCount + 2}/${MAX_CLIENT_RETRIES + 1})`);
-        
-        toast({
-          title: "Retrying...",
-          description: `Connection issue detected. Retrying in ${delay / 1000} seconds...`,
-        });
-        
-        setTimeout(() => {
-          generateInterviewTips(jobId, retryCount + 1);
-        }, delay);
-        return;
-      }
-      
-      // Final failure
+      console.error('Error generating tips:', error);
       setTipsLoading(false);
       toast({
         title: "Generation Failed",
         description: error instanceof Error 
-          ? `Failed to generate interview tips: ${error.message}${retryCount > 0 ? ` (after ${retryCount + 1} attempts)` : ''}` 
+          ? `Failed to generate interview tips: ${error.message}` 
           : "Failed to generate interview tips. Please try again.",
         variant: "destructive",
       });
@@ -622,25 +566,37 @@ const InterviewPrep: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                       <Select 
-                         value={selectedTipsJobId} 
-                         onValueChange={(value) => {
-                           setSelectedTipsJobId(value);
-                           setInterviewTips(null);
-                           generateInterviewTips(value);
-                         }}
-                       >
-                         <SelectTrigger>
-                           <SelectValue placeholder="Select a job description for tips..." />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {jobDescriptions.map((job) => (
-                             <SelectItem key={job.id} value={job.id}>
-                               {job.title}
-                             </SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
+                       <div className="space-y-4">
+                         <Select 
+                           value={selectedTipsJobId} 
+                           onValueChange={(value) => {
+                             setSelectedTipsJobId(value);
+                             setInterviewTips(null);
+                           }}
+                         >
+                           <SelectTrigger>
+                             <SelectValue placeholder="Select a job description for tips..." />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {jobDescriptions.map((job) => (
+                               <SelectItem key={job.id} value={job.id}>
+                                 {job.title}
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+
+                         {selectedTipsJobId && !interviewTips && !tipsLoading && (
+                           <Button 
+                             onClick={() => generateInterviewTips(selectedTipsJobId)}
+                             className="w-full"
+                             size="lg"
+                           >
+                             <Target className="mr-2 h-4 w-4" />
+                             Generate Interview Tips
+                           </Button>
+                         )}
+                       </div>
 
                        {tipsLoading && (
                          <div className="flex items-center justify-center py-8">
