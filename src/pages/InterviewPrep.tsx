@@ -53,6 +53,9 @@ const InterviewPrep: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTipsGuide, setShowTipsGuide] = useState(false);
   const [showFeatures, setShowFeatures] = useState(false);
+  const [interviewTips, setInterviewTips] = useState<any>(null);
+  const [tipsLoading, setTipsLoading] = useState(false);
+  const [selectedTipsJobId, setSelectedTipsJobId] = useState<string>('');
 
   // Fetch user's job descriptions
   const { data: jobDescriptions, isLoading: isLoadingJobs, error: jobsError } = useQuery({
@@ -149,6 +152,33 @@ const InterviewPrep: React.FC = () => {
   const startInterview = () => {
     if (!questions) return;
     setSessionActive(true);
+  };
+
+  const generateInterviewTips = async (jobId: string) => {
+    const selectedJob = jobDescriptions?.find(job => job.id === jobId);
+    if (!selectedJob) return;
+
+    setTipsLoading(true);
+    try {
+      const response = await supabase.functions.invoke('generate-interview-tips', {
+        body: { jobDescription: selectedJob.parsed_text }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      setInterviewTips(response.data.tips);
+    } catch (error) {
+      console.error('Error generating tips:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate interview tips. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setTipsLoading(false);
+    }
   };
 
   const handleSessionComplete = () => {
@@ -494,20 +524,34 @@ const InterviewPrep: React.FC = () => {
                     </div>
                   ) : (
                     <>
-                      <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a job description for tips..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {jobDescriptions.map((job) => (
-                            <SelectItem key={job.id} value={job.id}>
-                              {job.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                       <Select 
+                         value={selectedTipsJobId} 
+                         onValueChange={(value) => {
+                           setSelectedTipsJobId(value);
+                           setInterviewTips(null);
+                           generateInterviewTips(value);
+                         }}
+                       >
+                         <SelectTrigger>
+                           <SelectValue placeholder="Select a job description for tips..." />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {jobDescriptions.map((job) => (
+                             <SelectItem key={job.id} value={job.id}>
+                               {job.title}
+                             </SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
 
-                      {selectedJob && (
+                       {tipsLoading && (
+                         <div className="flex items-center justify-center py-8">
+                           <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                           <span>Generating personalized interview tips...</span>
+                         </div>
+                       )}
+
+                       {interviewTips && selectedTipsJobId && (
                         <div className="space-y-4 mt-6">
                           {/* Job Analysis Section */}
                           <Collapsible defaultOpen={true}>
@@ -525,29 +569,32 @@ const InterviewPrep: React.FC = () => {
                               </CollapsibleTrigger>
                               <CollapsibleContent>
                                 <CardContent className="space-y-4">
-                                  <div className="bg-blue-50 p-4 rounded-lg">
-                                    <h4 className="font-semibold text-blue-900 mb-3">Role: {selectedJob.title}</h4>
-                                    <div className="grid gap-3 md:grid-cols-2">
-                                      <div>
-                                        <h5 className="font-medium text-blue-800 mb-2">Key Preparation Areas:</h5>
-                                        <ul className="text-sm text-blue-700 space-y-1">
-                                          <li>• Research the company's mission and recent news</li>
-                                          <li>• Review technical skills mentioned in the job description</li>
-                                          <li>• Prepare examples showcasing relevant experience</li>
-                                          <li>• Practice explaining complex projects simply</li>
-                                        </ul>
-                                      </div>
-                                      <div>
-                                        <h5 className="font-medium text-blue-800 mb-2">What to Emphasize:</h5>
-                                        <ul className="text-sm text-blue-700 space-y-1">
-                                          <li>• Problem-solving abilities and methodology</li>
-                                          <li>• Team collaboration and communication skills</li>
-                                          <li>• Adaptability and learning agility</li>
-                                          <li>• Results and measurable achievements</li>
-                                        </ul>
-                                      </div>
-                                    </div>
-                                  </div>
+                                   <div className="bg-blue-50 p-4 rounded-lg">
+                                     <h4 className="font-semibold text-blue-900 mb-3">Role: {jobDescriptions?.find(job => job.id === selectedTipsJobId)?.title}</h4>
+                                     <div className="grid gap-3 md:grid-cols-2">
+                                       <div>
+                                         <h5 className="font-medium text-blue-800 mb-2">Key Skills Required:</h5>
+                                         <ul className="text-sm text-blue-700 space-y-1">
+                                           {interviewTips.jobAnalysis.keySkills.map((skill: string, index: number) => (
+                                             <li key={index}>• {skill}</li>
+                                           ))}
+                                         </ul>
+                                       </div>
+                                       <div>
+                                         <h5 className="font-medium text-blue-800 mb-2">Key Requirements:</h5>
+                                         <ul className="text-sm text-blue-700 space-y-1">
+                                           {interviewTips.jobAnalysis.requirements.map((req: string, index: number) => (
+                                             <li key={index}>• {req}</li>
+                                           ))}
+                                         </ul>
+                                       </div>
+                                     </div>
+                                     <div className="mt-4">
+                                       <h5 className="font-medium text-blue-800 mb-2">Company Culture & Level:</h5>
+                                       <p className="text-sm text-blue-700 mb-2">{interviewTips.jobAnalysis.companyCulture}</p>
+                                       <p className="text-sm text-blue-700"><strong>Seniority:</strong> {interviewTips.jobAnalysis.seniorityLevel}</p>
+                                     </div>
+                                   </div>
                                 </CardContent>
                               </CollapsibleContent>
                             </Card>
@@ -569,26 +616,42 @@ const InterviewPrep: React.FC = () => {
                               </CollapsibleTrigger>
                               <CollapsibleContent>
                                 <CardContent className="space-y-4">
-                                  <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="bg-purple-50 p-4 rounded-lg">
-                                      <h5 className="font-medium text-purple-900 mb-2">Behavioral Questions</h5>
-                                      <ul className="text-sm text-purple-700 space-y-1">
-                                        <li>• "Tell me about a time when..."</li>
-                                        <li>• Leadership and teamwork scenarios</li>
-                                        <li>• Conflict resolution examples</li>
-                                        <li>• Failure and learning experiences</li>
-                                      </ul>
-                                    </div>
-                                    <div className="bg-green-50 p-4 rounded-lg">
-                                      <h5 className="font-medium text-green-900 mb-2">Technical/Role-Specific</h5>
-                                      <ul className="text-sm text-green-700 space-y-1">
-                                        <li>• Industry knowledge and trends</li>
-                                        <li>• Tools and technologies you've used</li>
-                                        <li>• Problem-solving methodologies</li>
-                                        <li>• Best practices in your field</li>
-                                      </ul>
-                                    </div>
-                                  </div>
+                                   <div className="grid gap-4 md:grid-cols-2">
+                                     <div className="bg-purple-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-purple-900 mb-2">Behavioral Questions</h5>
+                                       <ul className="text-sm text-purple-700 space-y-1">
+                                         {interviewTips.expectedQuestions.behavioral.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div className="bg-green-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-green-900 mb-2">Technical Questions</h5>
+                                       <ul className="text-sm text-green-700 space-y-1">
+                                         {interviewTips.expectedQuestions.technical.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
+                                   <div className="grid gap-4 md:grid-cols-2 mt-4">
+                                     <div className="bg-blue-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-blue-900 mb-2">Company-Specific Questions</h5>
+                                       <ul className="text-sm text-blue-700 space-y-1">
+                                         {interviewTips.expectedQuestions.companySpecific.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div className="bg-yellow-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-yellow-900 mb-2">Culture Fit Questions</h5>
+                                       <ul className="text-sm text-yellow-700 space-y-1">
+                                         {interviewTips.expectedQuestions.cultureFit.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
                                 </CardContent>
                               </CollapsibleContent>
                             </Card>
@@ -610,31 +673,32 @@ const InterviewPrep: React.FC = () => {
                               </CollapsibleTrigger>
                               <CollapsibleContent>
                                 <CardContent className="space-y-4">
-                                  <div className="bg-orange-50 p-4 rounded-lg">
-                                    <h5 className="font-medium text-orange-900 mb-3">Prepare 3-5 STAR Stories</h5>
-                                    <div className="space-y-3">
-                                      <div>
-                                        <h6 className="font-medium text-orange-800">1. Leadership Example</h6>
-                                        <p className="text-sm text-orange-700">A time you led a project or team to success</p>
-                                      </div>
-                                      <div>
-                                        <h6 className="font-medium text-orange-800">2. Problem-Solving Achievement</h6>
-                                        <p className="text-sm text-orange-700">How you overcame a significant challenge</p>
-                                      </div>
-                                      <div>
-                                        <h6 className="font-medium text-orange-800">3. Collaboration Success</h6>
-                                        <p className="text-sm text-orange-700">Working effectively with others</p>
-                                      </div>
-                                      <div>
-                                        <h6 className="font-medium text-orange-800">4. Learning & Growth</h6>
-                                        <p className="text-sm text-orange-700">How you adapted or learned new skills</p>
-                                      </div>
-                                      <div>
-                                        <h6 className="font-medium text-orange-800">5. Quantifiable Impact</h6>
-                                        <p className="text-sm text-orange-700">Results with specific numbers/metrics</p>
-                                      </div>
-                                    </div>
-                                  </div>
+                                   <div className="bg-orange-50 p-4 rounded-lg space-y-4">
+                                     <div>
+                                       <h5 className="font-medium text-orange-900 mb-2">Strengths to Highlight</h5>
+                                       <ul className="text-sm text-orange-700 space-y-1">
+                                         {interviewTips.talkingPoints.strengthsToHighlight.map((strength: string, index: number) => (
+                                           <li key={index}>• {strength}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div>
+                                       <h5 className="font-medium text-orange-900 mb-2">STAR Story Topics</h5>
+                                       <ul className="text-sm text-orange-700 space-y-1">
+                                         {interviewTips.talkingPoints.starStories.map((story: string, index: number) => (
+                                           <li key={index}>• {story}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div>
+                                       <h5 className="font-medium text-orange-900 mb-2">Achievement Focus Areas</h5>
+                                       <ul className="text-sm text-orange-700 space-y-1">
+                                         {interviewTips.talkingPoints.achievements.map((achievement: string, index: number) => (
+                                           <li key={index}>• {achievement}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
                                 </CardContent>
                               </CollapsibleContent>
                             </Card>
@@ -656,74 +720,147 @@ const InterviewPrep: React.FC = () => {
                               </CollapsibleTrigger>
                               <CollapsibleContent>
                                 <CardContent className="space-y-4">
-                                  <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="bg-yellow-50 p-4 rounded-lg">
-                                      <h5 className="font-medium text-yellow-900 mb-2">About the Role</h5>
-                                      <ul className="text-sm text-yellow-700 space-y-1">
-                                        <li>• "What does a typical day look like?"</li>
-                                        <li>• "What are the biggest challenges?"</li>
-                                        <li>• "How do you measure success?"</li>
-                                        <li>• "What opportunities for growth exist?"</li>
-                                      </ul>
-                                    </div>
-                                    <div className="bg-indigo-50 p-4 rounded-lg">
-                                      <h5 className="font-medium text-indigo-900 mb-2">About the Team & Culture</h5>
-                                      <ul className="text-sm text-indigo-700 space-y-1">
-                                        <li>• "How would you describe the team dynamic?"</li>
-                                        <li>• "What do you enjoy most about working here?"</li>
-                                        <li>• "How does the company support professional development?"</li>
-                                        <li>• "What are the company's priorities this year?"</li>
-                                      </ul>
-                                    </div>
-                                  </div>
+                                   <div className="grid gap-4 md:grid-cols-2">
+                                     <div className="bg-yellow-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-yellow-900 mb-2">Role-Specific Questions</h5>
+                                       <ul className="text-sm text-yellow-700 space-y-1">
+                                         {interviewTips.questionsToAsk.roleSpecific.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div className="bg-indigo-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-indigo-900 mb-2">Team & Culture Questions</h5>
+                                       <ul className="text-sm text-indigo-700 space-y-1">
+                                         {interviewTips.questionsToAsk.teamCulture.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
+                                   <div className="grid gap-4 md:grid-cols-2 mt-4">
+                                     <div className="bg-green-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-green-900 mb-2">Growth & Development</h5>
+                                       <ul className="text-sm text-green-700 space-y-1">
+                                         {interviewTips.questionsToAsk.growthDevelopment.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div className="bg-purple-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-purple-900 mb-2">Company Direction</h5>
+                                       <ul className="text-sm text-purple-700 space-y-1">
+                                         {interviewTips.questionsToAsk.companyDirection.map((question: string, index: number) => (
+                                           <li key={index}>• {question}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
                                 </CardContent>
                               </CollapsibleContent>
                             </Card>
                           </Collapsible>
 
-                          {/* Final Tips */}
-                          <Collapsible>
-                            <Card>
-                              <CollapsibleTrigger asChild>
-                                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-                                  <CardTitle className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <TrendingUp className="h-5 w-5 text-green-600" />
-                                      Final Interview Tips
-                                    </div>
-                                    <ChevronDown className="h-4 w-4" />
-                                  </CardTitle>
-                                </CardHeader>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent>
-                                <CardContent className="space-y-4">
-                                  <div className="bg-green-50 p-4 rounded-lg">
-                                    <h5 className="font-medium text-green-900 mb-3">Day-of-Interview Checklist</h5>
-                                    <div className="grid gap-3 md:grid-cols-2">
-                                      <div>
-                                        <h6 className="font-medium text-green-800 mb-2">Before the Interview:</h6>
-                                        <ul className="text-sm text-green-700 space-y-1">
-                                          <li>• Research recent company news</li>
-                                          <li>• Review your resume and their job posting</li>
-                                          <li>• Prepare physical/digital copies of materials</li>
-                                          <li>• Plan your route and arrive 10-15 min early</li>
-                                        </ul>
-                                      </div>
-                                      <div>
-                                        <h6 className="font-medium text-green-800 mb-2">During the Interview:</h6>
-                                        <ul className="text-sm text-green-700 space-y-1">
-                                          <li>• Make eye contact and smile genuinely</li>
-                                          <li>• Listen actively and ask clarifying questions</li>
-                                          <li>• Take notes to show engagement</li>
-                                          <li>• End by asking about next steps</li>
-                                        </ul>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </CollapsibleContent>
-                            </Card>
-                          </Collapsible>
+                           {/* Industry Insights */}
+                           <Collapsible>
+                             <Card>
+                               <CollapsibleTrigger asChild>
+                                 <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                   <CardTitle className="flex items-center justify-between">
+                                     <div className="flex items-center gap-2">
+                                       <TrendingUp className="h-5 w-5 text-indigo-600" />
+                                       Industry Insights & Preparation
+                                     </div>
+                                     <ChevronDown className="h-4 w-4" />
+                                   </CardTitle>
+                                 </CardHeader>
+                               </CollapsibleTrigger>
+                               <CollapsibleContent>
+                                 <CardContent className="space-y-4">
+                                   <div className="grid gap-4 md:grid-cols-2">
+                                     <div className="bg-indigo-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-indigo-900 mb-2">Industry Trends</h5>
+                                       <ul className="text-sm text-indigo-700 space-y-1">
+                                         {interviewTips.industryInsights.trends.map((trend: string, index: number) => (
+                                           <li key={index}>• {trend}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div className="bg-pink-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-pink-900 mb-2">Role Expectations</h5>
+                                       <ul className="text-sm text-pink-700 space-y-1">
+                                         {interviewTips.industryInsights.roleExpectations.map((expectation: string, index: number) => (
+                                           <li key={index}>• {expectation}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
+                                   <div className="grid gap-4 md:grid-cols-2">
+                                     <div className="bg-red-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-red-900 mb-2">Skills Gap to Address</h5>
+                                       <ul className="text-sm text-red-700 space-y-1">
+                                         {interviewTips.industryInsights.skillsGap.map((gap: string, index: number) => (
+                                           <li key={index}>• {gap}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                     <div className="bg-emerald-50 p-4 rounded-lg">
+                                       <h5 className="font-medium text-emerald-900 mb-2">Compensation Tips</h5>
+                                       <ul className="text-sm text-emerald-700 space-y-1">
+                                         {interviewTips.industryInsights.compensationTips.map((tip: string, index: number) => (
+                                           <li key={index}>• {tip}</li>
+                                         ))}
+                                       </ul>
+                                     </div>
+                                   </div>
+                                 </CardContent>
+                               </CollapsibleContent>
+                             </Card>
+                           </Collapsible>
+
+                           {/* Final Tips */}
+                           <Collapsible>
+                             <Card>
+                               <CollapsibleTrigger asChild>
+                                 <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                                   <CardTitle className="flex items-center justify-between">
+                                     <div className="flex items-center gap-2">
+                                       <TrendingUp className="h-5 w-5 text-green-600" />
+                                       Day-of-Interview Checklist
+                                     </div>
+                                     <ChevronDown className="h-4 w-4" />
+                                   </CardTitle>
+                                 </CardHeader>
+                               </CollapsibleTrigger>
+                               <CollapsibleContent>
+                                 <CardContent className="space-y-4">
+                                   <div className="bg-green-50 p-4 rounded-lg">
+                                     <h5 className="font-medium text-green-900 mb-3">Interview Day Best Practices</h5>
+                                     <div className="grid gap-3 md:grid-cols-2">
+                                       <div>
+                                         <h6 className="font-medium text-green-800 mb-2">Before the Interview:</h6>
+                                         <ul className="text-sm text-green-700 space-y-1">
+                                           <li>• Research recent company news</li>
+                                           <li>• Review your resume and their job posting</li>
+                                           <li>• Prepare physical/digital copies of materials</li>
+                                           <li>• Plan your route and arrive 10-15 min early</li>
+                                         </ul>
+                                       </div>
+                                       <div>
+                                         <h6 className="font-medium text-green-800 mb-2">During the Interview:</h6>
+                                         <ul className="text-sm text-green-700 space-y-1">
+                                           <li>• Make eye contact and smile genuinely</li>
+                                           <li>• Listen actively and ask clarifying questions</li>
+                                           <li>• Take notes to show engagement</li>
+                                           <li>• End by asking about next steps</li>
+                                         </ul>
+                                       </div>
+                                     </div>
+                                   </div>
+                                 </CardContent>
+                               </CollapsibleContent>
+                             </Card>
+                           </Collapsible>
                         </div>
                       )}
                     </>
