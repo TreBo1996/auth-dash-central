@@ -21,6 +21,7 @@ interface JobDescription {
   id: string;
   title: string;
   parsed_text: string;
+  company?: string;
 }
 
 interface InterviewQuestions {
@@ -155,25 +156,87 @@ const InterviewPrep: React.FC = () => {
   };
 
   const generateInterviewTips = async (jobId: string) => {
+    console.log('🎯 generateInterviewTips called with jobId:', jobId);
+    
     const selectedJob = jobDescriptions?.find(job => job.id === jobId);
-    if (!selectedJob) return;
+    if (!selectedJob) {
+      console.error('❌ No job found for jobId:', jobId);
+      return;
+    }
+
+    console.log('📋 Selected job:', {
+      id: selectedJob.id,
+      title: selectedJob.title,
+      company: selectedJob.company,
+      parsedTextLength: selectedJob.parsed_text?.length || 0,
+      parsedTextPreview: selectedJob.parsed_text?.substring(0, 200) + '...'
+    });
+
+    if (!selectedJob.parsed_text || selectedJob.parsed_text.trim().length < 50) {
+      console.error('❌ Job description too short or empty:', selectedJob.parsed_text?.length);
+      toast({
+        title: "Job Description Too Short",
+        description: "This job description is too short to generate meaningful tips. Please try with a more detailed job posting.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setTipsLoading(true);
     try {
+      console.log('🚀 Invoking generate-interview-tips function...');
+      
       const response = await supabase.functions.invoke('generate-interview-tips', {
         body: { jobDescription: selectedJob.parsed_text }
       });
 
+      console.log('📤 Edge function response:', {
+        error: response.error,
+        dataExists: !!response.data,
+        dataKeys: response.data ? Object.keys(response.data) : []
+      });
+
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error('❌ Edge function returned error:', response.error);
+        throw new Error(response.error.message || 'Edge function returned an error');
       }
 
+      if (!response.data) {
+        console.error('❌ No data returned from edge function');
+        throw new Error('No data returned from interview tips service');
+      }
+
+      if (!response.data.tips) {
+        console.error('❌ No tips in response data:', response.data);
+        throw new Error('Interview tips service returned invalid data format');
+      }
+
+      console.log('✅ Tips generated successfully:', {
+        tipsKeys: Object.keys(response.data.tips),
+        hasJobAnalysis: !!response.data.tips.jobAnalysis,
+        hasExpectedQuestions: !!response.data.tips.expectedQuestions,
+        hasTalkingPoints: !!response.data.tips.talkingPoints,
+        hasQuestionsToAsk: !!response.data.tips.questionsToAsk,
+        hasIndustryInsights: !!response.data.tips.industryInsights
+      });
+
       setInterviewTips(response.data.tips);
+      toast({
+        title: "Tips Generated!",
+        description: "Your personalized interview tips are ready.",
+      });
     } catch (error) {
-      console.error('Error generating tips:', error);
+      console.error('💥 Error generating tips:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       toast({
         title: "Generation Failed",
-        description: "Failed to generate interview tips. Please try again.",
+        description: error instanceof Error 
+          ? `Failed to generate interview tips: ${error.message}` 
+          : "Failed to generate interview tips. Please try again.",
         variant: "destructive",
       });
     } finally {

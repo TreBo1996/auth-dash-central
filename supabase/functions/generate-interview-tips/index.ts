@@ -13,16 +13,34 @@ serve(async (req) => {
   }
 
   try {
-    const { jobDescription } = await req.json();
+    console.log('🎯 generate-interview-tips function called');
+    
+    const requestBody = await req.json();
+    console.log('📥 Request body received:', {
+      hasJobDescription: !!requestBody.jobDescription,
+      jobDescriptionLength: requestBody.jobDescription?.length || 0,
+      jobDescriptionPreview: requestBody.jobDescription?.substring(0, 200) + '...'
+    });
+    
+    const { jobDescription } = requestBody;
     
     if (!jobDescription) {
+      console.error('❌ No job description provided');
       throw new Error('Job description is required');
+    }
+
+    if (typeof jobDescription !== 'string' || jobDescription.trim().length < 50) {
+      console.error('❌ Job description too short or invalid:', jobDescription?.length);
+      throw new Error('Job description must be at least 50 characters long');
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
+      console.error('❌ OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
+
+    console.log('✅ OpenAI API key found, proceeding with request');
 
     const prompt = `
 Analyze this job description and provide personalized interview preparation tips. Return a JSON object with the following structure:
@@ -65,6 +83,8 @@ ${jobDescription}
 
 Provide specific, actionable advice tailored to this exact role and company. Be detailed and relevant.`;
 
+    console.log('🚀 Making OpenAI API request...');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -84,28 +104,68 @@ Provide specific, actionable advice tailored to this exact role and company. Be 
       }),
     });
 
+    console.log('📡 OpenAI API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ OpenAI API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('📦 OpenAI response data:', {
+      hasChoices: !!data.choices,
+      choicesLength: data.choices?.length || 0,
+      hasContent: !!data.choices?.[0]?.message?.content,
+      contentLength: data.choices?.[0]?.message?.content?.length || 0,
+      contentPreview: data.choices?.[0]?.message?.content?.substring(0, 200) + '...'
+    });
+    
     const content = data.choices[0].message.content;
+    
+    if (!content) {
+      console.error('❌ No content in OpenAI response');
+      throw new Error('OpenAI returned empty content');
+    }
     
     // Parse the JSON response
     let tips;
     try {
+      console.log('🔍 Attempting to parse JSON response...');
       tips = JSON.parse(content);
+      console.log('✅ JSON parsed successfully:', {
+        hasJobAnalysis: !!tips.jobAnalysis,
+        hasExpectedQuestions: !!tips.expectedQuestions,
+        hasTalkingPoints: !!tips.talkingPoints,
+        hasQuestionsToAsk: !!tips.questionsToAsk,
+        hasIndustryInsights: !!tips.industryInsights
+      });
     } catch (error) {
-      console.error('Failed to parse OpenAI response as JSON:', error);
-      throw new Error('Invalid response format from AI');
+      console.error('❌ Failed to parse OpenAI response as JSON:', {
+        error: error.message,
+        contentLength: content.length,
+        contentStart: content.substring(0, 500),
+        contentEnd: content.substring(content.length - 500)
+      });
+      throw new Error('Invalid response format from AI - not valid JSON');
     }
 
+    console.log('🎉 Successfully generated interview tips, returning response');
+    
     return new Response(JSON.stringify({ tips }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in generate-interview-tips function:', error);
+    console.error('💥 Error in generate-interview-tips function:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
