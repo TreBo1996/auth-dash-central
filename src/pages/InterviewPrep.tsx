@@ -155,8 +155,10 @@ const InterviewPrep: React.FC = () => {
     setSessionActive(true);
   };
 
-  const generateInterviewTips = async (jobId: string) => {
-    console.log('🎯 generateInterviewTips called with jobId:', jobId);
+  const generateInterviewTips = async (jobId: string, retryCount = 0) => {
+    const MAX_CLIENT_RETRIES = 2;
+    
+    console.log('🎯 generateInterviewTips called with jobId:', jobId, retryCount > 0 ? `(retry ${retryCount})` : '');
     
     const selectedJob = jobDescriptions?.find(job => job.id === jobId);
     if (!selectedJob) {
@@ -182,7 +184,10 @@ const InterviewPrep: React.FC = () => {
       return;
     }
 
-    setTipsLoading(true);
+    if (retryCount === 0) {
+      setTipsLoading(true);
+    }
+    
     try {
       console.log('🚀 Invoking generate-interview-tips function...');
       
@@ -221,26 +226,56 @@ const InterviewPrep: React.FC = () => {
       });
 
       setInterviewTips(response.data.tips);
+      setTipsLoading(false);
       toast({
         title: "Tips Generated!",
         description: "Your personalized interview tips are ready.",
       });
+      
     } catch (error) {
       console.error('💥 Error generating tips:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        attempt: retryCount + 1
       });
       
+      // Retry logic for client-side failures
+      const isRetriableError = error instanceof Error && 
+        (error.message.includes('timeout') || 
+         error.message.includes('network') || 
+         error.message.includes('fetch') ||
+         error.message.includes('Failed to fetch') ||
+         error.message.includes('NetworkError') ||
+         error.message.includes('500') ||
+         error.message.includes('502') ||
+         error.message.includes('503') ||
+         error.message.includes('504'));
+      
+      if (retryCount < MAX_CLIENT_RETRIES && isRetriableError) {
+        const delay = (retryCount + 1) * 3000; // 3s, 6s delays
+        console.log(`⏳ Retrying interview tips generation in ${delay}ms... (attempt ${retryCount + 2}/${MAX_CLIENT_RETRIES + 1})`);
+        
+        toast({
+          title: "Retrying...",
+          description: `Connection issue detected. Retrying in ${delay / 1000} seconds...`,
+        });
+        
+        setTimeout(() => {
+          generateInterviewTips(jobId, retryCount + 1);
+        }, delay);
+        return;
+      }
+      
+      // Final failure
+      setTipsLoading(false);
       toast({
         title: "Generation Failed",
         description: error instanceof Error 
-          ? `Failed to generate interview tips: ${error.message}` 
+          ? `Failed to generate interview tips: ${error.message}${retryCount > 0 ? ` (after ${retryCount + 1} attempts)` : ''}` 
           : "Failed to generate interview tips. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setTipsLoading(false);
     }
   };
 
