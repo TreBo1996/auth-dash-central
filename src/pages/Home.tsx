@@ -114,7 +114,7 @@ const Home = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
               <Star className="h-4 w-4 text-yellow-300" />
-              <span className="text-sm font-medium">Trusted by 50,000+ job seekers</span>
+              <span className="text-sm font-medium">Beats 95% of ATS Job Bots</span>
             </div>
             
             <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
