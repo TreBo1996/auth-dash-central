@@ -10,6 +10,7 @@ import { ExperienceSection } from '@/components/resume-editor/ExperienceSection'
 import { SkillsSection } from '@/components/resume-editor/SkillsSection';
 import { EducationSection } from '@/components/resume-editor/EducationSection';
 import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { ContactSection } from '@/components/resume-editor/ContactSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchInitialResumeStructuredData, saveInitialResumeStructuredData, updateInitialResumeSection, convertStructuredDataToEditorFormat } from '@/utils/initialResumeStorage';
 interface Resume {
@@ -42,7 +43,15 @@ interface Certification {
   issuer: string;
   year: string;
 }
+interface ContactInfo {
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+}
+
 interface ParsedResume {
+  contact: ContactInfo;
   summary: string;
   experience: Experience[];
   skills: SkillGroup[];
@@ -72,6 +81,7 @@ interface AICertification {
   year: string;
 }
 interface AIParseResponse {
+  contact: ContactInfo;
   summary: string;
   experience: AIExperience[];
   skills: string[];
@@ -187,6 +197,12 @@ const InitialResumeEditor: React.FC = () => {
   };
   const getDefaultResumeStructure = (): ParsedResume => {
     return {
+      contact: {
+        name: 'Not provided',
+        email: 'Not provided',
+        phone: 'Not provided',
+        location: 'Not provided'
+      },
       summary: 'Professional Summary',
       experience: [{
         title: 'Job Title',
@@ -259,6 +275,12 @@ const InitialResumeEditor: React.FC = () => {
       year: cert.year || '2023'
     }));
     return {
+      contact: aiResponse.contact || {
+        name: 'Not provided',
+        email: 'Not provided',
+        phone: 'Not provided',
+        location: 'Not provided'
+      },
       summary: aiResponse.summary || 'Professional Summary',
       experience,
       skills,
@@ -331,6 +353,12 @@ const InitialResumeEditor: React.FC = () => {
   const parseResumeTextBasic = (text: string) => {
     const sections = text.split('\n\n').filter(section => section.trim());
     const parsed: ParsedResume = {
+      contact: {
+        name: 'Not provided',
+        email: 'Not provided', 
+        phone: 'Not provided',
+        location: 'Not provided'
+      },
       summary: '',
       experience: [],
       skills: [],
@@ -473,6 +501,14 @@ const InitialResumeEditor: React.FC = () => {
   };
   const generateResumeText = (parsed: ParsedResume): string => {
     let text = '';
+    if (parsed.contact) {
+      text += `CONTACT INFORMATION\n`;
+      if (parsed.contact.name !== 'Not provided') text += `${parsed.contact.name}\n`;
+      if (parsed.contact.email !== 'Not provided') text += `${parsed.contact.email}\n`;
+      if (parsed.contact.phone !== 'Not provided') text += `${parsed.contact.phone}\n`;
+      if (parsed.contact.location !== 'Not provided') text += `${parsed.contact.location}\n`;
+      text += '\n';
+    }
     if (parsed.summary) {
       text += `SUMMARY\n${parsed.summary}\n\n`;
     }
@@ -594,6 +630,15 @@ const InitialResumeEditor: React.FC = () => {
 
         {/* Resume Sections */}
         <div className="space-y-6">
+          {/* Contact Information Section */}
+          <ContactSection 
+            contactInfo={parsedResume.contact} 
+            onChange={contactInfo => setParsedResume(prev => prev ? {
+              ...prev,
+              contact: contactInfo
+            } : null)} 
+          />
+
           {/* Summary Section */}
           <ResumeSection title="Professional Summary" value={parsedResume.summary} onChange={value => setParsedResume(prev => prev ? {
           ...prev,

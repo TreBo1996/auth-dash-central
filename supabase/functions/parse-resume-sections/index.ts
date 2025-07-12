@@ -12,6 +12,12 @@ interface ParseResumeRequest {
 }
 
 interface ParsedResumeResponse {
+  contact: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+  };
   summary: string;
   experience: Array<{
     id: string;
@@ -60,19 +66,41 @@ serve(async (req: Request) => {
 
     const systemPrompt = `You are an expert resume parser. Your task is to analyze resume text and extract structured information into specific sections.
 
+CRITICAL CONTACT INFORMATION EXTRACTION - HIGHEST PRIORITY:
+1. **NEVER USE PLACEHOLDER CONTACT INFORMATION**: ABSOLUTELY NO placeholders like "email@example.com", "your.email@example.com", "+1234567890", "(555) 123-4567", "City, State", etc.
+2. **EXTRACT ACTUAL CONTACT DATA**: Carefully scan the original resume text for real email addresses, phone numbers, names, and locations
+3. **LOOK FOR CONTACT PATTERNS**: Search for patterns like:
+   - Email: look for @gmail.com, @yahoo.com, @outlook.com, @[company].com, etc.
+   - Phone: look for actual phone numbers like (XXX) XXX-XXXX, XXX-XXX-XXXX, +1-XXX-XXX-XXXX
+   - Name: usually appears at the top of the resume or in headers
+   - Location: look for "City, ST", "City, State", specific addresses
+4. **VALIDATION RULES**: 
+   - If you find a real email, use it exactly as written
+   - If you find a real phone number, preserve the original formatting
+   - If you find the person's actual name, use it exactly
+   - If you find a real location, use it exactly
+   - If contact information is unclear or missing from the original text, use "Not provided" rather than placeholders
+
 IMPORTANT INSTRUCTIONS:
-1. Parse the resume text and identify these sections: Professional Summary, Work Experience, Skills, Education, and Certifications
-2. For Work Experience, extract each job separately with company, role, dates, and description
-3. For Skills, create a clean array of individual skills (no categories, just skill names)
-4. For Education, extract institution, degree/program, and year
-5. For Certifications, extract name, issuing organization, and year
-6. Always return valid JSON in the exact format specified
-7. If a section is missing or unclear, provide reasonable defaults or empty arrays
-8. For dates, extract in simple format like "2020" or "Jan 2020" or "2020-2023"
-9. Generate unique IDs for each item using timestamp-based strings
+1. Parse the resume text and identify these sections: Contact Information, Professional Summary, Work Experience, Skills, Education, and Certifications
+2. For Contact Information, extract actual name, email, phone, and location from the resume
+3. For Work Experience, extract each job separately with company, role, dates, and description
+4. For Skills, create a clean array of individual skills (no categories, just skill names)
+5. For Education, extract institution, degree/program, and year
+6. For Certifications, extract name, issuing organization, and year
+7. Always return valid JSON in the exact format specified
+8. If a section is missing or unclear, provide reasonable defaults or empty arrays
+9. For dates, extract in simple format like "2020" or "Jan 2020" or "2020-2023"
+10. Generate unique IDs for each item using timestamp-based strings
 
 Return ONLY valid JSON in this exact format:
 {
+  "contact": {
+    "name": "ACTUAL FULL NAME FROM RESUME (never placeholder)",
+    "email": "ACTUAL EMAIL FROM RESUME (never placeholder, use 'Not provided' if missing)",
+    "phone": "ACTUAL PHONE FROM RESUME (never placeholder, use 'Not provided' if missing)", 
+    "location": "ACTUAL LOCATION FROM RESUME (never placeholder, use 'Not provided' if missing)"
+  },
   "summary": "Professional summary text",
   "experience": [
     {
@@ -140,6 +168,12 @@ Return ONLY valid JSON in this exact format:
 
     // Validate and clean the response
     const cleanedResponse: ParsedResumeResponse = {
+      contact: {
+        name: structuredResume.contact?.name || 'Not provided',
+        email: structuredResume.contact?.email || 'Not provided',
+        phone: structuredResume.contact?.phone || 'Not provided',
+        location: structuredResume.contact?.location || 'Not provided'
+      },
       summary: structuredResume.summary || '',
       experience: Array.isArray(structuredResume.experience) ? structuredResume.experience.map((exp, index) => ({
         id: exp.id || `exp_${Date.now()}_${index}`,
@@ -165,6 +199,7 @@ Return ONLY valid JSON in this exact format:
     };
 
     console.log('Successfully parsed resume into sections:', {
+      contactInfo: cleanedResponse.contact,
       summaryLength: cleanedResponse.summary.length,
       experienceCount: cleanedResponse.experience.length,
       skillsCount: cleanedResponse.skills.length,
