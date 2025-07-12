@@ -157,6 +157,22 @@ These are legitimate experiences the user wants highlighted - treat them as raw 
 
     const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to enhance the existing resume content for better ATS compatibility while maintaining complete accuracy and authenticity.
 
+CRITICAL CONTACT INFORMATION EXTRACTION - HIGHEST PRIORITY:
+1. **NEVER USE PLACEHOLDER CONTACT INFORMATION**: ABSOLUTELY NO placeholders like "email@example.com", "your.email@example.com", "+1234567890", "(555) 123-4567", "City, State", etc.
+2. **EXTRACT ACTUAL CONTACT DATA**: Carefully scan the original resume text for real email addresses, phone numbers, names, and locations
+3. **LOOK FOR CONTACT PATTERNS**: Search for patterns like:
+   - Email: look for @gmail.com, @yahoo.com, @outlook.com, @[company].com, etc.
+   - Phone: look for actual phone numbers like (XXX) XXX-XXXX, XXX-XXX-XXXX, +1-XXX-XXX-XXXX
+   - Name: usually appears at the top of the resume
+   - Location: look for "City, ST", "City, State", specific addresses
+4. **VALIDATION RULES**: 
+   - If you find a real email, use it exactly as written
+   - If you find a real phone number, preserve the original formatting
+   - If you find the person's actual name, use it exactly
+   - If you find a real location, use it exactly
+   - If contact information is unclear or missing from the original text, use "Not provided" rather than placeholders
+5. **CONTACT EXTRACTION PRIORITY**: Extract contact information BEFORE any other optimization work
+
 CRITICAL AUTHENTICITY REQUIREMENTS:
 1. **PRESERVE ORIGINAL EXPERIENCES**: NEVER create, add, or invent new job positions, responsibilities, or achievements
 2. **ENHANCE EXISTING CONTENT ONLY**: Only improve the wording, structure, and keyword integration of existing bullet points
@@ -186,12 +202,19 @@ CONTENT ENHANCEMENT RULES:
 CRITICAL OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY valid JSON. The structure should match the original resume's sections exactly:
 
+CONTACT INFORMATION INSTRUCTIONS:
+- Extract the ACTUAL name from the original resume text (look at the top/header)
+- Extract the ACTUAL email address (look for real domains like @gmail.com, @company.com)
+- Extract the ACTUAL phone number (look for real phone formats)
+- Extract the ACTUAL location (look for real cities/states)
+- If any contact info is not found in the original text, use "Not provided" instead of placeholders
+
 {
-  "name": "Full Name (from original)",
+  "name": "ACTUAL FULL NAME FROM RESUME (never placeholder)",
   "contact": {
-    "email": "email@example.com (from original)",
-    "phone": "+1234567890 (from original)",
-    "location": "City, State (from original)"
+    "email": "ACTUAL EMAIL FROM RESUME (never placeholder)",
+    "phone": "ACTUAL PHONE FROM RESUME (never placeholder)", 
+    "location": "ACTUAL LOCATION FROM RESUME (never placeholder)"
   },
   "summary": "Enhanced professional summary with job description keywords (based on original if it exists)",
   "experience": [
