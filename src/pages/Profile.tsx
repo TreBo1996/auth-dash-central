@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Save, Mail, Briefcase, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Save, Mail, Briefcase, Lock, Eye, EyeOff, Phone, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -33,12 +33,16 @@ interface UserProfile {
   job_type_preference?: string;
   email_notifications_enabled?: boolean;
   newsletter_enabled?: boolean;
+  contact_phone?: string;
+  contact_location?: string;
 }
 
 const Profile: React.FC = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fullName, setFullName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactLocation, setContactLocation] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -73,7 +77,8 @@ const Profile: React.FC = () => {
             email, full_name, is_admin,
             desired_job_title, desired_salary_min, desired_salary_max, desired_salary_currency,
             work_setting_preference, experience_level, preferred_location,
-            industry_preferences, job_type_preference, email_notifications_enabled, newsletter_enabled
+            industry_preferences, job_type_preference, email_notifications_enabled, newsletter_enabled,
+            contact_phone, contact_location
           `)
           .eq('id', user.id)
           .single();
@@ -85,6 +90,8 @@ const Profile: React.FC = () => {
         
         console.log('Profile data retrieved:', profileData);
         setProfile(profileData);
+        setContactPhone(profileData.contact_phone || '');
+        setContactLocation(profileData.contact_location || '');
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -115,7 +122,9 @@ const Profile: React.FC = () => {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          full_name: fullName
+          full_name: fullName,
+          contact_phone: contactPhone || null,
+          contact_location: contactLocation || null
         })
         .eq('id', user.id);
 
@@ -337,10 +346,46 @@ const Profile: React.FC = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone">Phone Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="contactPhone"
+                  type="tel"
+                  placeholder="e.g. (555) 123-4567"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <p className="text-sm text-gray-500">
+                This will be used as your contact number in resumes and applications
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contactLocation">Contact Location</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="contactLocation"
+                  type="text"
+                  placeholder="e.g. New York, NY"
+                  value={contactLocation}
+                  onChange={(e) => setContactLocation(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <p className="text-sm text-gray-500">
+                This will be used as your location in resumes and applications
+              </p>
+            </div>
+
             <div className="pt-4">
               <Button
                 onClick={handleSaveProfile}
-                disabled={isSaving || !fullName.trim()}
+                disabled={isSaving}
                 className="w-full bg-indigo-900 hover:bg-indigo-800"
               >
                 {isSaving ? (
@@ -501,7 +546,9 @@ const Profile: React.FC = () => {
                   desired_salary_currency: profile.desired_salary_currency || 'USD',
                   industry_preferences: profile.industry_preferences || [],
                   email_notifications_enabled: profile.email_notifications_enabled ?? true,
-                  newsletter_enabled: profile.newsletter_enabled ?? true
+                  newsletter_enabled: profile.newsletter_enabled ?? true,
+                  contact_phone: profile.contact_phone || '',
+                  contact_location: profile.contact_location || ''
                 } : {}}
                 onSave={handleEmploymentPreferencesSave}
                 onError={handleEmploymentPreferencesError}

@@ -22,6 +22,9 @@ interface EmploymentPreferences {
   industry_preferences: string[];
   email_notifications_enabled: boolean;
   newsletter_enabled: boolean;
+  // Contact information fields
+  contact_phone: string;
+  contact_location: string;
 }
 
 interface EmploymentPreferencesFormProps {
@@ -88,6 +91,8 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
     industry_preferences: [],
     email_notifications_enabled: true,
     newsletter_enabled: true,
+    contact_phone: '',
+    contact_location: '',
     ...initialData
   });
 
@@ -180,7 +185,9 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
         desired_salary_currency: preferences.desired_salary_currency,
         industry_preferences: preferences.industry_preferences.length > 0 ? preferences.industry_preferences : null,
         email_notifications_enabled: preferences.email_notifications_enabled,
-        newsletter_enabled: preferences.newsletter_enabled
+        newsletter_enabled: preferences.newsletter_enabled,
+        contact_phone: preferences.contact_phone || null,
+        contact_location: preferences.contact_location || null
       };
 
       console.log('Saving employment preferences:', dbData);
@@ -269,6 +276,33 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
       )}
 
       <div className="space-y-6">
+        {/* Contact Information */}
+        <div className="space-y-4 p-4 bg-blue-50 rounded-lg border">
+          <h3 className="text-lg font-medium text-blue-900">Contact Information</h3>
+          <p className="text-sm text-blue-700">This information will be used in your resumes and job applications</p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact-phone">Phone Number</Label>
+              <Input
+                id="contact-phone"
+                placeholder="e.g. (555) 123-4567"
+                value={preferences.contact_phone}
+                onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-location">Contact Location</Label>
+              <Input
+                id="contact-location"
+                placeholder="e.g. New York, NY"
+                value={preferences.contact_location}
+                onChange={(e) => handleInputChange('contact_location', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Job Title */}
         <div className="space-y-2">
           <Label htmlFor="job-title" className="flex items-center gap-2">

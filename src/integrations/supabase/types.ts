@@ -736,6 +736,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          contact_location: string | null
+          contact_phone: string | null
           created_at: string
           desired_job_title: string | null
           desired_salary_currency: string | null
@@ -757,6 +759,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          contact_location?: string | null
+          contact_phone?: string | null
           created_at?: string
           desired_job_title?: string | null
           desired_salary_currency?: string | null
@@ -778,6 +782,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          contact_location?: string | null
+          contact_phone?: string | null
           created_at?: string
           desired_job_title?: string | null
           desired_salary_currency?: string | null

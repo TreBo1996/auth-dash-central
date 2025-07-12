@@ -13,6 +13,8 @@ import { CertificationsSection } from '@/components/resume-editor/Certifications
 import { ContactSection } from '@/components/resume-editor/ContactSection';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchInitialResumeStructuredData, saveInitialResumeStructuredData, updateInitialResumeSection, convertStructuredDataToEditorFormat } from '@/utils/initialResumeStorage';
+import { getUserContactInfo } from '@/utils/contactInfoUtils';
+import { useAuth } from '@/contexts/AuthContext';
 interface Resume {
   id: string;
   user_id: string;
@@ -95,9 +97,8 @@ const InitialResumeEditor: React.FC = () => {
     id: string;
   }>();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [resume, setResume] = useState<Resume | null>(null);
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,7 +181,7 @@ const InitialResumeEditor: React.FC = () => {
         await parseResumeWithAI(resumeText, resumeId);
       } else {
         console.warn('InitialResumeEditor: No resume text to parse, using default structure');
-        const defaultStructure = getDefaultResumeStructure();
+        const defaultStructure = await getDefaultResumeStructure();
         setParsedResume(defaultStructure);
         // Save the default structure for future loads
         await saveInitialResumeStructuredData(resumeId, defaultStructure);
@@ -191,18 +192,33 @@ const InitialResumeEditor: React.FC = () => {
       if (resumeText.trim()) {
         await parseResumeWithAI(resumeText, resumeId);
       } else {
-        setParsedResume(getDefaultResumeStructure());
+        const defaultStructure = await getDefaultResumeStructure();
+        setParsedResume(defaultStructure);
       }
     }
   };
-  const getDefaultResumeStructure = (): ParsedResume => {
+  const getDefaultResumeStructure = async (): Promise<ParsedResume> => {
+    let contactInfo = {
+      name: 'Not provided',
+      email: 'Not provided',
+      phone: 'Not provided',
+      location: 'Not provided'
+    };
+
+    // Try to get contact info from user profile
+    if (user?.id) {
+      try {
+        const profileContact = await getUserContactInfo(user.id);
+        if (profileContact.name || profileContact.email || profileContact.phone || profileContact.location) {
+          contactInfo = profileContact;
+        }
+      } catch (error) {
+        console.error('Error loading profile contact info:', error);
+      }
+    }
+
     return {
-      contact: {
-        name: 'Not provided',
-        email: 'Not provided',
-        phone: 'Not provided',
-        location: 'Not provided'
-      },
+      contact: contactInfo,
       summary: 'Professional Summary',
       experience: [{
         title: 'Job Title',
@@ -223,8 +239,33 @@ const InitialResumeEditor: React.FC = () => {
       certifications: []
     };
   };
-  const convertAIResponseToEditorFormat = (aiResponse: AIParseResponse): ParsedResume => {
+  const convertAIResponseToEditorFormat = async (aiResponse: AIParseResponse): Promise<ParsedResume> => {
     console.log('Converting AI response to editor format:', aiResponse);
+
+    // Get contact info from profile first, fallback to AI
+    let contactInfo = {
+      name: 'Not provided',
+      email: 'Not provided',
+      phone: 'Not provided',
+      location: 'Not provided'
+    };
+
+    if (user?.id) {
+      try {
+        const profileContact = await getUserContactInfo(user.id);
+        if (profileContact.name || profileContact.email || profileContact.phone || profileContact.location) {
+          contactInfo = profileContact;
+        } else if (aiResponse.contact) {
+          // Use AI contact as fallback
+          contactInfo = aiResponse.contact;
+        }
+      } catch (error) {
+        console.error('Error loading profile contact info, using AI contact:', error);
+        contactInfo = aiResponse.contact || contactInfo;
+      }
+    } else if (aiResponse.contact) {
+      contactInfo = aiResponse.contact;
+    }
 
     // Convert experience - handle both single description and bullets array
     const experience: Experience[] = (aiResponse.experience || []).map(exp => {
@@ -275,12 +316,7 @@ const InitialResumeEditor: React.FC = () => {
       year: cert.year || '2023'
     }));
     return {
-      contact: aiResponse.contact || {
-        name: 'Not provided',
-        email: 'Not provided',
-        phone: 'Not provided',
-        location: 'Not provided'
-      },
+      contact: contactInfo,
       summary: aiResponse.summary || 'Professional Summary',
       experience,
       skills,
@@ -320,7 +356,7 @@ const InitialResumeEditor: React.FC = () => {
         return;
       }
       console.log('InitialResumeEditor: AI parsing successful, converting data...');
-      const convertedData = convertAIResponseToEditorFormat(data);
+      const convertedData = await convertAIResponseToEditorFormat(data);
       setParsedResume(convertedData);
 
       // Save the structured data for future fast loading
