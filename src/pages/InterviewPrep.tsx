@@ -66,7 +66,7 @@ const InterviewPrep: React.FC = () => {
       
       const { data, error } = await supabase
         .from('job_descriptions')
-        .select('id, title, parsed_text')
+        .select('id, title, parsed_text, company')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -490,7 +490,7 @@ const InterviewPrep: React.FC = () => {
                         <SelectContent>
                           {jobDescriptions.map((job) => (
                             <SelectItem key={job.id} value={job.id}>
-                              {job.title}
+                              {job.company ? `${job.title} at ${job.company}` : job.title}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -578,11 +578,11 @@ const InterviewPrep: React.FC = () => {
                              <SelectValue placeholder="Select a job description for tips..." />
                            </SelectTrigger>
                            <SelectContent>
-                             {jobDescriptions.map((job) => (
-                               <SelectItem key={job.id} value={job.id}>
-                                 {job.title}
-                               </SelectItem>
-                             ))}
+                              {jobDescriptions.map((job) => (
+                                <SelectItem key={job.id} value={job.id}>
+                                  {job.company ? `${job.title} at ${job.company}` : job.title}
+                                </SelectItem>
+                              ))}
                            </SelectContent>
                          </Select>
 
