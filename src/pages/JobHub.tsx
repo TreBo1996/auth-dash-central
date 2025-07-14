@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { JobHubCard } from '@/components/job-hub/JobHubCard';
 import { JobHubMetrics } from '@/components/job-hub/JobHubMetrics';
 import { JobHubSuggestions } from '@/components/job-hub/JobHubSuggestions';
-import { JobHubChartsSection } from '@/components/job-hub/JobHubChartsSection';
+import { CollapsibleChartsSection } from '@/components/job-hub/CollapsibleChartsSection';
 import { ApplicationStatus } from '@/components/job-hub/JobStatusSelector';
 
 interface JobDescription {
@@ -307,7 +307,7 @@ const JobHub: React.FC = () => {
         <JobHubMetrics jobs={jobs} />
 
         {/* Charts Section */}
-        <JobHubChartsSection jobs={jobs} />
+        <CollapsibleChartsSection jobs={jobs} />
 
         {/* Smart Suggestions */}
         <JobHubSuggestions jobs={jobs} />
