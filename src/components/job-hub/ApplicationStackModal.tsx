@@ -43,7 +43,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
 
   const handleResumeEdit = () => {
     setShowResumePreview(false);
-    navigate(`/resume-editor?resumeId=${resume.id}`);
+    navigate(`/resume-editor/${resume.id}`);
   };
 
   const handleCoverLetterEdit = () => {
