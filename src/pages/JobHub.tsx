@@ -65,7 +65,7 @@ const JobHub: React.FC = () => {
         .select(`
           *,
           optimized_resumes(id, ats_score, job_fit_level, created_at),
-          cover_letters(id, title, created_at)
+          cover_letters(id, title, generated_text, created_at)
         `)
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
