@@ -17,13 +17,14 @@ import {
   Maximize,
   Minimize,
   RotateCcw,
-  FileImage,
   Target
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
 import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
+import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { fetchStructuredResumeData, StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -55,11 +56,11 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
   
   // Resume data
   const [resumeData, setResumeData] = useState<any>(null);
+  const [editableResumeData, setEditableResumeData] = useState<StructuredResumeData | null>(null);
   
   // Enhanced UI state
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [exportQuality, setExportQuality] = useState<'standard' | 'high' | 'print'>('high');
 
   useEffect(() => {
     if (isOpen && optimizedResumeId) {
@@ -73,6 +74,15 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
       setLoading(true);
       setError('');
 
+      // First try to fetch structured resume data
+      try {
+        const structuredData = await fetchStructuredResumeData(optimizedResumeId);
+        setEditableResumeData(structuredData);
+      } catch (structuredError) {
+        console.warn('Could not load structured data, falling back to text:', structuredError);
+      }
+
+      // Also fetch basic resume data for ATS score and fallback text
       const { data, error: fetchError } = await supabase
         .from('optimized_resumes')
         .select('generated_text, ats_score')
@@ -152,77 +162,8 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
     setIsFullscreen(!isFullscreen);
   };
 
-  const getExportOptions = () => {
-    const baseOptions = {
-      margin: [0.4, 0.4, 0.4, 0.4],
-      filename: `resume-${selectedTemplate}-${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      jsPDF: { 
-        unit: 'in' as const, 
-        format: 'letter' as const, 
-        orientation: 'portrait' as const
-      }
-    };
-
-    switch (exportQuality) {
-      case 'high':
-        return {
-          ...baseOptions,
-          html2canvas: { 
-            scale: 3,
-            useCORS: true,
-            letterRendering: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            dpi: 192,
-            foreignObjectRendering: true,
-            imageTimeout: 15000,
-            logging: false,
-            onclone: (clonedDoc: Document) => {
-              // Enhance text rendering for cloned document
-              const style = clonedDoc.createElement('style');
-              style.textContent = `
-                * {
-                  text-rendering: optimizeLegibility !important;
-                  -webkit-font-smoothing: antialiased !important;
-                  -moz-osx-font-smoothing: grayscale !important;
-                  font-smooth: always !important;
-                }
-              `;
-              clonedDoc.head.appendChild(style);
-            }
-          }
-        };
-      case 'print':
-        return {
-          ...baseOptions,
-          html2canvas: { 
-            scale: 4,
-            useCORS: true,
-            letterRendering: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            dpi: 300,
-            foreignObjectRendering: true,
-            imageTimeout: 20000
-          }
-        };
-      default:
-        return {
-          ...baseOptions,
-          html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff'
-          }
-        };
-    }
-  };
-
   const handleExportPDF = async () => {
-    if (!resumeData?.generated_text) {
+    if (!editableResumeData && !resumeData?.generated_text) {
       toast({
         title: "Export Failed",
         description: "No resume data available for export.",
@@ -234,20 +175,23 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
     try {
       setIsExporting(true);
       
-      const element = document.getElementById('resume-preview-content');
-      if (!element) {
-        throw new Error('Resume preview not found');
+      // Use the working PDF generator with structured data
+      if (editableResumeData) {
+        const fileName = `resume-${selectedTemplate}-${new Date().toISOString().split('T')[0]}.pdf`;
+        await generateNewProfessionalPDF(
+          selectedTemplate,
+          editableResumeData,
+          fileName,
+          selectedColorScheme
+        );
+        
+        toast({
+          title: "Export Successful", 
+          description: "Your resume has been downloaded as a PDF."
+        });
+      } else {
+        throw new Error('No structured data available for PDF generation');
       }
-
-      const html2pdf = (await import('html2pdf.js')).default;
-      const options = getExportOptions();
-
-      await html2pdf().set(options).from(element).save();
-      
-      toast({
-        title: "Export Successful",
-        description: `Your resume has been downloaded as a ${exportQuality} quality PDF.`
-      });
     } catch (error) {
       console.error('PDF export error:', error);
       toast({
@@ -398,43 +342,6 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
               </CardContent>
             </Card>
 
-            {/* Export Quality Selection */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <FileImage className="h-4 w-4" />
-                  Export Quality
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {[
-                    { id: 'standard', name: 'Standard', desc: 'Good quality, fast' },
-                    { id: 'high', name: 'High Quality', desc: 'Better quality, slower' }
-                  ].map((quality) => (
-                    <Card 
-                      key={quality.id}
-                      className={`cursor-pointer transition-all hover:shadow-sm ${
-                        exportQuality === quality.id ? 'ring-2 ring-primary' : ''
-                      }`}
-                      onClick={() => setExportQuality(quality.id as any)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="text-sm font-medium">{quality.name}</div>
-                            <div className="text-xs text-muted-foreground">{quality.desc}</div>
-                          </div>
-                          {exportQuality === quality.id && (
-                            <div className="w-2 h-2 bg-primary rounded-full" />
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Resume Preview Panel */}
@@ -477,14 +384,12 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
                   padding: '1rem'
                 }}
               >
-                <div id="resume-preview-content">
-                  <ResumePreview
-                    template={selectedTemplate}
-                    resumeData={resumeData.generated_text || ''}
-                    optimizedResumeId={optimizedResumeId}
-                    selectedColorScheme={selectedColorScheme}
-                  />
-                </div>
+                <ResumePreview
+                  template={selectedTemplate}
+                  resumeData={resumeData.generated_text || ''}
+                  optimizedResumeId={optimizedResumeId}
+                  selectedColorScheme={selectedColorScheme}
+                />
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
