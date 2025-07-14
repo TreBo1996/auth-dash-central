@@ -229,7 +229,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <Button onClick={handleExportPDF} disabled={isExporting || !resumeData} className="w-full" size="lg">
+              <Button onClick={handleExportPDF} disabled={isExporting || !resumeData} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white" size="lg">
                 {isExporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
                 {isExporting ? 'Exporting...' : 'Download PDF'}
               </Button>
