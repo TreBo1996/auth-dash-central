@@ -183,7 +183,12 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
 
     const currentPath = location.pathname;
     const isEmployerPath = currentPath.startsWith('/employer');
-    const isJobSeekerPath = currentPath === '/dashboard' || (!isEmployerPath && currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth');
+    
+    // Exclude specific tool paths from role-based redirection
+    const toolPaths = ['/resume-editor', '/resume-templates', '/interview-prep', '/cover-letters', '/job-search', '/job-hub'];
+    const isToolPath = toolPaths.some(path => currentPath.startsWith(path));
+    
+    const isJobSeekerPath = currentPath === '/dashboard' || (!isEmployerPath && !isToolPath && currentPath !== '/verify-email' && currentPath !== '/auth' && currentPath !== '/employer/auth');
 
     console.log('Role navigation check:', { 
       activeRole, 
