@@ -44,6 +44,7 @@ interface JobPosting {
   job_url?: string;
   apply_url?: string;
   company?: string;
+  employer_job_posting_id?: string; // For employer jobs in cached_jobs, stores actual job posting ID
   employer_profile: {
     company_name: string;
   } | null;
@@ -622,10 +623,17 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       }
 
       // Submit application to internal job
+      // For employer jobs, use the actual job posting ID, not the cached job ID
+      const jobPostingId = jobPosting.data_source === 'employer' && jobPosting.employer_job_posting_id 
+        ? jobPosting.employer_job_posting_id 
+        : jobPosting.id;
+
+      console.log('Submitting application with job_posting_id:', jobPostingId, 'for job source:', jobPosting.data_source);
+
       const { error: applicationError } = await supabase
         .from('job_applications')
         .insert({
-          job_posting_id: jobPosting.id,
+          job_posting_id: jobPostingId,
           applicant_id: user!.id,
           resume_id: selectedResumeId || optimizedResumeId,
           cover_letter: coverLetter || null,
