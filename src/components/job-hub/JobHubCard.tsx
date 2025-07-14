@@ -313,6 +313,10 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
           isOpen={showResumePreview}
           onClose={() => setShowResumePreview(false)}
           optimizedResumeId={latestResume.id}
+          onEdit={() => {
+            setShowResumePreview(false);
+            window.location.href = `/resume-editor/${latestResume.id}`;
+          }}
         />
       )}
 
