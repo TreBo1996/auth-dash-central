@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +52,7 @@ interface JobHubCardProps {
 }
 
 export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) => {
+  const navigate = useNavigate();
   const [showStackModal, setShowStackModal] = useState(false);
   const [showCreateStackModal, setShowCreateStackModal] = useState(false);
   const [showResumePreview, setShowResumePreview] = useState(false);
@@ -262,20 +264,20 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={() => window.location.href = `/upload-resume?jobId=${job.id}`}
+                    onClick={() => navigate(`/upload-resume?jobId=${job.id}`)}
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Optimize Resume
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => window.location.href = `/cover-letters?jobId=${job.id}`}
+                    onClick={() => navigate(`/cover-letters?jobId=${job.id}`)}
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Generate Cover Letter
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={() => window.location.href = `/upload-job?edit=${job.id}`}
+                    onClick={() => navigate(`/upload-job?edit=${job.id}`)}
                   >
                     Edit Job Details
                   </DropdownMenuItem>
@@ -315,7 +317,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
           optimizedResumeId={latestResume.id}
           onEdit={() => {
             setShowResumePreview(false);
-            window.location.href = `/resume-editor/${latestResume.id}`;
+            navigate(`/resume-editor/${latestResume.id}`);
           }}
         />
       )}
