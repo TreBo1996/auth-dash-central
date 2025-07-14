@@ -120,6 +120,113 @@ const JobHub: React.FC = () => {
     }
   };
 
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      // First, delete related data in the correct order to handle foreign key constraints
+      
+      // Delete resume sections, skills, experiences, certifications, education
+      const { data: optimizedResumes } = await supabase
+        .from('optimized_resumes')
+        .select('id')
+        .eq('job_description_id', jobId)
+        .eq('user_id', user!.id);
+
+      if (optimizedResumes && optimizedResumes.length > 0) {
+        const resumeIds = optimizedResumes.map(r => r.id);
+        
+        // Delete resume sections
+        await supabase
+          .from('resume_sections')
+          .delete()
+          .in('optimized_resume_id', resumeIds);
+
+        // Delete resume skills
+        await supabase
+          .from('resume_skills')
+          .delete()
+          .in('optimized_resume_id', resumeIds);
+
+        // Delete resume experiences
+        await supabase
+          .from('resume_experiences')
+          .delete()
+          .in('optimized_resume_id', resumeIds);
+
+        // Delete resume certifications
+        await supabase
+          .from('resume_certifications')
+          .delete()
+          .in('optimized_resume_id', resumeIds);
+
+        // Delete resume education
+        await supabase
+          .from('resume_education')
+          .delete()
+          .in('optimized_resume_id', resumeIds);
+      }
+
+      // Delete interview responses first, then sessions
+      const { data: interviewSessions } = await supabase
+        .from('interview_sessions')
+        .select('id')
+        .eq('job_description_id', jobId)
+        .eq('user_id', user!.id);
+
+      if (interviewSessions && interviewSessions.length > 0) {
+        const sessionIds = interviewSessions.map(s => s.id);
+        
+        await supabase
+          .from('interview_responses')
+          .delete()
+          .in('session_id', sessionIds);
+
+        await supabase
+          .from('interview_sessions')
+          .delete()
+          .in('id', sessionIds);
+      }
+
+      // Delete cover letters
+      await supabase
+        .from('cover_letters')
+        .delete()
+        .eq('job_description_id', jobId)
+        .eq('user_id', user!.id);
+
+      // Delete optimized resumes
+      await supabase
+        .from('optimized_resumes')
+        .delete()
+        .eq('job_description_id', jobId)
+        .eq('user_id', user!.id);
+
+      // Finally, delete the job description
+      const { error } = await supabase
+        .from('job_descriptions')
+        .delete()
+        .eq('id', jobId)
+        .eq('user_id', user!.id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setJobs(prev => prev.filter(job => job.id !== jobId));
+
+      toast({
+        title: "Deleted",
+        description: "Job and all related data have been successfully deleted."
+      });
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete job. Please try again.",
+        variant: "destructive"
+      });
+      throw error; // Re-throw to handle in the card component
+    }
+  };
+
   const getFilteredJobs = () => {
     switch (activeTab) {
       case 'pending':
@@ -256,6 +363,7 @@ const JobHub: React.FC = () => {
                         job={job} 
                         onStatusUpdate={handleStatusUpdate}
                         onRefresh={refreshJobs}
+                        onDelete={handleDeleteJob}
                       />
                     ))}
                   </div>

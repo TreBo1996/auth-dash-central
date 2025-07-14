@@ -12,6 +12,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { 
   Building, 
   MapPin, 
@@ -26,7 +36,8 @@ import {
   Award,
   CheckCircle,
   Clock,
-  MoreHorizontal
+  MoreHorizontal,
+  Trash2
 } from 'lucide-react';
 import { ApplicationStackModal } from './ApplicationStackModal';
 import { CreateApplicationStackModal } from './CreateApplicationStackModal';
@@ -52,15 +63,18 @@ interface JobHubCardProps {
   };
   onStatusUpdate: (jobId: string, field: string, value: boolean) => void;
   onRefresh: () => void;
+  onDelete: (jobId: string) => void;
 }
 
-export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onRefresh }) => {
+export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onRefresh, onDelete }) => {
   const navigate = useNavigate();
   const [showStackModal, setShowStackModal] = useState(false);
   const [showCreateStackModal, setShowCreateStackModal] = useState(false);
   const [showCoverLetterGenerationModal, setShowCoverLetterGenerationModal] = useState(false);
   const [showResumePreview, setShowResumePreview] = useState(false);
   const [showCoverLetterPreview, setShowCoverLetterPreview] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const hasOptimizedResume = job.optimized_resumes && job.optimized_resumes.length > 0;
   const hasCoverLetter = job.cover_letters && job.cover_letters.length > 0;
@@ -82,6 +96,18 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete(job.id);
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting job:', error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -297,6 +323,14 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                   >
                     Edit Job Details
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Job
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -358,6 +392,35 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
           onClose={() => setShowCoverLetterPreview(false)}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Job</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{job.title}" from your job pipeline? This action will permanently remove:
+              <ul className="mt-2 ml-4 list-disc text-sm">
+                <li>The job description</li>
+                {hasOptimizedResume && <li>Optimized resumes ({job.optimized_resumes?.length})</li>}
+                {hasCoverLetter && <li>Cover letters ({job.cover_letters?.length})</li>}
+                <li>Any interview sessions and responses</li>
+              </ul>
+              <p className="mt-2 font-medium text-red-600">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Deleting..." : "Delete Job"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
