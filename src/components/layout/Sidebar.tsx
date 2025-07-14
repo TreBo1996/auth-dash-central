@@ -1,12 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X, Mail, Lock } from 'lucide-react';
+import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X, Mail, Lock, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 const navigation = [{
+  name: 'Job Hub',
+  href: '/job-hub',
+  icon: Briefcase,
+  protected: true
+}, {
   name: 'Dashboard',
   href: '/dashboard',
   icon: Home,

@@ -33,6 +33,7 @@ import EmployerSettings from '@/pages/employer/EmployerSettings';
 import JobPosting from '@/pages/JobPosting';
 import JobDetail from '@/pages/JobDetail';
 import CoverLetters from '@/pages/CoverLetters';
+import JobHub from '@/pages/JobHub';
 import TermsOfService from '@/pages/TermsOfService';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import ResetPassword from '@/pages/ResetPassword';
@@ -66,6 +67,16 @@ function App() {
               />
               
               {/* Job Seeker Routes */}
+              <Route 
+                path="/job-hub" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="job_seeker">
+                      <JobHub />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/dashboard" 
                 element={
