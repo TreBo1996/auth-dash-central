@@ -85,6 +85,10 @@ const JobHub: React.FC = () => {
     }
   };
 
+  const refreshJobs = () => {
+    fetchJobDescriptions();
+  };
+
   const handleStatusUpdate = async (jobId: string, field: string, value: boolean) => {
     try {
       const { error } = await supabase
@@ -249,6 +253,7 @@ const JobHub: React.FC = () => {
                         key={job.id} 
                         job={job} 
                         onStatusUpdate={handleStatusUpdate}
+                        onRefresh={refreshJobs}
                       />
                     ))}
                   </div>

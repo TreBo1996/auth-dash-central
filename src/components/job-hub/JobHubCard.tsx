@@ -51,9 +51,10 @@ interface JobHubCardProps {
     cover_letters?: any[];
   };
   onStatusUpdate: (jobId: string, field: string, value: boolean) => void;
+  onRefresh: () => void;
 }
 
-export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) => {
+export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onRefresh }) => {
   const navigate = useNavigate();
   const [showStackModal, setShowStackModal] = useState(false);
   const [showCreateStackModal, setShowCreateStackModal] = useState(false);
@@ -340,7 +341,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
         job={job}
         onComplete={() => {
           setShowCoverLetterGenerationModal(false);
-          // Trigger a refresh of the job data in the parent component
+          onRefresh();
         }}
       />
 
