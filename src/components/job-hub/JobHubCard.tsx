@@ -177,7 +177,14 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
 
             <div className="grid grid-cols-2 gap-3">
               {/* Resume Status */}
-              <div className="p-3 bg-white border rounded-lg">
+              <div 
+                className={`p-3 bg-white border rounded-lg transition-colors ${
+                  hasOptimizedResume 
+                    ? 'cursor-pointer hover:bg-gray-50 hover:border-blue-300' 
+                    : ''
+                }`}
+                onClick={hasOptimizedResume ? () => setShowResumePreview(true) : undefined}
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <FileText className="h-4 w-4 text-gray-500" />
                   <span className="text-sm font-medium">Resume</span>
