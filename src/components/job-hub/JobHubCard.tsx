@@ -148,7 +148,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Badge variant={job.source === 'upload' ? 'default' : 'secondary'} className="text-xs">
-                    {job.source === 'upload' ? 'Uploaded' : 'External'}
+                    {job.source === 'upload' ? 'External' : 'RezLit Job'}
                   </Badge>
                   <div className="text-xs text-gray-500 flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
