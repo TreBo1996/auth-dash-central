@@ -164,15 +164,78 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
             {/* Right Section: Action Buttons */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {hasCompleteStack ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowStackModal(true)}
-                  className="h-8 px-3"
-                >
-                  <Eye className="h-3 w-3 mr-1" />
-                  Preview
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 px-3"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Preview
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64 bg-white border shadow-lg z-50">
+                    <DropdownMenuLabel className="font-medium text-gray-900">
+                      Application Stack
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    
+                    {/* Resume Section */}
+                    {latestResume && (
+                      <div className="px-3 py-2 border-b">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700">Resume</span>
+                          {latestResume.ats_score && (
+                            <Badge variant="secondary" className="text-xs">
+                              {latestResume.ats_score}% ATS
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2">
+                          Created {formatDate(latestResume.created_at)}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowResumePreview(true)}
+                          className="h-7 text-xs w-full justify-start"
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Preview Resume
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Cover Letter Section */}
+                    {latestCoverLetter && (
+                      <div className="px-3 py-2 border-b">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700">Cover Letter</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2">
+                          {latestCoverLetter.title}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowCoverLetterPreview(true)}
+                          className="h-7 text-xs w-full justify-start"
+                        >
+                          <Mail className="h-3 w-3 mr-1" />
+                          Preview Cover Letter
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* Full Stack Preview */}
+                    <DropdownMenuItem onClick={() => setShowStackModal(true)} className="py-2">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Full Stack
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
                 <Button 
                   size="sm" 
