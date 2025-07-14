@@ -14,6 +14,7 @@ interface JobHubMetricsProps {
     id: string;
     is_applied?: boolean;
     is_saved?: boolean;
+    created_at: string;
     optimized_resumes?: any[];
     cover_letters?: any[];
   }>;
@@ -21,16 +22,15 @@ interface JobHubMetricsProps {
 
 export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
   const totalJobs = jobs.length;
-  const savedJobs = jobs.filter(job => job.is_saved).length;
+  const pendingApplications = jobs.filter(job => !job.is_applied).length;
   const appliedJobs = jobs.filter(job => job.is_applied).length;
   
-  const totalOptimizedResumes = jobs.reduce((count, job) => {
-    return count + (job.optimized_resumes?.length || 0);
-  }, 0);
-  
-  const totalCoverLetters = jobs.reduce((count, job) => {
-    return count + (job.cover_letters?.length || 0);
-  }, 0);
+  // Calculate jobs added this week
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const jobsThisWeek = jobs.filter(job => 
+    new Date(job.created_at) >= oneWeekAgo
+  ).length;
   
   const jobsWithCompleteStack = jobs.filter(job => 
     job.optimized_resumes && job.optimized_resumes.length > 0 &&
@@ -47,11 +47,18 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
 
   const metrics = [
     {
-      title: 'Total Jobs Tracked',
+      title: 'Jobs in Pipeline',
       value: totalJobs,
       icon: FileText,
       color: 'bg-blue-500',
-      description: 'Job descriptions in your pipeline'
+      description: 'Total jobs being tracked'
+    },
+    {
+      title: 'Pending Applications',
+      value: pendingApplications,
+      icon: TrendingUp,
+      color: 'bg-orange-500',
+      description: 'Jobs ready for application'
     },
     {
       title: 'Applications Submitted',
@@ -61,18 +68,11 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
       description: 'Jobs you\'ve applied to'
     },
     {
-      title: 'Optimized Resumes',
-      value: totalOptimizedResumes,
-      icon: FileText,
-      color: 'bg-purple-500',
-      description: 'ATS-optimized resumes generated'
-    },
-    {
-      title: 'Cover Letters',
-      value: totalCoverLetters,
-      icon: Mail,
-      color: 'bg-orange-500',
-      description: 'Personalized cover letters created'
+      title: 'Complete Stacks',
+      value: jobsWithCompleteStack,
+      icon: Target,
+      color: 'bg-indigo-500',
+      description: 'Jobs with resume & cover letter'
     },
     {
       title: 'Average ATS Score',
@@ -82,11 +82,11 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
       description: 'Average resume optimization score'
     },
     {
-      title: 'Complete Stacks',
-      value: jobsWithCompleteStack,
-      icon: Target,
-      color: 'bg-indigo-500',
-      description: 'Jobs with both resume & cover letter'
+      title: 'Jobs This Week',
+      value: jobsThisWeek,
+      icon: TrendingUp,
+      color: 'bg-purple-500',
+      description: 'New jobs added this week'
     }
   ];
 

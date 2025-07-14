@@ -122,10 +122,10 @@ const JobHub: React.FC = () => {
 
   const getFilteredJobs = () => {
     switch (activeTab) {
+      case 'pending':
+        return jobs.filter(job => !job.is_applied);
       case 'applied':
         return jobs.filter(job => job.is_applied);
-      case 'saved':
-        return jobs.filter(job => job.is_saved);
       case 'with-stack':
         return jobs.filter(job => 
           job.optimized_resumes && job.optimized_resumes.length > 0 &&
@@ -206,8 +206,8 @@ const JobHub: React.FC = () => {
                 <TabsTrigger value="all">
                   All Jobs ({jobs.length})
                 </TabsTrigger>
-                <TabsTrigger value="saved">
-                  Saved ({jobs.filter(j => j.is_saved).length})
+                <TabsTrigger value="pending">
+                  Pending ({jobs.filter(j => !j.is_applied).length})
                 </TabsTrigger>
                 <TabsTrigger value="applied">
                   Applied ({jobs.filter(j => j.is_applied).length})
@@ -230,7 +230,7 @@ const JobHub: React.FC = () => {
                     <p className="text-gray-500 mb-4">
                       {activeTab === 'all' 
                         ? 'Start by uploading job descriptions or searching for jobs.'
-                        : `You haven't ${activeTab === 'applied' ? 'applied to' : activeTab === 'saved' ? 'saved' : 'created application stacks for'} any jobs yet.`
+                        : `You haven't ${activeTab === 'applied' ? 'applied to' : activeTab === 'pending' ? 'found pending' : 'created application stacks for'} any jobs yet.`
                       }
                     </p>
                     <div className="flex gap-2 justify-center">

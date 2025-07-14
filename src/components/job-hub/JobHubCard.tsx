@@ -134,14 +134,6 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Switch
-                    checked={job.is_saved || false}
-                    onCheckedChange={(checked) => onStatusUpdate(job.id, 'is_saved', checked)}
-                    className="scale-75"
-                  />
-                  <span className="text-xs font-medium text-gray-600">Saved</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
                     checked={job.is_applied || false}
                     onCheckedChange={(checked) => onStatusUpdate(job.id, 'is_applied', checked)}
                     className="scale-75"
