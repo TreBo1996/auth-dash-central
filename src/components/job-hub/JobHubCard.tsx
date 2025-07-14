@@ -32,7 +32,7 @@ import { ApplicationStackModal } from './ApplicationStackModal';
 import { CreateApplicationStackModal } from './CreateApplicationStackModal';
 import { CoverLetterGenerationModal } from './CoverLetterGenerationModal';
 import { ResumeTemplateModal } from './ResumeTemplateModal';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ContentPreview } from '@/components/ContentPreview';
 
 interface JobHubCardProps {
   job: {
@@ -359,18 +359,12 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
 
       {/* Cover Letter Preview Modal */}
       {latestCoverLetter && showCoverLetterPreview && (
-        <Dialog open={showCoverLetterPreview} onOpenChange={setShowCoverLetterPreview}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{latestCoverLetter.title}</DialogTitle>
-            </DialogHeader>
-            <div className="prose max-w-none">
-              <div className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg">
-                {latestCoverLetter.generated_text}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <ContentPreview
+          content={latestCoverLetter.generated_text}
+          title={latestCoverLetter.title}
+          type="cover-letter"
+          onClose={() => setShowCoverLetterPreview(false)}
+        />
       )}
     </>
   );
