@@ -18,8 +18,7 @@ import {
   Minimize,
   RotateCcw,
   FileImage,
-  FileText,
-  Printer
+  Target
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
@@ -138,11 +137,11 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
   };
 
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.25, 2));
+    setZoomLevel(prev => Math.min(prev + 0.1, 1.5));
   };
 
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+    setZoomLevel(prev => Math.max(prev - 0.1, 0.6));
   };
 
   const handleResetZoom = () => {
@@ -287,7 +286,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={`${isFullscreen ? 'max-w-[98vw] max-h-[98vh]' : 'max-w-6xl max-h-[90vh]'} overflow-hidden transition-all duration-300`}>
+      <DialogContent className={`${isFullscreen ? 'max-w-[98vw] max-h-[98vh]' : 'max-w-7xl max-h-[95vh]'} overflow-hidden transition-all duration-300`}>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
@@ -317,9 +316,55 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
           </Alert>
         )}
 
-        <div className={`grid ${isMobile || isFullscreen ? 'grid-cols-1' : 'grid-cols-4'} gap-6 ${isFullscreen ? 'h-[88vh]' : 'h-[75vh]'}`}>
-          {/* Template Selection Panel */}
+        <div className={`grid ${isMobile || isFullscreen ? 'grid-cols-1' : 'grid-cols-4'} gap-6 ${isFullscreen ? 'h-[90vh]' : 'h-[80vh]'}`}>
+          {/* Control Panel */}
           <div className={`${isMobile ? 'order-2' : isFullscreen ? 'hidden' : 'order-1'} space-y-4 overflow-y-auto ${isFullscreen ? 'w-0' : ''}`}>
+            
+            {/* ATS Score */}
+            {resumeData?.ats_score && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Target className="h-4 w-4 text-primary" />
+                      <div className="text-sm font-medium">ATS Score</div>
+                    </div>
+                    <div className="text-2xl font-bold text-primary">
+                      {resumeData.ats_score}%
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button
+                onClick={handleExportPDF}
+                disabled={isExporting || !resumeData}
+                className="w-full"
+                size="lg"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                {isExporting ? 'Exporting...' : 'Download PDF'}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={handleEdit}
+                className="w-full"
+                size="lg"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Resume
+              </Button>
+            </div>
+
+            {/* Template Selection */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -336,6 +381,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
               </CardContent>
             </Card>
 
+            {/* Color Selection */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -364,8 +410,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
                 <div className="space-y-2">
                   {[
                     { id: 'standard', name: 'Standard', desc: 'Good quality, fast' },
-                    { id: 'high', name: 'High Quality', desc: 'Better quality, slower' },
-                    { id: 'print', name: 'Print Ready', desc: 'Best quality, slowest' }
+                    { id: 'high', name: 'High Quality', desc: 'Better quality, slower' }
                   ].map((quality) => (
                     <Card 
                       key={quality.id}
@@ -390,40 +435,6 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
                 </div>
               </CardContent>
             </Card>
-
-            {/* Action Buttons */}
-            <div className="space-y-2">
-              <Button
-                onClick={handleExportPDF}
-                disabled={isExporting || !resumeData}
-                className="w-full"
-              >
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                {isExporting ? 'Exporting...' : 'Download PDF'}
-              </Button>
-              
-              <Button
-                variant="outline"
-                onClick={handleEdit}
-                className="w-full"
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Resume
-              </Button>
-
-              {resumeData?.ats_score && (
-                <div className="text-center p-2 bg-muted rounded-lg">
-                  <div className="text-sm text-muted-foreground">ATS Score</div>
-                  <div className="text-lg font-semibold text-primary">
-                    {resumeData.ats_score}%
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Resume Preview Panel */}
@@ -434,7 +445,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomOut}
-                disabled={zoomLevel <= 0.5}
+                disabled={zoomLevel <= 0.6}
                 className="h-7 w-7 p-0"
               >
                 <ZoomOut className="h-3 w-3" />
@@ -451,18 +462,10 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomIn}
-                disabled={zoomLevel >= 2}
+                disabled={zoomLevel >= 1.5}
                 className="h-7 w-7 p-0"
               >
                 <ZoomIn className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.print()}
-                className="h-7 w-7 p-0"
-              >
-                <Printer className="h-3 w-3" />
               </Button>
             </div>
 
@@ -470,10 +473,8 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
               <div 
                 className="h-full overflow-auto"
                 style={{
-                  transform: `scale(${zoomLevel})`,
-                  transformOrigin: 'top left',
-                  width: `${100 / zoomLevel}%`,
-                  height: `${100 / zoomLevel}%`
+                  fontSize: `${zoomLevel}rem`,
+                  padding: '1rem'
                 }}
               >
                 <div id="resume-preview-content">

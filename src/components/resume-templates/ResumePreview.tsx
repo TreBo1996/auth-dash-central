@@ -120,20 +120,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
         willChange: 'transform'
       }}
     >
-      <div 
-        className={`${
-          isMobile 
-            ? 'w-full' // Remove CSS transform scaling for mobile to prevent blur
-            : ''
-        } transition-transform duration-200`}
-        style={{
-          // Use viewport scaling instead of CSS transforms for better quality
-          ...(isMobile && {
-            fontSize: '0.75rem', // Scale font size instead of using transform
-            lineHeight: '1.2'
-          })
-        }}
-      >
+      <div className="w-full">
         {renderTemplate()}
       </div>
     </div>
