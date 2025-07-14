@@ -40,6 +40,7 @@ interface JobPosting {
   description: string;
   requirements: string[];
   source?: string;
+  data_source?: string; // 'employer' or 'apify' to distinguish job sources
   job_url?: string;
   apply_url?: string;
   company?: string;
@@ -577,8 +578,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       return;
     }
 
-    // Handle external jobs differently
-    if (jobPosting.source === 'database') {
+    // Handle external jobs differently - only route to external for scraped jobs, not employer jobs
+    if (jobPosting.source === 'database' && jobPosting.data_source !== 'employer') {
       handleExternalJobApplication();
       return;
     }
@@ -1233,7 +1234,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     ) : (
                       <>
                         <Send className="h-4 w-4 mr-2" />
-                        {jobPosting.source === 'database' ? 'Continue to External Site' : 'Submit Application'}
+                        {(jobPosting.source === 'database' && jobPosting.data_source !== 'employer') ? 'Continue to External Site' : 'Submit Application'}
                       </>
                     )}
                   </Button>

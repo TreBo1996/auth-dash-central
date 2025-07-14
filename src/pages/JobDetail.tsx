@@ -148,6 +148,7 @@ const JobDetail: React.FC = () => {
           posted_at: data.posted_at || new Date(data.scraped_at).toLocaleDateString(),
           job_url: `/job/database/${data.id}`,
           source: 'database',
+          data_source: data.data_source, // Include data_source to distinguish employer vs scraped jobs
           via: data.via,
           thumbnail: data.thumbnail,
           job_type: data.job_type,
@@ -155,6 +156,9 @@ const JobDetail: React.FC = () => {
           experience_level: data.experience_level,
           apply_url: data.apply_url,
           external_job_url: data.job_url,
+          // For employer jobs in cached_jobs, get actual job posting ID
+          employer_job_posting_id: data.data_source === 'employer' && data.apify_job_id ? 
+            data.apify_job_id.replace('employer_', '') : undefined,
           // Note: cached_jobs doesn't have structured requirements/responsibilities/benefits
           // These would be parsed from description if needed
         };

@@ -34,4 +34,6 @@ export interface UnifiedJob {
   job_type?: string | null;
   apply_url?: string | null;
   external_job_url?: string | null;
+  data_source?: string; // 'employer' or 'apify' to distinguish job sources
+  employer_job_posting_id?: string; // For employer jobs in cached_jobs, stores actual job posting ID
 }
