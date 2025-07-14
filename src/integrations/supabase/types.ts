@@ -447,6 +447,9 @@ export type Database = {
       }
       job_descriptions: {
         Row: {
+          application_status:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           company: string | null
           created_at: string
           file_name: string | null
@@ -465,6 +468,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          application_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           company?: string | null
           created_at?: string
           file_name?: string | null
@@ -483,6 +489,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          application_status?:
+            | Database["public"]["Enums"]["application_status"]
+            | null
           company?: string | null
           created_at?: string
           file_name?: string | null
@@ -1484,6 +1493,13 @@ export type Database = {
     }
     Enums: {
       app_role: "job_seeker" | "employer" | "both"
+      application_status:
+        | "pending"
+        | "applied"
+        | "interviewing"
+        | "rejected"
+        | "offer"
+        | "withdrawn"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1612,6 +1628,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["job_seeker", "employer", "both"],
+      application_status: [
+        "pending",
+        "applied",
+        "interviewing",
+        "rejected",
+        "offer",
+        "withdrawn",
+      ],
     },
   },
 } as const

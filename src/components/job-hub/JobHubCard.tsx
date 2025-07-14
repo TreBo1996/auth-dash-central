@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { JobStatusSelector, ApplicationStatus } from './JobStatusSelector';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -58,10 +60,11 @@ interface JobHubCardProps {
     created_at: string;
     is_applied?: boolean;
     is_saved?: boolean;
+    application_status?: ApplicationStatus;
     optimized_resumes?: any[];
     cover_letters?: any[];
   };
-  onStatusUpdate: (jobId: string, field: string, value: boolean) => void;
+  onStatusUpdate: (jobId: string, field: string, value: boolean | ApplicationStatus) => void;
   onRefresh: () => void;
   onDelete: (jobId: string) => void;
 }
@@ -157,15 +160,11 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
 
             {/* Center Section: Status Controls */}
             <div className="flex items-center gap-4 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={job.is_applied || false}
-                    onCheckedChange={(checked) => onStatusUpdate(job.id, 'is_applied', checked)}
-                    className="scale-75"
-                  />
-                  <span className="text-xs font-medium text-gray-600">Applied</span>
-                </div>
+              <div className="min-w-[160px]">
+                <JobStatusSelector
+                  status={job.application_status || 'pending'}
+                  onStatusChange={(status) => onStatusUpdate(job.id, 'application_status', status)}
+                />
               </div>
 
               {/* Stack Status */}

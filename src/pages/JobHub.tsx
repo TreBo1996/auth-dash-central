@@ -26,6 +26,8 @@ import { useToast } from '@/hooks/use-toast';
 import { JobHubCard } from '@/components/job-hub/JobHubCard';
 import { JobHubMetrics } from '@/components/job-hub/JobHubMetrics';
 import { JobHubSuggestions } from '@/components/job-hub/JobHubSuggestions';
+import { JobHubChartsSection } from '@/components/job-hub/JobHubChartsSection';
+import { ApplicationStatus } from '@/components/job-hub/JobStatusSelector';
 
 interface JobDescription {
   id: string;
@@ -39,6 +41,7 @@ interface JobDescription {
   created_at: string;
   is_applied?: boolean;
   is_saved?: boolean;
+  application_status?: ApplicationStatus;
   optimized_resumes?: any[];
   cover_letters?: any[];
 }
@@ -91,11 +94,18 @@ const JobHub: React.FC = () => {
     fetchJobDescriptions();
   };
 
-  const handleStatusUpdate = async (jobId: string, field: string, value: boolean) => {
+  const handleStatusUpdate = async (jobId: string, field: string, value: boolean | ApplicationStatus) => {
     try {
+      let updateData: any = { [field]: value };
+      
+      // If updating application_status, also update is_applied for backward compatibility
+      if (field === 'application_status') {
+        updateData.is_applied = value === 'applied';
+      }
+
       const { error } = await supabase
         .from('job_descriptions')
-        .update({ [field]: value })
+        .update(updateData)
         .eq('id', jobId)
         .eq('user_id', user!.id);
 
@@ -103,12 +113,12 @@ const JobHub: React.FC = () => {
 
       // Update local state
       setJobs(prev => prev.map(job => 
-        job.id === jobId ? { ...job, [field]: value } : job
+        job.id === jobId ? { ...job, ...updateData } : job
       ));
 
       toast({
         title: "Updated",
-        description: `Job ${field === 'is_applied' ? 'application status' : 'save status'} updated successfully.`
+        description: `Job status updated to ${typeof value === 'string' ? value : field.replace('is_', '')}.`
       });
     } catch (error) {
       console.error('Error updating job status:', error);
@@ -230,9 +240,9 @@ const JobHub: React.FC = () => {
   const getFilteredJobs = () => {
     switch (activeTab) {
       case 'pending':
-        return jobs.filter(job => !job.is_applied);
+        return jobs.filter(job => job.application_status === 'pending' || (!job.application_status && !job.is_applied));
       case 'applied':
-        return jobs.filter(job => job.is_applied);
+        return jobs.filter(job => job.application_status === 'applied' || (job.is_applied && !job.application_status));
       case 'with-stack':
         return jobs.filter(job => 
           job.optimized_resumes && job.optimized_resumes.length > 0 &&
@@ -295,6 +305,9 @@ const JobHub: React.FC = () => {
 
         {/* Metrics Dashboard */}
         <JobHubMetrics jobs={jobs} />
+
+        {/* Charts Section */}
+        <JobHubChartsSection jobs={jobs} />
 
         {/* Smart Suggestions */}
         <JobHubSuggestions jobs={jobs} />

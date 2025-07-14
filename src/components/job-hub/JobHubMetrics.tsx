@@ -6,7 +6,8 @@ import {
   CheckCircle, 
   Award,
   TrendingUp,
-  Target
+  Target,
+  Users
 } from 'lucide-react';
 
 interface JobHubMetricsProps {
@@ -14,6 +15,7 @@ interface JobHubMetricsProps {
     id: string;
     is_applied?: boolean;
     is_saved?: boolean;
+    application_status?: string;
     created_at: string;
     optimized_resumes?: any[];
     cover_letters?: any[];
@@ -22,8 +24,14 @@ interface JobHubMetricsProps {
 
 export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
   const totalJobs = jobs.length;
-  const pendingApplications = jobs.filter(job => !job.is_applied).length;
-  const appliedJobs = jobs.filter(job => job.is_applied).length;
+  const pendingApplications = jobs.filter(job => 
+    job.application_status === 'pending' || (!job.application_status && !job.is_applied)
+  ).length;
+  const appliedJobs = jobs.filter(job => 
+    job.application_status === 'applied' || (job.is_applied && !job.application_status)
+  ).length;
+  const activeInterviews = jobs.filter(job => job.application_status === 'interviewing').length;
+  const offersReceived = jobs.filter(job => job.application_status === 'offer').length;
   
   // Calculate jobs added this week
   const oneWeekAgo = new Date();
@@ -44,6 +52,9 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
   const averageAtsScore = allResumesWithScores.length > 0 
     ? Math.round(allResumesWithScores.reduce((sum, resume) => sum + resume.ats_score, 0) / allResumesWithScores.length)
     : 0;
+
+  // Calculate success rate (offers / total applied)
+  const successRate = appliedJobs > 0 ? Math.round((offersReceived / appliedJobs) * 100) : 0;
 
   const metrics = [
     {
@@ -68,25 +79,25 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
       description: 'Jobs you\'ve applied to'
     },
     {
-      title: 'Complete Stacks',
-      value: jobsWithCompleteStack,
+      title: 'Active Interviews',
+      value: activeInterviews,
+      icon: Users,
+      color: 'bg-purple-500',
+      description: 'Interview processes ongoing'
+    },
+    {
+      title: 'Offers Received',
+      value: offersReceived,
+      icon: Award,
+      color: 'bg-emerald-500',
+      description: 'Job offers received'
+    },
+    {
+      title: 'Success Rate',
+      value: successRate > 0 ? `${successRate}%` : 'N/A',
       icon: Target,
       color: 'bg-indigo-500',
-      description: 'Jobs with resume & cover letter'
-    },
-    {
-      title: 'Average ATS Score',
-      value: averageAtsScore > 0 ? `${averageAtsScore}%` : 'N/A',
-      icon: Award,
-      color: 'bg-yellow-500',
-      description: 'Average resume optimization score'
-    },
-    {
-      title: 'Jobs This Week',
-      value: jobsThisWeek,
-      icon: TrendingUp,
-      color: 'bg-purple-500',
-      description: 'New jobs added this week'
+      description: 'Offer rate from applications'
     }
   ];
 
