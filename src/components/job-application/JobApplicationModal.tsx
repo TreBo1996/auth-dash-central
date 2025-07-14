@@ -65,7 +65,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'external-apply' | 'success'>('choose');
+  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'final-submit' | 'external-apply' | 'success'>('choose');
   const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
   
   // Resume management
@@ -306,12 +306,12 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         
         setStep('edit-resume');
       } else {
-        console.log('⚠️ No optimized resume found, going to submit');
-        setStep('submit');
+        console.log('⚠️ No optimized resume found, going to final-submit');
+        setStep('final-submit');
       }
     } catch (error) {
       console.error('Error getting optimized resume:', error);
-      setStep('submit');
+      setStep('final-submit');
     }
   };
 
@@ -710,8 +710,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         setStep('optimize');
       }
     } else {
-      // User just wanted to upload, so go to submit step
-      setStep('submit');
+      // User just wanted to upload, so go to final-submit step
+      setStep('final-submit');
     }
   };
 
@@ -766,7 +766,6 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         case 'edit-resume': return 5;
         case 'templates': return 6;
         case 'cover-letter': return 7;
-        case 'submit': return 8;
         case 'final-submit': 
         case 'external-apply': return 8;
         case 'success': return 9;
@@ -1172,7 +1171,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
               <div className="flex gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => setStep('submit')}
+                  onClick={() => setStep('final-submit')}
                   className="flex-1"
                 >
                   Skip Cover Letter
@@ -1181,62 +1180,6 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             </div>
           )}
 
-          {step === 'submit' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Write Cover Letter (Optional)</h3>
-                <Button variant="outline" onClick={() => setStep('cover-letter')}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Cover Letter (Optional)</label>
-                  <Textarea
-                    placeholder="Tell the employer why you're interested in this position and what makes you a great fit..."
-                    value={coverLetter}
-                    onChange={(e) => setCoverLetter(e.target.value)}
-                    rows={6}
-                    className="w-full"
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between items-center pt-4">
-                  <div className="text-sm text-muted-foreground">
-                    {optimizedResumeId ? (
-                      <span className="text-green-600 font-medium">✓ Using AI-optimized resume</span>
-                    ) : selectedResumeId ? (
-                      'Using selected resume'
-                    ) : (
-                      'No resume selected'
-                    )}
-                  </div>
-                  <Button 
-                    onClick={submitApplication}
-                    disabled={submitting || (!selectedResumeId && !optimizedResumeId)}
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Submit Application
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-           )}
 
           {step === 'final-submit' && (
             <div className="space-y-4">
@@ -1260,15 +1203,6 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                     <div className="bg-white rounded p-4 border border-green-200 max-h-48 overflow-y-auto">
                       <p className="text-sm whitespace-pre-wrap">{coverLetter}</p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2"
-                      onClick={() => setStep('submit')}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Cover Letter
-                    </Button>
                   </CardContent>
                 </Card>
               )}

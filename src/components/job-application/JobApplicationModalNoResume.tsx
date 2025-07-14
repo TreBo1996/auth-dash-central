@@ -56,7 +56,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'submit' | 'final-submit' | 'external-apply' | 'success'>('upload');
+  const [step, setStep] = useState<'upload' | 'choose-optimization' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'final-submit' | 'external-apply' | 'success'>('upload');
   
   // Track workflow intent for streamlined paths
   const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
@@ -222,12 +222,12 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
         
         setStep('edit-resume');
       } else {
-        console.log('⚠️ No optimized resume found, going to submit');
-        setStep('submit');
+        console.log('⚠️ No optimized resume found, going to final-submit');
+        setStep('final-submit');
       }
     } catch (error) {
       console.error('Error getting optimized resume:', error);
-      setStep('submit');
+      setStep('final-submit');
     }
   };
 
@@ -605,7 +605,6 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
         case 'upload': return 1;
         case 'choose-optimization': return 2;
         case 'cover-letter': return 3;
-        case 'submit': return 4;
         case 'final-submit': return 4;
         case 'external-apply': return 4;
         case 'success': return 4;
@@ -621,7 +620,6 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
       case 'edit-resume': return 4;
       case 'templates': return 5;
       case 'cover-letter': return 6;
-      case 'submit': return 7;
       case 'final-submit': return 7;
       case 'external-apply': return 7;
       case 'success': return 8;
@@ -934,44 +932,6 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
             </div>
           )}
 
-          {step === 'submit' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Write Cover Letter (Optional)</h3>
-                <Button variant="outline" onClick={() => setStep('cover-letter')}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-              </div>
-
-              <Textarea
-                placeholder={`Dear ${companyName} Hiring Team,\n\nI am excited to apply for the ${jobPosting.title} position...`}
-                value={coverLetter}
-                onChange={(e) => setCoverLetter(e.target.value)}
-                rows={8}
-                className="resize-none"
-              />
-
-              <Button 
-                onClick={submitApplication} 
-                disabled={submitting}
-                className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                size="lg"
-              >
-                {submitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Submitting Application...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Submit Application
-                  </>
-                )}
-              </Button>
-            </div>
-           )}
 
           {step === 'final-submit' && (
             <div className="space-y-4">
@@ -995,15 +955,6 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
                     <div className="bg-white rounded p-4 border border-green-200 max-h-48 overflow-y-auto">
                       <p className="text-sm whitespace-pre-wrap">{coverLetter}</p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2"
-                      onClick={() => setStep('submit')}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Cover Letter
-                    </Button>
                   </CardContent>
                 </Card>
               )}
