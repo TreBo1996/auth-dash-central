@@ -170,12 +170,11 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
-                      variant="outline" 
                       size="sm" 
-                      className="h-8 px-3"
+                      className="h-8 px-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                     >
                       <Eye className="h-3 w-3 mr-1" />
-                      Preview
+                      Preview Stack
                       <ChevronDown className="h-3 w-3 ml-1" />
                     </Button>
                   </DropdownMenuTrigger>
