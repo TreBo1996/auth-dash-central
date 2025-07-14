@@ -167,17 +167,21 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 />
               </div>
 
-              {/* Stack Status */}
-              <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full">
+              {/* Stack Status - Fixed width for consistent alignment */}
+              <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full min-w-[140px]">
                 <div className={`w-2 h-2 rounded-full ${stackStatus.color}`} />
                 <span className={`text-xs font-medium ${stackStatus.textColor}`}>
                   {stackStatus.text}
                 </span>
-                {hasOptimizedResume && latestResume?.ats_score && (
-                  <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
-                    {latestResume.ats_score}%
-                  </Badge>
-                )}
+                <div className="ml-auto">
+                  {hasOptimizedResume && latestResume?.ats_score ? (
+                    <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                      {latestResume.ats_score}%
+                    </Badge>
+                  ) : (
+                    <div className="w-8 h-4" /> // Placeholder to maintain consistent spacing
+                  )}
+                </div>
               </div>
             </div>
 
@@ -188,7 +192,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                   <DropdownMenuTrigger asChild>
                     <Button 
                       size="sm" 
-                      className="h-8 px-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                      className="h-8 w-[120px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                     >
                       <Eye className="h-3 w-3 mr-1" />
                       Preview Stack
@@ -269,7 +273,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 <Button 
                   size="sm" 
                   onClick={() => setShowCreateStackModal(true)}
-                  className="h-8 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="h-8 w-[120px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                 >
                   <Plus className="h-3 w-3 mr-1" />
                   Create Stack
