@@ -109,14 +109,30 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
           ? 'w-full overflow-hidden' 
           : ''
       }`}
+      style={{
+        // Enhanced rendering properties for crisp text
+        textRendering: 'optimizeLegibility',
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale',
+        fontSmooth: 'always',
+        backfaceVisibility: 'hidden',
+        perspective: '1000px',
+        willChange: 'transform'
+      }}
     >
       <div 
         className={`${
           isMobile 
-            ? 'scale-75 origin-top-left w-[133%] transform-gpu' 
+            ? 'w-full' // Remove CSS transform scaling for mobile to prevent blur
             : ''
         } transition-transform duration-200`}
-        style={isMobile ? { transformOrigin: '0 0' } : {}}
+        style={{
+          // Use viewport scaling instead of CSS transforms for better quality
+          ...(isMobile && {
+            fontSize: '0.75rem', // Scale font size instead of using transform
+            lineHeight: '1.2'
+          })
+        }}
       >
         {renderTemplate()}
       </div>

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Download, 
@@ -11,7 +12,14 @@ import {
   AlertCircle,
   Palette,
   Layout,
-  ExternalLink
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  Minimize,
+  RotateCcw,
+  FileImage,
+  FileText,
+  Printer
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
@@ -48,6 +56,11 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
   
   // Resume data
   const [resumeData, setResumeData] = useState<any>(null);
+  
+  // Enhanced UI state
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [exportQuality, setExportQuality] = useState<'standard' | 'high' | 'print'>('high');
 
   useEffect(() => {
     if (isOpen && optimizedResumeId) {
@@ -124,6 +137,91 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
     setSelectedColorScheme(schemeId);
   };
 
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.25, 2));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const getExportOptions = () => {
+    const baseOptions = {
+      margin: [0.4, 0.4, 0.4, 0.4],
+      filename: `resume-${selectedTemplate}-${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      jsPDF: { 
+        unit: 'in' as const, 
+        format: 'letter' as const, 
+        orientation: 'portrait' as const
+      }
+    };
+
+    switch (exportQuality) {
+      case 'high':
+        return {
+          ...baseOptions,
+          html2canvas: { 
+            scale: 3,
+            useCORS: true,
+            letterRendering: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            dpi: 192,
+            foreignObjectRendering: true,
+            imageTimeout: 15000,
+            logging: false,
+            onclone: (clonedDoc: Document) => {
+              // Enhance text rendering for cloned document
+              const style = clonedDoc.createElement('style');
+              style.textContent = `
+                * {
+                  text-rendering: optimizeLegibility !important;
+                  -webkit-font-smoothing: antialiased !important;
+                  -moz-osx-font-smoothing: grayscale !important;
+                  font-smooth: always !important;
+                }
+              `;
+              clonedDoc.head.appendChild(style);
+            }
+          }
+        };
+      case 'print':
+        return {
+          ...baseOptions,
+          html2canvas: { 
+            scale: 4,
+            useCORS: true,
+            letterRendering: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            dpi: 300,
+            foreignObjectRendering: true,
+            imageTimeout: 20000
+          }
+        };
+      default:
+        return {
+          ...baseOptions,
+          html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff'
+          }
+        };
+    }
+  };
+
   const handleExportPDF = async () => {
     if (!resumeData?.generated_text) {
       toast({
@@ -137,37 +235,19 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
     try {
       setIsExporting(true);
       
-      // Generate PDF using the preview element
-      const element = document.getElementById('resume-preview');
+      const element = document.getElementById('resume-preview-content');
       if (!element) {
         throw new Error('Resume preview not found');
       }
 
       const html2pdf = (await import('html2pdf.js')).default;
-      
-      const options = {
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `resume-${selectedTemplate}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          allowTaint: false,
-          backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-          unit: 'in', 
-          format: 'letter', 
-          orientation: 'portrait'
-        }
-      };
+      const options = getExportOptions();
 
       await html2pdf().set(options).from(element).save();
       
       toast({
         title: "Export Successful",
-        description: "Your resume has been downloaded as a PDF."
+        description: `Your resume has been downloaded as a ${exportQuality} quality PDF.`
       });
     } catch (error) {
       console.error('PDF export error:', error);
@@ -207,12 +287,27 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
+      <DialogContent className={`${isFullscreen ? 'max-w-[98vw] max-h-[98vh]' : 'max-w-6xl max-h-[90vh]'} overflow-hidden transition-all duration-300`}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Layout className="h-5 w-5" />
-            Resume Template Preview
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Layout className="h-5 w-5" />
+              Resume Template Preview
+            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                {Math.round(zoomLevel * 100)}%
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleFullscreen}
+                className="h-8 w-8 p-0"
+              >
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
 
         {error && (
@@ -222,9 +317,9 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
           </Alert>
         )}
 
-        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-4'} gap-6 h-[75vh]`}>
+        <div className={`grid ${isMobile || isFullscreen ? 'grid-cols-1' : 'grid-cols-4'} gap-6 ${isFullscreen ? 'h-[88vh]' : 'h-[75vh]'}`}>
           {/* Template Selection Panel */}
-          <div className={`${isMobile ? 'order-2' : 'order-1'} space-y-4 overflow-y-auto`}>
+          <div className={`${isMobile ? 'order-2' : isFullscreen ? 'hidden' : 'order-1'} space-y-4 overflow-y-auto ${isFullscreen ? 'w-0' : ''}`}>
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -254,6 +349,45 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
                   selectedScheme={selectedColorScheme}
                   onSchemeSelect={handleColorSchemeSelect}
                 />
+              </CardContent>
+            </Card>
+
+            {/* Export Quality Selection */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileImage className="h-4 w-4" />
+                  Export Quality
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {[
+                    { id: 'standard', name: 'Standard', desc: 'Good quality, fast' },
+                    { id: 'high', name: 'High Quality', desc: 'Better quality, slower' },
+                    { id: 'print', name: 'Print Ready', desc: 'Best quality, slowest' }
+                  ].map((quality) => (
+                    <Card 
+                      key={quality.id}
+                      className={`cursor-pointer transition-all hover:shadow-sm ${
+                        exportQuality === quality.id ? 'ring-2 ring-primary' : ''
+                      }`}
+                      onClick={() => setExportQuality(quality.id as any)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium">{quality.name}</div>
+                            <div className="text-xs text-muted-foreground">{quality.desc}</div>
+                          </div>
+                          {exportQuality === quality.id && (
+                            <div className="w-2 h-2 bg-primary rounded-full" />
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -293,15 +427,63 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
           </div>
 
           {/* Resume Preview Panel */}
-          <div className={`${isMobile ? 'order-1 col-span-1' : 'order-2 col-span-3'} border rounded-lg overflow-hidden bg-white`}>
-          {resumeData ? (
-              <div className="h-full overflow-y-auto">
-                <ResumePreview
-                  template={selectedTemplate}
-                  resumeData={resumeData.generated_text || ''}
-                  optimizedResumeId={optimizedResumeId}
-                  selectedColorScheme={selectedColorScheme}
-                />
+          <div className={`${isMobile ? 'order-1 col-span-1' : isFullscreen ? 'col-span-1' : 'order-2 col-span-3'} border rounded-lg overflow-hidden bg-white relative`}>
+            {/* Enhanced Preview Controls */}
+            <div className="zoom-controls absolute top-2 right-2 z-10 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg p-1 shadow-sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomOut}
+                disabled={zoomLevel <= 0.5}
+                className="h-7 w-7 p-0"
+              >
+                <ZoomOut className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetZoom}
+                className="h-7 px-2 text-xs"
+              >
+                <RotateCcw className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomIn}
+                disabled={zoomLevel >= 2}
+                className="h-7 w-7 p-0"
+              >
+                <ZoomIn className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.print()}
+                className="h-7 w-7 p-0"
+              >
+                <Printer className="h-3 w-3" />
+              </Button>
+            </div>
+
+            {resumeData ? (
+              <div 
+                className="h-full overflow-auto"
+                style={{
+                  transform: `scale(${zoomLevel})`,
+                  transformOrigin: 'top left',
+                  width: `${100 / zoomLevel}%`,
+                  height: `${100 / zoomLevel}%`
+                }}
+              >
+                <div id="resume-preview-content">
+                  <ResumePreview
+                    template={selectedTemplate}
+                    resumeData={resumeData.generated_text || ''}
+                    optimizedResumeId={optimizedResumeId}
+                    selectedColorScheme={selectedColorScheme}
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">

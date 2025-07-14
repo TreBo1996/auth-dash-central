@@ -340,3 +340,47 @@
     page-break-inside: avoid;
   }
 }
+
+/* Enhanced text rendering for resume previews */
+#resume-preview,
+#resume-preview-content {
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  font-smooth: always !important;
+  backface-visibility: hidden;
+  perspective: 1000px;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* High-DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi), (min-resolution: 2dppx) {
+  #resume-preview,
+  #resume-preview-content {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Print optimizations for enhanced modal */
+@media print {
+  #resume-preview-content {
+    transform: none !important;
+    zoom: 1 !important;
+    scale: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+}
+
+/* Zoom control animations */
+.zoom-controls {
+  transition: all 0.2s ease-in-out;
+}
+
+.zoom-controls:hover {
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+}
