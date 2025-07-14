@@ -113,8 +113,21 @@ const PostJob: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to post jobs.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!profile) {
-      toast({ title: "Error", description: "Employer profile not found", variant: "destructive" });
+      toast({ 
+        title: "Profile Required", 
+        description: "Please complete your employer profile before posting jobs.", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -123,6 +136,15 @@ const PostJob: React.FC = () => {
         title: "Profile Incomplete", 
         description: "Please complete your company profile before posting jobs.", 
         variant: "destructive" 
+      });
+      return;
+    }
+
+    if (!validateTab('basic')) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in the job title and description.",
+        variant: "destructive",
       });
       return;
     }
@@ -150,7 +172,7 @@ const PostJob: React.FC = () => {
         ...(isEditMode ? {} : { employer_id: profile.id, is_active: true })
       };
 
-      console.log('Submitting job data:', { jobData, profileId: profile.id });
+      console.log('Submitting job data:', { jobData, profileId: profile.id, userId: user.id });
 
       if (isEditMode) {
         const { data, error } = await supabase
@@ -194,8 +216,20 @@ const PostJob: React.FC = () => {
     } catch (error: any) {
       console.error('Error posting job:', error);
       
+      // Provide specific error messages based on error type
       let errorMessage = "Failed to post job. Please try again.";
-      if (error?.message) {
+      
+      if (error?.code === '42501') {
+        errorMessage = "Permission denied. Please ensure your employer profile is complete and you have the correct permissions.";
+      } else if (error?.code === 'PGRST301') {
+        errorMessage = "Row level security violation. Please contact support if this issue persists.";
+      } else if (error?.message?.includes('row-level security')) {
+        errorMessage = "Access denied. Your account may need verification. Please contact support.";
+      } else if (error?.message?.includes('employer_id')) {
+        errorMessage = "There was an issue with your employer profile. Please ensure it's properly configured.";
+      } else if (error?.message?.includes('function') && error?.message?.includes('null')) {
+        errorMessage = "Authentication issue detected. Please try logging out and back in.";
+      } else if (error?.message) {
         errorMessage = error.message;
       }
       
