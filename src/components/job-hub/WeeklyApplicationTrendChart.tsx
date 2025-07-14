@@ -25,10 +25,24 @@ export function WeeklyApplicationTrendChart({ jobs }: WeeklyApplicationTrendChar
         return job.application_status === 'applied' && 
                isWithinInterval(jobDate, { start: weekStart, end: weekEnd });
       }).length;
+
+      const interviewJobsThisWeek = jobs.filter(job => {
+        const jobDate = new Date(job.created_at);
+        return job.application_status === 'interviewing' && 
+               isWithinInterval(jobDate, { start: weekStart, end: weekEnd });
+      }).length;
+
+      const offerJobsThisWeek = jobs.filter(job => {
+        const jobDate = new Date(job.created_at);
+        return job.application_status === 'offer' && 
+               isWithinInterval(jobDate, { start: weekStart, end: weekEnd });
+      }).length;
       
       weeks.push({
         week: format(weekStart, 'MMM dd'),
         applications: appliedJobsThisWeek,
+        interviews: interviewJobsThisWeek,
+        offers: offerJobsThisWeek,
         weekStart: weekStart.toISOString()
       });
     }
@@ -38,32 +52,38 @@ export function WeeklyApplicationTrendChart({ jobs }: WeeklyApplicationTrendChar
 
   const weeklyData = generateWeeklyData();
   const totalApplications = weeklyData.reduce((sum, week) => sum + week.applications, 0);
+  const totalInterviews = weeklyData.reduce((sum, week) => sum + week.interviews, 0);
+  const totalOffers = weeklyData.reduce((sum, week) => sum + week.offers, 0);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const data = payload[0];
       return (
         <div className="bg-background p-3 border border-border rounded-lg shadow-lg">
           <p className="font-medium">Week of {label}</p>
-          <p className="text-blue-600">
-            {data.value} applications submitted
-          </p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }} className="text-sm">
+              • {entry.value} {entry.dataKey === 'applications' ? 'applications' : 
+                                 entry.dataKey === 'interviews' ? 'interviews' : 'offers'}
+            </p>
+          ))}
         </div>
       );
     }
     return null;
   };
 
-  if (totalApplications === 0) {
+  const totalActivities = totalApplications + totalInterviews + totalOffers;
+
+  if (totalActivities === 0) {
     return (
       <Card className="h-full">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Weekly Application Trend</CardTitle>
+          <CardTitle className="text-lg font-semibold">Weekly Progress Trends</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-64">
           <div className="text-center text-muted-foreground">
-            <p className="text-lg font-medium">No applications yet</p>
-            <p className="text-sm">Start applying to jobs to see your weekly trend</p>
+            <p className="text-lg font-medium">No activity yet</p>
+            <p className="text-sm">Start applying to jobs to see your weekly progress trends</p>
           </div>
         </CardContent>
       </Card>
@@ -73,12 +93,12 @@ export function WeeklyApplicationTrendChart({ jobs }: WeeklyApplicationTrendChar
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Weekly Application Trend</CardTitle>
+        <CardTitle className="text-lg font-semibold">Weekly Progress Trends</CardTitle>
         <p className="text-sm text-muted-foreground">
-          {totalApplications} applications in the last 8 weeks
+          {totalApplications} applications • {totalInterviews} interviews • {totalOffers} offers
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={weeklyData}>
@@ -104,8 +124,40 @@ export function WeeklyApplicationTrendChart({ jobs }: WeeklyApplicationTrendChar
                 dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
                 activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
               />
+              <Line 
+                type="monotone" 
+                dataKey="interviews" 
+                stroke="#8B5CF6" 
+                strokeWidth={2}
+                dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5, stroke: '#8B5CF6', strokeWidth: 2 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="offers" 
+                stroke="#10B981" 
+                strokeWidth={2}
+                dot={{ fill: '#10B981', strokeWidth: 2, r: 3 }}
+                activeDot={{ r: 5, stroke: '#10B981', strokeWidth: 2 }}
+              />
             </LineChart>
           </ResponsiveContainer>
+        </div>
+        
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 justify-center text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-blue-600"></div>
+            <span className="text-muted-foreground">Applications</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-purple-600"></div>
+            <span className="text-muted-foreground">Interviews</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-green-600"></div>
+            <span className="text-muted-foreground">Offers</span>
+          </div>
         </div>
       </CardContent>
     </Card>
