@@ -27,6 +27,7 @@ import {
   Clock
 } from 'lucide-react';
 import { ApplicationStackModal } from './ApplicationStackModal';
+import { CreateApplicationStackModal } from './CreateApplicationStackModal';
 
 interface JobHubCardProps {
   job: {
@@ -49,6 +50,7 @@ interface JobHubCardProps {
 
 export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) => {
   const [showStackModal, setShowStackModal] = useState(false);
+  const [showCreateStackModal, setShowCreateStackModal] = useState(false);
 
   const hasOptimizedResume = job.optimized_resumes && job.optimized_resumes.length > 0;
   const hasCoverLetter = job.cover_letters && job.cover_letters.length > 0;
@@ -218,7 +220,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
               ) : (
                 <Button 
                   size="sm" 
-                  onClick={() => window.location.href = `/upload-resume?jobId=${job.id}`}
+                  onClick={() => setShowCreateStackModal(true)}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -267,6 +269,18 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
         job={job}
         resume={latestResume}
         coverLetter={latestCoverLetter}
+      />
+
+      {/* Create Application Stack Modal */}
+      <CreateApplicationStackModal 
+        isOpen={showCreateStackModal}
+        onClose={() => setShowCreateStackModal(false)}
+        job={job}
+        onComplete={() => {
+          setShowCreateStackModal(false);
+          // Trigger a refresh of the job data in the parent component
+          // The parent should re-fetch the job data to show updated stack status
+        }}
       />
     </>
   );
