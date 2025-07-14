@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,17 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
   const [showResumePreview, setShowResumePreview] = useState(false);
   const [showCoverLetterPreview, setShowCoverLetterPreview] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleResumeEdit = () => {
+    setShowResumePreview(false);
+    navigate(`/resume-editor?resumeId=${resume.id}`);
+  };
+
+  const handleCoverLetterEdit = () => {
+    setShowCoverLetterPreview(false);
+    navigate('/cover-letters');
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -98,7 +110,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                       </Button>
                       <Button 
                         size="sm" 
-                        onClick={() => window.location.href = `/resume-editor/${resume.id}`}
+                        onClick={handleResumeEdit}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
@@ -138,7 +150,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                       </Button>
                       <Button 
                         size="sm" 
-                        onClick={() => window.location.href = `/cover-letters?edit=${coverLetter.id}`}
+                        onClick={handleCoverLetterEdit}
                       >
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
@@ -191,6 +203,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
             isOpen={showResumePreview}
             onClose={() => setShowResumePreview(false)}
             optimizedResumeId={resume.id}
+            onEdit={handleResumeEdit}
           />
         )}
 
@@ -201,6 +214,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
             title={coverLetter.title}
             type="cover-letter"
             onClose={() => setShowCoverLetterPreview(false)}
+            onEdit={handleCoverLetterEdit}
           />
         )}
       </DialogContent>
