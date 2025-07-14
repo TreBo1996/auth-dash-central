@@ -452,6 +452,8 @@ export type Database = {
           file_name: string | null
           file_size: number | null
           id: string
+          is_applied: boolean | null
+          is_saved: boolean | null
           job_url: string | null
           location: string | null
           parsed_text: string
@@ -468,6 +470,8 @@ export type Database = {
           file_name?: string | null
           file_size?: number | null
           id?: string
+          is_applied?: boolean | null
+          is_saved?: boolean | null
           job_url?: string | null
           location?: string | null
           parsed_text: string
@@ -484,6 +488,8 @@ export type Database = {
           file_name?: string | null
           file_size?: number | null
           id?: string
+          is_applied?: boolean | null
+          is_saved?: boolean | null
           job_url?: string | null
           location?: string | null
           parsed_text?: string
