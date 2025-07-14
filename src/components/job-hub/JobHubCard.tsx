@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { ApplicationStackModal } from './ApplicationStackModal';
 import { CreateApplicationStackModal } from './CreateApplicationStackModal';
+import { CoverLetterGenerationModal } from './CoverLetterGenerationModal';
 import { ResumeTemplateModal } from './ResumeTemplateModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -56,6 +57,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
   const navigate = useNavigate();
   const [showStackModal, setShowStackModal] = useState(false);
   const [showCreateStackModal, setShowCreateStackModal] = useState(false);
+  const [showCoverLetterGenerationModal, setShowCoverLetterGenerationModal] = useState(false);
   const [showResumePreview, setShowResumePreview] = useState(false);
   const [showCoverLetterPreview, setShowCoverLetterPreview] = useState(false);
 
@@ -163,7 +165,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
 
             {/* Right Section: Action Buttons */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              {hasCompleteStack ? (
+              {(hasOptimizedResume || hasCoverLetter) ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
@@ -229,11 +231,21 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
                       </div>
                     )}
                     
+                    {/* Generate Cover Letter Option */}
+                    {hasOptimizedResume && !hasCoverLetter && (
+                      <DropdownMenuItem onClick={() => setShowCoverLetterGenerationModal(true)} className="py-2">
+                        <Mail className="h-4 w-4 mr-2" />
+                        Generate Cover Letter
+                      </DropdownMenuItem>
+                    )}
+                    
                     {/* Full Stack Preview */}
-                    <DropdownMenuItem onClick={() => setShowStackModal(true)} className="py-2">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Full Stack
-                    </DropdownMenuItem>
+                    {hasCompleteStack && (
+                      <DropdownMenuItem onClick={() => setShowStackModal(true)} className="py-2">
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Full Stack
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
@@ -282,7 +294,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
                     Optimize Resume
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => navigate(`/cover-letters?jobId=${job.id}`)}
+                    onClick={() => setShowCoverLetterGenerationModal(true)}
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Generate Cover Letter
@@ -318,6 +330,17 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
           setShowCreateStackModal(false);
           // Trigger a refresh of the job data in the parent component
           // The parent should re-fetch the job data to show updated stack status
+        }}
+      />
+
+      {/* Cover Letter Generation Modal */}
+      <CoverLetterGenerationModal 
+        isOpen={showCoverLetterGenerationModal}
+        onClose={() => setShowCoverLetterGenerationModal(false)}
+        job={job}
+        onComplete={() => {
+          setShowCoverLetterGenerationModal(false);
+          // Trigger a refresh of the job data in the parent component
         }}
       />
 
