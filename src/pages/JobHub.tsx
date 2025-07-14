@@ -243,7 +243,7 @@ const JobHub: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
                     {filteredJobs.map((job) => (
                       <JobHubCard 
                         key={job.id} 
