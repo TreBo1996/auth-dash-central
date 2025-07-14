@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { ApplicationStackModal } from './ApplicationStackModal';
 import { CreateApplicationStackModal } from './CreateApplicationStackModal';
+import { ResumeTemplateModal } from './ResumeTemplateModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface JobHubCardProps {
   job: {
@@ -51,6 +53,8 @@ interface JobHubCardProps {
 export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) => {
   const [showStackModal, setShowStackModal] = useState(false);
   const [showCreateStackModal, setShowCreateStackModal] = useState(false);
+  const [showResumePreview, setShowResumePreview] = useState(false);
+  const [showCoverLetterPreview, setShowCoverLetterPreview] = useState(false);
 
   const hasOptimizedResume = job.optimized_resumes && job.optimized_resumes.length > 0;
   const hasCoverLetter = job.cover_letters && job.cover_letters.length > 0;
@@ -237,6 +241,19 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  {latestResume && (
+                    <DropdownMenuItem onClick={() => setShowResumePreview(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Preview Resume
+                    </DropdownMenuItem>
+                  )}
+                  {latestCoverLetter && (
+                    <DropdownMenuItem onClick={() => setShowCoverLetterPreview(true)}>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Preview Cover Letter
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => window.location.href = `/upload-resume?jobId=${job.id}`}
                   >
@@ -282,6 +299,31 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate }) =
           // The parent should re-fetch the job data to show updated stack status
         }}
       />
+
+      {/* Resume Template Preview Modal */}
+      {latestResume && (
+        <ResumeTemplateModal
+          isOpen={showResumePreview}
+          onClose={() => setShowResumePreview(false)}
+          optimizedResumeId={latestResume.id}
+        />
+      )}
+
+      {/* Cover Letter Preview Modal */}
+      {latestCoverLetter && showCoverLetterPreview && (
+        <Dialog open={showCoverLetterPreview} onOpenChange={setShowCoverLetterPreview}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{latestCoverLetter.title}</DialogTitle>
+            </DialogHeader>
+            <div className="prose max-w-none">
+              <div className="whitespace-pre-wrap text-sm bg-gray-50 p-4 rounded-lg">
+                {latestCoverLetter.generated_text}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };

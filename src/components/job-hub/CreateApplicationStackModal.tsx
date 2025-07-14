@@ -15,7 +15,8 @@ import {
   Sparkles,
   AlertCircle,
   Crown,
-  Zap
+  Zap,
+  Eye
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 import { ATSPreviewModal } from '@/components/ATSPreviewModal';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
+import { ResumeTemplateModal } from './ResumeTemplateModal';
 import type { UserAddition } from '@/components/UserAdditionsForm';
 
 interface Resume {
@@ -43,7 +45,7 @@ interface CreateApplicationStackModalProps {
   onComplete: () => void;
 }
 
-type Step = 'resume-selection' | 'optimization' | 'cover-letter' | 'complete';
+type Step = 'resume-selection' | 'optimization' | 'cover-letter' | 'complete' | 'preview';
 
 export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalProps> = ({
   isOpen,
@@ -79,6 +81,9 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
   // Payment modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+  // Preview modal
+  const [showResumePreview, setShowResumePreview] = useState(false);
+
   useEffect(() => {
     if (isOpen && user) {
       loadResumes();
@@ -90,11 +95,12 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
       // Reset all state when modal closes
       setCurrentStep('resume-selection');
       setSelectedResumeId('');
-      setError('');
-      setOptimizedResumeId('');
-      setCoverLetterText('');
-      setCoverLetterTitle('');
-      setShowATSModal(false);
+              setError('');
+              setOptimizedResumeId('');
+              setCoverLetterText('');
+              setCoverLetterTitle('');
+              setShowATSModal(false);
+              setShowResumePreview(false);
     }
   }, [isOpen]);
 
@@ -332,10 +338,11 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
 
   const getStepProgress = () => {
     switch (currentStep) {
-      case 'resume-selection': return 25;
-      case 'optimization': return 50;
-      case 'cover-letter': return 75;
-      case 'complete': return 100;
+      case 'resume-selection': return 20;
+      case 'optimization': return 40;
+      case 'cover-letter': return 60;
+      case 'complete': return 80;
+      case 'preview': return 100;
       default: return 0;
     }
   };
@@ -529,6 +536,46 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
         </DialogContent>
       </Dialog>
 
+      {/* Step 4: Preview */}
+      {currentStep === 'preview' && optimizedResumeId && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Step 4: Preview Your Resume
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Review your optimized resume with different templates and color schemes.
+              </p>
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowResumePreview(true)}
+                  className="flex-1"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Open Full Preview
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setCurrentStep('complete')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <Button onClick={handleComplete}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Complete Setup
+            </Button>
+          </div>
+        </div>
+      )}
+
       <ATSPreviewModal 
         isOpen={showATSModal} 
         onClose={() => setShowATSModal(false)} 
@@ -541,6 +588,20 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
         isOptimizing={isOptimizing}
         resumeData={parsedResumeData}
       />
+
+      {/* Resume Preview Modal */}
+      {optimizedResumeId && (
+        <ResumeTemplateModal
+          isOpen={showResumePreview}
+          onClose={() => setShowResumePreview(false)}
+          optimizedResumeId={optimizedResumeId}
+          onEdit={() => {
+            setShowResumePreview(false);
+            onClose();
+            window.location.href = `/resume-editor/${optimizedResumeId}`;
+          }}
+        />
+      )}
       
       <PaymentModal 
         isOpen={showPaymentModal}

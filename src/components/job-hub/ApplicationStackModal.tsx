@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { ResumePreview } from '@/components/resume-templates/ResumePreview';
 import { 
   FileText, 
   Mail, 
@@ -204,11 +205,21 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 p-6 rounded-lg min-h-[400px]">
-                  <p className="text-center text-gray-500">
-                    Resume preview would be displayed here
-                  </p>
-                  {/* TODO: Integrate with actual resume preview component */}
+                <div className="bg-white border rounded-lg min-h-[400px] overflow-hidden">
+                  {resume ? (
+                    <ResumePreview
+                      template="modern-ats"
+                      resumeData={resume.generated_text || ''}
+                      optimizedResumeId={resume.id}
+                      selectedColorScheme="professional"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-center text-gray-500">
+                        No resume available
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
