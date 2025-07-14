@@ -181,7 +181,7 @@ const Auth: React.FC = () => {
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
       } else {
-        navigate('/dashboard');
+        navigate('/job-hub');
       }
     }
     
@@ -307,7 +307,7 @@ const Auth: React.FC = () => {
           title: "Password updated!",
           description: "Your password has been successfully updated.",
         });
-        navigate('/dashboard');
+        navigate('/job-hub');
       }
     } catch (error: any) {
       handleAuthError(error);

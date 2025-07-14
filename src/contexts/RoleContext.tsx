@@ -204,8 +204,8 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       navigate('/employer/dashboard', { replace: true });
       setHasNavigated(true);
     } else if (activeRole === 'job_seeker' && isEmployerPath) {
-      console.log('Redirecting job seeker user from employer path to job seeker dashboard');
-      navigate('/dashboard', { replace: true });
+      console.log('Redirecting job seeker user from employer path to job hub');
+      navigate('/job-hub', { replace: true });
       setHasNavigated(true);
     }
   }, [activeRole, isLoadingRoles, isInitializing, hasNavigated, location.pathname, navigate, user]);
@@ -239,7 +239,7 @@ export const RoleProvider: React.FC<RoleProviderProps> = ({ children }) => {
       if (role === 'employer') {
         navigate('/employer/dashboard');
       } else {
-        navigate('/dashboard');
+        navigate('/job-hub');
       }
 
     } catch (error) {

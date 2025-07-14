@@ -334,7 +334,7 @@ const Dashboard: React.FC = () => {
     });
   };
   if (showLoadingScreen) {
-    return <AppLoadingScreen message="Loading your dashboard..." />;
+    return <AppLoadingScreen message="Loading Resume Optimizer..." />;
   }
   return <DashboardLayout>
       <div className="space-y-6 md:space-y-8">
@@ -343,10 +343,10 @@ const Dashboard: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-indigo-600/5 to-purple-600/5"></div>
           <div className="relative z-10">
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
-              Welcome back, {user?.user_metadata?.full_name || user?.email}!
+              Resume Optimizer
             </h1>
             <p className="text-base md:text-lg text-gray-600">
-              Manage your resumes and job descriptions from your dashboard.
+              Upload your resume and job descriptions to get AI-powered optimization recommendations.
             </p>
           </div>
         </div>

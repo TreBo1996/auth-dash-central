@@ -12,7 +12,7 @@ const navigation = [{
   icon: Briefcase,
   protected: true
 }, {
-  name: 'Dashboard',
+  name: 'Resume Optimizer',
   href: '/dashboard',
   icon: Home,
   protected: true

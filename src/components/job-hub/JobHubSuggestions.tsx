@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,6 +24,8 @@ interface JobHubSuggestionsProps {
 }
 
 export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) => {
+  const navigate = useNavigate();
+  
   const generateSuggestions = () => {
     const suggestions = [];
     
@@ -164,7 +167,7 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
               <Button 
                 size="sm" 
                 variant={suggestion.type === 'warning' ? 'destructive' : 'default'}
-                onClick={() => window.location.href = suggestion.actionUrl}
+                onClick={() => navigate(suggestion.actionUrl)}
                 className="ml-4 whitespace-nowrap"
               >
                 {suggestion.action}

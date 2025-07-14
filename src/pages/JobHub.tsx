@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ interface JobDescription {
 const JobHub: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobDescription[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -168,14 +170,14 @@ const JobHub: React.FC = () => {
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = '/job-search'}
+              onClick={() => navigate('/job-search')}
               className="hover:bg-blue-50"
             >
               <Search className="h-4 w-4 mr-2" />
               Find More Jobs
             </Button>
             <Button 
-              onClick={() => window.location.href = '/upload-job'}
+              onClick={() => navigate('/upload-job')}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -234,12 +236,12 @@ const JobHub: React.FC = () => {
                     <div className="flex gap-2 justify-center">
                       <Button 
                         variant="outline"
-                        onClick={() => window.location.href = '/upload-job'}
+                        onClick={() => navigate('/upload-job')}
                       >
                         Upload Job Description
                       </Button>
                       <Button 
-                        onClick={() => window.location.href = '/job-search'}
+                        onClick={() => navigate('/job-search')}
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                       >
                         Search Jobs

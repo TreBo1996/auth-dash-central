@@ -40,7 +40,7 @@ const VerifyEmail: React.FC = () => {
             navigate(fromParam);
           } else {
             // Let ProtectedRoute handle the role selection flow
-            navigate('/dashboard');
+            navigate('/job-hub');
           }
         }, 1500);
       }
@@ -64,7 +64,7 @@ const VerifyEmail: React.FC = () => {
             if (fromParam) {
               navigate(fromParam);
             } else {
-              navigate('/dashboard');
+              navigate('/job-hub');
             }
           }, 1500);
         }

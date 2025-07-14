@@ -43,7 +43,7 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
         redirectPath = '/employer/dashboard';
       } else {
         // Default for job seeker users
-        redirectPath = '/dashboard';
+        redirectPath = '/job-hub';
       }
     }
     
