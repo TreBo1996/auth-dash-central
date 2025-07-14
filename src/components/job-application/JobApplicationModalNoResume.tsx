@@ -888,20 +888,48 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Generate Cover Letter
+                  {originalIntent === 'existing' ? 'Generate Cover Letter' : 'Generate Cover Letter'}
                 </h3>
                 <Button variant="outline" onClick={() => setStep(originalIntent === 'existing' ? 'choose-optimization' : 'templates')}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  Back to {originalIntent === 'existing' ? 'Resume Selection' : 'Templates'}
                 </Button>
               </div>
+
+              {originalIntent === 'existing' && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Using Your Existing Resume</span>
+                    </div>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Ready to generate a personalized cover letter for this position.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {originalIntent === 'optimize' && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Resume Downloaded Successfully!</span>
+                    </div>
+                    <p className="text-sm text-green-600 mt-1">
+                      Your optimized resume is ready. Now let's create a cover letter.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               <CoverLetterGenerator
                 onComplete={(generatedText: string) => {
                   setCoverLetter(generatedText);
                   setStep('final-submit');
                 }}
-                onCancel={() => setStep('templates')}
+                onCancel={() => setStep(originalIntent === 'existing' ? 'choose-optimization' : 'templates')}
               />
             </div>
           )}
