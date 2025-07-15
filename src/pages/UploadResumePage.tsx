@@ -15,6 +15,7 @@ const UploadResumePage: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [fileInfo, setFileInfo] = useState<{name: string, size: number, type: string} | null>(null);
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const {
@@ -94,8 +95,13 @@ const UploadResumePage: React.FC = () => {
       return;
     }
     setFile(selectedFile);
+    setFileInfo({
+      name: selectedFile.name,
+      size: selectedFile.size,
+      type: selectedFile.type || (selectedFile.name.endsWith('.pdf') ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    });
 
-    // Parse document immediately for preview
+    // Parse document immediately for structured data
     try {
       setIsUploading(true);
       console.log('Starting document parsing for:', selectedFile.name);
@@ -268,6 +274,7 @@ const UploadResumePage: React.FC = () => {
   };
   const handleStartOver = () => {
     setFile(null);
+    setFileInfo(null);
     setParsedContent('');
     setShowPreview(false);
     setUploadError(null);
@@ -357,7 +364,7 @@ const UploadResumePage: React.FC = () => {
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">Resume parsed successfully!</span>
+                  <span className="font-medium">Resume structured successfully!</span>
                   <Button variant="ghost" size="sm" onClick={handleStartOver}>
                     <X className="h-4 w-4 mr-1" />
                     Start Over
@@ -370,27 +377,56 @@ const UploadResumePage: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  {file?.name}
+                  {fileInfo?.name}
                 </CardTitle>
                 <CardDescription>
-                  Preview of your resume content ({parsedContent.length} characters parsed)
+                  Your resume has been structured and is ready for optimization
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto mb-6">
-                  <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-                    {parsedContent}
-                  </pre>
+                <div className="bg-gradient-to-br from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                    <div>
+                      <h3 className="font-semibold text-green-900">Ready for Optimization</h3>
+                      <p className="text-sm text-green-700">
+                        Your resume information has been structured and organized
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-600">File Size:</span>
+                      <span className="ml-2 text-gray-900">
+                        {fileInfo ? (fileInfo.size / 1024 / 1024).toFixed(1) : '0'} MB
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Format:</span>
+                      <span className="ml-2 text-gray-900">
+                        {fileInfo?.name.endsWith('.pdf') ? 'PDF' : 'DOCX'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Content Length:</span>
+                      <span className="ml-2 text-gray-900">{parsedContent.length} characters</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Status:</span>
+                      <span className="ml-2 text-green-600 font-medium">✓ Structured</span>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex gap-4">
-                  <Button onClick={handleConfirmUpload} disabled={isUploading} className="flex-1">
+                  <Button onClick={handleConfirmUpload} disabled={isUploading} className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
                     {isUploading ? <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Saving Resume...
                       </> : <>
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        Confirm & Save Resume
+                        Continue to Resume Editor
                       </>}
                   </Button>
                   <Button variant="outline" onClick={handleStartOver} disabled={isUploading}>
@@ -404,10 +440,15 @@ const UploadResumePage: React.FC = () => {
         {isUploading && !showPreview && <Card>
             <CardContent className="py-8 text-center">
               <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-600 mb-4" />
-              <p className="text-gray-600">Parsing your resume...</p>
+              <p className="text-gray-600 font-medium">Structuring your resume information for optimization...</p>
               <p className="text-sm text-gray-500 mt-2">
-                PDF files may take longer or fail - DOCX is recommended
+                This organizes your data to enable better resume optimization
               </p>
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-xs text-blue-700">
+                  <strong>Note:</strong> PDF files may take longer to process. DOCX format is recommended for fastest results.
+                </p>
+              </div>
             </CardContent>
           </Card>}
       </div>
