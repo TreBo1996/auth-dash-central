@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, AlertTriangle, Sparkles, Star, Clock, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -28,6 +29,7 @@ const Auth: React.FC = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   const { signIn, signUp, user, resetPassword } = useAuth();
   const navigate = useNavigate();
@@ -204,6 +206,11 @@ const Auth: React.FC = () => {
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (!termsAccepted) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
       return;
     }
 
@@ -611,16 +618,51 @@ const Auth: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* No captcha for frictionless signup */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-green-50 p-3 rounded">
-                    <Shield className="h-4 w-4 text-green-600" />
-                    <span>Protected by smart bot detection</span>
+                  {/* Terms of Service and Privacy Policy Agreement */}
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                      <Checkbox
+                        id="terms-agreement"
+                        checked={termsAccepted}
+                        onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <Label 
+                          htmlFor="terms-agreement" 
+                          className="text-sm text-gray-700 cursor-pointer leading-relaxed"
+                        >
+                          I agree to the{' '}
+                          <Link 
+                            to="/terms-of-service" 
+                            target="_blank"
+                            className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium"
+                          >
+                            Terms of Service
+                          </Link>
+                          {' '}and{' '}
+                          <Link 
+                            to="/privacy-policy" 
+                            target="_blank"
+                            className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </Label>
+                      </div>
+                    </div>
+
+                    {/* No captcha for frictionless signup */}
+                    <div className="flex items-center gap-2 text-sm text-gray-600 bg-green-50 p-3 rounded">
+                      <Shield className="h-4 w-4 text-green-600" />
+                      <span>Protected by smart bot detection</span>
+                    </div>
                   </div>
                   
                    <Button 
                      type="submit" 
                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
-                     disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short' || !fullName.trim()}
+                     disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short' || !fullName.trim() || !termsAccepted}
                    >
                     {isLoading ? (
                       <>
@@ -635,11 +677,7 @@ const Auth: React.FC = () => {
                     ) : (
                       'Create Account - Free & Instant'
                     )}
-                  </Button>
-                  
-                  <div className="text-xs text-gray-500 text-center">
-                    By creating an account, you agree to our <Link to="/terms-of-service" className="text-primary hover:underline">Terms of Service</Link> and <Link to="/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link>
-                  </div>
+                   </Button>
                 </form>
               </TabsContent>
             </Tabs>
