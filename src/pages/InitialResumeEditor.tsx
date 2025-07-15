@@ -105,6 +105,7 @@ const InitialResumeEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingPhase, setLoadingPhase] = useState<'fetching' | 'parsing'>('fetching');
   useEffect(() => {
     console.log('InitialResumeEditor: Component mounted with ID:', id);
     if (id) {
@@ -328,6 +329,7 @@ const InitialResumeEditor: React.FC = () => {
     try {
       console.log('InitialResumeEditor: Starting AI parsing...');
       setParsing(true);
+      setLoadingPhase('parsing');
       const {
         data,
         error
@@ -590,9 +592,17 @@ const InitialResumeEditor: React.FC = () => {
   if (loading) {
     return <DashboardLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading resume for editing...</p>
+          <div className="text-center max-w-md mx-auto">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <h3 className="mt-4 text-lg font-medium text-foreground">
+              Preparing your resume for AI optimization...
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Retrieving your resume data
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Usually takes 2-3 seconds
+            </p>
           </div>
         </div>
       </DashboardLayout>;
@@ -632,12 +642,22 @@ const InitialResumeEditor: React.FC = () => {
   if (!parsedResume) {
     return <DashboardLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Parsing resume content...</p>
-            {parsing && <p className="text-sm text-blue-600 mt-2">
-                AI is analyzing your resume structure...
-              </p>}
+          <div className="text-center max-w-md mx-auto">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <h3 className="mt-4 text-lg font-medium text-foreground">
+              Structuring your resume for optimization...
+            </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              AI is organizing your resume into sections for better optimization results
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Usually takes 15-30 seconds
+            </p>
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                This one-time process enables faster edits and more targeted improvements
+              </p>
+            </div>
           </div>
         </div>
       </DashboardLayout>;
