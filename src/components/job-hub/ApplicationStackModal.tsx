@@ -23,6 +23,7 @@ interface ApplicationStackModalProps {
     id: string;
     title: string;
     company: string | null;
+    source?: string | null;
   };
   resume: any;
   coverLetter: any;
@@ -182,13 +183,28 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
             </Card>
           </div>
 
-          {/* Stack Actions */}
+          {/* Next Steps */}
           <Card>
             <CardHeader>
-              <CardTitle>Application Actions</CardTitle>
+              <CardTitle>Next Steps</CardTitle>
             </CardHeader>
-            <CardContent>
-               <div className="flex gap-4">
+            <CardContent className="space-y-4">
+              <div className="text-sm text-gray-600 space-y-2">
+                <p className="font-medium">Ready to apply? Follow these steps:</p>
+                <ol className="list-decimal list-inside space-y-1 ml-2">
+                  <li>Click <strong>Preview</strong> on your resume and cover letter to review them</li>
+                  <li>Make any final edits using the <strong>Edit</strong> buttons if needed</li>
+                  <li>Download both documents using the download buttons in the preview modals</li>
+                  <li>
+                    {job.source === 'database' 
+                      ? 'Apply directly using the button below' 
+                      : 'Apply through the original job posting with your downloaded files'
+                    }
+                  </li>
+                </ol>
+              </div>
+              
+              {job.source === 'database' && (
                 <Button 
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   onClick={() => {
@@ -199,7 +215,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                   <Mail className="h-4 w-4 mr-2" />
                   Apply with This Stack
                 </Button>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
