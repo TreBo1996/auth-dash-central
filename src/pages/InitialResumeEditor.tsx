@@ -601,7 +601,7 @@ const InitialResumeEditor: React.FC = () => {
               Retrieving your resume data
             </p>
             <p className="text-xs text-muted-foreground">
-              Usually takes 2-3 seconds
+              Usually takes 10-15 seconds
             </p>
           </div>
         </div>
