@@ -9,7 +9,9 @@ import {
   Target,
   AlertTriangle,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Layers,
+  BookOpen
 } from 'lucide-react';
 
 interface JobHubSuggestionsProps {
@@ -28,6 +30,36 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
   
   const generateSuggestions = () => {
     const suggestions = [];
+    
+    // Application Stack Education - for users who need to understand what they are
+    const totalJobs = jobs.length;
+    const completeStacks = jobs.filter(job => 
+      job.optimized_resumes && job.optimized_resumes.length > 0 &&
+      job.cover_letters && job.cover_letters.length > 0
+    );
+    const savedJobs = jobs.filter(job => job.is_saved);
+    
+    // Show Application Stack education if:
+    // - User has saved jobs but no complete stacks, OR
+    // - User is new (< 3 jobs total), OR  
+    // - User has very few complete stacks compared to saved jobs
+    const shouldShowEducation = (
+      (savedJobs.length > 0 && completeStacks.length === 0) ||
+      (totalJobs > 0 && totalJobs < 3) ||
+      (savedJobs.length > 2 && completeStacks.length < savedJobs.length * 0.3)
+    );
+    
+    if (shouldShowEducation) {
+      suggestions.push({
+        type: 'education',
+        icon: Layers,
+        title: 'What Are Application Stacks?',
+        description: 'An Application Stack is your optimized resume + personalized cover letter for each job. They increase your ATS scores by 40% and triple your interview chances through job-specific customization.',
+        action: 'Create Your First Stack',
+        actionUrl: '/upload-resume',
+        priority: 0
+      });
+    }
     
     // Incomplete application stacks
     const incompleteStacks = jobs.filter(job => {
@@ -104,11 +136,6 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
     }
 
     // Success message for complete stacks
-    const completeStacks = jobs.filter(job => 
-      job.optimized_resumes && job.optimized_resumes.length > 0 &&
-      job.cover_letters && job.cover_letters.length > 0
-    );
-
     if (completeStacks.length > 0 && suggestions.length === 0) {
       suggestions.push({
         type: 'success',
@@ -143,6 +170,7 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
       case 'warning': return 'text-red-500';
       case 'success': return 'text-green-500';
       case 'info': return 'text-blue-500';
+      case 'education': return 'text-purple-500';
       default: return 'text-gray-500';
     }
   };
