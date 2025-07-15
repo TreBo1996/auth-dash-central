@@ -245,6 +245,17 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
         setShowSuccessBanner(false);
       }, 3000);
 
+      // Add user to Mailchimp after successful profile save (non-blocking)
+      try {
+        await supabase.functions.invoke('add-user-to-mailchimp', {
+          body: { userId }
+        });
+        console.log('User added to Mailchimp successfully');
+      } catch (mailchimpError) {
+        // Don't block the main flow if Mailchimp fails
+        console.error('Mailchimp integration error (non-blocking):', mailchimpError);
+      }
+
       // Call onSave callback with current preferences
       onSave?.(preferences);
 
