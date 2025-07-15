@@ -275,30 +275,34 @@ const JobHub: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               Job Hub
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
               Track your applications, manage your job pipeline, and optimize your application stack
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto sm:self-end">
             <Button 
               variant="outline" 
               onClick={() => navigate('/job-search')}
-              className="hover:bg-blue-50"
+              className="hover:bg-blue-50 flex-1 sm:flex-none text-sm"
+              size="sm"
             >
-              <Search className="h-4 w-4 mr-2" />
-              Find More Jobs
+              <Search className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Find More Jobs</span>
+              <span className="sm:hidden">Find Jobs</span>
             </Button>
             <Button 
               onClick={() => navigate('/upload-job')}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 flex-1 sm:flex-none text-sm"
+              size="sm"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Job
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Job</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </div>
@@ -322,21 +326,28 @@ const JobHub: React.FC = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all">
-                  All Jobs ({jobs.length})
+              <TabsList className="grid w-full grid-cols-4 h-auto">
+                <TabsTrigger value="all" className="text-xs sm:text-sm px-2 py-2">
+                  <span className="hidden sm:inline">All Jobs ({jobs.length})</span>
+                  <span className="sm:hidden">All<br/>({jobs.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="pending">
-                  Pending ({jobs.filter(j => !j.is_applied).length})
+                <TabsTrigger value="pending" className="text-xs sm:text-sm px-2 py-2">
+                  <span className="hidden sm:inline">Pending ({jobs.filter(j => !j.is_applied).length})</span>
+                  <span className="sm:hidden">Pending<br/>({jobs.filter(j => !j.is_applied).length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="applied">
-                  Applied ({jobs.filter(j => j.is_applied).length})
+                <TabsTrigger value="applied" className="text-xs sm:text-sm px-2 py-2">
+                  <span className="hidden sm:inline">Applied ({jobs.filter(j => j.is_applied).length})</span>
+                  <span className="sm:hidden">Applied<br/>({jobs.filter(j => j.is_applied).length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="with-stack">
-                  With Stack ({jobs.filter(j => 
+                <TabsTrigger value="with-stack" className="text-xs sm:text-sm px-2 py-2">
+                  <span className="hidden sm:inline">With Stack ({jobs.filter(j => 
                     j.optimized_resumes && j.optimized_resumes.length > 0 &&
                     j.cover_letters && j.cover_letters.length > 0
-                  ).length})
+                  ).length})</span>
+                  <span className="sm:hidden">Stack<br/>({jobs.filter(j => 
+                    j.optimized_resumes && j.optimized_resumes.length > 0 &&
+                    j.cover_letters && j.cover_letters.length > 0
+                  ).length})</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -369,7 +380,7 @@ const JobHub: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
+                  <div className="max-h-[600px] overflow-y-auto space-y-2 sm:space-y-3 pr-1 sm:pr-2">
                     {filteredJobs.map((job) => (
                       <JobHubCard 
                         key={job.id} 

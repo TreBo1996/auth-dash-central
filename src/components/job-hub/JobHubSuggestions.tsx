@@ -149,26 +149,26 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-yellow-500" />
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
           Smart Suggestions
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4">
         {suggestions.map((suggestion, index) => (
           <Alert key={index} variant={getAlertVariant(suggestion.type)}>
             <suggestion.icon className={`h-4 w-4 ${getIconColor(suggestion.type)}`} />
-            <AlertDescription className="flex items-center justify-between">
-              <div>
-                <div className="font-medium mb-1">{suggestion.title}</div>
-                <div className="text-sm">{suggestion.description}</div>
+            <AlertDescription className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex-1">
+                <div className="font-medium mb-1 text-sm sm:text-base">{suggestion.title}</div>
+                <div className="text-xs sm:text-sm leading-tight">{suggestion.description}</div>
               </div>
               <Button 
                 size="sm" 
                 variant={suggestion.type === 'warning' ? 'destructive' : 'default'}
                 onClick={() => navigate(suggestion.actionUrl)}
-                className="ml-4 whitespace-nowrap"
+                className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm"
               >
                 {suggestion.action}
                 <ArrowRight className="h-3 w-3 ml-1" />

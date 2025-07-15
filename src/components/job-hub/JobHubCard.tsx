@@ -116,8 +116,154 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
   return (
     <>
       <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-blue-500 hover:border-l-blue-600">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between gap-4">
+        <CardContent className="p-3 sm:p-4">
+          {/* Mobile Layout - Vertical Stack */}
+          <div className="block sm:hidden space-y-3">
+            {/* Top Row: Job Info */}
+            <div className="space-y-2">
+              <div className="flex items-start justify-between">
+                <h3 className="font-semibold text-base text-gray-900 leading-tight flex-1 pr-2">
+                  {job.title}
+                </h3>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Badge variant={job.source === 'upload' ? 'secondary' : 'default'} className="text-xs px-2 py-0.5">
+                    {job.source === 'upload' ? 'Ext' : 'RezLit'}
+                  </Badge>
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                {job.company && (
+                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                    <Building className="h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">{job.company}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  {job.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      <span className="truncate max-w-[120px]">{job.location}</span>
+                    </div>
+                  )}
+                  {job.salary_range && (
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-3 w-3" />
+                      <span className="truncate max-w-[100px]">{job.salary_range}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1 ml-auto">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(job.created_at)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Row: Status and Stack Info */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <JobStatusSelector
+                  status={job.application_status || 'pending'}
+                  onStatusChange={(status) => onStatusUpdate(job.id, 'application_status', status)}
+                />
+              </div>
+              <div className="flex items-center gap-2 px-2 py-1 bg-gray-50 rounded-full">
+                <div className={`w-2 h-2 rounded-full ${stackStatus.color}`} />
+                <span className={`text-xs font-medium ${stackStatus.textColor}`}>
+                  {stackStatus.text}
+                </span>
+                {hasOptimizedResume && latestResume?.ats_score && (
+                  <Badge variant="secondary" className="text-xs px-1 py-0 h-4 ml-1">
+                    {latestResume.ats_score}%
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Row: Actions */}
+            <div className="flex gap-2">
+              {(hasOptimizedResume || hasCoverLetter) ? (
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowStackModal(true)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  View Stack
+                </Button>
+              ) : (
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowCreateStackModal(true)}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-sm"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Create Stack
+                </Button>
+              )}
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {latestResume && (
+                    <DropdownMenuItem onClick={() => setShowResumePreview(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Preview Resume
+                    </DropdownMenuItem>
+                  )}
+                  {latestCoverLetter && (
+                    <DropdownMenuItem onClick={() => setShowCoverLetterPreview(true)}>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Preview Cover Letter
+                    </DropdownMenuItem>
+                  )}
+                  {job.job_url && (
+                    <DropdownMenuItem onClick={() => window.open(job.job_url!, '_blank')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Job Posting
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/upload-resume?jobId=${job.id}`)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Optimize Resume
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setShowCoverLetterGenerationModal(true)}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Generate Cover Letter
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => navigate(`/upload-job?edit=${job.id}`)}
+                  >
+                    Edit Job Details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Job
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Desktop Layout - Horizontal */}
+          <div className="hidden sm:flex items-center justify-between gap-4">
             {/* Left Section: Job Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between mb-2">

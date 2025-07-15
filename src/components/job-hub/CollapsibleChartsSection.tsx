@@ -6,6 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { JobHubChartsSection } from './JobHubChartsSection';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CollapsibleChartsSectionProps {
   jobs: Array<{
@@ -18,6 +19,7 @@ interface CollapsibleChartsSectionProps {
 export function CollapsibleChartsSection({ jobs }: CollapsibleChartsSectionProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   
   // Smart default state and localStorage persistence
@@ -28,10 +30,10 @@ export function CollapsibleChartsSection({ jobs }: CollapsibleChartsSectionProps
     if (storedState !== null) {
       setIsOpen(storedState === 'true');
     } else {
-      // Default: collapsed if no jobs, expanded if has jobs
-      setIsOpen(jobs.length > 0);
+      // Default: collapsed on mobile, expanded on desktop if has jobs
+      setIsOpen(jobs.length > 0 && !isMobile);
     }
-  }, [jobs.length, user?.id]);
+  }, [jobs.length, user?.id, isMobile]);
 
   const handleToggle = (open: boolean) => {
     setIsOpen(open);
@@ -63,14 +65,14 @@ export function CollapsibleChartsSection({ jobs }: CollapsibleChartsSectionProps
   );
 
   const CollapsedPreview = () => (
-    <div className="flex items-center justify-between p-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-          <BarChart3 className="h-5 w-5 text-primary" />
+    <div className="flex items-center justify-between p-3 sm:p-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+          <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
         </div>
         <div>
-          <h3 className="font-medium text-foreground">Application Insights</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-medium text-foreground text-sm sm:text-base">Application Insights</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {jobs.length === 0 
               ? "Track your application progress with visual insights"
               : `Tracking ${jobs.length} application${jobs.length !== 1 ? 's' : ''}`
@@ -79,9 +81,10 @@ export function CollapsibleChartsSection({ jobs }: CollapsibleChartsSectionProps
         </div>
       </div>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center gap-2">
-          {jobs.length === 0 ? "Get Started" : "View Charts"}
-          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <Button variant="ghost" size="sm" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+          <span className="hidden sm:inline">{jobs.length === 0 ? "Get Started" : "View Charts"}</span>
+          <span className="sm:hidden">{jobs.length === 0 ? "Start" : "Charts"}</span>
+          <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </Button>
       </CollapsibleTrigger>
     </div>
