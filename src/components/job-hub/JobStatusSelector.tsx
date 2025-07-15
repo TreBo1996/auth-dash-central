@@ -13,7 +13,7 @@ interface JobStatusSelectorProps {
 
 const statusConfig = {
   pending: {
-    label: 'Pending',
+    label: 'Saved',
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     icon: Clock,
     selectColor: 'text-yellow-700'

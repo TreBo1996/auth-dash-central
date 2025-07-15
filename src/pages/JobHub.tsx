@@ -242,7 +242,11 @@ const JobHub: React.FC = () => {
       case 'pending':
         return jobs.filter(job => job.application_status === 'pending' || (!job.application_status && !job.is_applied));
       case 'applied':
-        return jobs.filter(job => job.application_status === 'applied' || (job.is_applied && !job.application_status));
+        return jobs.filter(job => 
+          job.application_status === 'applied' || 
+          job.application_status === 'interviewing' || 
+          (job.is_applied && !job.application_status)
+        );
       case 'with-stack':
         return jobs.filter(job => 
           job.optimized_resumes && job.optimized_resumes.length > 0 &&
@@ -332,12 +336,12 @@ const JobHub: React.FC = () => {
                   <span className="sm:hidden">All<br/>({jobs.length})</span>
                 </TabsTrigger>
                 <TabsTrigger value="pending" className="text-xs sm:text-sm px-2 py-2">
-                  <span className="hidden sm:inline">Pending ({jobs.filter(j => !j.is_applied).length})</span>
-                  <span className="sm:hidden">Pending<br/>({jobs.filter(j => !j.is_applied).length})</span>
+                  <span className="hidden sm:inline">Saved ({jobs.filter(j => j.application_status === 'pending' || (!j.application_status && !j.is_applied)).length})</span>
+                  <span className="sm:hidden">Saved<br/>({jobs.filter(j => j.application_status === 'pending' || (!j.application_status && !j.is_applied)).length})</span>
                 </TabsTrigger>
                 <TabsTrigger value="applied" className="text-xs sm:text-sm px-2 py-2">
-                  <span className="hidden sm:inline">Applied ({jobs.filter(j => j.is_applied).length})</span>
-                  <span className="sm:hidden">Applied<br/>({jobs.filter(j => j.is_applied).length})</span>
+                  <span className="hidden sm:inline">Applied ({jobs.filter(j => j.application_status === 'applied' || j.application_status === 'interviewing' || (j.is_applied && !j.application_status)).length})</span>
+                  <span className="sm:hidden">Applied<br/>({jobs.filter(j => j.application_status === 'applied' || j.application_status === 'interviewing' || (j.is_applied && !j.application_status)).length})</span>
                 </TabsTrigger>
                 <TabsTrigger value="with-stack" className="text-xs sm:text-sm px-2 py-2">
                   <span className="hidden sm:inline">With Stack ({jobs.filter(j => 
@@ -361,7 +365,7 @@ const JobHub: React.FC = () => {
                     <p className="text-gray-500 mb-4">
                       {activeTab === 'all' 
                         ? 'Start by uploading job descriptions or searching for jobs.'
-                        : `You haven't ${activeTab === 'applied' ? 'applied to' : activeTab === 'pending' ? 'found pending' : 'created application stacks for'} any jobs yet.`
+                        : `You haven't ${activeTab === 'applied' ? 'applied to' : activeTab === 'pending' ? 'saved' : 'created application stacks for'} any jobs yet.`
                       }
                     </p>
                     <div className="flex gap-2 justify-center">
