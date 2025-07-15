@@ -293,7 +293,7 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
             <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500 mb-4">Upload a resume to get started with AI optimization</p>
             <Button asChild>
-              <Link to="/upload">Upload Resume</Link>
+              <Link to="/upload-resume">Upload Resume</Link>
             </Button>
           </CardContent>
         </Card>
