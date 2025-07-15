@@ -449,16 +449,25 @@ const InterviewPrep: React.FC = () => {
           />
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="tips" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-3 bg-transparent p-0 gap-2">
+              <TabsTrigger 
+                value="tips" 
+                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3"
+              >
                 <Lightbulb className="h-4 w-4" />
                 Interview Tips
               </TabsTrigger>
-              <TabsTrigger value="new-interview" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="new-interview" 
+                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3"
+              >
                 <Play className="h-4 w-4" />
                 New Mock Interview
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="history" 
+                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3"
+              >
                 <TrendingUp className="h-4 w-4" />
                 History & Analytics
               </TabsTrigger>
