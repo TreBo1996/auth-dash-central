@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,6 +57,7 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
   const { user } = useAuth();
   const { toast } = useToast();
   const { usage, checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
+  const navigate = useNavigate();
 
   // State management
   const [currentStep, setCurrentStep] = useState<Step>('resume-selection');
@@ -397,7 +399,7 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
                   ) : resumes.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground mb-4">No resumes found. Please upload a resume first.</p>
-                      <Button onClick={() => window.location.href = '/upload-resume'}>
+                      <Button onClick={() => navigate('/upload-resume')}>
                         Upload Resume
                       </Button>
                     </div>
