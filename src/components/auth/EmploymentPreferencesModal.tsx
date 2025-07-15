@@ -9,13 +9,11 @@ import { EmploymentPreferencesForm } from '@/components/forms/EmploymentPreferen
 interface EmploymentPreferencesModalProps {
   fromParam?: string | null;
   onComplete: () => void;
-  onSkip: () => void;
 }
 
 export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProps> = ({
   fromParam,
-  onComplete,
-  onSkip
+  onComplete
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,11 +37,9 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
     console.error('Error saving preferences:', error);
     toast({
       title: "Error",
-      description: "Could not save preferences. You can set them later in your profile.",
+      description: "Please fix the errors and try again. This information is required to continue.",
       variant: "destructive",
     });
-    console.log('EmploymentPreferencesModal - error occurred, calling onSkip with fromParam:', fromParam);
-    onSkip(); // Fall back to skipping on error
   };
 
   return (
@@ -53,11 +49,11 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
           <div className="mx-auto mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full w-16 h-16 flex items-center justify-center">
             <Star className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">Set Your Job Preferences</CardTitle>
+          <CardTitle className="text-2xl">Complete Your Job Profile</CardTitle>
           <CardDescription className="text-base">
             {fromParam 
-              ? 'Set your preferences to get better job matches, then we\'ll take you back to where you left off.'
-              : 'Help us find the perfect job matches for you. You can update these anytime in your profile.'
+              ? 'Complete your job preferences to get better matches, then we\'ll take you back to where you left off.'
+              : 'This information is required to personalize your job search experience and provide better recommendations.'
             }
           </CardDescription>
         </CardHeader>
@@ -72,19 +68,8 @@ export const EmploymentPreferencesModal: React.FC<EmploymentPreferencesModalProp
             />
           )}
 
-          {/* Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={onSkip}
-              className="flex-1"
-            >
-              Skip for now
-            </Button>
-          </div>
-
-          <p className="text-center text-sm text-gray-500 mt-4">
-            You can update these preferences anytime in your Profile Settings
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Complete all required fields (*) to continue. You can update these preferences anytime in your Profile Settings.
           </p>
         </CardContent>
       </Card>

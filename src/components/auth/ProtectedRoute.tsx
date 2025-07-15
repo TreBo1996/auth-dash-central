@@ -57,7 +57,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       <EmploymentPreferencesModal
         fromParam={fromParam}
         onComplete={() => setEmploymentPreferencesComplete(fromParam)}
-        onSkip={() => setEmploymentPreferencesComplete(fromParam)}
       />
     );
   }

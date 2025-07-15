@@ -96,6 +96,11 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
     ...initialData
   });
 
+  // Validation for required fields
+  const requiredFields = ['desired_job_title', 'experience_level', 'work_setting_preference'] as const;
+  const isFormValid = requiredFields.every(field => preferences[field] && preferences[field].trim() !== '');
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+
   const experienceLevels = Object.keys(EXPERIENCE_LEVEL_MAP);
   const workSettings = Object.keys(WORK_SETTING_MAP);
   const jobTypes = Object.keys(JOB_TYPE_MAP);
@@ -158,8 +163,17 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
   };
 
   const handleSavePreferences = async () => {
+    setHasAttemptedSave(true);
+    
     if (!userId) {
       onError?.(new Error('User ID is required'));
+      return;
+    }
+
+    // Validate required fields
+    if (!isFormValid) {
+      const missingFields = requiredFields.filter(field => !preferences[field] || preferences[field].trim() === '');
+      onError?.(new Error(`Please complete the following required fields: ${missingFields.join(', ')}`));
       return;
     }
 
@@ -307,27 +321,31 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
         <div className="space-y-2">
           <Label htmlFor="job-title" className="flex items-center gap-2">
             <Briefcase className="h-4 w-4" />
-            Desired Job Title
+            Desired Job Title <span className="text-red-500">*</span>
           </Label>
           <Input
             id="job-title"
             placeholder="e.g. Software Engineer, Marketing Manager"
             value={preferences.desired_job_title}
             onChange={(e) => handleInputChange('desired_job_title', e.target.value)}
+            className={hasAttemptedSave && !preferences.desired_job_title.trim() ? 'border-red-500' : ''}
           />
+          {hasAttemptedSave && !preferences.desired_job_title.trim() && (
+            <p className="text-sm text-red-500">Job title is required</p>
+          )}
         </div>
 
         {/* Experience Level */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Star className="h-4 w-4" />
-            Experience Level
+            Experience Level <span className="text-red-500">*</span>
           </Label>
           <Select 
             value={preferences.experience_level} 
             onValueChange={(value) => handleInputChange('experience_level', value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className={hasAttemptedSave && !preferences.experience_level ? 'border-red-500' : ''}>
               <SelectValue placeholder="Select your experience level" />
             </SelectTrigger>
             <SelectContent>
@@ -336,19 +354,22 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
               ))}
             </SelectContent>
           </Select>
+          {hasAttemptedSave && !preferences.experience_level && (
+            <p className="text-sm text-red-500">Experience level is required</p>
+          )}
         </div>
 
         {/* Work Setting */}
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <MapPin className="h-4 w-4" />
-            Work Setting
+            Work Setting <span className="text-red-500">*</span>
           </Label>
           <Select 
             value={preferences.work_setting_preference} 
             onValueChange={(value) => handleInputChange('work_setting_preference', value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className={hasAttemptedSave && !preferences.work_setting_preference ? 'border-red-500' : ''}>
               <SelectValue placeholder="Select preferred work setting" />
             </SelectTrigger>
             <SelectContent>
@@ -357,6 +378,9 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
               ))}
             </SelectContent>
           </Select>
+          {hasAttemptedSave && !preferences.work_setting_preference && (
+            <p className="text-sm text-red-500">Work setting is required</p>
+          )}
         </div>
 
         {/* Location */}
@@ -478,11 +502,21 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
           </div>
         )}
 
+        {/* Validation Message */}
+        {hasAttemptedSave && !isFormValid && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <span className="text-red-800 text-sm">
+              Please complete all required fields (*) to continue
+            </span>
+          </div>
+        )}
+
         {/* Save Button */}
         <div className="pt-4">
           <Button
             onClick={handleSavePreferences}
-            disabled={isLoading || !hasUnsavedChanges}
+            disabled={isLoading || (!hasUnsavedChanges && isFormValid)}
             className="w-full bg-indigo-900 hover:bg-indigo-800"
           >
             {isLoading ? (
@@ -491,7 +525,7 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
                 Saving...
               </>
             ) : (
-              'Save Preferences'
+              'Complete Profile'
             )}
           </Button>
           
