@@ -65,7 +65,7 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({ jobs }) => {
       description: 'Total jobs being tracked'
     },
     {
-      title: 'Pending Applications',
+      title: 'Saved Jobs',
       value: pendingApplications,
       icon: TrendingUp,
       color: 'bg-orange-500',
