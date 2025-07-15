@@ -81,6 +81,19 @@ const JobDetail: React.FC = () => {
     }
   }, [source, id, user]);
 
+  // Check for auto-apply parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoApply = urlParams.get('autoApply');
+    
+    if (autoApply === 'true' && user && job && !(source === 'employer' && hasApplied)) {
+      // Small delay to ensure component is fully mounted
+      setTimeout(() => {
+        handleApplyClick();
+      }, 100);
+    }
+  }, [user, job, source, hasApplied]);
+
   const loadJobData = async () => {
     try {
       if (source === 'employer') {

@@ -73,6 +73,19 @@ const JobPosting: React.FC = () => {
     }
   }, [id, user]);
 
+  // Check for auto-apply parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoApply = urlParams.get('autoApply');
+    
+    if (autoApply === 'true' && user && jobPosting && !hasApplied) {
+      // Small delay to ensure component is fully mounted
+      setTimeout(() => {
+        handleApplyClick();
+      }, 100);
+    }
+  }, [user, jobPosting, hasApplied]);
+
   useEffect(() => {
     // Debug logging for user authentication
     console.log('🔍 JobPosting Debug - User auth state:', {

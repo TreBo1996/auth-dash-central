@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, ChevronDown, ChevronUp, Star, Briefcase, Share2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { UnifiedJob } from '@/types/job';
 import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
 import { toTitleCase } from '@/lib/utils';
@@ -22,6 +22,7 @@ export const JobCard: React.FC<JobCardProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [showExternalModal, setShowExternalModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const navigate = useNavigate();
   const {
     toast
   } = useToast();
@@ -118,12 +119,9 @@ export const JobCard: React.FC<JobCardProps> = ({
     }
   };
   const handleViewJob = () => {
-    if (job.source === 'employer') {
-      window.location.href = job.job_url;
-    } else {
-      // For database jobs, show the optimization modal instead of direct redirect
-      setShowExternalModal(true);
-    }
+    // For both employer and database jobs, navigate to the individual job page with auto-apply
+    const url = `${getJobUrl()}?autoApply=true`;
+    navigate(url);
   };
   const toggleExpanded = () => {
     setExpanded(!expanded);
