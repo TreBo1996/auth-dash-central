@@ -452,21 +452,21 @@ const InterviewPrep: React.FC = () => {
             <TabsList className="grid w-full grid-cols-3 bg-transparent p-0 gap-2">
               <TabsTrigger 
                 value="tips" 
-                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3"
+                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 hover:scale-[1.02] data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3 transition-all duration-300 ease-in-out"
               >
                 <Lightbulb className="h-4 w-4" />
                 Interview Tips
               </TabsTrigger>
               <TabsTrigger 
                 value="new-interview" 
-                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3"
+                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 hover:scale-[1.02] data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3 transition-all duration-300 ease-in-out"
               >
                 <Play className="h-4 w-4" />
                 New Mock Interview
               </TabsTrigger>
               <TabsTrigger 
                 value="history" 
-                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3"
+                className="flex items-center gap-2 border border-border bg-background shadow-sm hover:shadow-md hover:border-primary/40 hover:scale-[1.02] data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-3 transition-all duration-300 ease-in-out"
               >
                 <TrendingUp className="h-4 w-4" />
                 History & Analytics
