@@ -57,10 +57,37 @@ Return the response as JSON in this format:
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
     
-    // Parse the JSON response from OpenAI
-    const questions = JSON.parse(content);
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid OpenAI API response structure:', data);
+      throw new Error('Invalid response from OpenAI API');
+    }
+
+    const content = data.choices[0].message.content;
+
+    if (!content || content.trim().length === 0) {
+      console.error('Empty generated content from OpenAI');
+      throw new Error('Generated interview questions are empty');
+    }
+
+    // Parse JSON response with robust handling
+    let cleanContent = content.trim();
+    
+    // Handle cases where response might be wrapped in markdown
+    if (cleanContent.startsWith('```json')) {
+      cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const questions = JSON.parse(cleanContent);
+
+    // Basic validation - ensure required fields exist
+    if (!questions.behavioral || !questions.technical || 
+        !Array.isArray(questions.behavioral) || !Array.isArray(questions.technical)) {
+      console.error('Invalid questions structure:', questions);
+      throw new Error('Invalid questions structure - missing behavioral or technical arrays');
+    }
 
     return new Response(JSON.stringify(questions), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
