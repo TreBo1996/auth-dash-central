@@ -12,7 +12,6 @@ import {
   Mail, 
   Award, 
   Calendar,
-  Download,
   Edit,
   Eye
 } from 'lucide-react';
@@ -49,6 +48,27 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
   const handleCoverLetterEdit = () => {
     setShowCoverLetterPreview(false);
     navigate('/cover-letters');
+  };
+
+  const handleCoverLetterDownload = () => {
+    if (!coverLetter) return;
+    
+    const fileName = `cover-letter-${job.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${job.company?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'company'}-${new Date().toISOString().split('T')[0]}.txt`;
+    const blob = new Blob([coverLetter.generated_text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Download Complete",
+      description: "Cover letter has been downloaded successfully."
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -168,7 +188,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
               <CardTitle>Application Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4">
+               <div className="flex gap-4">
                 <Button 
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   onClick={() => {
@@ -178,19 +198,6 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Apply with This Stack
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    // Download both files
-                    toast({
-                      title: "Download Started",
-                      description: "Your application stack is being prepared for download."
-                    });
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Stack
                 </Button>
               </div>
             </CardContent>
@@ -215,6 +222,7 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
             type="cover-letter"
             onClose={() => setShowCoverLetterPreview(false)}
             onEdit={handleCoverLetterEdit}
+            onDownload={handleCoverLetterDownload}
           />
         )}
       </DialogContent>

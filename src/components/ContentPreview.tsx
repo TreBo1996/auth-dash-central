@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { FileText, Mail, Edit } from 'lucide-react';
+import { FileText, Mail, Edit, Download } from 'lucide-react';
 
 interface ContentPreviewProps {
   content: string;
@@ -18,6 +18,7 @@ interface ContentPreviewProps {
   type: 'resume' | 'job-description' | 'cover-letter';
   onClose: () => void;
   onEdit?: () => void;
+  onDownload?: () => void;
 }
 
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
@@ -25,7 +26,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   title,
   type,
   onClose,
-  onEdit
+  onEdit,
+  onDownload
 }) => {
   const getIcon = () => {
     switch (type) {
@@ -68,12 +70,26 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
           </div>
         </ScrollArea>
         
-        {onEdit && (
+        {(onEdit || onDownload) && (
           <DialogFooter>
-            <Button onClick={onEdit} className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              Edit
-            </Button>
+            <div className="flex gap-2">
+              {onDownload && (
+                <Button 
+                  variant="outline" 
+                  onClick={onDownload} 
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </Button>
+              )}
+              {onEdit && (
+                <Button onClick={onEdit} className="flex items-center gap-2">
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </DialogFooter>
         )}
       </DialogContent>
