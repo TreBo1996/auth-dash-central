@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,12 +51,15 @@ const JobHub: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobDescription[]>([]);
+  const [userResumes, setUserResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const jobPipelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
       fetchJobDescriptions();
+      fetchUserResumes();
     }
   }, [user]);
 
@@ -90,8 +93,26 @@ const JobHub: React.FC = () => {
     }
   };
 
+  const fetchUserResumes = async () => {
+    try {
+      const { data: resumes, error } = await supabase
+        .from('resumes')
+        .select('id, file_name, created_at, parsed_text')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setUserResumes(resumes || []);
+    } catch (error) {
+      console.error('Error fetching user resumes:', error);
+      // Don't show error toast for resumes as it's not critical for the main flow
+    }
+  };
+
   const refreshJobs = () => {
     fetchJobDescriptions();
+    fetchUserResumes();
   };
 
   const handleStatusUpdate = async (jobId: string, field: string, value: boolean | ApplicationStatus) => {
@@ -318,10 +339,10 @@ const JobHub: React.FC = () => {
         <CollapsibleChartsSection jobs={jobs} />
 
         {/* Smart Suggestions */}
-        <JobHubSuggestions jobs={jobs} />
+        <JobHubSuggestions jobs={jobs} userResumes={userResumes} jobPipelineRef={jobPipelineRef} />
 
         {/* Job Listings */}
-        <Card>
+        <Card ref={jobPipelineRef}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />

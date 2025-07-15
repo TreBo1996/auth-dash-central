@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
+import { StackPrerequisitesModal } from './StackPrerequisitesModal';
 import { 
   Lightbulb, 
   TrendingUp, 
@@ -24,11 +26,51 @@ interface JobHubSuggestionsProps {
     optimized_resumes?: any[];
     cover_letters?: any[];
   }>;
+  userResumes: any[];
+  jobPipelineRef: React.RefObject<HTMLDivElement>;
 }
 
-export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) => {
+export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs, userResumes, jobPipelineRef }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [showPrerequisitesModal, setShowPrerequisitesModal] = useState(false);
   
+  const handleCreateStack = () => {
+    const hasResume = userResumes && userResumes.length > 0;
+    const hasJobs = jobs && jobs.length > 0;
+    
+    if (hasResume && hasJobs) {
+      // Smooth scroll to Job Pipeline section
+      scrollToJobPipeline();
+    } else {
+      // Show prerequisites modal
+      setShowPrerequisitesModal(true);
+    }
+  };
+
+  const scrollToJobPipeline = () => {
+    if (jobPipelineRef.current) {
+      jobPipelineRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+      
+      // Add brief highlight animation
+      jobPipelineRef.current.style.transition = 'all 0.3s ease-in-out';
+      jobPipelineRef.current.style.transform = 'scale(1.02)';
+      setTimeout(() => {
+        if (jobPipelineRef.current) {
+          jobPipelineRef.current.style.transform = 'scale(1)';
+        }
+      }, 300);
+      
+      toast({
+        title: "Ready to create stacks!",
+        description: "Select a job below to create your first application stack."
+      });
+    }
+  };
+
   const generateSuggestions = () => {
     const suggestions = [];
     
@@ -57,7 +99,7 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
         title: 'What Are Application Stacks?',
         description: 'An Application Stack is your optimized resume + personalized cover letter for each job. They increase your ATS scores by 40% and triple your interview chances through job-specific customization.',
         action: 'Create Your First Stack',
-        actionUrl: '/upload-resume',
+        actionUrl: 'smart-create',
         priority: 0
       });
     }
@@ -196,7 +238,13 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
               <Button 
                 size="sm" 
                 variant={suggestion.type === 'warning' ? 'destructive' : 'default'}
-                onClick={() => navigate(suggestion.actionUrl)}
+                onClick={() => {
+                  if (suggestion.actionUrl === 'smart-create') {
+                    handleCreateStack();
+                  } else {
+                    navigate(suggestion.actionUrl);
+                  }
+                }}
                 className="w-full sm:w-auto whitespace-nowrap text-xs sm:text-sm"
               >
                 {suggestion.action}
@@ -206,6 +254,13 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
           </Alert>
         ))}
       </CardContent>
+      
+      <StackPrerequisitesModal
+        open={showPrerequisitesModal}
+        onOpenChange={setShowPrerequisitesModal}
+        hasResume={userResumes && userResumes.length > 0}
+        hasJobDescriptions={jobs && jobs.length > 0}
+      />
     </Card>
   );
 };
