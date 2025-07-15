@@ -6,7 +6,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Sparkles, Loader2, AlertTriangle, Crown, Zap, Star, CheckCircle, TrendingUp, Target, Award, Users, Trophy, BarChart3, FileText, Brain, Lightbulb, ChevronDown, ChevronUp, Rocket, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
@@ -293,7 +293,7 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
             <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500 mb-4">Upload a resume to get started with AI optimization</p>
             <Button asChild>
-              <a href="/upload-resume">Upload Resume</a>
+              <Link to="/upload">Upload Resume</Link>
             </Button>
           </CardContent>
         </Card>
