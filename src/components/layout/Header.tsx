@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { RoleSwitcher } from './RoleSwitcher';
 
-
 export const Header: React.FC = () => {
   const {
     user,
@@ -27,7 +26,7 @@ export const Header: React.FC = () => {
     <header className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 sticky top-0 z-50">
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link to={user ? "/dashboard" : "/"} className="flex items-center">
+          <Link to={user ? "/job-hub" : "/"} className="flex items-center">
             <img 
               src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
               alt="RezLit Logo" 
@@ -39,7 +38,7 @@ export const Header: React.FC = () => {
             {user && <RoleSwitcher />}
             
             {user ? <>
-                <Link to="/dashboard">
+                <Link to="/job-hub">
                   <Button variant="ghost" className="text-white hover:bg-white/20 hover:text-white border-0">
                     Dashboard
                   </Button>
