@@ -20,6 +20,7 @@ interface JobHubSuggestionsProps {
     title: string;
     is_applied?: boolean;
     is_saved?: boolean;
+    application_status?: string;
     optimized_resumes?: any[];
     cover_letters?: any[];
   }>;
@@ -37,7 +38,7 @@ export const JobHubSuggestions: React.FC<JobHubSuggestionsProps> = ({ jobs }) =>
       job.optimized_resumes && job.optimized_resumes.length > 0 &&
       job.cover_letters && job.cover_letters.length > 0
     );
-    const savedJobs = jobs.filter(job => job.is_saved);
+    const savedJobs = jobs.filter(job => job.application_status === 'pending' || job.is_saved);
     
     // Show Application Stack education if:
     // - User has saved jobs but no complete stacks, OR
