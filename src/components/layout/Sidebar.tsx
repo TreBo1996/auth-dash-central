@@ -9,12 +9,12 @@ import { useAuth } from '@/contexts/AuthContext';
 const navigation = [{
   name: 'Job Hub',
   href: '/job-hub',
-  icon: Briefcase,
+  icon: Home,
   protected: true
 }, {
   name: 'Resume Optimizer',
   href: '/dashboard',
-  icon: Home,
+  icon: Briefcase,
   protected: true
 }, {
   name: 'Mock Interview Prep',
