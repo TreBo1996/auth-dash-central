@@ -65,6 +65,24 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
     onOptimize(userAdditions);
   };
 
+  // Prevent tab switching during optimization
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isOptimizing) {
+        e.preventDefault();
+        e.returnValue = 'Resume optimization is in progress. Are you sure you want to leave?';
+      }
+    };
+
+    if (isOptimizing) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isOptimizing]);
+
   const optimizationSteps = [
     { icon: <TrendingUp className="h-5 w-5" />, text: "Analyzing resume content..." },
     { icon: <Zap className="h-5 w-5" />, text: "Enhancing keywords and phrases..." },
@@ -113,9 +131,14 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                 </div>
               </div>
               <Progress value={(optimizationStep + 1) * 25} className="w-full" />
-              <p className="text-sm text-muted-foreground">
-                This usually takes 30-60 seconds. Please don't close this window.
-              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800 font-medium">
+                  ⚠️ Please keep this tab active and don't switch tabs until optimization is complete
+                </p>
+                <p className="text-xs text-yellow-700 mt-1">
+                  This usually takes 30-60 seconds. Switching tabs may interrupt the process.
+                </p>
+              </div>
             </div>
           </div>
         )}

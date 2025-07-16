@@ -198,6 +198,24 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
     }
   };
 
+  // Prevent tab switching during optimization
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isOptimizing || isGeneratingCoverLetter) {
+        e.preventDefault();
+        e.returnValue = 'Resume optimization and cover letter generation is in progress. Are you sure you want to leave?';
+      }
+    };
+
+    if (isOptimizing || isGeneratingCoverLetter) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isOptimizing, isGeneratingCoverLetter]);
+
   const handleOptimizeResume = async (userAdditions?: UserAddition[]) => {
     try {
       setIsOptimizing(true);
@@ -506,9 +524,17 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
                   <h3 className="text-lg font-medium mb-2">Generating Cover Letter</h3>
-                  <p className="text-muted-foreground text-center">
+                  <p className="text-muted-foreground text-center mb-4">
                     Creating a personalized cover letter using your optimized resume...
                   </p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-md">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      ⚠️ Please keep this tab active and don't switch tabs until complete
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      This process usually takes 15-30 seconds. Switching tabs may interrupt the generation.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
