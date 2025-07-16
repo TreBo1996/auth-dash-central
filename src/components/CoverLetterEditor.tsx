@@ -78,6 +78,9 @@ export const CoverLetterEditor: React.FC = () => {
         return;
       }
 
+      console.log('Cover letter data structure:', data);
+      console.log('Job descriptions data:', data?.job_descriptions);
+      
       setCoverLetter(data);
       setEditedContent(data.generated_text);
     } catch (error) {
