@@ -24,6 +24,7 @@ import { newTemplateConfigs } from '@/components/resume-templates/configs/newTem
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InlineFileUpload } from './InlineFileUpload';
 import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, Upload, Save, Download, Edit, Target, Palette, ExternalLink, AlertCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface JobPosting {
   id: string;
@@ -607,32 +608,69 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
     setOriginalIntent(null);
   };
 
-  const getProgressStep = () => {
+  const getProgressPercentage = () => {
     // For existing resume workflow, use shorter progress
     if (originalIntent === 'existing') {
+      const totalSteps = 4;
+      let currentStep = 1;
+      
       switch (step) {
-        case 'upload': return 1;
-        case 'choose-optimization': return 2;
-        case 'cover-letter': return 3;
-        case 'final-submit': return 4;
-        case 'external-apply': return 4;
-        case 'success': return 4;
-        default: return 1;
+        case 'upload': currentStep = 1; break;
+        case 'choose-optimization': currentStep = 2; break;
+        case 'cover-letter': currentStep = 3; break;
+        case 'final-submit':
+        case 'external-apply':
+        case 'success': currentStep = 4; break;
+        default: currentStep = 1;
       }
+      
+      return Math.round((currentStep / totalSteps) * 100);
     }
     
     // Full optimization workflow
+    const totalSteps = 8;
+    let currentStep = 1;
+    
     switch (step) {
-      case 'upload': return 1;
-      case 'choose-optimization': return 2;
-      case 'optimize': return 3;
-      case 'edit-resume': return 4;
-      case 'templates': return 5;
-      case 'cover-letter': return 6;
-      case 'final-submit': return 7;
-      case 'external-apply': return 7;
-      case 'success': return 8;
-      default: return 1;
+      case 'upload': currentStep = 1; break;
+      case 'choose-optimization': currentStep = 2; break;
+      case 'optimize': currentStep = 3; break;
+      case 'edit-resume': currentStep = 4; break;
+      case 'templates': currentStep = 5; break;
+      case 'cover-letter': currentStep = 6; break;
+      case 'final-submit':
+      case 'external-apply': currentStep = 7; break;
+      case 'success': currentStep = 8; break;
+      default: currentStep = 1;
+    }
+    
+    return Math.round((currentStep / totalSteps) * 100);
+  };
+
+  const getCurrentStepText = () => {
+    if (originalIntent === 'existing') {
+      switch (step) {
+        case 'upload': return 'Step 1 of 4';
+        case 'choose-optimization': return 'Step 2 of 4';
+        case 'cover-letter': return 'Step 3 of 4';
+        case 'final-submit':
+        case 'external-apply':
+        case 'success': return 'Step 4 of 4';
+        default: return 'Step 1 of 4';
+      }
+    }
+    
+    switch (step) {
+      case 'upload': return 'Step 1 of 8';
+      case 'choose-optimization': return 'Step 2 of 8';
+      case 'optimize': return 'Step 3 of 8';
+      case 'edit-resume': return 'Step 4 of 8';
+      case 'templates': return 'Step 5 of 8';
+      case 'cover-letter': return 'Step 6 of 8';
+      case 'final-submit':
+      case 'external-apply': return 'Step 7 of 8';
+      case 'success': return 'Step 8 of 8';
+      default: return 'Step 1 of 8';
     }
   };
 
@@ -648,19 +686,12 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
           </DialogDescription>
           
           {/* Progress Indicator */}
-          <div className="flex items-center space-x-1 mt-4 overflow-x-auto">
-            {(originalIntent === 'existing' ? [1, 2, 3, 4] : [1, 2, 3, 4, 5, 6, 7, 8]).map((num) => (
-              <div
-                key={num}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                  num <= getProgressStep()
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {num}
-              </div>
-            ))}
+          <div className="space-y-2 mt-4">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{getCurrentStepText()}</span>
+              <span>{getProgressPercentage()}% Complete</span>
+            </div>
+            <Progress value={getProgressPercentage()} className="h-2" />
           </div>
         </DialogHeader>
 

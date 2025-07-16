@@ -25,6 +25,7 @@ import { newTemplateConfigs } from '@/components/resume-templates/configs/newTem
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InlineFileUpload } from './InlineFileUpload';
 import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload, Save, Download, Edit, Target, Palette, ExternalLink } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface Resume {
   id: string;
@@ -752,33 +753,71 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     parsed_text: jobPosting.description
   }] : [];
 
-  const getProgressStep = () => {
+  const getProgressPercentage = () => {
     // Adjust progress based on workflow type
     if (originalIntent === 'existing') {
       // Quick apply workflow: choose -> ats-score -> cover-letter -> final-submit
+      const totalSteps = 5;
+      let currentStep = 1;
+      
       switch (step) {
-        case 'choose': return 1;
-        case 'ats-score': return 2;
-        case 'cover-letter': return 3;
+        case 'choose': currentStep = 1; break;
+        case 'ats-score': currentStep = 2; break;
+        case 'cover-letter': currentStep = 3; break;
         case 'final-submit': 
-        case 'external-apply': return 4;
-        case 'success': return 5;
-        default: return 1;
+        case 'external-apply': currentStep = 4; break;
+        case 'success': currentStep = 5; break;
+        default: currentStep = 1;
       }
+      
+      return Math.round((currentStep / totalSteps) * 100);
     } else {
       // Full optimization workflow
+      const totalSteps = 9;
+      let currentStep = 1;
+      
       switch (step) {
-        case 'choose': return 1;
-        case 'upload': return 2;
-        case 'ats-score': return 3;
-        case 'optimize': return 4;
-        case 'edit-resume': return 5;
-        case 'templates': return 6;
-        case 'cover-letter': return 7;
+        case 'choose': currentStep = 1; break;
+        case 'upload': currentStep = 2; break;
+        case 'ats-score': currentStep = 3; break;
+        case 'optimize': currentStep = 4; break;
+        case 'edit-resume': currentStep = 5; break;
+        case 'templates': currentStep = 6; break;
+        case 'cover-letter': currentStep = 7; break;
         case 'final-submit': 
-        case 'external-apply': return 8;
-        case 'success': return 9;
-        default: return 1;
+        case 'external-apply': currentStep = 8; break;
+        case 'success': currentStep = 9; break;
+        default: currentStep = 1;
+      }
+      
+      return Math.round((currentStep / totalSteps) * 100);
+    }
+  };
+
+  const getCurrentStepText = () => {
+    if (originalIntent === 'existing') {
+      switch (step) {
+        case 'choose': return 'Step 1 of 5';
+        case 'ats-score': return 'Step 2 of 5';
+        case 'cover-letter': return 'Step 3 of 5';
+        case 'final-submit': 
+        case 'external-apply': return 'Step 4 of 5';
+        case 'success': return 'Step 5 of 5';
+        default: return 'Step 1 of 5';
+      }
+    } else {
+      switch (step) {
+        case 'choose': return 'Step 1 of 9';
+        case 'upload': return 'Step 2 of 9';
+        case 'ats-score': return 'Step 3 of 9';
+        case 'optimize': return 'Step 4 of 9';
+        case 'edit-resume': return 'Step 5 of 9';
+        case 'templates': return 'Step 6 of 9';
+        case 'cover-letter': return 'Step 7 of 9';
+        case 'final-submit': 
+        case 'external-apply': return 'Step 8 of 9';
+        case 'success': return 'Step 9 of 9';
+        default: return 'Step 1 of 9';
       }
     }
   };
@@ -795,19 +834,12 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
           </DialogDescription>
           
           {/* Progress Indicator */}
-          <div className="flex items-center space-x-1 mt-4 overflow-x-auto">
-            {Array.from({ length: originalIntent === 'existing' ? 5 : 9 }, (_, i) => i + 1).map((num) => (
-              <div
-                key={num}
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                  num <= getProgressStep()
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {num}
-              </div>
-            ))}
+          <div className="space-y-2 mt-4">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{getCurrentStepText()}</span>
+              <span>{getProgressPercentage()}% Complete</span>
+            </div>
+            <Progress value={getProgressPercentage()} className="h-2" />
           </div>
         </DialogHeader>
 

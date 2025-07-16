@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResumeOptimizer } from '@/components/ResumeOptimizer';
 import { FileText, Sparkles, ExternalLink, CheckCircle, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { UnifiedJob } from '@/types/job';
 
 interface Resume {
@@ -195,14 +196,30 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
     parsed_text: job.description
   }] : [];
 
-  const getProgressStep = () => {
+  const getProgressPercentage = () => {
+    const totalSteps = 4;
+    let currentStep = 1;
+    
     switch (step) {
-      case 'choose': return 1;
-      case 'existing': return 2;
-      case 'optimize': return 2;
-      case 'review': return 3;
-      case 'redirect': return 4;
-      default: return 1;
+      case 'choose': currentStep = 1; break;
+      case 'existing': currentStep = 2; break;
+      case 'optimize': currentStep = 2; break;
+      case 'review': currentStep = 3; break;
+      case 'redirect': currentStep = 4; break;
+      default: currentStep = 1;
+    }
+    
+    return Math.round((currentStep / totalSteps) * 100);
+  };
+
+  const getCurrentStepText = () => {
+    switch (step) {
+      case 'choose': return 'Step 1 of 4';
+      case 'existing': return 'Step 2 of 4';
+      case 'optimize': return 'Step 2 of 4';
+      case 'review': return 'Step 3 of 4';
+      case 'redirect': return 'Step 4 of 4';
+      default: return 'Step 1 of 4';
     }
   };
 
@@ -218,19 +235,12 @@ export const ExternalJobApplicationModal: React.FC<ExternalJobApplicationModalPr
           </DialogDescription>
           
           {/* Progress Indicator */}
-          <div className="flex items-center space-x-2 mt-4">
-            {[1, 2, 3, 4].map((num) => (
-              <div
-                key={num}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  num <= getProgressStep()
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                    : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {num}
-              </div>
-            ))}
+          <div className="space-y-2 mt-4">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{getCurrentStepText()}</span>
+              <span>{getProgressPercentage()}% Complete</span>
+            </div>
+            <Progress value={getProgressPercentage()} className="h-2" />
           </div>
         </DialogHeader>
 
