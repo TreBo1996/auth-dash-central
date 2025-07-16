@@ -82,7 +82,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalNoResumePr
   
   // Template selection
   const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
-  const [selectedColorScheme, setSelectedColorScheme] = useState('professional');
+  const [selectedColorScheme, setSelectedColorScheme] = useState('classic-monochrome');
   const [isExporting, setIsExporting] = useState(false);
   
   // Cover letter and application

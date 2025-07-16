@@ -91,7 +91,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   
   // Template selection
   const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
-  const [selectedColorScheme, setSelectedColorScheme] = useState('professional');
+  const [selectedColorScheme, setSelectedColorScheme] = useState('classic-monochrome');
   const [isExporting, setIsExporting] = useState(false);
   
   // Cover letter

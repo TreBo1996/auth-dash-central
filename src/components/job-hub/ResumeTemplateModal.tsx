@@ -33,7 +33,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
 
   // Template and color scheme state
   const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
-  const [selectedColorScheme, setSelectedColorScheme] = useState('professional');
+  const [selectedColorScheme, setSelectedColorScheme] = useState('classic-monochrome');
 
   // Loading and export states
   const [loading, setLoading] = useState(false);
