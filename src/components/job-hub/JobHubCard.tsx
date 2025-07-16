@@ -245,12 +245,6 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={() => navigate(`/upload-job?edit=${job.id}`)}
-                  >
-                    Edit Job Details
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
                     onClick={() => setShowDeleteDialog(true)}
                     className="text-red-600 focus:text-red-600"
                   >
@@ -465,12 +459,6 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Generate Cover Letter
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => navigate(`/upload-job?edit=${job.id}`)}
-                  >
-                    Edit Job Details
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
