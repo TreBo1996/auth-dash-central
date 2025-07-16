@@ -105,6 +105,11 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
               <CardContent className="space-y-4">
                 {resume && (
                   <>
+                    <div>
+                      <h4 className="font-medium">
+                        Resume for {job.title} at {job.company}
+                      </h4>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="flex items-center gap-1">
                         <Award className="h-3 w-3" />
