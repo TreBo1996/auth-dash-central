@@ -150,9 +150,45 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
           </div>
 
           {isLoading ? <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p className="text-gray-600">Analyzing your resume...</p>
+              <div className="text-center space-y-6 max-w-md mx-auto">
+                <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-xl font-semibold text-foreground">Analyzing Your Resume Against Job Requirements</h3>
+                  <div className="space-y-2 text-muted-foreground">
+                    <p className="text-sm">Our AI is scanning your resume to identify:</p>
+                    <div className="grid grid-cols-1 gap-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-3 w-3 text-primary" />
+                        <span>Keyword matches and optimization opportunities</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-3 w-3 text-primary" />
+                        <span>Format compliance with ATS systems</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-3 w-3 text-primary" />
+                        <span>Skills alignment and experience relevance</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-primary">
+                    <Zap className="h-4 w-4" />
+                    <span className="text-sm font-medium">Analysis in progress...</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This analysis typically takes 25-40 seconds
+                  </p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Why this matters:</strong> 95% of large companies use ATS systems to filter resumes. 
+                    Our analysis ensures your resume passes these automated screenings.
+                  </p>
+                </div>
               </div>
             </div> : atsScore !== undefined && atsFeedback ? <>
               {/* Current vs Expected Score Comparison */}
