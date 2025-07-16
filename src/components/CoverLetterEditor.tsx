@@ -16,7 +16,7 @@ interface CoverLetterData {
   generated_text: string;
   created_at: string;
   updated_at: string;
-  job_description?: {
+  job_descriptions?: {
     title: string;
     company: string;
   };
@@ -78,9 +78,6 @@ export const CoverLetterEditor: React.FC = () => {
         return;
       }
 
-      console.log('Cover letter data structure:', data);
-      console.log('Job descriptions data:', data?.job_descriptions);
-      
       setCoverLetter(data);
       setEditedContent(data.generated_text);
     } catch (error) {
@@ -236,12 +233,12 @@ export const CoverLetterEditor: React.FC = () => {
               <div className="space-y-2">
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  {coverLetter.job_description?.title || 'Unknown Position'}
+                  {coverLetter.job_descriptions?.title || 'Unknown Position'}
                 </CardTitle>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Building className="h-4 w-4" />
-                    {coverLetter.job_description?.company || 'Unknown Company'}
+                    {coverLetter.job_descriptions?.company || 'Unknown Company'}
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
