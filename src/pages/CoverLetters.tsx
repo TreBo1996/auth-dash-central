@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, Plus, Building, Calendar, Target, Zap, FileText, Clock, Award, Users, TrendingUp, Lightbulb, ChevronDown, ChevronUp, Rocket, Star, CheckCircle, Brain } from 'lucide-react';
+import { Mail, Plus, Building, Calendar, Target, Zap, FileText, Clock, Award, Users, TrendingUp, Lightbulb, ChevronDown, ChevronUp, Rocket, Star, CheckCircle, Brain, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
+import { useNavigate } from 'react-router-dom';
 
 interface CoverLetterWithJob {
   id: string;
@@ -22,6 +23,7 @@ interface CoverLetterWithJob {
 
 export const CoverLetters: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [coverLetters, setCoverLetters] = useState<CoverLetterWithJob[]>([]);
   const [showGenerator, setShowGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -82,6 +84,10 @@ export const CoverLetters: React.FC = () => {
 
   const handleClosePreview = () => {
     setSelectedCoverLetter(null);
+  };
+
+  const handleEditCoverLetter = (coverLetter: CoverLetterWithJob) => {
+    navigate(`/cover-letters/edit/${coverLetter.id}`);
   };
 
   if (showGenerator) {
@@ -326,14 +332,25 @@ export const CoverLetters: React.FC = () => {
                     {coverLetter.generated_text.substring(0, 150)}...
                   </p>
                   <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleViewCoverLetter(coverLetter)}
-                    >
-                      View Cover Letter
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleViewCoverLetter(coverLetter)}
+                      >
+                        View
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditCoverLetter(coverLetter)}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

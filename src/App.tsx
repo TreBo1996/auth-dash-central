@@ -33,6 +33,7 @@ import EmployerSettings from '@/pages/employer/EmployerSettings';
 import JobPosting from '@/pages/JobPosting';
 import JobDetail from '@/pages/JobDetail';
 import CoverLetters from '@/pages/CoverLetters';
+import CoverLetterEditor from '@/components/CoverLetterEditor';
 import JobHub from '@/pages/JobHub';
 import TermsOfService from '@/pages/TermsOfService';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
@@ -123,6 +124,18 @@ function App() {
                   <ProtectedRoute>
                     <RoleProtectedRoute requiredRole="job_seeker">
                       <CoverLetters />
+                    </RoleProtectedRoute>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/cover-letters/edit/:id" 
+                element={
+                  <ProtectedRoute>
+                    <RoleProtectedRoute requiredRole="job_seeker">
+                      <ErrorBoundary>
+                        <CoverLetterEditor />
+                      </ErrorBoundary>
                     </RoleProtectedRoute>
                   </ProtectedRoute>
                 } 

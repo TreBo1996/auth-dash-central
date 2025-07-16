@@ -48,7 +48,11 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
 
   const handleCoverLetterEdit = () => {
     setShowCoverLetterPreview(false);
-    navigate('/cover-letters');
+    if (coverLetter?.id) {
+      navigate(`/cover-letters/edit/${coverLetter.id}`);
+    } else {
+      navigate('/cover-letters');
+    }
   };
 
   const handleCoverLetterDownload = () => {
