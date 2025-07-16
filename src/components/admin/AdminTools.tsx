@@ -17,7 +17,10 @@ import {
   Database,
   Calendar,
   Clock,
-  Shield
+  Shield,
+  Users,
+  Mail,
+  Download
 } from 'lucide-react';
 
 interface JobStatistics {
@@ -40,6 +43,12 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
   const [query, setQuery] = useState('software engineer');
   const [location, setLocation] = useState('');
   const [maxJobs, setMaxJobs] = useState(50);
+  
+  // Email campaigns state
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [mailchimpLoading, setMailchimpLoading] = useState(false);
+  const [csvLoading, setCsvLoading] = useState(false);
+  const [lastRun, setLastRun] = useState<any>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -195,6 +204,149 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     }
   };
 
+  const generateDailyRecommendations = async () => {
+    setRecommendationsLoading(true);
+    
+    try {
+      console.log("Starting daily job recommendations generation...");
+      
+      const { data, error } = await supabase.functions.invoke('generate-daily-job-recommendations');
+      
+      if (error) {
+        console.error("Recommendations error:", error);
+        toast({
+          title: "Error",
+          description: `Failed to generate recommendations: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Recommendations result:", data);
+      setLastRun(data);
+
+      toast({
+        title: "Success",
+        description: `Generated ${data.recommendationsGenerated} recommendations for ${data.usersProcessed} users`,
+      });
+
+      // Refresh statistics
+      loadStatistics();
+    } catch (error: any) {
+      console.error("Recommendations failed:", error);
+      toast({
+        title: "Error",
+        description: `Recommendations failed: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  };
+
+  const updateMailchimpMergeFields = async () => {
+    if (!lastRun?.runId) {
+      toast({
+        title: "Error",
+        description: "No recent recommendation run found. Generate recommendations first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMailchimpLoading(true);
+    
+    try {
+      console.log("Starting Mailchimp merge fields update...");
+      
+      const { data, error } = await supabase.functions.invoke('update-mailchimp-job-recommendations', {
+        body: { runId: lastRun.runId }
+      });
+      
+      if (error) {
+        console.error("Mailchimp update error:", error);
+        toast({
+          title: "Error",
+          description: `Failed to update Mailchimp: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Mailchimp update result:", data);
+
+      toast({
+        title: "Success",
+        description: `Updated ${data.usersUpdated} subscribers in Mailchimp`,
+      });
+    } catch (error: any) {
+      console.error("Mailchimp update failed:", error);
+      toast({
+        title: "Error",
+        description: `Mailchimp update failed: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setMailchimpLoading(false);
+    }
+  };
+
+  const exportRecommendationsCSV = async () => {
+    if (!lastRun?.runId) {
+      toast({
+        title: "Error",
+        description: "No recent recommendation run found. Generate recommendations first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCsvLoading(true);
+    
+    try {
+      console.log("Starting CSV export...");
+      
+      const response = await supabase.functions.invoke('export-job-recommendations-csv', {
+        body: { runId: lastRun.runId }
+      });
+      
+      if (response.error) {
+        console.error("CSV export error:", response.error);
+        toast({
+          title: "Error",
+          description: `Failed to export CSV: ${response.error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create download link
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `job-recommendations-${lastRun.runId}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: "CSV export downloaded successfully",
+      });
+    } catch (error: any) {
+      console.error("CSV export failed:", error);
+      toast({
+        title: "Error",
+        description: `CSV export failed: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setCsvLoading(false);
+    }
+  };
+
   if (!isAdmin) {
     return null;
   }
@@ -339,6 +491,136 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
 
           <div className="text-sm text-gray-600 bg-white p-3 rounded border">
             <strong>Debug Info:</strong> Check browser console for detailed logs when running the scraper.
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Email Campaigns Section */}
+    <Card className="border-blue-200 bg-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-blue-800">
+          <Mail className="h-5 w-5" />
+          Email Campaigns
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Daily Job Recommendations Panel */}
+        <div className="space-y-4">
+          <div>
+            <h4 className="font-semibold text-blue-800 mb-2">Daily Job Recommendations</h4>
+            <p className="text-sm text-blue-700 mb-4">
+              Generate personalized job recommendations for users based on their preferences and match them with today's quality job listings.
+            </p>
+            
+            <Button 
+              onClick={generateDailyRecommendations}
+              disabled={recommendationsLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {recommendationsLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating Recommendations...
+                </>
+              ) : (
+                <>
+                  <Users className="mr-2 h-4 w-4" />
+                  Generate Daily Job Recommendations
+                </>
+              )}
+            </Button>
+
+            {lastRun && (
+              <div className="mt-4 p-4 bg-white rounded-lg border">
+                <h5 className="font-semibold text-blue-800 mb-2">Last Run Results</h5>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-blue-600">Users Processed:</span>
+                    <span className="ml-2 font-semibold">{lastRun.usersProcessed}</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-600">Recommendations:</span>
+                    <span className="ml-2 font-semibold">{lastRun.recommendationsGenerated}</span>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 mt-2">{lastRun.message}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Mailchimp Integration Panel */}
+          <div className="border-t border-blue-200 pt-4">
+            <h4 className="font-semibold text-blue-800 mb-2">Mailchimp Integration</h4>
+            <p className="text-sm text-blue-700 mb-4">
+              Update Mailchimp subscriber merge fields with job recommendation data for email campaigns.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button 
+                onClick={updateMailchimpMergeFields}
+                disabled={mailchimpLoading || !lastRun}
+                variant="outline"
+                className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                {mailchimpLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating Mailchimp...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Update Mailchimp Merge Fields
+                  </>
+                )}
+              </Button>
+
+              <Button 
+                onClick={exportRecommendationsCSV}
+                disabled={csvLoading || !lastRun}
+                variant="outline"
+                className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                {csvLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Recommendations CSV
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Email Template Preview */}
+          <div className="border-t border-blue-200 pt-4">
+            <h4 className="font-semibold text-blue-800 mb-2">Email Template Preview</h4>
+            <div className="bg-white rounded-lg p-4 text-sm border">
+              <div className="space-y-2">
+                <div className="font-semibold text-blue-800">Subject: Your Daily Job Recommendations - *|RECOMMENDATION_DATE|*</div>
+                <div className="text-blue-700">
+                  Hi *|USER_NAME|*,<br/><br/>
+                  Here are your top 5 personalized job matches for today:<br/><br/>
+                  
+                  <strong>1. *|JOB1_TITLE|* at *|JOB1_COMPANY|*</strong><br/>
+                  📍 *|JOB1_LOCATION|* | 💰 *|JOB1_SALARY|*<br/>
+                  Match: *|JOB1_MATCH_REASON|*<br/>
+                  <span className="text-blue-600">[View Job] [Create Optimized Resume]</span><br/><br/>
+                  
+                  <em>... (Jobs 2-5 follow same format)</em><br/><br/>
+                  
+                  Ready to apply? Create an optimized resume for each job in seconds!
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              Create a single campaign in Mailchimp using merge fields. Each user will receive personalized job recommendations.
+            </p>
           </div>
         </div>
       </CardContent>

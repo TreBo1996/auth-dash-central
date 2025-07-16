@@ -190,6 +190,39 @@ export type Database = {
           },
         ]
       }
+      daily_recommendation_runs: {
+        Row: {
+          created_at: string
+          id: string
+          mailchimp_updated_at: string | null
+          notes: string | null
+          status: string
+          total_recommendations_generated: number | null
+          total_users_processed: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mailchimp_updated_at?: string | null
+          notes?: string | null
+          status?: string
+          total_recommendations_generated?: number | null
+          total_users_processed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mailchimp_updated_at?: string | null
+          notes?: string | null
+          status?: string
+          total_recommendations_generated?: number | null
+          total_users_processed?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employer_profiles: {
         Row: {
           address: string | null
@@ -1201,6 +1234,83 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_job_recommendations: {
+        Row: {
+          cached_job_id: string
+          created_at: string
+          email_opened_at: string | null
+          email_sent_at: string | null
+          experience_match_score: number
+          id: string
+          mailchimp_merge_data: Json | null
+          match_score: number
+          recommended_at: string
+          run_id: string
+          title_similarity_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cached_job_id: string
+          created_at?: string
+          email_opened_at?: string | null
+          email_sent_at?: string | null
+          experience_match_score: number
+          id?: string
+          mailchimp_merge_data?: Json | null
+          match_score: number
+          recommended_at?: string
+          run_id: string
+          title_similarity_score: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cached_job_id?: string
+          created_at?: string
+          email_opened_at?: string | null
+          email_sent_at?: string | null
+          experience_match_score?: number
+          id?: string
+          mailchimp_merge_data?: Json | null
+          match_score?: number
+          recommended_at?: string
+          run_id?: string
+          title_similarity_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user_job_recommendations_cached_job_id"
+            columns: ["cached_job_id"]
+            isOneToOne: false
+            referencedRelation: "cached_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_job_recommendations_cached_job_id"
+            columns: ["cached_job_id"]
+            isOneToOne: false
+            referencedRelation: "hot_job_searches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_job_recommendations_run_id"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "daily_recommendation_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user_job_recommendations_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_resume_additions: {
         Row: {
