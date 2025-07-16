@@ -8,24 +8,35 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, Loader2, Type } from 'lucide-react';
+import { Upload, FileText, CheckCircle, Loader2, Type, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { parseDocument } from '@/utils/documentParser';
 import { useNavigate } from 'react-router-dom';
+import { useJobDescriptionPersistence } from '@/hooks/useJobDescriptionPersistence';
 
 const UploadJobPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [textInput, setTextInput] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
-  const [companyName, setCompanyName] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
-  const [activeTab, setActiveTab] = useState('file');
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  const {
+    jobTitle,
+    companyName,
+    textInput,
+    activeTab,
+    isDraftRestored,
+    updateJobTitle,
+    updateCompanyName,
+    updateTextInput,
+    updateActiveTab,
+    clearDraft,
+    resetForm
+  } = useJobDescriptionPersistence();
 
   const maxFileSize = 10 * 1024 * 1024; // 10MB
 
@@ -218,6 +229,9 @@ const UploadJobPage: React.FC = () => {
         description: "Your job description has been saved successfully.",
       });
 
+      // Clear the draft after successful save
+      clearDraft();
+      
       navigate('/dashboard');
 
     } catch (error) {
@@ -234,9 +248,7 @@ const UploadJobPage: React.FC = () => {
 
   const handleStartOver = () => {
     setFile(null);
-    setTextInput('');
-    setJobTitle('');
-    setCompanyName('');
+    resetForm();
     setParsedContent('');
     setShowPreview(false);
   };
@@ -250,6 +262,15 @@ const UploadJobPage: React.FC = () => {
             Upload a job description file or paste the text directly
           </p>
         </div>
+
+        {isDraftRestored && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Draft restored! Your previous job description details have been recovered.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!showPreview ? (
           <Card>
@@ -265,7 +286,7 @@ const UploadJobPage: React.FC = () => {
                     id="job-title"
                     placeholder="e.g., Senior Software Engineer"
                     value={jobTitle}
-                    onChange={(e) => setJobTitle(e.target.value)}
+                    onChange={(e) => updateJobTitle(e.target.value)}
                   />
                 </div>
                 <div>
@@ -274,12 +295,12 @@ const UploadJobPage: React.FC = () => {
                     id="company-name"
                     placeholder="e.g., Google, Microsoft, Apple"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => updateCompanyName(e.target.value)}
                   />
                 </div>
               </div>
 
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <Tabs value={activeTab} onValueChange={updateActiveTab}>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="file">Upload File</TabsTrigger>
                   <TabsTrigger value="text">Paste Text</TabsTrigger>
@@ -333,7 +354,7 @@ const UploadJobPage: React.FC = () => {
                       id="job-text"
                       placeholder="Paste the job description text here..."
                       value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
+                      onChange={(e) => updateTextInput(e.target.value)}
                       rows={12}
                       className="resize-none"
                     />
