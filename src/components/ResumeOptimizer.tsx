@@ -64,6 +64,39 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const { usage, checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
   const { toast } = useToast();
+  // Function to test basic connectivity
+  const testFunctionConnectivity = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('parse-resume-sections', {
+        body: { test: true }
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  };
+
+  // Retry function with exponential backoff
+  const retryWithBackoff = async (fn: () => Promise<any>, maxRetries = 3, baseDelay = 1000) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (error: any) {
+        const isNetworkError = error.message?.includes('Failed to send a request') || 
+                             error.message?.includes('FunctionsFetchError') ||
+                             error.message?.includes('network');
+        
+        if (attempt === maxRetries || !isNetworkError) {
+          throw error;
+        }
+        
+        const delay = baseDelay * Math.pow(2, attempt - 1);
+        console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
+
   const handleAnalyzeATS = async () => {
     if (!selectedResumeId || !selectedJobDescId) {
       toast({
@@ -94,34 +127,50 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
     try {
       setIsLoadingATS(true);
       setShowATSModal(true);
-      console.log('Calculating original ATS score...');
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('calculate-original-ats-score', {
-        body: {
-          resumeId: selectedResumeId,
-          jobDescriptionId: selectedJobDescId
-        }
-      });
-      if (error) throw error;
-      if (data.error) {
-        throw new Error(data.error);
+      
+      // Test connectivity first
+      console.log('Testing function connectivity...');
+      const isConnected = await testFunctionConnectivity();
+      if (!isConnected) {
+        throw new Error('Unable to connect to analysis service. Please check your connection and try again.');
       }
-      setOriginalATSScore(data.ats_score);
-      setOriginalATSFeedback(data.ats_feedback);
+      
+      console.log('Calculating original ATS score...');
+      
+      const result = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('calculate-original-ats-score', {
+          body: {
+            resumeId: selectedResumeId,
+            jobDescriptionId: selectedJobDescId
+          }
+        });
+        
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      });
+
+      setOriginalATSScore(result.ats_score);
+      setOriginalATSFeedback(result.ats_feedback);
       
       // Parse resume data for user additions form
-      if (data.parsed_resume_data) {
-        setParsedResumeData(data.parsed_resume_data);
+      if (result.parsed_resume_data) {
+        setParsedResumeData(result.parsed_resume_data);
       }
       
-      console.log('Original ATS score calculated:', data.ats_score);
-    } catch (error) {
+      console.log('Original ATS score calculated:', result.ats_score);
+    } catch (error: any) {
       console.error('ATS scoring error:', error);
+      
+      const isNetworkError = error.message?.includes('Failed to send a request') || 
+                           error.message?.includes('FunctionsFetchError') ||
+                           error.message?.includes('network');
+      
       toast({
         title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze resume. Please try again.",
+        description: isNetworkError 
+          ? "Connection error. Please check your internet connection and try again."
+          : error.message || "Failed to analyze resume. Please try again.",
         variant: "destructive"
       });
       setShowATSModal(false);
@@ -162,18 +211,19 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
         }
       }
       
-      const { data, error } = await supabase.functions.invoke('optimize-resume', {
-        body: {
-          resumeId: selectedResumeId,
-          jobDescriptionId: selectedJobDescId,
-          userAdditions: userAdditions || []
-        }
-      });
+      const result = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.functions.invoke('optimize-resume', {
+          body: {
+            resumeId: selectedResumeId,
+            jobDescriptionId: selectedJobDescId,
+            userAdditions: userAdditions || []
+          }
+        });
 
-      if (error) throw error;
-      if (data.error) {
-        throw new Error(data.error);
-      }
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      });
 
       // Increment usage for free users
       if (!isPremium) {
@@ -196,15 +246,22 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
       onOptimizationComplete();
 
       // Only navigate to editor if navigateToEditor is true
-      if (navigateToEditor && data.optimizedResume?.id) {
-        console.log('Navigating to resume editor with ID:', data.optimizedResume.id);
-        navigate(`/resume-editor/${data.optimizedResume.id}`);
+      if (navigateToEditor && result.optimizedResume?.id) {
+        console.log('Navigating to resume editor with ID:', result.optimizedResume.id);
+        navigate(`/resume-editor/${result.optimizedResume.id}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Optimization error:', error);
+      
+      const isNetworkError = error.message?.includes('Failed to send a request') || 
+                           error.message?.includes('FunctionsFetchError') ||
+                           error.message?.includes('network');
+      
       toast({
         title: "Optimization Failed",
-        description: error instanceof Error ? error.message : "Failed to optimize resume. Please try again.",
+        description: isNetworkError 
+          ? "Connection error during optimization. Please check your internet connection and try again."
+          : error.message || "Failed to optimize resume. Please try again.",
         variant: "destructive"
       });
     } finally {
