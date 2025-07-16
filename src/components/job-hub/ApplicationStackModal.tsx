@@ -161,6 +161,12 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                     <div>
                       <h4 className="font-medium">{coverLetter.title}</h4>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        AI Generated
+                      </Badge>
+                    </div>
                     <div className="text-sm text-gray-600 flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
                       Created on {formatDate(coverLetter.created_at)}
