@@ -49,10 +49,14 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
   const [mailchimpLoading, setMailchimpLoading] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
   const [lastRun, setLastRun] = useState<any>(null);
+  const [recentRuns, setRecentRuns] = useState<any[]>([]);
+  const [totalRecommendations, setTotalRecommendations] = useState<number>(0);
 
   useEffect(() => {
     if (isAdmin) {
       loadStatistics();
+      loadRecentRuns();
+      loadTotalRecommendations();
     }
   }, [isAdmin]);
 
@@ -64,6 +68,45 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
       setStatistics(data as unknown as JobStatistics);
     } catch (error) {
       console.error('Error loading statistics:', error);
+    }
+  };
+
+  const loadRecentRuns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('daily_recommendation_runs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      setRecentRuns(data || []);
+      
+      // Set the most recent completed run as lastRun for CSV/Mailchimp
+      const lastCompletedRun = data?.find(run => run.status === 'completed');
+      if (lastCompletedRun) {
+        setLastRun({
+          runId: lastCompletedRun.id,
+          usersProcessed: lastCompletedRun.total_users_processed,
+          recommendationsGenerated: lastCompletedRun.total_recommendations_generated,
+          message: lastCompletedRun.notes
+        });
+      }
+    } catch (error) {
+      console.error('Error loading recent runs:', error);
+    }
+  };
+
+  const loadTotalRecommendations = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('user_job_recommendations')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      setTotalRecommendations(count || 0);
+    } catch (error) {
+      console.error('Error loading total recommendations:', error);
     }
   };
 
@@ -230,8 +273,10 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
         description: `Generated ${data.recommendationsGenerated} recommendations for ${data.usersProcessed} users`,
       });
 
-      // Refresh statistics
+      // Refresh statistics and recent runs
       loadStatistics();
+      loadRecentRuns();
+      loadTotalRecommendations();
     } catch (error: any) {
       console.error("Recommendations failed:", error);
       toast({
@@ -513,38 +558,101 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
               Generate personalized job recommendations for users based on their preferences and match them with today's quality job listings.
             </p>
             
-            <Button 
-              onClick={generateDailyRecommendations}
-              disabled={recommendationsLoading}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {recommendationsLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Recommendations...
-                </>
-              ) : (
-                <>
-                  <Users className="mr-2 h-4 w-4" />
-                  Generate Daily Job Recommendations
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3 mb-4">
+              <Button 
+                onClick={generateDailyRecommendations}
+                disabled={recommendationsLoading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {recommendationsLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Recommendations...
+                  </>
+                ) : (
+                  <>
+                    <Users className="mr-2 h-4 w-4" />
+                    Generate Daily Job Recommendations
+                  </>
+                )}
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  loadRecentRuns();
+                  loadTotalRecommendations();
+                }}
+                disabled={recommendationsLoading}
+                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                Refresh Status
+              </Button>
+            </div>
+
+            {/* System Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="p-3 bg-white rounded-lg border">
+                <div className="text-sm text-blue-600">Total Recommendations in System</div>
+                <div className="text-2xl font-bold text-blue-800">{totalRecommendations}</div>
+              </div>
+              <div className="p-3 bg-white rounded-lg border">
+                <div className="text-sm text-blue-600">CSV Export Status</div>
+                <div className="text-sm font-semibold text-blue-800">
+                  {lastRun ? 'Available' : 'No recent run available'}
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Runs */}
+            {recentRuns.length > 0 && (
+              <div className="mt-4 p-4 bg-white rounded-lg border">
+                <h5 className="font-semibold text-blue-800 mb-3">Recent Recommendation Runs</h5>
+                <div className="space-y-2">
+                  {recentRuns.map((run, index) => (
+                    <div key={run.id} className="flex items-center justify-between text-sm p-2 border rounded">
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          variant={run.status === 'completed' ? 'default' : run.status === 'failed' ? 'destructive' : 'secondary'}
+                        >
+                          {run.status}
+                        </Badge>
+                        <span className="text-blue-600">
+                          {new Date(run.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        {run.status === 'completed' && (
+                          <div className="text-blue-800">
+                            {run.total_recommendations_generated} recommendations, {run.total_users_processed} users
+                          </div>
+                        )}
+                        {run.status === 'failed' && run.notes && (
+                          <div className="text-red-600 text-xs max-w-xs truncate">
+                            {run.notes}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {lastRun && (
-              <div className="mt-4 p-4 bg-white rounded-lg border">
-                <h5 className="font-semibold text-blue-800 mb-2">Last Run Results</h5>
+              <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <h5 className="font-semibold text-green-800 mb-2">Most Recent Successful Run</h5>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-blue-600">Users Processed:</span>
+                    <span className="text-green-600">Users Processed:</span>
                     <span className="ml-2 font-semibold">{lastRun.usersProcessed}</span>
                   </div>
                   <div>
-                    <span className="text-blue-600">Recommendations:</span>
+                    <span className="text-green-600">Recommendations:</span>
                     <span className="ml-2 font-semibold">{lastRun.recommendationsGenerated}</span>
                   </div>
                 </div>
-                <p className="text-xs text-blue-600 mt-2">{lastRun.message}</p>
+                <p className="text-xs text-green-600 mt-2">{lastRun.message}</p>
               </div>
             )}
           </div>
@@ -581,6 +689,7 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
                 disabled={csvLoading || !lastRun}
                 variant="outline"
                 className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-100"
+                title={!lastRun ? "No successful recommendation run found - generate recommendations first" : "Export latest recommendations as CSV"}
               >
                 {csvLoading ? (
                   <>
@@ -590,7 +699,7 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Export Recommendations CSV
+                    {lastRun ? 'Export Recommendations CSV' : 'CSV Export (No Data)'}
                   </>
                 )}
               </Button>

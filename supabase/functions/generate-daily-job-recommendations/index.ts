@@ -104,7 +104,21 @@ const handler = async (req: Request): Promise<Response> => {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-    const { data: eligibleUsers, error: usersError } = await supabase
+    // First get users with recent recommendations
+    const { data: recentUsers, error: recentUsersError } = await supabase
+      .from('user_job_recommendations')
+      .select('user_id')
+      .gte('recommended_at', threeDaysAgo.toISOString());
+
+    if (recentUsersError) {
+      console.error('[JOB-RECOMMENDATIONS] Error fetching recent users:', recentUsersError);
+      throw recentUsersError;
+    }
+
+    const recentUserIds = recentUsers?.map(u => u.user_id) || [];
+
+    // Get eligible users (excluding those with recent recommendations)
+    let usersQuery = supabase
       .from('profiles')
       .select(`
         id,
@@ -117,12 +131,14 @@ const handler = async (req: Request): Promise<Response> => {
         work_setting_preference
       `)
       .not('desired_job_title', 'is', null)
-      .not('experience_level', 'is', null)
-      .not('id', 'in', `(
-        SELECT user_id 
-        FROM user_job_recommendations 
-        WHERE recommended_at > '${threeDaysAgo.toISOString()}'
-      )`);
+      .not('experience_level', 'is', null);
+
+    // Exclude users with recent recommendations if any exist
+    if (recentUserIds.length > 0) {
+      usersQuery = usersQuery.not('id', 'in', `(${recentUserIds.map(id => `'${id}'`).join(',')})`);
+    }
+
+    const { data: eligibleUsers, error: usersError } = await usersQuery;
 
     if (usersError) {
       console.error('[JOB-RECOMMENDATIONS] Error fetching users:', usersError);
@@ -268,6 +284,21 @@ const handler = async (req: Request): Promise<Response> => {
 
   } catch (error: any) {
     console.error('[JOB-RECOMMENDATIONS] Error:', error);
+    
+    // Try to update run status to failed
+    try {
+      if (run?.id) {
+        await supabase
+          .from('daily_recommendation_runs')
+          .update({
+            status: 'failed',
+            notes: `Error: ${error.message}`
+          })
+          .eq('id', run.id);
+      }
+    } catch (updateError) {
+      console.error('[JOB-RECOMMENDATIONS] Error updating run status:', updateError);
+    }
     
     return new Response(JSON.stringify({ 
       error: error.message,
