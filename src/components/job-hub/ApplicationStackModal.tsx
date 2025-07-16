@@ -150,8 +150,8 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                   Cover Letter
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {coverLetter && (
+               <CardContent className="space-y-4">
+                {coverLetter ? (
                   <>
                     <div>
                       <h4 className="font-medium">{coverLetter.title}</h4>
@@ -178,6 +178,20 @@ export const ApplicationStackModal: React.FC<ApplicationStackModalProps> = ({
                       </Button>
                     </div>
                   </>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm text-muted-foreground">
+                      Cover letter not found or failed to generate
+                    </p>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="mt-2"
+                      onClick={() => navigate('/cover-letters')}
+                    >
+                      Create Cover Letter
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

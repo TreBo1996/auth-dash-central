@@ -290,8 +290,21 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
       setCoverLetterText(data.generatedText.trim());
       setCoverLetterTitle(data.title || `Cover Letter for ${job.title} at ${job.company}`);
 
-      // Save the cover letter
-      await saveCoverLetter(data.generatedText.trim(), data.title || `Cover Letter for ${job.title} at ${job.company}`);
+      // Save the cover letter with the current optimizedResumeId
+      const savedCoverLetterId = await saveCoverLetter(
+        data.generatedText.trim(), 
+        data.title || `Cover Letter for ${job.title} at ${job.company}`,
+        optimizedResumeId
+      );
+
+      if (!savedCoverLetterId) {
+        throw new Error('Failed to save cover letter to database');
+      }
+
+      // Increment usage for free users
+      if (!isPremium) {
+        await incrementUsage('cover_letters');
+      }
 
       setCurrentStep('complete');
 
@@ -309,24 +322,61 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
     }
   };
 
-  const saveCoverLetter = async (text: string, title: string) => {
-    if (!user) return;
+  const saveCoverLetter = async (text: string, title: string, resumeId?: string): Promise<string | null> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
-    const { error } = await supabase
+    // Validate required fields
+    if (!text.trim()) {
+      throw new Error('Cover letter text cannot be empty');
+    }
+    
+    if (!title.trim()) {
+      throw new Error('Cover letter title cannot be empty');
+    }
+
+    if (!job.id) {
+      throw new Error('Job description ID is required');
+    }
+
+    if (!selectedResumeId) {
+      throw new Error('Original resume ID is required');
+    }
+
+    console.log('Saving cover letter with data:', {
+      user_id: user.id,
+      title: title.trim(),
+      job_description_id: job.id,
+      original_resume_id: selectedResumeId,
+      optimized_resume_id: resumeId || null,
+      text_length: text.length
+    });
+
+    const { data, error } = await supabase
       .from('cover_letters')
       .insert({
         user_id: user.id,
-        title: title,
-        generated_text: text,
+        title: title.trim(),
+        generated_text: text.trim(),
         job_description_id: job.id,
         original_resume_id: selectedResumeId,
-        optimized_resume_id: optimizedResumeId
-      });
+        optimized_resume_id: resumeId || null
+      })
+      .select('id')
+      .single();
 
     if (error) {
-      console.error('Error saving cover letter:', error);
-      // Don't throw here, just log the error
+      console.error('Error saving cover letter to database:', error);
+      throw new Error(`Failed to save cover letter: ${error.message}`);
     }
+
+    if (!data?.id) {
+      throw new Error('No cover letter ID returned from database');
+    }
+
+    console.log('Cover letter saved successfully with ID:', data.id);
+    return data.id;
   };
 
   const handleComplete = () => {
