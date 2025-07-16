@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,8 +57,11 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
 }) => {
   const [optimizationStep, setOptimizationStep] = useState(0);
   const [userAdditions, setUserAdditions] = useState<UserAddition[]>([]);
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   const handleOptimize = () => {
+    // Scroll to top to show the loading screen
+    modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     onOptimize(userAdditions);
   };
 
@@ -94,7 +97,7 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
     return Math.min(95, currentScore + 15);
   };
   return <Dialog open={isOpen} onOpenChange={isOptimizing ? undefined : onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" ref={modalContentRef}>
         {/* Optimization Loading Overlay */}
         {isOptimizing && (
           <div className="absolute inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
