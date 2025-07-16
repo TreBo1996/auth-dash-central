@@ -334,8 +334,12 @@ export const CreateApplicationStackModal: React.FC<CreateApplicationStackModalPr
       title: "Application Stack Created!",
       description: "Your optimized resume and cover letter are ready."
     });
-    onComplete();
-    onClose();
+    
+    // Add a small delay to ensure database operations are complete
+    setTimeout(() => {
+      onComplete();
+      onClose();
+    }, 500);
   };
 
   const getStepProgress = () => {

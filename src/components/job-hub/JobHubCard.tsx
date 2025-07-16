@@ -503,8 +503,8 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
         job={job}
         onComplete={() => {
           setShowCreateStackModal(false);
-          // Trigger a refresh of the job data in the parent component
-          // The parent should re-fetch the job data to show updated stack status
+          // Refresh the job data to show updated stack status
+          onRefresh();
         }}
       />
 

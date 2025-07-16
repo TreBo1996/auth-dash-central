@@ -44,7 +44,7 @@ export const CoverLetters: React.FC = () => {
           title, 
           created_at,
           generated_text,
-          job_descriptions!inner(
+          job_descriptions(
             title,
             company
           )
@@ -59,8 +59,8 @@ export const CoverLetters: React.FC = () => {
         title: item.title,
         created_at: item.created_at,
         generated_text: item.generated_text,
-        job_title: item.job_descriptions.title,
-        company: item.job_descriptions.company
+        job_title: item.job_descriptions?.title || 'Unknown Job',
+        company: item.job_descriptions?.company || 'Unknown Company'
       }));
       
       setCoverLetters(formattedData);
