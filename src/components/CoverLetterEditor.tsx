@@ -58,7 +58,7 @@ export const CoverLetterEditor: React.FC = () => {
           generated_text,
           created_at,
           updated_at,
-          job_descriptions(
+          job_descriptions!job_description_id(
             title,
             company
           )
