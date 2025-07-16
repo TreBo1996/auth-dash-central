@@ -306,7 +306,7 @@ const JobHub: React.FC = () => {
               Job Hub
             </h1>
             <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Track your applications, manage your job pipeline, and optimize your application stack
+              Track your applications, manage your job pipeline, and optimize your application stack.
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto sm:self-end">
