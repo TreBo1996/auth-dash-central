@@ -147,14 +147,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[JOB-RECOMMENDATIONS] Found ${eligibleUsers?.length || 0} eligible users`);
 
-    // Get today's quality jobs
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get recent quality jobs (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
 
     const { data: qualityJobs, error: jobsError } = await supabase
       .from('cached_jobs')
       .select('*')
-      .gte('scraped_at', today.toISOString())
+      .gte('scraped_at', thirtyDaysAgo.toISOString())
       .gte('quality_score', 6)
       .eq('is_expired', false)
       .is('archived_at', null)
