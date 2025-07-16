@@ -8,6 +8,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Utility function to clean OpenAI response
+function cleanOpenAIResponse(response: string): string {
+  // Remove markdown code blocks if present
+  let cleaned = response.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  return cleaned.trim();
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -266,21 +278,22 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
         'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert ATS optimization specialist focused on enhancing existing resume content for better compatibility while maintaining complete authenticity. Never fabricate experiences, achievements, or certifications. Always return valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 4000,
-        temperature: 0.3,
-      }),
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert ATS optimization specialist focused on enhancing existing resume content for better compatibility while maintaining complete authenticity. Never fabricate experiences, achievements, or certifications. Return only valid JSON, no markdown or additional text.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 4000,
+          temperature: 0.3,
+          response_format: { type: "json_object" },
+        }),
     });
 
     if (!openAIResponse.ok) {
@@ -298,7 +311,8 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
     // Validate that the response is valid JSON
     let structuredResume;
     try {
-      structuredResume = JSON.parse(generatedText);
+      const cleanedResponse = cleanOpenAIResponse(generatedText);
+      structuredResume = JSON.parse(cleanedResponse);
       console.log('Successfully parsed structured resume:', {
         name: structuredResume.name,
         experienceCount: structuredResume.experience?.length || 0,
@@ -307,6 +321,7 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
       });
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', generatedText);
       throw new Error('OpenAI response was not valid JSON');
     }
 
@@ -484,21 +499,22 @@ Return ONLY the JSON structure above, no additional text.`;
           'Authorization': `Bearer ${openAIApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text. Optimized resumes should score 80+ overall.'
-            },
-            {
-              role: 'user',
-              content: atsPrompt
-            }
-          ],
-          max_tokens: 2000,
-          temperature: 0.3,
-        }),
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert ATS analyzer. Return only valid JSON, no markdown or additional text. Optimized resumes should score 80+ overall.'
+              },
+              {
+                role: 'user',
+                content: atsPrompt
+              }
+            ],
+            max_tokens: 2000,
+            temperature: 0.3,
+            response_format: { type: "json_object" },
+          }),
       });
 
       if (atsResponse.ok) {
@@ -507,7 +523,8 @@ Return ONLY the JSON structure above, no additional text.`;
 
         let atsScoring;
         try {
-          atsScoring = JSON.parse(atsResult);
+          const cleanedAtsResult = cleanOpenAIResponse(atsResult);
+          atsScoring = JSON.parse(cleanedAtsResult);
           
           // Update the optimized resume with ATS scoring
           await supabase

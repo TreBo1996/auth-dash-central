@@ -8,6 +8,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Utility function to clean OpenAI response
+function cleanOpenAIResponse(response: string): string {
+  // Remove markdown code blocks if present
+  let cleaned = response.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  return cleaned.trim();
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -134,7 +146,7 @@ Return ONLY the JSON structure above, no additional text.`;
           messages: [
             {
               role: 'system',
-              content: 'You are a resume parser. Always return valid JSON only, never include markdown or additional text.'
+              content: 'You are a resume parser. Return only valid JSON, no markdown or additional text.'
             },
             {
               role: 'user',
@@ -143,6 +155,7 @@ Return ONLY the JSON structure above, no additional text.`;
           ],
           max_tokens: 1500,
           temperature: 0.1,
+          response_format: { type: "json_object" },
         }),
       });
 
@@ -150,7 +163,8 @@ Return ONLY the JSON structure above, no additional text.`;
         const parseData = await parseResponse.json();
         const parseResult = parseData.choices[0].message.content;
         try {
-          parsedResumeData = JSON.parse(parseResult);
+          const cleanedParseResult = cleanOpenAIResponse(parseResult);
+          parsedResumeData = JSON.parse(cleanedParseResult);
           console.log('Successfully parsed resume data:', parsedResumeData);
         } catch (parseError) {
           console.warn('Failed to parse resume structure:', parseError);
@@ -220,7 +234,7 @@ Return ONLY the JSON structure above, no additional text.`;
         messages: [
           {
             role: 'system',
-            content: 'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text.'
+            content: 'You are an expert ATS analyzer. Return only valid JSON, no markdown or additional text.'
           },
           {
             role: 'user',
@@ -229,6 +243,7 @@ Return ONLY the JSON structure above, no additional text.`;
         ],
         max_tokens: 2000,
         temperature: 0.3,
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -246,13 +261,15 @@ Return ONLY the JSON structure above, no additional text.`;
     // Validate that the response is valid JSON
     let atsScoring;
     try {
-      atsScoring = JSON.parse(scoringResult);
+      const cleanedScoringResult = cleanOpenAIResponse(scoringResult);
+      atsScoring = JSON.parse(cleanedScoringResult);
       console.log('Successfully parsed original ATS scoring:', {
         overall_score: atsScoring.overall_score,
         category_scores: atsScoring.category_scores
       });
     } catch (parseError) {
       console.error('Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', scoringResult);
       throw new Error('OpenAI response was not valid JSON');
     }
 
