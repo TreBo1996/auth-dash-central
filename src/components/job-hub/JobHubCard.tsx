@@ -331,7 +331,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 <Button 
                   size="sm" 
                   onClick={() => setShowStackModal(true)}
-                  className="h-8 w-[120px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                  className="h-8 w-[140px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Preview Stack
@@ -340,7 +340,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 <Button 
                   size="sm" 
                   onClick={() => setShowCreateStackModal(true)}
-                  className="h-8 w-[120px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  className="h-8 w-[140px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                 >
                   <Plus className="h-3 w-3 mr-1" />
                   Create Stack
