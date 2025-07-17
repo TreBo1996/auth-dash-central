@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
 import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
+import { useApplyTracking } from '@/hooks/useApplyTracking';
+import { ApplyCounter } from '@/components/ApplyCounter';
 import { 
   MapPin, 
   Building, 
@@ -65,6 +67,9 @@ const JobPosting: React.FC = () => {
   const [showNoResumeModal, setShowNoResumeModal] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [checkingResumes, setCheckingResumes] = useState(false);
+  const [applyCount, setApplyCount] = useState(0);
+  
+  const { trackApplyClick } = useApplyTracking();
 
   useEffect(() => {
     if (id) {
@@ -139,6 +144,7 @@ const JobPosting: React.FC = () => {
       console.log('✅ Job posting loaded successfully:', transformedData?.title);
       console.log('✅ Employer profile data:', transformedData?.employer_profile);
       setJobPosting(transformedData);
+      setApplyCount(transformedData.apply_count || 0);
     } catch (error) {
       console.error('Error loading job posting:', error);
       toast({
@@ -222,6 +228,13 @@ const JobPosting: React.FC = () => {
       hasApplied,
       showApplicationModal
     });
+
+    // Track apply click first (before any other logic)
+    if (id) {
+      await trackApplyClick('employer', id);
+      // Optimistically update the counter
+      setApplyCount(prev => prev + 1);
+    }
     
     if (!user) {
       console.log('❌ No user authenticated, cannot apply');
@@ -347,6 +360,9 @@ const JobPosting: React.FC = () => {
         </Button>
 
         <div className="space-y-6">
+          {/* Apply Counter */}
+          <ApplyCounter count={applyCount} className="mb-6" />
+
           {/* Header Card */}
           <Card>
             <CardHeader>

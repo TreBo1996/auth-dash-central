@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toTitleCase } from '@/lib/utils';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
 import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
+import { useApplyTracking } from '@/hooks/useApplyTracking';
+import { ApplyCounter } from '@/components/ApplyCounter';
 
 import { Header } from '@/components/layout/Header';
 import { UnifiedJob } from '@/types/job';
@@ -71,6 +73,9 @@ const JobDetail: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [checkingResumes, setCheckingResumes] = useState(false);
+  const [applyCount, setApplyCount] = useState(0);
+  
+  const { trackApplyClick } = useApplyTracking();
 
   useEffect(() => {
     if (source && id) {
@@ -140,6 +145,7 @@ const JobDetail: React.FC = () => {
         };
 
         setJob(unifiedJob);
+        setApplyCount(data.apply_count || 0);
       } else if (source === 'database') {
         // Load database job from cached_jobs table  
         const { data, error } = await supabase
@@ -177,6 +183,7 @@ const JobDetail: React.FC = () => {
         };
 
         setJob(unifiedJob);
+        setApplyCount(data.apply_count || 0);
       }
     } catch (error) {
       console.error('Error loading job:', error);
@@ -250,6 +257,13 @@ const JobDetail: React.FC = () => {
   };
 
   const handleApplyClick = async () => {
+    // Track apply click first (before any other logic)
+    if (source && id) {
+      await trackApplyClick(source as 'employer' | 'database', id);
+      // Optimistically update the counter
+      setApplyCount(prev => prev + 1);
+    }
+
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -449,6 +463,9 @@ const JobDetail: React.FC = () => {
             </Button>
 
             <div className="space-y-6">
+              {/* Apply Counter */}
+              <ApplyCounter count={applyCount} className="mb-6" />
+
               {/* Header Card */}
               <Card>
                 <CardHeader>

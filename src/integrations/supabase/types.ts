@@ -17,6 +17,7 @@ export type Database = {
       cached_jobs: {
         Row: {
           apify_job_id: string | null
+          apply_count: number
           apply_url: string | null
           archived_at: string | null
           company: string
@@ -52,6 +53,7 @@ export type Database = {
         }
         Insert: {
           apify_job_id?: string | null
+          apply_count?: number
           apply_url?: string | null
           archived_at?: string | null
           company: string
@@ -87,6 +89,7 @@ export type Database = {
         }
         Update: {
           apify_job_id?: string | null
+          apply_count?: number
           apply_url?: string | null
           archived_at?: string | null
           company?: string
@@ -478,6 +481,33 @@ export type Database = {
           },
         ]
       }
+      job_apply_tracking: {
+        Row: {
+          clicked_at: string
+          created_at: string
+          id: string
+          job_id: string
+          job_source: string
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          created_at?: string
+          id?: string
+          job_id: string
+          job_source: string
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          job_source?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       job_descriptions: {
         Row: {
           application_status:
@@ -547,6 +577,7 @@ export type Database = {
       job_postings: {
         Row: {
           application_count: number | null
+          apply_count: number
           benefits: string[] | null
           created_at: string
           description: string
@@ -572,6 +603,7 @@ export type Database = {
         }
         Insert: {
           application_count?: number | null
+          apply_count?: number
           benefits?: string[] | null
           created_at?: string
           description: string
@@ -597,6 +629,7 @@ export type Database = {
         }
         Update: {
           application_count?: number | null
+          apply_count?: number
           benefits?: string[] | null
           created_at?: string
           description?: string
