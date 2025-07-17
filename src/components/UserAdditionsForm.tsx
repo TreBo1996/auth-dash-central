@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Plus, X } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus, X, AlertCircle } from 'lucide-react';
 export interface UserAddition {
   id: string;
   addition_type: 'skill' | 'experience' | 'achievement';
@@ -64,7 +65,19 @@ export const UserAdditionsForm: React.FC<UserAdditionsFormProps> = ({
   };
   return <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Add Missing Experiences or Skills (Optional)</CardTitle>
+        <CardTitle className="text-lg flex items-center gap-1">
+          Add Missing Experiences or Skills (Optional)
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>AI will try its best to incorporate these additions into your current experiences by modifying existing content. It will only work with what's available and won't create new experiences from scratch.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardTitle>
         <p className="text-sm text-muted-foreground">
           Based on the ATS analysis, you can add any relevant experiences or skills you have that might improve your score.
         </p>

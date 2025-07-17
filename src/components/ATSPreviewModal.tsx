@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sparkles, Loader2, TrendingUp, AlertCircle, Target, Zap, FileText, CheckCircle } from 'lucide-react';
 import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserAdditionsForm, UserAddition } from './UserAdditionsForm';
 import { supabase } from '@/integrations/supabase/client';
 interface ATSFeedback {
@@ -329,7 +330,19 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
                         </div>
                       </div>}
                     {atsFeedback.keyword_analysis.missing_keywords.length > 0 && <div>
-                        <h4 className="text-sm font-medium text-red-600 mb-2">Missing Keywords (AI Will Add)</h4>
+                        <h4 className="text-sm font-medium text-red-600 mb-2 flex items-center gap-1">
+                          Missing Keywords (AI Will Try to Add)
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <AlertCircle className="h-3 w-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>AI will try its best to incorporate these keywords into your current experiences by modifying existing content. It will only work with what's available and won't create new experiences from scratch.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </h4>
                         <div className="flex flex-wrap gap-1">
                           {atsFeedback.keyword_analysis.missing_keywords.slice(0, 10).map((keyword, index) => <Badge key={index} variant="outline" className="text-xs border-red-200">
                               {keyword}
