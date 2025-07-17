@@ -384,3 +384,16 @@
   backdrop-filter: blur(8px);
   background: rgba(255, 255, 255, 0.95);
 }
+
+/* Auto-scrolling animation for template descriptions */
+.animate-scroll {
+  animation: scroll-text 8s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes scroll-text {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(0); }
+  75% { transform: translateX(-50%); }
+  100% { transform: translateX(-50%); }
+}
