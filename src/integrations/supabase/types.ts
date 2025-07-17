@@ -430,6 +430,30 @@ export type Database = {
           },
         ]
       }
+      job_application_eeo_responses: {
+        Row: {
+          created_at: string
+          eeo_responses: Json
+          id: string
+          job_application_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          eeo_responses?: Json
+          id?: string
+          job_application_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          eeo_responses?: Json
+          id?: string
+          job_application_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       job_applications: {
         Row: {
           applicant_id: string

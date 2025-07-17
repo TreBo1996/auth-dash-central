@@ -26,6 +26,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { InlineFileUpload } from './InlineFileUpload';
 import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload, Save, Download, Edit, Target, Palette, ExternalLink } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { EEOFormsSection, EEOResponses } from './EEOFormsSection';
 
 interface Resume {
   id: string;
@@ -68,7 +69,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const { toast } = useToast();
   
   // Comprehensive workflow step management
-  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'final-submit' | 'external-apply' | 'success'>('choose');
+  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'eeo-forms' | 'final-submit' | 'external-apply' | 'success'>('choose');
   const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
   
   // Resume management
@@ -101,6 +102,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   
   // Application submission
   const [submitting, setSubmitting] = useState(false);
+  
+  // EEO forms
+  const [eeoResponses, setEeoResponses] = useState<EEOResponses>({});
   
   const isMobile = useIsMobile();
   const companyName = jobPosting.employer_profile?.company_name || jobPosting.company || 'Company Name Not Available';
@@ -544,7 +548,12 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
 
   const handleCoverLetterGenerated = (generatedText: string) => {
     setCoverLetter(generatedText);
-    setStep('final-submit');
+    // Check if this is an employer job that needs EEO forms
+    if (jobPosting.data_source === 'employer') {
+      setStep('eeo-forms');
+    } else {
+      setStep('final-submit');
+    }
   };
 
   const handleProceedWithExistingResume = async () => {
@@ -646,6 +655,38 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         throw applicationError;
       }
 
+      // Get the application ID for storing EEO responses
+      const { data: applicationData, error: applicationFetchError } = await supabase
+        .from('job_applications')
+        .select('id')
+        .eq('job_posting_id', jobPostingId)
+        .eq('applicant_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (applicationFetchError) {
+        console.error('❌ Error fetching application ID:', applicationFetchError);
+        throw applicationFetchError;
+      }
+
+      // Store EEO responses if this is an employer job and user provided responses
+      if (jobPosting.data_source === 'employer' && Object.keys(eeoResponses).length > 0) {
+        const { error: eeoError } = await supabase
+          .from('job_application_eeo_responses')
+          .insert({
+            job_application_id: applicationData.id,
+            eeo_responses: eeoResponses as any
+          });
+
+        if (eeoError) {
+          console.error('❌ Error storing EEO responses:', eeoError);
+          // Don't throw here - the application was successful, EEO is supplementary
+        } else {
+          console.log('✅ EEO responses stored successfully');
+        }
+      }
+
       console.log('✅ Internal job application submitted successfully');
       setStep('success');
       
@@ -744,6 +785,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     setOptimizedResumeContent('');
     setJobDescriptionId('');
     setOriginalIntent(null);
+    setEeoResponses({});
   };
 
   const availableResumes = resumes.filter(resume => resume.parsed_text);
@@ -754,26 +796,29 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   }] : [];
 
   const getProgressPercentage = () => {
-    // Adjust progress based on workflow type
+    // Adjust progress based on workflow type and whether EEO forms are needed
+    const needsEEO = jobPosting.data_source === 'employer';
+    
     if (originalIntent === 'existing') {
-      // Quick apply workflow: choose -> ats-score -> cover-letter -> final-submit
-      const totalSteps = 5;
+      // Quick apply workflow: choose -> ats-score -> cover-letter -> (eeo-forms) -> final-submit
+      const totalSteps = needsEEO ? 6 : 5;
       let currentStep = 1;
       
       switch (step) {
         case 'choose': currentStep = 1; break;
         case 'ats-score': currentStep = 2; break;
         case 'cover-letter': currentStep = 3; break;
+        case 'eeo-forms': currentStep = 4; break;
         case 'final-submit': 
-        case 'external-apply': currentStep = 4; break;
-        case 'success': currentStep = 5; break;
+        case 'external-apply': currentStep = needsEEO ? 5 : 4; break;
+        case 'success': currentStep = needsEEO ? 6 : 5; break;
         default: currentStep = 1;
       }
       
       return Math.round((currentStep / totalSteps) * 100);
     } else {
       // Full optimization workflow
-      const totalSteps = 9;
+      const totalSteps = needsEEO ? 10 : 9;
       let currentStep = 1;
       
       switch (step) {
@@ -784,9 +829,10 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         case 'edit-resume': currentStep = 5; break;
         case 'templates': currentStep = 6; break;
         case 'cover-letter': currentStep = 7; break;
+        case 'eeo-forms': currentStep = 8; break;
         case 'final-submit': 
-        case 'external-apply': currentStep = 8; break;
-        case 'success': currentStep = 9; break;
+        case 'external-apply': currentStep = needsEEO ? 9 : 8; break;
+        case 'success': currentStep = needsEEO ? 10 : 9; break;
         default: currentStep = 1;
       }
       
@@ -795,29 +841,35 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const getCurrentStepText = () => {
+    const needsEEO = jobPosting.data_source === 'employer';
+    
     if (originalIntent === 'existing') {
+      const totalSteps = needsEEO ? 6 : 5;
       switch (step) {
-        case 'choose': return 'Step 1 of 5';
-        case 'ats-score': return 'Step 2 of 5';
-        case 'cover-letter': return 'Step 3 of 5';
+        case 'choose': return `Step 1 of ${totalSteps}`;
+        case 'ats-score': return `Step 2 of ${totalSteps}`;
+        case 'cover-letter': return `Step 3 of ${totalSteps}`;
+        case 'eeo-forms': return `Step 4 of ${totalSteps}`;
         case 'final-submit': 
-        case 'external-apply': return 'Step 4 of 5';
-        case 'success': return 'Step 5 of 5';
-        default: return 'Step 1 of 5';
+        case 'external-apply': return `Step ${needsEEO ? 5 : 4} of ${totalSteps}`;
+        case 'success': return `Step ${totalSteps} of ${totalSteps}`;
+        default: return `Step 1 of ${totalSteps}`;
       }
     } else {
+      const totalSteps = needsEEO ? 10 : 9;
       switch (step) {
-        case 'choose': return 'Step 1 of 9';
-        case 'upload': return 'Step 2 of 9';
-        case 'ats-score': return 'Step 3 of 9';
-        case 'optimize': return 'Step 4 of 9';
-        case 'edit-resume': return 'Step 5 of 9';
-        case 'templates': return 'Step 6 of 9';
-        case 'cover-letter': return 'Step 7 of 9';
+        case 'choose': return `Step 1 of ${totalSteps}`;
+        case 'upload': return `Step 2 of ${totalSteps}`;
+        case 'ats-score': return `Step 3 of ${totalSteps}`;
+        case 'optimize': return `Step 4 of ${totalSteps}`;
+        case 'edit-resume': return `Step 5 of ${totalSteps}`;
+        case 'templates': return `Step 6 of ${totalSteps}`;
+        case 'cover-letter': return `Step 7 of ${totalSteps}`;
+        case 'eeo-forms': return `Step 8 of ${totalSteps}`;
         case 'final-submit': 
-        case 'external-apply': return 'Step 8 of 9';
-        case 'success': return 'Step 9 of 9';
-        default: return 'Step 1 of 9';
+        case 'external-apply': return `Step ${needsEEO ? 9 : 8} of ${totalSteps}`;
+        case 'success': return `Step ${totalSteps} of ${totalSteps}`;
+        default: return `Step 1 of ${totalSteps}`;
       }
     }
   };
@@ -1212,7 +1264,14 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
               <div className="flex gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => setStep('final-submit')}
+                  onClick={() => {
+                    // Skip to EEO forms if employer job, otherwise final submit
+                    if (jobPosting.data_source === 'employer') {
+                      setStep('eeo-forms');
+                    } else {
+                      setStep('final-submit');
+                    }
+                  }}
                   className="flex-1"
                 >
                   Skip Cover Letter
@@ -1221,12 +1280,52 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             </div>
           )}
 
+          {/* EEO Forms Step - Only for Employer Jobs */}
+          {step === 'eeo-forms' && jobPosting.data_source === 'employer' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Equal Employment Opportunity</h3>
+                <Button variant="outline" onClick={() => setStep('cover-letter')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              <EEOFormsSection 
+                responses={eeoResponses}
+                onResponsesChange={setEeoResponses}
+              />
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1"
+                >
+                  Skip EEO Forms
+                </Button>
+                <Button 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  Continue to Submit
+                </Button>
+              </div>
+            </div>
+          )}
 
           {step === 'final-submit' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Finalize Application</h3>
-                <Button variant="outline" onClick={() => setStep('cover-letter')}>
+                <Button variant="outline" onClick={() => {
+                  // Route back to EEO forms if employer job, otherwise cover letter
+                  if (jobPosting.data_source === 'employer') {
+                    setStep('eeo-forms');
+                  } else {
+                    setStep('cover-letter');
+                  }
+                }}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
