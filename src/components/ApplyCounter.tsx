@@ -17,7 +17,7 @@ export const ApplyCounter = ({ count, className }: ApplyCounterProps) => {
         </div>
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground">
-            ✨ {count.toLocaleString()} Job Seekers Applied for This Position
+            ✨ {count.toLocaleString()} Job Seekers Optimized Resumes for This Position
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Stand out by optimizing your resume with AI for better ATS compatibility
