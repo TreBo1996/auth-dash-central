@@ -7,18 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Utility function to clean OpenAI response
-function cleanOpenAIResponse(response: string): string {
-  // Remove markdown code blocks if present
-  let cleaned = response.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-  return cleaned.trim();
-}
-
 serve(async (req) => {
   console.log('get-resume-suggestions function called:', req.method);
   
@@ -114,10 +102,8 @@ Provide 3-5 specific, actionable bullet points that this person could add to enh
 3. Skills and technologies mentioned in the job posting
 4. Action verbs and impact statements
 
-Return ONLY valid JSON in this format:
-{
-  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
-}`;
+Return ONLY a JSON array of strings, no additional text:
+["suggestion 1", "suggestion 2", "suggestion 3"]`;
 
     console.log('Calling OpenAI API...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -131,7 +117,7 @@ Return ONLY valid JSON in this format:
         messages: [
           {
             role: 'system',
-            content: 'You are a resume optimization expert. Return only valid JSON arrays of suggestions, no markdown or additional text.'
+            content: 'You are a resume optimization expert. Always return valid JSON arrays of suggestions.'
           },
           {
             role: 'user',
@@ -139,8 +125,7 @@ Return ONLY valid JSON in this format:
           }
         ],
         max_tokens: 800,
-        temperature: 0.3,
-        response_format: { type: "json_object" },
+        temperature: 0.7,
       }),
     });
 
@@ -157,10 +142,7 @@ Return ONLY valid JSON in this format:
 
     let suggestions;
     try {
-      const cleanedSuggestionsText = cleanOpenAIResponse(suggestionsText);
-      const parsedSuggestions = JSON.parse(cleanedSuggestionsText);
-      // Handle both array format and object format with array property
-      suggestions = Array.isArray(parsedSuggestions) ? parsedSuggestions : parsedSuggestions.suggestions || [];
+      suggestions = JSON.parse(suggestionsText);
       console.log('Suggestions parsed successfully:', suggestions.length, 'suggestions');
     } catch (parseError) {
       console.error('Failed to parse suggestions:', parseError);

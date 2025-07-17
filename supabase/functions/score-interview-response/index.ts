@@ -9,18 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Utility function to clean OpenAI response
-function cleanOpenAIResponse(response: string): string {
-  // Remove markdown code blocks if present
-  let cleaned = response.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-  return cleaned.trim();
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -69,11 +57,10 @@ Keep feedback constructive, specific, and actionable. Focus on what they did wel
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are an expert interview coach providing detailed scoring and feedback. Return only valid JSON, no markdown or additional text.' },
+          { role: 'system', content: 'You are an expert interview coach providing detailed scoring and feedback.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.3,
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -87,14 +74,11 @@ Keep feedback constructive, specific, and actionable. Focus on what they did wel
 
     // Parse the JSON response
     try {
-      const cleanedScoringText = cleanOpenAIResponse(scoringText);
-      const scoring = JSON.parse(cleanedScoringText);
+      const scoring = JSON.parse(scoringText);
       return new Response(JSON.stringify(scoring), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', parseError);
-      console.error('Raw response:', scoringText);
       // Fallback if JSON parsing fails
       return new Response(JSON.stringify({
         overall_score: 5,

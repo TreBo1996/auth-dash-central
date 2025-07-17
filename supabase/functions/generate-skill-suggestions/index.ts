@@ -7,18 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Utility function to clean OpenAI response
-function cleanOpenAIResponse(response: string): string {
-  // Remove markdown code blocks if present
-  let cleaned = response.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-  return cleaned.trim();
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -98,12 +86,11 @@ Format your response as JSON with this structure:
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are an expert resume writer specializing in identifying relevant skills for job positions. Return only valid JSON, no markdown or additional text.' },
+          { role: 'system', content: 'You are an expert resume writer specializing in identifying relevant skills for job positions. Always respond with valid JSON.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.3,
+        temperature: 0.7,
         max_tokens: 600,
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -116,8 +103,7 @@ Format your response as JSON with this structure:
     const generatedText = data.choices[0].message.content;
     
     try {
-      const cleanedResponse = cleanOpenAIResponse(generatedText);
-      const skillSuggestions = JSON.parse(cleanedResponse);
+      const skillSuggestions = JSON.parse(generatedText);
       console.log('Generated skill suggestions:', skillSuggestions);
 
       return new Response(JSON.stringify(skillSuggestions), {

@@ -7,18 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Utility function to clean OpenAI response
-function cleanOpenAIResponse(response: string): string {
-  // Remove markdown code blocks if present
-  let cleaned = response.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-  return cleaned.trim();
-}
-
 interface ParseResumeRequest {
   resume_text: string;
 }
@@ -157,7 +145,6 @@ Return ONLY valid JSON in this exact format:
         ],
         temperature: 0.1,
         max_tokens: 2000,
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -173,11 +160,9 @@ Return ONLY valid JSON in this exact format:
     // Parse the JSON response
     let structuredResume: ParsedResumeResponse;
     try {
-      const cleanedContent = cleanOpenAIResponse(parsedContent);
-      structuredResume = JSON.parse(cleanedContent);
+      structuredResume = JSON.parse(parsedContent);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      console.error('Raw response:', parsedContent);
       throw new Error('AI response was not valid JSON');
     }
 

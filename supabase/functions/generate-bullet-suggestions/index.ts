@@ -8,18 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Utility function to clean OpenAI response
-function cleanOpenAIResponse(response: string): string {
-  // Remove markdown code blocks if present
-  let cleaned = response.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-  }
-  return cleaned.trim();
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -85,10 +73,10 @@ Example format:
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are an expert resume writer specializing in creating compelling, ATS-optimized bullet points. Follow the exact format requested.' },
+          { role: 'system', content: 'You are an expert resume writer specializing in creating compelling, ATS-optimized bullet points.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.3,
+        temperature: 0.7,
         max_tokens: 800,
       }),
     });
