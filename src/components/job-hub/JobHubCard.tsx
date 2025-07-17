@@ -125,11 +125,6 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                 <h3 className="font-semibold text-base text-gray-900 leading-tight flex-1 pr-2">
                   {job.title}
                 </h3>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <Badge variant={job.source === 'upload' ? 'secondary' : 'default'} className="text-xs px-2 py-0.5">
-                    {job.source === 'upload' ? 'Ext' : 'RezLit'}
-                  </Badge>
-                </div>
               </div>
               
               <div className="space-y-1">
@@ -152,16 +147,12 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                       <span className="truncate max-w-[100px]">{job.salary_range}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-1 ml-auto">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(job.created_at)}
-                  </div>
                 </div>
               </div>
             </div>
 
             {/* Middle Row: Status and Stack Info */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex-1">
                 <JobStatusSelector
                   status={job.application_status || 'pending'}
@@ -178,6 +169,13 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                     {latestResume.ats_score}%
                   </Badge>
                 )}
+              </div>
+              <Badge variant={job.source === 'upload' ? 'secondary' : 'default'} className="text-xs px-2 py-0.5">
+                {job.source === 'upload' ? 'Ext' : 'RezLit'}
+              </Badge>
+              <div className="text-xs text-gray-500 flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatDate(job.created_at)}
               </div>
             </div>
 
@@ -286,15 +284,6 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Badge variant={job.source === 'upload' ? 'secondary' : 'default'} className="text-xs">
-                    {job.source === 'upload' ? 'External' : 'RezLit Job'}
-                  </Badge>
-                  <div className="text-xs text-gray-500 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(job.created_at)}
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -322,6 +311,15 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
                     <div className="w-8 h-4" /> // Placeholder to maintain consistent spacing
                   )}
                 </div>
+              </div>
+
+              <Badge variant={job.source === 'upload' ? 'secondary' : 'default'} className="text-xs">
+                {job.source === 'upload' ? 'External' : 'RezLit Job'}
+              </Badge>
+              
+              <div className="text-xs text-gray-500 flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatDate(job.created_at)}
               </div>
             </div>
 
