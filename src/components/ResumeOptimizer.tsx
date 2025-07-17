@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Sparkles, Loader2, AlertTriangle, Crown, Zap, Star, CheckCircle, TrendingUp, Target, Award, Users, Trophy, BarChart3, FileText, Brain, Lightbulb, ChevronDown, ChevronUp, Rocket, Shield, Upload, PlusCircle, HelpCircle, Info } from 'lucide-react';
+import { Sparkles, Loader2, AlertTriangle, Crown, Zap, Star, CheckCircle, TrendingUp, Target, Award, Users, Trophy, BarChart3, FileText, Brain, Lightbulb, ChevronDown, ChevronUp, Rocket, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
@@ -62,7 +62,6 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   const [originalATSFeedback, setOriginalATSFeedback] = useState<ATSFeedback | undefined>();
   const [isLoadingATS, setIsLoadingATS] = useState(false);
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
-  const [showHowTo, setShowHowTo] = useState(false);
   const { usage, checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
   const { toast } = useToast();
   const handleAnalyzeATS = async () => {
@@ -228,69 +227,6 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
   console.log('Selected resume ID:', selectedResumeId);
   console.log('Selected job desc ID:', selectedJobDescId);
   return <>
-      {/* How To Guide Section */}
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-purple-900">
-              <Info className="h-5 w-5" />
-              AI Resume Optimizer
-            </CardTitle>
-            <Collapsible open={showHowTo} onOpenChange={setShowHowTo}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-purple-700 hover:text-purple-900">
-                  <HelpCircle className="h-4 w-4 mr-2" />
-                  How It Works
-                  {showHowTo ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-4">
-                <div className="bg-white/50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-purple-100 text-purple-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">1</div>
-                    <div>
-                      <h4 className="font-medium text-purple-900">Upload Your Base Resume</h4>
-                      <p className="text-sm text-purple-700">Start by uploading your primary resume file (PDF, DOC, or DOCX)</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-purple-100 text-purple-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">2</div>
-                    <div>
-                      <h4 className="font-medium text-purple-900">Add Target Job Descriptions</h4>
-                      <p className="text-sm text-purple-700">Upload or paste job descriptions for positions you're targeting</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-purple-100 text-purple-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">3</div>
-                    <div>
-                      <h4 className="font-medium text-purple-900">Select & Analyze</h4>
-                      <p className="text-sm text-purple-700">Choose your resume and target job to get an ATS compatibility score</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-purple-100 text-purple-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">4</div>
-                    <div>
-                      <h4 className="font-medium text-purple-900">AI Optimization</h4>
-                      <p className="text-sm text-purple-700">Our AI will optimize keywords, skills, and formatting for maximum ATS compatibility</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="bg-purple-100 text-purple-700 rounded-full w-6 h-6 flex items-center justify-center text-sm font-semibold">5</div>
-                    <div>
-                      <h4 className="font-medium text-purple-900">Export & Apply</h4>
-                      <p className="text-sm text-purple-700">Download your optimized resume and start applying with confidence</p>
-                    </div>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-          <CardDescription className="text-purple-700">
-            Get your resume past ATS systems and into human hands
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
       {/* Benefits Overview - Always visible */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
         <CardHeader>
@@ -356,22 +292,9 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
           <CardContent className="py-12 text-center">
             <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500 mb-4">Upload a resume to get started with AI optimization</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild>
-                <Link to="/upload-resume">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Resume
-                </Link>
-              </Button>
-              {jobDescriptions.length === 0 && (
-                <Button variant="outline" asChild>
-                  <Link to="/upload-job">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Job Description
-                  </Link>
-                </Button>
-              )}
-            </div>
+            <Button asChild>
+              <Link to="/upload-resume">Upload Resume</Link>
+            </Button>
           </CardContent>
         </Card>
       ) : jobDescriptions.length === 0 ? (
@@ -380,43 +303,22 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
             <Sparkles className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500 mb-4">Add a job description to optimize your resume</p>
             <Button asChild>
-              <Link to="/upload-job">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Job Description
-              </Link>
+              <a href="/upload-job">Add Job Description</a>
             </Button>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                  <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Start Optimization
-                  </span>
-                </CardTitle>
-                <CardDescription>
-                  Select a resume and job description to see your current ATS score and create an optimized version
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/upload-resume">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload New Resume
-                  </Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/upload-job">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Job Description
-                  </Link>
-                </Button>
-              </div>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+              <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                AI Resume Optimizer
+              </span>
+            </CardTitle>
+            <CardDescription>
+              Select a resume and job description to see your current ATS score and create an optimized version
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
