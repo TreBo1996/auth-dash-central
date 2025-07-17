@@ -185,7 +185,7 @@ const Home = () => {
               </div>
             </AnimatedSection>
             
-            <AnimatedSection immediate={true} delay={600} stagger={true} staggerDelay={100}>
+            <AnimatedSection immediate={true} delay={600} stagger={true} staggerDelay={100} className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center animate-counter-up">
                   <div className="text-2xl md:text-3xl font-bold text-yellow-300">{stat.number}</div>
