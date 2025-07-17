@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchInitialResumeStructuredData, saveInitialResumeStructuredData, updateInitialResumeSection, convertStructuredDataToEditorFormat } from '@/utils/initialResumeStorage';
 import { getUserContactInfo } from '@/utils/contactInfoUtils';
 import { useAuth } from '@/contexts/AuthContext';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 interface Resume {
   id: string;
   user_id: string;
@@ -665,7 +666,8 @@ const InitialResumeEditor: React.FC = () => {
   return <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <AnimatedSection immediate={true} delay={0}>
+          <div className="flex justify-between items-center">
           <div>
             <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mb-2">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -682,10 +684,12 @@ const InitialResumeEditor: React.FC = () => {
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Save Changes
           </Button>
-        </div>
+          </div>
+        </AnimatedSection>
 
         {/* Resume Sections */}
-        <div className="space-y-6">
+        <AnimatedSection immediate={true} delay={100} stagger={true} staggerDelay={50}>
+          <div className="space-y-6">
           {/* Contact Information Section */}
           <ContactSection 
             contactInfo={parsedResume.contact} 
@@ -722,9 +726,10 @@ const InitialResumeEditor: React.FC = () => {
           {/* Certifications Section */}
           <CertificationsSection certifications={parsedResume.certifications} onChange={certifications => setParsedResume(prev => prev ? {
           ...prev,
-          certifications
-        } : null)} />
-        </div>
+           certifications
+         } : null)} />
+          </div>
+        </AnimatedSection>
 
         {/* Bottom Actions */}
         <div className="flex justify-between items-center pt-6 border-t">

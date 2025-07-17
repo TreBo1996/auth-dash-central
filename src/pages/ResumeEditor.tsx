@@ -367,7 +367,7 @@ const ResumeEditor: React.FC = () => {
   return <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
         {/* Mobile-Optimized Header */}
-        <AnimatedSection delay={0}>
+        <AnimatedSection immediate={true} delay={0}>
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div className="space-y-2">
@@ -397,7 +397,7 @@ const ResumeEditor: React.FC = () => {
         </AnimatedSection>
 
         {/* Mobile-Optimized ATS Banner */}
-        <AnimatedSection delay={100}>
+        <AnimatedSection immediate={true} delay={100}>
           {resumeId && <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6 shadow-sm">
               <div className="max-w-full">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
@@ -413,7 +413,7 @@ const ResumeEditor: React.FC = () => {
         </AnimatedSection>
 
         {/* Resume Sections */}
-        <AnimatedSection delay={200} stagger={true} staggerDelay={50}>
+        <AnimatedSection immediate={true} delay={200} stagger={true} staggerDelay={50}>
           <div className="space-y-4 sm:space-y-6">
           {/* Contact Information */}
           <ContactSection contactInfo={resumeData.contactInfo} onChange={contactInfo => setResumeData(prev => prev ? {

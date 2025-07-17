@@ -7,6 +7,7 @@ interface AnimatedSectionProps {
   className?: string;
   stagger?: boolean;
   staggerDelay?: number;
+  immediate?: boolean;
 }
 
 export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
@@ -16,6 +17,7 @@ export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
   className = '',
   stagger = false,
   staggerDelay = 50,
+  immediate = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -25,10 +27,26 @@ export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
     // Check if user prefers reduced motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     
-    if (prefersReducedMotion) {
-      setIsVisible(true);
-      setHasAnimated(true);
+    if (prefersReducedMotion || immediate) {
+      setTimeout(() => {
+        setIsVisible(true);
+        setHasAnimated(true);
+      }, delay);
       return;
+    }
+
+    // Check if element is initially in viewport
+    if (elementRef.current) {
+      const rect = elementRef.current.getBoundingClientRect();
+      const inViewport = rect.top < window.innerHeight && rect.bottom > 0;
+      
+      if (inViewport) {
+        setTimeout(() => {
+          setIsVisible(true);
+          setHasAnimated(true);
+        }, delay);
+        return;
+      }
     }
 
     const observer = new IntersectionObserver(
@@ -42,7 +60,7 @@ export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
       },
       {
         threshold: 0.1,
-        rootMargin: '50px 0px -50px 0px',
+        rootMargin: '100px 0px -50px 0px',
       }
     );
 
@@ -51,7 +69,7 @@ export const AnimatedSection: React.FC<AnimatedSectionProps> = ({
     }
 
     return () => observer.disconnect();
-  }, [delay, hasAnimated]);
+  }, [delay, hasAnimated, immediate]);
 
   const baseClasses = `transform transition-all ease-out ${
     isVisible 
