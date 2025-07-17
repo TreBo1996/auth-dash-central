@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Sparkles, Loader2, AlertTriangle, Crown, Zap, Star, CheckCircle, TrendingUp, Target, Award, Users, Trophy, BarChart3, FileText, Brain, Lightbulb, ChevronDown, ChevronUp, Rocket, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { FunctionRegion } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
@@ -142,7 +143,8 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
           body: {
             resumeId: selectedResumeId,
             jobDescriptionId: selectedJobDescId
-          }
+          },
+          region: FunctionRegion.UsWest1
         });
         
         if (error) throw error;
@@ -217,7 +219,8 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
             resumeId: selectedResumeId,
             jobDescriptionId: selectedJobDescId,
             userAdditions: userAdditions || []
-          }
+          },
+          region: FunctionRegion.UsWest1
         });
 
         if (error) throw error;
