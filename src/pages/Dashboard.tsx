@@ -467,7 +467,7 @@ const Dashboard: React.FC = () => {
                       <FileText className="h-5 w-5 text-white" />
                     </div>
                     <h2 className="text-lg md:text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                      My Job Descriptions
+                      My Jobs
                     </h2>
                     <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 font-semibold">
                       {jobDescriptions.length}
