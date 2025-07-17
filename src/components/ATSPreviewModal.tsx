@@ -116,10 +116,10 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
     return Math.min(95, currentScore + 15);
   };
   return <Dialog open={isOpen} onOpenChange={isOptimizing ? undefined : onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" ref={modalContentRef}>
+      <DialogContent className={`max-w-4xl max-h-[90vh] ${isOptimizing ? 'overflow-hidden' : 'overflow-y-auto'}`} ref={modalContentRef}>
         {/* Optimization Loading Overlay */}
         {isOptimizing && (
-          <div className="absolute inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center">
                 <Loader2 className="h-8 w-8 text-white animate-spin" />
