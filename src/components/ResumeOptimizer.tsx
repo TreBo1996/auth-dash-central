@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Sparkles, Loader2, AlertTriangle, Crown, Zap, Star, CheckCircle, TrendingUp, Target, Award, Users, Trophy, BarChart3, FileText, Brain, Lightbulb, ChevronDown, ChevronUp, Rocket, Shield } from 'lucide-react';
+import { Sparkles, Loader2, AlertTriangle, Crown, Zap, Star, CheckCircle, TrendingUp, Target, Award, Users, Trophy, BarChart3, FileText, Brain, Lightbulb, ChevronDown, ChevronUp, Rocket, Shield, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { ATSPreviewModal } from './ATSPreviewModal';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { UserAddition } from './UserAdditionsForm';
 
 interface Resume {
@@ -315,6 +316,27 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
               <span className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                 AI Resume Optimizer
               </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="ml-2 text-gray-400 hover:text-gray-600 transition-colors">
+                      <HelpCircle className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <div className="space-y-2 text-sm">
+                      <p className="font-medium">How to use the optimizer:</p>
+                      <div className="space-y-1">
+                        <p>1. Upload your base resume file</p>
+                        <p>2. Add job descriptions for roles you're targeting</p>
+                        <p>3. Select both resume and job description</p>
+                        <p>4. Click "Analyze & Optimize"</p>
+                        <p>5. Review ATS score and create optimized version</p>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </CardTitle>
             <CardDescription>
               Select a resume and job description to see your current ATS score and create an optimized version

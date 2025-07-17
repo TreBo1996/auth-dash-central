@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye, Building2 } from 'lucide-react';
+import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye, Building2, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
@@ -381,6 +381,14 @@ const Dashboard: React.FC = () => {
                     <Badge className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border-blue-200 font-semibold">
                       {resumes.length}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate('/upload-resume')}
+                      className="ml-1 h-6 w-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${resumesOpen ? 'rotate-180' : ''}`} />
                 </div>
@@ -451,6 +459,14 @@ const Dashboard: React.FC = () => {
                     <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 font-semibold">
                       {jobDescriptions.length}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate('/upload-job')}
+                      className="ml-1 h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${jobDescriptionsOpen ? 'rotate-180' : ''}`} />
                 </div>
