@@ -118,7 +118,45 @@ export const JobCard: React.FC<JobCardProps> = ({
       });
     }
   };
-  const handleViewJob = () => {
+  const checkExistingApplication = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      // For employer jobs, check job_applications table
+      if (job.source === 'employer') {
+        const jobPostingId = job.employer_job_posting_id || job.id;
+        const { data } = await supabase
+          .from('job_applications')
+          .select('id')
+          .eq('job_posting_id', jobPostingId)
+          .eq('applicant_id', user.id)
+          .maybeSingle();
+        
+        return !!data;
+      }
+      
+      // For database jobs, could also check if saved to job_descriptions and marked as applied
+      return false;
+    } catch (error) {
+      console.error('Error checking application status:', error);
+      return false;
+    }
+  };
+
+  const handleViewJob = async () => {
+    // Check if user has already applied to this job
+    const hasApplied = await checkExistingApplication();
+    
+    if (hasApplied) {
+      toast({
+        title: "Already Applied",
+        description: "You have already submitted an application for this position.",
+        variant: "default"
+      });
+      return;
+    }
+
     // For both employer and database jobs, navigate to the individual job page with auto-apply
     const url = `${getJobUrl()}?autoApply=true`;
     navigate(url);

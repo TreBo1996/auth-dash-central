@@ -687,6 +687,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         }
       }
 
+      // Sync status with Job Hub if job exists there
+      await syncJobHubStatus(jobDescriptionId);
+
       console.log('✅ Internal job application submitted successfully');
       setStep('success');
       
@@ -774,6 +777,48 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const handleUploadOnly = () => {
     setOriginalIntent('existing');
     setStep('upload');
+  };
+
+  const syncJobHubStatus = async (jobDescId: string | null = null) => {
+    if (!user) return;
+    
+    try {
+      // Find matching job description in user's Job Hub
+      const { data: existingJobDesc, error: findError } = await supabase
+        .from('job_descriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', jobPosting.title)
+        .eq('company', companyName)
+        .maybeSingle();
+
+      if (findError) {
+        console.error('Error finding job description for sync:', findError);
+        return;
+      }
+
+      const targetJobDescId = existingJobDesc?.id || jobDescId;
+      
+      if (targetJobDescId) {
+        // Update the job description status to reflect application
+        const { error: updateError } = await supabase
+          .from('job_descriptions')
+          .update({
+            application_status: 'applied',
+            is_applied: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', targetJobDescId);
+
+        if (updateError) {
+          console.error('Error syncing Job Hub status:', updateError);
+        } else {
+          console.log('✅ Job Hub status synced successfully');
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing Job Hub status:', error);
+    }
   };
 
   const resetModal = () => {
