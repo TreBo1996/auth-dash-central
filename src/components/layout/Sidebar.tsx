@@ -17,7 +17,7 @@ const navigation = [{
   icon: Briefcase,
   protected: true
 }, {
-  name: 'Mock Interview Prep',
+  name: 'AI Interview Coach',
   href: '/interview-prep',
   icon: MessageSquare,
   protected: true

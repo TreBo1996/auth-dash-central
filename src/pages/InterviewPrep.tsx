@@ -51,7 +51,7 @@ const InterviewPrep: React.FC = () => {
   const [questions, setQuestions] = useState<InterviewQuestions | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
-  const [activeTab, setActiveTab] = useState('new-interview');
+  const [activeTab, setActiveTab] = useState('tips');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTipsGuide, setShowTipsGuide] = useState(false);
   const [showFeatures, setShowFeatures] = useState(false);
@@ -267,7 +267,7 @@ const InterviewPrep: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">AI Interview Coach</h1>
             <p className="text-gray-600 mt-2">
-              Practice with AI-powered interview questions and track your progress over time
+              Transform your interview performance with AI coaching that provides personalized tips, generates job-specific practice questions, delivers detailed feedback, and tracks your improvement over time.
             </p>
           </div>
         </AnimatedSection>
