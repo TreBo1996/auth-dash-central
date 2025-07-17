@@ -16,6 +16,7 @@ import { fetchStructuredResumeData, StructuredResumeData } from '@/components/re
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ATSInfoTooltip } from '@/components/common/ATSInfoTooltip';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 interface ContactInfo {
   name: string;
   email: string;
@@ -366,49 +367,54 @@ const ResumeEditor: React.FC = () => {
   return <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
         {/* Mobile-Optimized Header */}
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div className="space-y-2">
-              <Button variant="ghost" onClick={() => navigate('/dashboard')} className="p-0 h-auto text-sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Resume Editor</h1>
-                <p className="text-sm sm:text-base text-gray-600">Edit your AI-optimized resume</p>
-              </div>
-            </div>
-            
-            {/* Desktop Actions */}
-            <div className="hidden sm:flex gap-2">
-              <Button onClick={handleExport} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold" title="Export to template">
-                <FileDown className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile-Optimized ATS Banner */}
-        {resumeId && <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6 shadow-sm">
-            <div className="max-w-full">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-semibold text-gray-900">ATS Performance</h2>
-                  <ATSInfoTooltip size="md" />
+        <AnimatedSection delay={0}>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div className="space-y-2">
+                <Button variant="ghost" onClick={() => navigate('/dashboard')} className="p-0 h-auto text-sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Resume Editor</h1>
+                  <p className="text-sm sm:text-base text-gray-600">Edit your AI-optimized resume</p>
                 </div>
               </div>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Monitor how well your resume performs against applicant tracking systems</p>
-              <ATSScoreDisplay optimizedResumeId={resumeId} atsScore={atsScore} atsFeedback={atsFeedback} onScoreUpdate={handleATSScoreUpdate} />
+              
+              {/* Desktop Actions */}
+              <div className="hidden sm:flex gap-2">
+                <Button onClick={handleExport} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold" title="Export to template">
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+                <Button onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  Save Changes
+                </Button>
+                </div>
             </div>
-          </div>}
+          </div>
+        </AnimatedSection>
+
+        {/* Mobile-Optimized ATS Banner */}
+        <AnimatedSection delay={100}>
+          {resumeId && <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 sm:p-6 shadow-sm">
+              <div className="max-w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900">ATS Performance</h2>
+                    <ATSInfoTooltip size="md" />
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">Monitor how well your resume performs against applicant tracking systems</p>
+                <ATSScoreDisplay optimizedResumeId={resumeId} atsScore={atsScore} atsFeedback={atsFeedback} onScoreUpdate={handleATSScoreUpdate} />
+              </div>
+            </div>}
+        </AnimatedSection>
 
         {/* Resume Sections */}
-        <div className="space-y-4 sm:space-y-6">
+        <AnimatedSection delay={200} stagger={true} staggerDelay={50}>
+          <div className="space-y-4 sm:space-y-6">
           {/* Contact Information */}
           <ContactSection contactInfo={resumeData.contactInfo} onChange={contactInfo => setResumeData(prev => prev ? {
           ...prev,
@@ -444,7 +450,8 @@ const ResumeEditor: React.FC = () => {
           ...prev,
           certifications
         } : null)} />
-        </div>
+          </div>
+        </AnimatedSection>
 
         {/* Desktop Bottom Actions - Hidden on Mobile */}
         <div className="hidden sm:flex justify-between items-center pt-6 border-t">

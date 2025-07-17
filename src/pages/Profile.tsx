@@ -13,6 +13,7 @@ import { AdminTools } from '@/components/admin/AdminTools';
 import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
 import { SubscriptionCard } from '@/components/subscription/SubscriptionCard';
 import { EmploymentPreferencesForm } from '@/components/forms/EmploymentPreferencesForm';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 
 interface UserProfile {
   email: string;
@@ -283,36 +284,45 @@ const Profile: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-          <p className="text-gray-600">
-            Manage your account information and preferences
-          </p>
-        </div>
+        <AnimatedSection delay={0}>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
+            <p className="text-gray-600">
+              Manage your account information and preferences
+            </p>
+          </div>
+        </AnimatedSection>
 
         {/* Admin Tools - Only visible to admin users */}
-        <AdminTools isAdmin={profile?.is_admin || false} />
+        <AnimatedSection delay={100}>
+          <AdminTools isAdmin={profile?.is_admin || false} />
+        </AnimatedSection>
 
         {/* Subscription & Billing */}
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-gray-900">Subscription & Billing</h2>
-          <p className="text-gray-600">Manage your subscription plan and billing information</p>
-        </div>
-        <SubscriptionCard />
+        <AnimatedSection delay={200}>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-gray-900">Subscription & Billing</h2>
+            <p className="text-gray-600">Manage your subscription plan and billing information</p>
+          </div>
+          <SubscriptionCard />
+        </AnimatedSection>
 
         {/* Usage Overview */}
-        <UsageDashboard />
+        <AnimatedSection delay={300}>
+          <UsageDashboard />
+        </AnimatedSection>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Personal Information
-            </CardTitle>
-            <CardDescription>
-              Update your personal details and account information
-            </CardDescription>
-          </CardHeader>
+        <AnimatedSection delay={400}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Personal Information
+              </CardTitle>
+              <CardDescription>
+                Update your personal details and account information
+              </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
@@ -403,9 +413,11 @@ const Profile: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </AnimatedSection>
 
         {/* Security Settings */}
-        <Card>
+        <AnimatedSection delay={500}>
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lock className="h-5 w-5" />
@@ -578,6 +590,7 @@ const Profile: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </AnimatedSection>
       </div>
     </DashboardLayout>
   );

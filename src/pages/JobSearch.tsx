@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Search } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
 import { useOptimizedJobSearch } from '@/hooks/useOptimizedJobSearch';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 
 interface JobSearchFilters {
   query: string;
@@ -198,37 +199,43 @@ export const JobSearch: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Find Your Next Job</h1>
-          <p className="text-muted-foreground">Search from our curated job database</p>
-        </div>
+        <AnimatedSection delay={0}>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Find Your Next Job</h1>
+            <p className="text-muted-foreground">Search from our curated job database</p>
+          </div>
+        </AnimatedSection>
 
-        <div className="mb-8">
-          <JobSearchForm onSearch={handleSearch} loading={loading} />
-        </div>
+        <AnimatedSection delay={100}>
+          <div className="mb-8">
+            <JobSearchForm onSearch={handleSearch} loading={loading} />
+          </div>
+        </AnimatedSection>
 
-        <div ref={resultsRef} className="space-y-8 scroll-mt-4">
-          <JobSearchResults 
-            jobs={currentJobs}
-            loading={loading} 
-            searchPerformed={searchPerformed}
-            pagination={pagination}
-            warnings={warnings}
-            onPageChange={handlePageChange}
-          />
+        <AnimatedSection delay={200}>
+          <div ref={resultsRef} className="space-y-8 scroll-mt-4">
+            <JobSearchResults 
+              jobs={currentJobs}
+              loading={loading} 
+              searchPerformed={searchPerformed}
+              pagination={pagination}
+              warnings={warnings}
+              onPageChange={handlePageChange}
+            />
 
-          {/* No results state */}
-          {searchPerformed && totalJobs === 0 && !loading && (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  No jobs found matching your search criteria. Try adjusting your search terms or filters.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            {/* No results state */}
+            {searchPerformed && totalJobs === 0 && !loading && (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No jobs found matching your search criteria. Try adjusting your search terms or filters.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </AnimatedSection>
       </div>
     </DashboardLayout>
   );

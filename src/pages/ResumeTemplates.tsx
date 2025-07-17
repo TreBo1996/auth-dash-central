@@ -18,6 +18,7 @@ import { printResume } from '@/utils/pdfGenerator';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 interface OptimizedResume {
   id: string;
   generated_text: string;
@@ -219,64 +220,69 @@ const ResumeTemplates: React.FC = () => {
   return <DashboardLayout>
       <div className={`space-y-6 ${isMobile ? 'pb-20' : ''}`}>
         {/* Header */}
-        <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
-          <div className={`${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>
-            <Button variant="outline" onClick={() => navigate('/dashboard')} className={isMobile ? 'w-full sm:w-auto' : ''}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <div className={isMobile ? 'text-center sm:text-left' : ''}>
-              <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
-                Choose Resume Template
-              </h1>
-              <p className={`text-gray-600 ${isMobile ? 'text-sm break-words' : ''}`}>
-                <span className="font-medium">
-                  {optimizedResume.resumes?.file_name || 'Resume'}
-                </span>
-                {' → '}
-                <span className="font-medium">
-                  {optimizedResume.job_descriptions?.title || 'Job Position'}
-                </span>
-              </p>
-            </div>
-          </div>
-          {/* Desktop buttons only */}
-          {!isMobile && <div className="flex gap-2">
-              
-              <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
-                <Download className="h-4 w-4 mr-2" />
-                {isGeneratingPDF 
-                  ? 'Generating PDF...' 
-                  : newTemplateConfigs[selectedTemplate]?.premiumRequired && !subscriptionData?.subscribed
-                    ? 'Upgrade to Download'
-                    : 'Download PDF'
-                }
+        <AnimatedSection delay={0}>
+          <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
+            <div className={`${isMobile ? 'space-y-3' : 'flex items-center gap-4'}`}>
+              <Button variant="outline" onClick={() => navigate('/dashboard')} className={isMobile ? 'w-full sm:w-auto' : ''}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
               </Button>
-            </div>}
-        </div>
+              <div className={isMobile ? 'text-center sm:text-left' : ''}>
+                <h1 className={`font-bold text-gray-900 ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                  Choose Resume Template
+                </h1>
+                <p className={`text-gray-600 ${isMobile ? 'text-sm break-words' : ''}`}>
+                  <span className="font-medium">
+                    {optimizedResume.resumes?.file_name || 'Resume'}
+                  </span>
+                  {' → '}
+                  <span className="font-medium">
+                    {optimizedResume.job_descriptions?.title || 'Job Position'}
+                  </span>
+                </p>
+              </div>
+            </div>
+            {/* Desktop buttons only */}
+            {!isMobile && <div className="flex gap-2">
+                
+                <Button onClick={handleDownloadPDF} disabled={isGeneratingPDF} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg">
+                  <Download className="h-4 w-4 mr-2" />
+                  {isGeneratingPDF 
+                    ? 'Generating PDF...' 
+                    : newTemplateConfigs[selectedTemplate]?.premiumRequired && !subscriptionData?.subscribed
+                      ? 'Upgrade to Download'
+                      : 'Download PDF'
+                  }
+                </Button>
+              </div>}
+          </div>
+        </AnimatedSection>
 
         {/* Mobile Template Selector - Shows on small screens */}
-        <div className="block lg:hidden mb-6 space-y-4">
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-4 text-center">Choose Template</h3>
-              <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={templateId => {
-              setSelectedTemplate(templateId);
-              const config = newTemplateConfigs[templateId];
-              setSelectedColorScheme(config.defaultColorScheme);
-            }} isMobile={true} />
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <ColorSchemeSelector colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes} selectedScheme={selectedColorScheme} onSchemeSelect={setSelectedColorScheme} />
-            </CardContent>
-          </Card>
-        </div>
+        <AnimatedSection delay={100}>
+          <div className="block lg:hidden mb-6 space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4 text-center">Choose Template</h3>
+                <TemplateSelector selectedTemplate={selectedTemplate} onTemplateSelect={templateId => {
+                setSelectedTemplate(templateId);
+                const config = newTemplateConfigs[templateId];
+                setSelectedColorScheme(config.defaultColorScheme);
+              }} isMobile={true} />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <ColorSchemeSelector colorSchemes={newTemplateConfigs[selectedTemplate].colorSchemes} selectedScheme={selectedColorScheme} onSchemeSelect={setSelectedColorScheme} />
+              </CardContent>
+            </Card>
+          </div>
+        </AnimatedSection>
 
         {/* Desktop/Tablet Layout */}
-        <div className="grid lg:grid-cols-4 md:grid-cols-3 gap-6 min-h-[800px]">
+        <AnimatedSection delay={200}>
+          <div className="grid lg:grid-cols-4 md:grid-cols-3 gap-6 min-h-[800px]">
           {/* Resume Preview */}
           <div className="lg:col-span-3 md:col-span-2 flex justify-center">
             <div className={`w-full ${isMobile ? '' : 'max-w-4xl'}`}>
@@ -317,7 +323,8 @@ const ResumeTemplates: React.FC = () => {
               </Card>
             </div>
           </div>
-        </div>
+          </div>
+        </AnimatedSection>
         
         {/* Mobile Floating Action Button */}
         {isMobile && <div className="fixed bottom-6 right-6 z-50">

@@ -16,6 +16,7 @@ import { InterviewAnalytics } from '@/components/interview/InterviewAnalytics';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 
 interface JobDescription {
   id: string;
@@ -262,18 +263,23 @@ const InterviewPrep: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">AI Interview Coach</h1>
-          <p className="text-gray-600 mt-2">
-            Practice with AI-powered interview questions and track your progress over time
-          </p>
-        </div>
+        <AnimatedSection delay={0}>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">AI Interview Coach</h1>
+            <p className="text-gray-600 mt-2">
+              Practice with AI-powered interview questions and track your progress over time
+            </p>
+          </div>
+        </AnimatedSection>
 
         {/* Usage Counter */}
-        <ContextualUsageCounter features={['interview_sessions']} />
+        <AnimatedSection delay={100}>
+          <ContextualUsageCounter features={['interview_sessions']} />
+        </AnimatedSection>
 
         {/* Benefits Overview */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <AnimatedSection delay={200}>
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-900">
               <Star className="h-5 w-5" />
@@ -330,9 +336,11 @@ const InterviewPrep: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        </AnimatedSection>
 
         {/* Tips & Features Section */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <AnimatedSection delay={300} stagger={true} staggerDelay={100}>
+          <div className="grid gap-4 md:grid-cols-2">
           <Collapsible open={showTipsGuide} onOpenChange={setShowTipsGuide}>
             <Card>
               <CollapsibleTrigger asChild>
@@ -439,7 +447,8 @@ const InterviewPrep: React.FC = () => {
               </CollapsibleContent>
             </Card>
           </Collapsible>
-        </div>
+          </div>
+        </AnimatedSection>
 
         {sessionActive && selectedJob && questions ? (
           <InterviewSession

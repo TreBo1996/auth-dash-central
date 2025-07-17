@@ -18,6 +18,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 interface Resume {
   id: string;
   original_file_url: string | null;
@@ -340,33 +341,40 @@ const Dashboard: React.FC = () => {
   return <DashboardLayout>
       <div className="space-y-6 md:space-y-8">
         {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-white via-blue-50/50 to-indigo-50/80 backdrop-blur-sm rounded-2xl shadow-xl-modern border border-indigo-100/50 p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-indigo-600/5 to-purple-600/5"></div>
-          <div className="relative z-10">
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
-              Resume Optimizer
-            </h1>
-            <p className="text-base md:text-lg text-gray-600">
-              Upload your resume and job descriptions to get AI-powered optimization recommendations.
-            </p>
-          </div>
-        </div>
-
-        {/* Usage Overview */}
-        <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
-
-        {/* AI Resume Optimizer Section */}
-        <div className="space-y-4">
-          
-          <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
-            <div className="bg-white rounded-lg">
-              <ResumeOptimizer resumes={resumes} jobDescriptions={jobDescriptions} onOptimizationComplete={handleOptimizationComplete} />
+        <AnimatedSection delay={0}>
+          <div className="bg-gradient-to-r from-white via-blue-50/50 to-indigo-50/80 backdrop-blur-sm rounded-2xl shadow-xl-modern border border-indigo-100/50 p-6 md:p-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-indigo-600/5 to-purple-600/5"></div>
+            <div className="relative z-10">
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
+                Resume Optimizer
+              </h1>
+              <p className="text-base md:text-lg text-gray-600">
+                Upload your resume and job descriptions to get AI-powered optimization recommendations.
+              </p>
             </div>
           </div>
-        </div>
+        </AnimatedSection>
+
+        {/* Usage Overview */}
+        <AnimatedSection delay={100}>
+          <ContextualUsageCounter features={['resume_optimizations', 'job_descriptions']} />
+        </AnimatedSection>
+
+        {/* AI Resume Optimizer Section */}
+        <AnimatedSection delay={200}>
+          <div className="space-y-4">
+            
+            <div className="bg-gradient-to-r from-purple-50 via-white to-indigo-50 rounded-xl p-1 shadow-lg relative z-[5]">
+              <div className="bg-white rounded-lg">
+                <ResumeOptimizer resumes={resumes} jobDescriptions={jobDescriptions} onOptimizationComplete={handleOptimizationComplete} />
+              </div>
+            </div>
+          </div>
+        </AnimatedSection>
 
         {/* Three Column Layout with Collapsible Sections */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+        <AnimatedSection delay={300} stagger={true} staggerDelay={100}>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* My Resumes Column */}
           <div className="bg-gradient-to-b from-white to-blue-50/30 rounded-xl border border-blue-200/50 shadow-xl-modern overflow-hidden backdrop-blur-sm">
             <Collapsible open={resumesOpen} onOpenChange={setResumesOpen}>
@@ -635,7 +643,8 @@ const Dashboard: React.FC = () => {
               </CollapsibleContent>
             </Collapsible>
           </div>
-        </div>
+          </div>
+        </AnimatedSection>
       </div>
 
       {/* Content Preview Modal */}
