@@ -65,7 +65,10 @@ export const JobHubMetrics: React.FC<JobHubMetricsProps> = ({
     description: 'Jobs with both resume & cover letter'
   }];
   return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-      {metrics.map((metric, index) => <Card key={index} className="hover:shadow-md transition-shadow">
+      {metrics.map((metric, index) => <Card 
+        key={index} 
+        className={`hover:shadow-md transition-all duration-300 opacity-0 animate-fade-in-scale animate-stagger-${index + 1}`}
+      >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               {metric.title}

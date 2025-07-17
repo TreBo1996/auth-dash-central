@@ -28,6 +28,7 @@ import { JobHubMetrics } from '@/components/job-hub/JobHubMetrics';
 import { JobHubSuggestions } from '@/components/job-hub/JobHubSuggestions';
 import { CollapsibleChartsSection } from '@/components/job-hub/CollapsibleChartsSection';
 import { ApplicationStatus } from '@/components/job-hub/JobStatusSelector';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 
 interface JobDescription {
   id: string;
@@ -300,49 +301,58 @@ const JobHub: React.FC = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Job Hub
-            </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Track your applications, manage your job pipeline, and optimize your application stack.
-            </p>
+        <AnimatedSection delay={0}>
+          <div className="flex flex-col gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Job Hub
+              </h1>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                Track your applications, manage your job pipeline, and optimize your application stack.
+              </p>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto sm:self-end">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/job-search')}
+                className="hover:bg-blue-50 flex-1 sm:flex-none text-sm"
+                size="sm"
+              >
+                <Search className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Find More Jobs</span>
+                <span className="sm:hidden">Find Jobs</span>
+              </Button>
+              <Button 
+                onClick={() => navigate('/upload-job')}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 flex-1 sm:flex-none text-sm"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add Job</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto sm:self-end">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/job-search')}
-              className="hover:bg-blue-50 flex-1 sm:flex-none text-sm"
-              size="sm"
-            >
-              <Search className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Find More Jobs</span>
-              <span className="sm:hidden">Find Jobs</span>
-            </Button>
-            <Button 
-              onClick={() => navigate('/upload-job')}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 flex-1 sm:flex-none text-sm"
-              size="sm"
-            >
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Add Job</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </div>
-        </div>
+        </AnimatedSection>
 
         {/* Metrics Dashboard */}
-        <JobHubMetrics jobs={jobs} />
+        <AnimatedSection delay={100}>
+          <JobHubMetrics jobs={jobs} />
+        </AnimatedSection>
 
         {/* Charts Section */}
-        <CollapsibleChartsSection jobs={jobs} />
+        <AnimatedSection delay={200}>
+          <CollapsibleChartsSection jobs={jobs} />
+        </AnimatedSection>
 
         {/* Smart Suggestions */}
-        <JobHubSuggestions jobs={jobs} userResumes={userResumes} jobPipelineRef={jobPipelineRef} />
+        <AnimatedSection delay={300}>
+          <JobHubSuggestions jobs={jobs} userResumes={userResumes} jobPipelineRef={jobPipelineRef} />
+        </AnimatedSection>
 
         {/* Job Listings */}
-        <Card ref={jobPipelineRef}>
+        <AnimatedSection delay={400}>
+          <Card ref={jobPipelineRef}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
@@ -406,14 +416,19 @@ const JobHub: React.FC = () => {
                   </div>
                 ) : (
                   <div className="max-h-[600px] overflow-y-auto space-y-2 sm:space-y-3 pr-1 sm:pr-2">
-                    {filteredJobs.map((job) => (
-                      <JobHubCard 
-                        key={job.id} 
-                        job={job} 
-                        onStatusUpdate={handleStatusUpdate}
-                        onRefresh={refreshJobs}
-                        onDelete={handleDeleteJob}
-                      />
+                    {filteredJobs.map((job, index) => (
+                      <div
+                        key={job.id}
+                        className="opacity-0 animate-fade-in-scale"
+                        style={{ animationDelay: `${index * 25}ms` }}
+                      >
+                        <JobHubCard 
+                          job={job} 
+                          onStatusUpdate={handleStatusUpdate}
+                          onRefresh={refreshJobs}
+                          onDelete={handleDeleteJob}
+                        />
+                      </div>
                     ))}
                   </div>
                 )}
@@ -421,6 +436,7 @@ const JobHub: React.FC = () => {
             </Tabs>
           </CardContent>
         </Card>
+        </AnimatedSection>
       </div>
     </DashboardLayout>
   );

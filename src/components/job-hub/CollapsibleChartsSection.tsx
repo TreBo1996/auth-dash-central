@@ -91,7 +91,7 @@ export function CollapsibleChartsSection({ jobs }: CollapsibleChartsSectionProps
   );
 
   return (
-    <Card>
+    <Card className="opacity-0 animate-fade-in-up">
       <Collapsible open={isOpen} onOpenChange={handleToggle}>
         <CardHeader className="pb-0">
           <CollapsedPreview />
@@ -100,9 +100,13 @@ export function CollapsibleChartsSection({ jobs }: CollapsibleChartsSectionProps
         <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
           <CardContent className="pt-0">
             {jobs.length > 0 ? (
-              <JobHubChartsSection jobs={jobs} />
+              <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                <JobHubChartsSection jobs={jobs} />
+              </div>
             ) : (
-              <EmptyChartsState />
+              <div className="opacity-0 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <EmptyChartsState />
+              </div>
             )}
           </CardContent>
         </CollapsibleContent>
