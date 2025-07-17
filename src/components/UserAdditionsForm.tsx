@@ -73,7 +73,7 @@ export const UserAdditionsForm: React.FC<UserAdditionsFormProps> = ({
                 <AlertCircle className="h-4 w-4 text-muted-foreground cursor-help" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
-                <p>AI will try its best to incorporate these additions into your current experiences by modifying existing content. It will only work with what's available and won't create new experiences from scratch.</p>
+                <p>Add any relevant experiences, skills, or achievements you actually have that might be missing from your resume. Based on the ATS analysis, the AI will incorporate these into your existing experience sections to improve your job match score and better highlight your qualifications.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
