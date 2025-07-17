@@ -69,6 +69,25 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
       return;
     }
 
+    // Validate required fields for job descriptions before processing file
+    if (type === 'job-description' && !jobTitle.trim()) {
+      toast({
+        title: "Missing Job Title",
+        description: "Please enter a job title before uploading a file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (type === 'job-description' && !companyName.trim()) {
+      toast({
+        title: "Missing Company Name",
+        description: "Please enter a company name before uploading a file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setFile(selectedFile);
     
     // Parse document immediately for preview
@@ -114,8 +133,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
 
     if (type === 'job-description' && !jobTitle.trim()) {
       toast({
-        title: "Missing Title",
-        description: "Please enter a job title.",
+        title: "Missing Job Title",
+        description: "Please enter a job title before proceeding.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (type === 'job-description' && !companyName.trim()) {
+      toast({
+        title: "Missing Company Name",
+        description: "Please enter a company name before proceeding.",
         variant: "destructive"
       });
       return;
@@ -313,22 +341,38 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
         {type === 'job-description' && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="job-title">Job Title</Label>
+              <Label htmlFor="job-title" className="flex items-center gap-1">
+                Job Title
+                <span className="text-red-500">*</span>
+                <span className="text-xs text-muted-foreground font-normal">(Required)</span>
+              </Label>
               <Input
                 id="job-title"
                 placeholder="Enter job title"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
+                className={!jobTitle.trim() && showPreview ? "border-red-500 focus:ring-red-500" : ""}
               />
+              {!jobTitle.trim() && showPreview && (
+                <p className="text-sm text-red-600 mt-1">Job title is required</p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company-name">Company Name</Label>
+              <Label htmlFor="company-name" className="flex items-center gap-1">
+                Company Name
+                <span className="text-red-500">*</span>
+                <span className="text-xs text-muted-foreground font-normal">(Required)</span>
+              </Label>
               <Input
                 id="company-name"
                 placeholder="Enter company name"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
+                className={!companyName.trim() && showPreview ? "border-red-500 focus:ring-red-500" : ""}
               />
+              {!companyName.trim() && showPreview && (
+                <p className="text-sm text-red-600 mt-1">Company name is required</p>
+              )}
             </div>
           </div>
         )}
@@ -378,7 +422,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ type, onUploadSuccess })
                 <Button 
                   onClick={handleTextSubmit}
                   variant="outline"
-                  disabled={!textInput.trim() || (!jobTitle.trim() && type === 'job-description')}
+                  disabled={!textInput.trim() || (type === 'job-description' && (!jobTitle.trim() || !companyName.trim()))}
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Preview Text

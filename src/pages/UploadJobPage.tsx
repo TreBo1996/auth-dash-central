@@ -80,6 +80,25 @@ const UploadJobPage: React.FC = () => {
       return;
     }
 
+    // Validate required fields before processing file
+    if (!jobTitle.trim()) {
+      toast({
+        title: "Missing Job Title",
+        description: "Please enter a job title before uploading a file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!companyName.trim()) {
+      toast({
+        title: "Missing Company Name",
+        description: "Please enter a company name before uploading a file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setFile(selectedFile);
     
     try {
@@ -118,8 +137,17 @@ const UploadJobPage: React.FC = () => {
 
     if (!jobTitle.trim()) {
       toast({
-        title: "Missing Title",
-        description: "Please enter a job title.",
+        title: "Missing Job Title",
+        description: "Please enter a job title before proceeding.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!companyName.trim()) {
+      toast({
+        title: "Missing Company Name", 
+        description: "Please enter a company name before proceeding.",
         variant: "destructive"
       });
       return;
@@ -149,6 +177,25 @@ const UploadJobPage: React.FC = () => {
 
   const handleConfirmSave = async () => {
     if (!parsedContent) return;
+
+    // Final validation check before saving
+    if (!jobTitle.trim()) {
+      toast({
+        title: "Missing Job Title",
+        description: "Job title is required to save the job description.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!companyName.trim()) {
+      toast({
+        title: "Missing Company Name",
+        description: "Company name is required to save the job description.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       setIsProcessing(true);
@@ -281,22 +328,38 @@ const UploadJobPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4 mb-6">
                 <div>
-                  <Label htmlFor="job-title">Job Title</Label>
+                  <Label htmlFor="job-title" className="flex items-center gap-1">
+                    Job Title
+                    <span className="text-red-500">*</span>
+                    <span className="text-xs text-muted-foreground font-normal">(Required)</span>
+                  </Label>
                   <Input
                     id="job-title"
                     placeholder="e.g., Senior Software Engineer"
                     value={jobTitle}
                     onChange={(e) => updateJobTitle(e.target.value)}
+                    className={!jobTitle.trim() && showPreview ? "border-red-500 focus:ring-red-500" : ""}
                   />
+                  {!jobTitle.trim() && showPreview && (
+                    <p className="text-sm text-red-600 mt-1">Job title is required</p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="company-name">Company Name</Label>
+                  <Label htmlFor="company-name" className="flex items-center gap-1">
+                    Company Name
+                    <span className="text-red-500">*</span>
+                    <span className="text-xs text-muted-foreground font-normal">(Required)</span>
+                  </Label>
                   <Input
                     id="company-name"
                     placeholder="e.g., Google, Microsoft, Apple"
                     value={companyName}
                     onChange={(e) => updateCompanyName(e.target.value)}
+                    className={!companyName.trim() && showPreview ? "border-red-500 focus:ring-red-500" : ""}
                   />
+                  {!companyName.trim() && showPreview && (
+                    <p className="text-sm text-red-600 mt-1">Company name is required</p>
+                  )}
                 </div>
               </div>
 
@@ -360,7 +423,7 @@ const UploadJobPage: React.FC = () => {
                     />
                     <Button 
                       onClick={handleTextSubmit}
-                      disabled={!textInput.trim() || !jobTitle.trim()}
+                      disabled={!textInput.trim() || !jobTitle.trim() || !companyName.trim()}
                       className="w-full"
                     >
                       <Type className="h-4 w-4 mr-2" />
