@@ -387,13 +387,15 @@
 
 /* Auto-scrolling animation for template descriptions */
 .animate-scroll {
-  animation: scroll-text 8s linear infinite;
+  animation: scroll-text 6s linear infinite;
   white-space: nowrap;
+  display: inline-block;
+  min-width: 100%;
 }
 
 @keyframes scroll-text {
   0% { transform: translateX(0); }
-  25% { transform: translateX(0); }
-  75% { transform: translateX(-50%); }
-  100% { transform: translateX(-50%); }
+  20% { transform: translateX(0); }
+  80% { transform: translateX(calc(-100% + 200px)); }
+  100% { transform: translateX(calc(-100% + 200px)); }
 }

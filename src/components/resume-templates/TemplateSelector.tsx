@@ -48,8 +48,8 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 <span className="font-medium text-sm">{template.name}</span>
                 {template.premiumRequired ? <PremiumBadge size="sm" /> : <FreeBadge size="sm" />}
               </div>
-              <div className={`text-xs ${selectedTemplate === template.id ? 'text-white' : 'text-muted-foreground'} ${selectedTemplate === template.id ? 'overflow-hidden' : 'line-clamp-2'}`}>
-                <p className={selectedTemplate === template.id && template.description.length > 80 ? 'animate-scroll' : ''}>
+              <div className={`text-xs ${selectedTemplate === template.id ? 'text-white overflow-hidden' : 'text-muted-foreground line-clamp-2'} max-w-full`}>
+                <p className={selectedTemplate === template.id ? 'animate-scroll' : ''}>
                   {template.description}
                 </p>
               </div>
