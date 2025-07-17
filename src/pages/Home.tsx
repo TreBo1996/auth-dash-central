@@ -9,6 +9,7 @@ import { useSubscription } from '@/contexts/SubscriptionContext';
 import { toast } from "sonner";
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 import { useTypewriter } from '@/hooks/useTypewriter';
+import { AnimatedSection } from '@/components/common/AnimatedSection';
 
 const Home = () => {
   const { user } = useAuth();
@@ -112,82 +113,86 @@ const Home = () => {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <Star className="h-4 w-4 text-yellow-300" />
-              <span className="text-sm font-medium">Beats 95% of ATS Job Bots</span>
-            </div>
+            <AnimatedSection immediate={true} delay={0} className="animate-fade-in-zoom">
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
+                <Star className="h-4 w-4 text-yellow-300" />
+                <span className="text-sm font-medium">Beats 95% of ATS Job Bots</span>
+              </div>
+              
+              <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
+                Transform Your Job Search with{" "}
+                <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                  {displayText}
+                  {!isComplete && <span className="animate-blink">|</span>}
+                </span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+                Get 3x more interviews with AI-optimized resumes that beat ATS systems. 
+                Join thousands who've landed their dream jobs.
+              </p>
+            </AnimatedSection>
             
-            <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight">
-              Transform Your Job Search with{" "}
-              <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                {displayText}
-                {!isComplete && <span className="animate-blink">|</span>}
-              </span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Get 3x more interviews with AI-optimized resumes that beat ATS systems. 
-              Join thousands who've landed their dream jobs.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              {user ? (
-                <>
-                  <Link to="/dashboard">
-                    <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 shadow-xl">
-                      <ArrowRight className="mr-2 h-5 w-5" />
-                      Go to Dashboard
-                    </Button>
-                  </Link>
-                  <Link to="/upload-resume">
-                    <Button size="lg" className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-all">
+            <AnimatedSection immediate={true} delay={300} className="animate-slide-in-bounce">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                {user ? (
+                  <>
+                    <Link to="/dashboard">
+                      <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 shadow-xl hover:scale-105 transition-all">
+                        <ArrowRight className="mr-2 h-5 w-5" />
+                        Go to Dashboard
+                      </Button>
+                    </Link>
+                    <Link to="/upload-resume">
+                      <Button size="lg" className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 hover:scale-105 transition-all">
+                        <Upload className="mr-2 h-5 w-5" />
+                        Upload Resume
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth">
+                      <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 shadow-xl hover:scale-105 transition-all">
+                        <ArrowRight className="mr-2 h-5 w-5" />
+                        Start Free Today
+                      </Button>
+                    </Link>
+                    <Button 
+                      size="lg" 
+                      variant="outline" 
+                      className="text-lg px-8 py-4 border-indigo-900 text-white bg-indigo-900 hover:bg-indigo-800 hover:scale-105 transition-all"
+                      onClick={handleUploadResumeClick}
+                    >
                       <Upload className="mr-2 h-5 w-5" />
                       Upload Resume
                     </Button>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 shadow-xl">
-                      <ArrowRight className="mr-2 h-5 w-5" />
-                      Start Free Today
-                    </Button>
-                  </Link>
+                  </>
+                )}
+              </div>
+
+              {/* Add For Employers Button */}
+              <div className="mb-8">
+                <Link to="/employer/auth">
                   <Button 
                     size="lg" 
-                    variant="outline" 
-                    className="text-lg px-8 py-4 border-indigo-900 text-white bg-indigo-900 hover:bg-indigo-800"
-                    onClick={handleUploadResumeClick}
+                    className="text-lg px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-xl border-2 border-white/20 hover:scale-105 transition-all"
                   >
-                    <Upload className="mr-2 h-5 w-5" />
-                    Upload Resume
+                    <Briefcase className="mr-2 h-5 w-5" />
+                    For Employers - Post Jobs
                   </Button>
-                </>
-              )}
-            </div>
-
-            {/* Add For Employers Button */}
-            <div className="mb-8">
-              <Link to="/employer/auth">
-                <Button 
-                  size="lg" 
-                  className="text-lg px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-xl border-2 border-white/20"
-                >
-                  <Briefcase className="mr-2 h-5 w-5" />
-                  For Employers - Post Jobs
-                </Button>
-              </Link>
-            </div>
+                </Link>
+              </div>
+            </AnimatedSection>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
+            <AnimatedSection immediate={true} delay={600} stagger={true} staggerDelay={100}>
               {stats.map((stat, index) => (
-                <div key={index} className="text-center">
+                <div key={index} className="text-center animate-counter-up">
                   <div className="text-2xl md:text-3xl font-bold text-yellow-300">{stat.number}</div>
                   <div className="text-sm text-blue-200">{stat.label}</div>
                 </div>
               ))}
-            </div>
+            </AnimatedSection>
           </div>
         </div>
       </section>
@@ -195,37 +200,39 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <AnimatedSection delay={0} className="text-center mb-16 animate-reveal-up">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
               Everything You Need to Land Your Dream Job
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Our comprehensive suite of AI-powered tools gives you the competitive edge in today's job market.
             </p>
-          </div>
+          </AnimatedSection>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {features.map((feature, index) => (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-1">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="text-indigo-600 group-hover:text-indigo-700 transition-colors">
-                      {feature.icon}
+              <AnimatedSection key={index} delay={index * 150} className="animate-fade-in-zoom">
+                <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2 hover:scale-105">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between">
+                      <div className="text-indigo-600 group-hover:text-indigo-700 transition-colors">
+                        {feature.icon}
+                      </div>
+                      <span className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                        {feature.highlight}
+                      </span>
                     </div>
-                    <span className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs px-3 py-1 rounded-full font-medium">
-                      {feature.highlight}
-                    </span>
-                  </div>
-                  <CardTitle className="text-xl group-hover:text-indigo-600 transition-colors">
-                    {feature.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+                    <CardTitle className="text-xl group-hover:text-indigo-600 transition-colors">
+                      {feature.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-gray-600 leading-relaxed">
+                      {feature.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </AnimatedSection>
             ))}
           </div>
         </div>
@@ -234,14 +241,14 @@ const Home = () => {
       {/* How It Works Section */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <AnimatedSection delay={0} className="text-center mb-16 animate-reveal-up">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
               How It Works
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Get your optimized resume in just 3 simple steps
             </p>
-          </div>
+          </AnimatedSection>
           
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8">
@@ -261,17 +268,23 @@ const Home = () => {
                 description: "Get your optimized resume with improved ATS score and start applying!",
                 icon: <FileText className="h-8 w-8" />
               }].map((step, index) => (
-                <div key={index} className="text-center relative">
-                  <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg text-indigo-600">
+                <AnimatedSection 
+                  key={index} 
+                  delay={index * 200} 
+                  className={`text-center relative ${
+                    index % 2 === 0 ? 'animate-fade-in-left' : 'animate-fade-in-right'
+                  }`}
+                >
+                  <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg text-indigo-600 hover:scale-110 transition-transform">
                     {step.icon}
                   </div>
-                  <div className="absolute -top-2 -right-2 bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  <div className="absolute -top-2 -right-2 bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold animate-counter-up">
                     {step.step}
                   </div>
                   <h3 className="text-xl font-semibold mb-4">{step.title}</h3>
                   <p className="text-gray-600">{step.description}</p>
                   {index < 2 && <ChevronRight className="hidden md:block absolute top-8 -right-4 h-6 w-6 text-gray-400" />}
-                </div>
+                </AnimatedSection>
               ))}
             </div>
           </div>
@@ -281,34 +294,36 @@ const Home = () => {
       {/* Testimonials Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <AnimatedSection delay={0} className="text-center mb-16 animate-reveal-up">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
               Success Stories
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">See how RezLit has helped professionals land their dream jobs</p>
-          </div>
+          </AnimatedSection>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-lg">
-                <CardContent className="pt-6">
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
-                  <div className="flex items-center">
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-white font-semibold">
-                      {testimonial.name.charAt(0)}
+              <AnimatedSection key={index} delay={index * 200} className="animate-fade-in-zoom">
+                <Card className="border-0 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+                  <CardContent className="pt-6">
+                    <div className="flex mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                      ))}
                     </div>
-                    <div className="ml-4">
-                      <div className="font-semibold">{testimonial.name}</div>
-                      <div className="text-sm text-gray-600">{testimonial.role} at {testimonial.company}</div>
+                    <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
+                    <div className="flex items-center">
+                      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full w-12 h-12 flex items-center justify-center text-white font-semibold">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="font-semibold">{testimonial.name}</div>
+                        <div className="text-sm text-gray-600">{testimonial.role} at {testimonial.company}</div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </AnimatedSection>
             ))}
           </div>
         </div>
@@ -317,85 +332,87 @@ const Home = () => {
       {/* Pricing Section */}
       <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <AnimatedSection delay={0} className="text-center mb-16 animate-reveal-up">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">
               Start Free, Upgrade When Ready
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               Begin your journey with our comprehensive free plan, then unlock premium features as you grow
             </p>
-          </div>
+          </AnimatedSection>
           
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Free Plan */}
-            <Card className="border-2 border-gray-200 shadow-lg">
-              <CardHeader className="text-center pb-8">
-                <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium w-fit mx-auto mb-4">
-                  Most Popular
-                </div>
-                <CardTitle className="text-2xl font-bold">Free Plan</CardTitle>
-                <div className="text-4xl font-bold text-gray-900 mt-4">
-                  $0<span className="text-lg text-gray-600">/month</span>
-                </div>
-                <CardDescription className="text-lg mt-2">Perfect to get started</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-8">
-                  {freeFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-{!user ? (
-                <Link to="/auth" className="block">
-                  <Button className="w-full py-3" size="lg">
-                    Get Started Free
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/dashboard" className="block">
-                  <Button className="w-full py-3" size="lg">
-                    Access Dashboard
-                  </Button>
-                </Link>
-              )}
-              </CardContent>
-            </Card>
+            <AnimatedSection delay={200} className="animate-fade-in-zoom">
+              <Card className="border-2 border-gray-200 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="text-center pb-8">
+                  <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium w-fit mx-auto mb-4">
+                    Most Popular
+                  </div>
+                  <CardTitle className="text-2xl font-bold">Free Plan</CardTitle>
+                  <div className="text-4xl font-bold text-gray-900 mt-4">
+                    $0<span className="text-lg text-gray-600">/month</span>
+                  </div>
+                  <CardDescription className="text-lg mt-2">Perfect to get started</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    {freeFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+  {!user ? (
+                  <Link to="/auth" className="block">
+                    <Button className="w-full py-3 hover:scale-105 transition-transform" size="lg">
+                      Get Started Free
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/dashboard" className="block">
+                    <Button className="w-full py-3 hover:scale-105 transition-transform" size="lg">
+                      Access Dashboard
+                    </Button>
+                  </Link>
+                )}
+                </CardContent>
+              </Card>
+            </AnimatedSection>
 
-            {/* Premium Plan */}
-            <Card className="border-2 border-indigo-200 shadow-xl relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium">
-                  Best Value
-                </span>
-              </div>
-              <CardHeader className="text-center pb-8">
-                <CardTitle className="text-2xl font-bold">Premium Plan</CardTitle>
-                <div className="text-4xl font-bold text-gray-900 mt-4">
-                  $19.99<span className="text-lg text-gray-600">/month</span>
+            <AnimatedSection delay={400} className="animate-fade-in-zoom">
+              <Card className="border-2 border-indigo-200 shadow-xl relative hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium animate-pulse">
+                    Best Value
+                  </span>
                 </div>
-                <CardDescription className="text-lg mt-2">For serious job seekers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-8">
-                  {premiumFeatures.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-indigo-500 mt-0.5 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  onClick={handleJoinPremium}
-                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700" 
-                  size="lg"
-                >
-                  Join Premium
-                </Button>
-              </CardContent>
-            </Card>
+                <CardHeader className="text-center pb-8">
+                  <CardTitle className="text-2xl font-bold">Premium Plan</CardTitle>
+                  <div className="text-4xl font-bold text-gray-900 mt-4">
+                    $19.99<span className="text-lg text-gray-600">/month</span>
+                  </div>
+                  <CardDescription className="text-lg mt-2">For serious job seekers</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-8">
+                    {premiumFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <CheckCircle className="h-5 w-5 text-indigo-500 mt-0.5 mr-3 flex-shrink-0" />
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button 
+                    onClick={handleJoinPremium}
+                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:scale-105 transition-all" 
+                    size="lg"
+                  >
+                    Join Premium
+                  </Button>
+                </CardContent>
+              </Card>
+            </AnimatedSection>
           </div>
         </div>
       </section>
@@ -403,45 +420,47 @@ const Home = () => {
       {/* Final CTA Section */}
       <section className="py-20 bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Ready to Transform Your Career?
-          </h2>
-          <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">Join thousands of professionals who've already boosted their job search success with RezLit.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? (
-              <>
-                <Link to="/dashboard">
-                  <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100">
-                    <ArrowRight className="mr-2 h-5 w-5" />
-                    Access Dashboard
-                  </Button>
-                </Link>
-                <Link to="/upload-resume">
-                  <Button size="lg" className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-all">
+          <AnimatedSection delay={0} className="animate-fade-in-zoom">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">
+              Ready to Transform Your Career?
+            </h2>
+            <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">Join thousands of professionals who've already boosted their job search success with RezLit.</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {user ? (
+                <>
+                  <Link to="/dashboard">
+                    <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 hover:scale-105 transition-all">
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                      Access Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/upload-resume">
+                    <Button size="lg" className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 hover:scale-105 transition-all">
+                      <Upload className="mr-2 h-5 w-5" />
+                      Upload Resume
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100 hover:scale-105 transition-all">
+                      <ArrowRight className="mr-2 h-5 w-5" />
+                      Start Free Today
+                    </Button>
+                  </Link>
+                  <Button 
+                    size="lg" 
+                    className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 hover:scale-105 transition-all"
+                    onClick={handleUploadResumeClick}
+                  >
                     <Upload className="mr-2 h-5 w-5" />
                     Upload Resume
                   </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button size="lg" className="text-lg px-8 py-4 bg-white text-indigo-600 hover:bg-gray-100">
-                    <ArrowRight className="mr-2 h-5 w-5" />
-                    Start Free Today
-                  </Button>
-                </Link>
-                <Button 
-                  size="lg" 
-                  className="text-lg px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 hover:bg-white/20 transition-all"
-                  onClick={handleUploadResumeClick}
-                >
-                  <Upload className="mr-2 h-5 w-5" />
-                  Upload Resume
-                </Button>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          </AnimatedSection>
         </div>
       </section>
 

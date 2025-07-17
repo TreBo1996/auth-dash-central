@@ -142,6 +142,75 @@ export default {
 				'blink': {
 					'0%, 50%': { opacity: '1' },
 					'51%, 100%': { opacity: '0' }
+				},
+				/* Enhanced Landing Page Keyframes */
+				'fade-in-zoom': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(30px) scale(0.95)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0) scale(1)'
+					}
+				},
+				'slide-in-bounce': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(50px)'
+					},
+					'60%': {
+						opacity: '1',
+						transform: 'translateY(-5px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'reveal-up': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(40px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'fade-in-left': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateX(-30px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateX(0)'
+					}
+				},
+				'fade-in-right': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateX(30px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateX(0)'
+					}
+				},
+				'counter-up': {
+					'0%': {
+						opacity: '0',
+						transform: 'scale(0.8)'
+					},
+					'50%': {
+						opacity: '1',
+						transform: 'scale(1.1)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'scale(1)'
+					}
 				}
 			},
 			animation: {
@@ -149,7 +218,14 @@ export default {
 				'accordion-up': 'accordion-up 0.3s ease-in',
 				'fade-in': 'fade-in 0.3s ease-out',
 				'slide-up': 'slide-up 0.4s ease-out',
-				'blink': 'blink 1s infinite'
+				'blink': 'blink 1s infinite',
+				/* Enhanced Landing Page Animations */
+				'fade-in-zoom': 'fade-in-zoom 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+				'slide-in-bounce': 'slide-in-bounce 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+				'reveal-up': 'reveal-up 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+				'fade-in-left': 'fade-in-left 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+				'fade-in-right': 'fade-in-right 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+				'counter-up': 'counter-up 1.5s ease-out'
 			}
 		}
 	},
