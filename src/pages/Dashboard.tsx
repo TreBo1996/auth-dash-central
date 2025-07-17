@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye, Building2, Plus } from 'lucide-react';
+import { FileText, Calendar, Edit, Trash2, Sparkles, Palette, ChevronDown, Eye, Building2, Plus, Upload } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@supabase/supabase-js';
@@ -381,14 +382,26 @@ const Dashboard: React.FC = () => {
                     <Badge className="bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border-blue-200 font-semibold">
                       {resumes.length}
                     </Badge>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => navigate('/upload-resume')}
-                      className="ml-1 h-6 w-6 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/upload-resume');
+                            }}
+                            className="ml-2 h-7 w-7 p-0 border-blue-300 text-blue-600 hover:text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Upload new resume</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${resumesOpen ? 'rotate-180' : ''}`} />
                 </div>
@@ -459,14 +472,26 @@ const Dashboard: React.FC = () => {
                     <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 font-semibold">
                       {jobDescriptions.length}
                     </Badge>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => navigate('/upload-job')}
-                      className="ml-1 h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/upload-job');
+                            }}
+                            className="ml-2 h-7 w-7 p-0 border-green-300 text-green-600 hover:text-green-700 hover:bg-green-50 hover:border-green-400"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Upload job description</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${jobDescriptionsOpen ? 'rotate-180' : ''}`} />
                 </div>
