@@ -61,8 +61,6 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
   const modalContentRef = useRef<HTMLDivElement>(null);
 
   const handleOptimize = () => {
-    // Scroll to top to show the loading screen
-    modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     onOptimize(userAdditions);
   };
 
@@ -91,8 +89,11 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
     { icon: <CheckCircle className="h-5 w-5" />, text: "Finalizing your optimized resume..." }
   ];
 
+  // Handle optimization state changes
   useEffect(() => {
     if (isOptimizing) {
+      // Immediately scroll to top when optimization starts
+      modalContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
       setOptimizationStep(0);
       const interval = setInterval(() => {
         setOptimizationStep(prev => (prev + 1) % optimizationSteps.length);
@@ -119,7 +120,7 @@ export const ATSPreviewModal: React.FC<ATSPreviewModalProps> = ({
       <DialogContent className={`max-w-4xl max-h-[90vh] ${isOptimizing ? 'overflow-hidden' : 'overflow-y-auto'}`} ref={modalContentRef}>
         {/* Optimization Loading Overlay */}
         {isOptimizing && (
-          <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="text-center space-y-6 max-w-md">
               <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center">
                 <Loader2 className="h-8 w-8 text-white animate-spin" />
