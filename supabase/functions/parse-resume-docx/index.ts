@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -55,40 +56,55 @@ serve(async (req: Request) => {
     
     console.log(`Converting file to buffer: ${arrayBuffer.byteLength} bytes`);
 
-    // Parse DOCX using mammoth (server-side with better memory management)
-    const mammoth = await import("npm:mammoth@1.6.0");
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    const extractedText = result.value;
-    
-    console.log(`DOCX parsing completed: ${extractedText.length} characters extracted`);
-
-    if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error('No readable text could be extracted from this DOCX file. The file may be corrupted or empty.');
+    // Validate the buffer before passing to mammoth
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('Invalid or empty file buffer');
     }
 
-    // Clean up the extracted text
-    const cleanedText = extractedText
-      .replace(/\s+/g, ' ')
-      .trim();
+    try {
+      // Parse DOCX using mammoth with correct parameter format
+      console.log('Initializing mammoth parser...');
+      const mammoth = await import("npm:mammoth@1.6.0");
+      
+      console.log('Calling mammoth extractRawText with buffer...');
+      // FIX: Use { buffer: arrayBuffer } instead of { arrayBuffer }
+      const result = await mammoth.extractRawText({ buffer: arrayBuffer });
+      const extractedText = result.value;
+      
+      console.log(`DOCX parsing completed: ${extractedText.length} characters extracted`);
 
-    // Assess text quality to detect potential issues
-    const textQuality = assessTextQuality(cleanedText);
-    if (textQuality.isLowQuality) {
-      console.warn(`Low quality text detected: ${textQuality.reason}`);
-      throw new Error(`DOCX text extraction produced poor quality results. ${textQuality.reason}`);
-    }
-
-    return new Response(
-      JSON.stringify({
-        parsed_text: cleanedText
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('No readable text could be extracted from this DOCX file. The file may be corrupted or empty.');
       }
-    );
+
+      // Clean up the extracted text
+      const cleanedText = extractedText
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Assess text quality to detect potential issues
+      const textQuality = assessTextQuality(cleanedText);
+      if (textQuality.isLowQuality) {
+        console.warn(`Low quality text detected: ${textQuality.reason}`);
+        throw new Error(`DOCX text extraction produced poor quality results. ${textQuality.reason}`);
+      }
+
+      return new Response(
+        JSON.stringify({
+          parsed_text: cleanedText
+        }),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
+
+    } catch (mammothError) {
+      console.error('Mammoth parsing error:', mammothError);
+      throw new Error(`Failed to parse DOCX content: ${mammothError.message || 'Unknown mammoth error'}`);
+    }
 
   } catch (error) {
     console.error('Resume DOCX parsing error:', error);
