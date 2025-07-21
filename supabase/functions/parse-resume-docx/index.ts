@@ -51,27 +51,23 @@ serve(async (req: Request) => {
 
     console.log(`File downloaded successfully, size: ${fileData.size} bytes`);
 
-    // Convert blob to array buffer for mammoth
-    const arrayBuffer = await fileData.arrayBuffer();
-    
-    console.log(`Converting file to buffer: ${arrayBuffer.byteLength} bytes`);
-
-    // Validate the buffer before passing to mammoth
-    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-      throw new Error('Invalid or empty file buffer');
-    }
-
     try {
-      // Parse DOCX using mammoth with correct parameter format
-      console.log('Initializing mammoth parser...');
+      // Import mammoth and parse DOCX - using the correct approach
+      console.log('Importing mammoth library...');
       const mammoth = await import("npm:mammoth@1.6.0");
       
-      console.log('Calling mammoth extractRawText with buffer...');
-      // FIX: Use { buffer: arrayBuffer } instead of { arrayBuffer }
-      const result = await mammoth.extractRawText({ buffer: arrayBuffer });
+      console.log('Converting file data to buffer for mammoth...');
+      // Convert the blob to buffer format that mammoth expects
+      const buffer = new Uint8Array(await fileData.arrayBuffer());
+      
+      console.log(`Buffer prepared: ${buffer.length} bytes`);
+      console.log('Calling mammoth extractRawText...');
+      
+      // Use the correct mammoth API - pass the buffer directly
+      const result = await mammoth.extractRawText({ buffer: buffer });
       const extractedText = result.value;
       
-      console.log(`DOCX parsing completed: ${extractedText.length} characters extracted`);
+      console.log(`DOCX parsing completed successfully: ${extractedText.length} characters extracted`);
 
       if (!extractedText || extractedText.trim().length === 0) {
         throw new Error('No readable text could be extracted from this DOCX file. The file may be corrupted or empty.');
@@ -89,6 +85,8 @@ serve(async (req: Request) => {
         throw new Error(`DOCX text extraction produced poor quality results. ${textQuality.reason}`);
       }
 
+      console.log('DOCX parsing successful, returning cleaned text');
+
       return new Response(
         JSON.stringify({
           parsed_text: cleanedText
@@ -102,12 +100,14 @@ serve(async (req: Request) => {
       );
 
     } catch (mammothError) {
-      console.error('Mammoth parsing error:', mammothError);
-      throw new Error(`Failed to parse DOCX content: ${mammothError.message || 'Unknown mammoth error'}`);
+      console.error('Mammoth parsing error details:', mammothError);
+      console.error('Mammoth error stack:', mammothError.stack);
+      throw new Error(`Failed to parse DOCX content with mammoth: ${mammothError.message || 'Unknown mammoth error'}`);
     }
 
   } catch (error) {
     console.error('Resume DOCX parsing error:', error);
+    console.error('Error stack:', error.stack);
     
     let errorMessage = 'Unknown error occurred during resume DOCX parsing';
     

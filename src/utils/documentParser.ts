@@ -9,13 +9,13 @@ export const parseDocument = async (file: File): Promise<string> => {
 
   try {
     if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      console.log('Processing PDF using new parse-resume-pdf edge function...');
+      console.log('Processing PDF using parse-resume-pdf edge function...');
       return await parsePDFWithStorage(file);
     } else if (
       fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       fileName.endsWith('.docx')
     ) {
-      console.log('Processing DOCX using new parse-resume-docx edge function...');
+      console.log('Processing DOCX using parse-resume-docx edge function...');
       return await parseDocxWithStorage(file);
     } else {
       throw new Error(`Unsupported file type: ${fileType || 'unknown'}. Please use PDF or DOCX format.`);
@@ -72,7 +72,7 @@ const parsePDFWithStorage = async (file: File): Promise<string> => {
 
     console.log('PDF uploaded to temporary storage, calling parse-resume-pdf function...');
 
-    // Call the new parse-resume-pdf edge function
+    // Call the parse-resume-pdf edge function
     const { data, error } = await supabase.functions.invoke('parse-resume-pdf', {
       body: {
         file_path: tempFilePath
@@ -140,7 +140,7 @@ const parseDocxWithStorage = async (file: File): Promise<string> => {
 
     console.log('DOCX uploaded to temporary storage, calling parse-resume-docx function...');
 
-    // Call the new parse-resume-docx edge function
+    // Call the parse-resume-docx edge function (now fixed)
     const { data, error } = await supabase.functions.invoke('parse-resume-docx', {
       body: {
         file_path: tempFilePath
@@ -153,11 +153,11 @@ const parseDocxWithStorage = async (file: File): Promise<string> => {
       .remove([tempFilePath]);
 
     if (error) {
-      console.error('Edge function error:', error);
+      console.error('DOCX edge function error:', error);
       throw new Error(`DOCX parsing failed: ${error.message}`);
     }
 
-    if (!data.parsed_text) {
+    if (!data || !data.parsed_text) {
       throw new Error('No text could be extracted from this DOCX file');
     }
 
