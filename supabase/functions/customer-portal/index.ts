@@ -21,6 +21,11 @@ serve(async (req) => {
     logStep("Function started");
 
     const stripeKey = Deno.env.get("STRIPE_API_KEY");
+    logStep("Environment check", { 
+      hasStripeKey: !!stripeKey, 
+      stripeKeyLength: stripeKey?.length || 0,
+      envKeys: Object.keys(Deno.env.toObject()).filter(k => k.includes('STRIPE'))
+    });
     if (!stripeKey) throw new Error("STRIPE_API_KEY is not set");
     logStep("Stripe key verified");
 
