@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    logStep("Function started");
+    logStep("Function started", { allEnvKeys: Object.keys(Deno.env.toObject()).sort() });
 
     const stripeKey = Deno.env.get("STRIPE_API_KEY");
     logStep("Environment check", { 
