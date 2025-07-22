@@ -66,3 +66,6 @@ verify_jwt = false
 
 [functions.cached-job-search]
 verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
