@@ -212,7 +212,7 @@ const Home = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {features.map((feature, index) => (
               <AnimatedSection key={index} delay={index * 150} className="animate-fade-in-zoom">
-                <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2 hover:scale-105">
+                <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg hover:-translate-y-2 hover:scale-105 h-full flex flex-col">
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="text-indigo-600 group-hover:text-indigo-700 transition-colors">
@@ -226,7 +226,7 @@ const Home = () => {
                       {feature.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow">
                     <CardDescription className="text-gray-600 leading-relaxed">
                       {feature.description}
                     </CardDescription>
