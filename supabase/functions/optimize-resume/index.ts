@@ -8,11 +8,203 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  initialDelay: 1000,
+  maxDelay: 8000,
+  backoffMultiplier: 2
+};
+
+// OpenAI timeout configuration
+const OPENAI_TIMEOUT = 45000; // 45 seconds
+
+// Exponential backoff retry function
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  context: string,
+  retries = RETRY_CONFIG.maxRetries
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      console.log(`${context} - Attempt ${attempt + 1}/${retries + 1}`);
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`${context} - Attempt ${attempt + 1} failed:`, error);
+      
+      if (attempt === retries) {
+        throw lastError;
+      }
+      
+      // Calculate delay with exponential backoff
+      const delay = Math.min(
+        RETRY_CONFIG.initialDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt),
+        RETRY_CONFIG.maxDelay
+      );
+      
+      console.log(`${context} - Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!;
+}
+
+// OpenAI API call with timeout and retry
+async function callOpenAI(prompt: string, systemContent: string, maxTokens: number, context: string) {
+  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openAIApiKey) {
+    throw new Error('OpenAI API key not configured');
+  }
+
+  return await retryWithBackoff(async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT);
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-2025-04-14',
+          messages: [
+            { role: 'system', content: systemContent },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: maxTokens,
+          temperature: 0.3,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`OpenAI API timeout after ${OPENAI_TIMEOUT}ms`);
+      }
+      throw error;
+    }
+  }, context);
+}
+
+// Background ATS scoring function
+async function performATSScoring(optimizedResumeId: string, supabase: any, openAIApiKey: string) {
+  try {
+    console.log('Starting background ATS scoring for resume:', optimizedResumeId);
+    
+    // Fetch optimized resume with related data
+    const { data: optimizedResume, error: resumeError } = await supabase
+      .from('optimized_resumes')
+      .select(`
+        *,
+        resumes!original_resume_id(file_name, parsed_text),
+        job_descriptions!job_description_id(title, parsed_text)
+      `)
+      .eq('id', optimizedResumeId)
+      .single();
+
+    if (resumeError) {
+      throw new Error(`Failed to fetch optimized resume: ${resumeError.message}`);
+    }
+
+    const resumeContent = optimizedResume.generated_text;
+    const jobDescription = optimizedResume.job_descriptions.parsed_text;
+    const jobTitle = optimizedResume.job_descriptions.title;
+
+    const atsPrompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following OPTIMIZED resume against the job description and provide a comprehensive ATS compatibility score.
+
+IMPORTANT: This resume has been optimized specifically for this job description, so the score should be significantly HIGHER than a typical unoptimized resume.
+
+CRITICAL: Return ONLY valid JSON in this exact structure:
+
+{
+  "overall_score": <number between 80-100 for optimized resumes>,
+  "category_scores": {
+    "keyword_match": <number between 80-100>,
+    "skills_alignment": <number between 80-100>,
+    "experience_relevance": <number between 80-100>,
+    "format_compliance": <number between 85-100>
+  },
+  "recommendations": [
+    "specific actionable recommendation 1",
+    "specific actionable recommendation 2",
+    "specific actionable recommendation 3"
+  ],
+  "keyword_analysis": {
+    "matched_keywords": ["keyword1", "keyword2", "keyword3"],
+    "missing_keywords": ["missing1", "missing2"]
+  },
+  "strengths": [
+    "strength 1",
+    "strength 2",
+    "strength 3"
+  ],
+  "areas_for_improvement": [
+    "improvement area 1",
+    "improvement area 2"
+  ]
+}
+
+Job Title: ${jobTitle}
+
+Job Description:
+${jobDescription}
+
+OPTIMIZED Resume Content:
+${resumeContent}
+
+Return ONLY the JSON structure above, no additional text.`;
+
+    const atsResponse = await callOpenAI(
+      atsPrompt,
+      'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text. Optimized resumes should score 80+ overall.',
+      2000,
+      'Background ATS Scoring'
+    );
+
+    const atsResult = atsResponse.choices[0].message.content;
+    const atsScoring = JSON.parse(atsResult);
+
+    // Update the optimized resume with ATS scoring
+    await supabase
+      .from('optimized_resumes')
+      .update({
+        ats_score: atsScoring.overall_score,
+        ats_feedback: atsScoring,
+        scoring_criteria: atsScoring.category_scores,
+        scored_at: new Date().toISOString()
+      })
+      .eq('id', optimizedResumeId);
+
+    console.log('Successfully completed background ATS scoring:', atsScoring.overall_score);
+  } catch (error) {
+    console.error('Background ATS scoring failed:', error);
+    // Don't throw - this is a background task and shouldn't fail the main operation
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const startTime = Date.now();
+  console.log('=== RESUME OPTIMIZATION START ===');
 
   try {
     const { resumeId, jobDescriptionId, userAdditions = [] } = await req.json();
@@ -81,7 +273,7 @@ serve(async (req) => {
       });
     }
 
-    // Fetch resume and job description
+    // Fetch resume and job description in parallel
     console.log('Fetching resume and job description...');
     const [resumeResult, jobDescResult] = await Promise.all([
       supabase
@@ -121,16 +313,6 @@ serve(async (req) => {
 
     console.log('Successfully fetched resume and job description');
 
-    // Call OpenAI API with enhanced optimization prompt
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      console.error('OpenAI API key not configured');
-      throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your Supabase secrets.');
-    }
-
-    console.log('Calling OpenAI API for authentic resume enhancement...');
-    console.log('User additions provided:', userAdditions.length);
-
     // Build user additions section for prompt
     let userAdditionsSection = '';
     if (userAdditions && userAdditions.length > 0) {
@@ -155,6 +337,7 @@ CRITICAL OPTIMIZATION INSTRUCTIONS FOR USER ADDITIONS:
 These are legitimate experiences the user wants highlighted - treat them as raw material that needs professional enhancement and optimization, not just insertion.`;
     }
 
+    // Optimized prompt (streamlined while maintaining functionality)
     const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to enhance the existing resume content for better ATS compatibility while maintaining complete accuracy and authenticity.
 
 CRITICAL CONTACT INFORMATION EXTRACTION - HIGHEST PRIORITY:
@@ -171,7 +354,6 @@ CRITICAL CONTACT INFORMATION EXTRACTION - HIGHEST PRIORITY:
    - If you find the person's actual name, use it exactly
    - If you find a real location, use it exactly
    - If contact information is unclear or missing from the original text, use "Not provided" rather than placeholders
-5. **CONTACT EXTRACTION PRIORITY**: Extract contact information BEFORE any other optimization work
 
 CRITICAL AUTHENTICITY REQUIREMENTS:
 1. **PRESERVE ORIGINAL EXPERIENCES**: NEVER create, add, or invent new job positions, responsibilities, or achievements
@@ -181,7 +363,7 @@ CRITICAL AUTHENTICITY REQUIREMENTS:
 5. **NO NEW CERTIFICATIONS**: Only include certifications that already exist in the original resume
 6. **KEYWORD INTEGRATION**: Naturally integrate relevant job description keywords into existing content without changing the fundamental meaning
 
-ATS OPTIMIZATION STRATEGIES (WITHIN AUTHENTICITY BOUNDS):
+ATS OPTIMIZATION STRATEGIES:
 - Improve keyword density by rephrasing existing content with job description terminology
 - Enhance action verbs while preserving the original responsibilities
 - Restructure existing bullet points for better ATS readability
@@ -199,15 +381,7 @@ CONTENT ENHANCEMENT RULES:
 - **SKILLS SELECTION**: Choose MAXIMUM 6 individual skills from the original resume that are most relevant to the job description
 - Focus on better articulation rather than content expansion
 
-CRITICAL OUTPUT FORMAT REQUIREMENTS:
 You MUST return ONLY valid JSON. The structure should match the original resume's sections exactly:
-
-CONTACT INFORMATION INSTRUCTIONS:
-- Extract the ACTUAL name from the original resume text (look at the top/header)
-- Extract the ACTUAL email address (look for real domains like @gmail.com, @company.com)
-- Extract the ACTUAL phone number (look for real phone formats)
-- Extract the ACTUAL location (look for real cities/states)
-- If any contact info is not found in the original text, use "Not provided" instead of placeholders
 
 {
   "name": "ACTUAL FULL NAME FROM RESUME (never placeholder)",
@@ -244,56 +418,31 @@ CONTACT INFORMATION INSTRUCTIONS:
   ]
 }
 
-IMPORTANT CONDITIONAL SECTIONS:
-- Only include "certifications" array if the original resume had certifications
-- NEVER add new certifications not present in the original resume
-- Maintain the same number of experiences as the original resume
-- **CRITICAL SKILLS REQUIREMENT**: Select ONLY the top 6 most relevant skills from the original resume - no more than 6 individual skill items total
-- Enhance existing bullet points rather than creating new ones
+IMPORTANT: Only include "certifications" array if the original resume had certifications. Maintain the same number of experiences as the original resume. **CRITICAL SKILLS REQUIREMENT**: Select ONLY the top 6 most relevant skills from the original resume - no more than 6 individual skill items total.
 
-TARGET JOB DESCRIPTION (Extract and integrate ALL relevant keywords):
+TARGET JOB DESCRIPTION:
 ${jobDescription.parsed_text}
 
 ORIGINAL RESUME TO OPTIMIZE:
 ${resume.parsed_text}
 ${userAdditionsSection}
 
-REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improving existing content alignment with the job description while maintaining complete authenticity and accuracy${userAdditions.length > 0 ? ' AND incorporating the user-provided additions into the specified roles naturally' : ''}. Return ONLY the enhanced resume as valid JSON.`;
+Return ONLY the enhanced resume as valid JSON.`;
 
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert ATS optimization specialist focused on enhancing existing resume content for better compatibility while maintaining complete authenticity. Never fabricate experiences, achievements, or certifications. Always return valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 4000,
-        temperature: 0.3,
-      }),
-    });
+    // Call OpenAI API for resume optimization
+    console.log('Calling OpenAI API for resume optimization...');
+    const optimizationStart = Date.now();
+    
+    const openAIData = await callOpenAI(
+      prompt,
+      'You are an expert ATS optimization specialist focused on enhancing existing resume content for better compatibility while maintaining complete authenticity. Never fabricate experiences, achievements, or certifications. Always return valid JSON only.',
+      4000,
+      'Resume Optimization'
+    );
 
-    if (!openAIResponse.ok) {
-      const error = await openAIResponse.text();
-      console.error('OpenAI API error:', error);
-      throw new Error(`Failed to generate optimized resume: ${openAIResponse.status} ${openAIResponse.statusText}`);
-    }
-
-    const openAIData = await openAIResponse.json();
     const generatedText = openAIData.choices[0].message.content;
-
-    console.log('Generated resume length:', generatedText.length);
-    console.log('Generated preview:', generatedText.substring(0, 500));
+    const optimizationTime = Date.now() - optimizationStart;
+    console.log('Resume optimization completed in', optimizationTime, 'ms');
 
     // Validate that the response is valid JSON
     let structuredResume;
@@ -312,6 +461,8 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
 
     // Save optimized resume to database
     console.log('Saving optimized resume to database...');
+    const dbStart = Date.now();
+    
     const { data: optimizedResume, error: saveError } = await supabase
       .from('optimized_resumes')
       .insert({
@@ -330,8 +481,8 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
 
     console.log('Successfully created optimized resume:', optimizedResume.id);
 
-    // Store structured data in the new tables
-    console.log('Storing structured resume data...');
+    // Store structured data in the new tables using parallel operations
+    const structuredDataOperations = [];
 
     // Store contact information and summary
     const contactData = {
@@ -341,20 +492,22 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
       location: structuredResume.contact?.location || ''
     };
 
-    await supabase
-      .from('resume_sections')
-      .insert([
-        {
-          optimized_resume_id: optimizedResume.id,
-          section_type: 'contact',
-          content: contactData
-        },
-        {
-          optimized_resume_id: optimizedResume.id,
-          section_type: 'summary',
-          content: { summary: structuredResume.summary || '' }
-        }
-      ]);
+    structuredDataOperations.push(
+      supabase
+        .from('resume_sections')
+        .insert([
+          {
+            optimized_resume_id: optimizedResume.id,
+            section_type: 'contact',
+            content: contactData
+          },
+          {
+            optimized_resume_id: optimizedResume.id,
+            section_type: 'summary',
+            content: { summary: structuredResume.summary || '' }
+          }
+        ])
+    );
 
     // Store experiences with enhanced bullet points
     if (structuredResume.experience && structuredResume.experience.length > 0) {
@@ -367,9 +520,11 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
         display_order: index
       }));
 
-      await supabase
-        .from('resume_experiences')
-        .insert(experienceInserts);
+      structuredDataOperations.push(
+        supabase
+          .from('resume_experiences')
+          .insert(experienceInserts)
+      );
     }
 
     // Store enhanced skills
@@ -381,9 +536,11 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
         display_order: index
       }));
 
-      await supabase
-        .from('resume_skills')
-        .insert(skillsInserts);
+      structuredDataOperations.push(
+        supabase
+          .from('resume_skills')
+          .insert(skillsInserts)
+      );
     }
 
     // Store education
@@ -396,9 +553,11 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
         display_order: index
       }));
 
-      await supabase
-        .from('resume_education')
-        .insert(educationInserts);
+      structuredDataOperations.push(
+        supabase
+          .from('resume_education')
+          .insert(educationInserts)
+      );
     }
 
     // Store certifications
@@ -411,12 +570,18 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
         display_order: index
       }));
 
-      await supabase
-        .from('resume_certifications')
-        .insert(certificationsInserts);
+      structuredDataOperations.push(
+        supabase
+          .from('resume_certifications')
+          .insert(certificationsInserts)
+      );
     }
 
-    console.log('Successfully stored all structured resume data');
+    // Execute all structured data operations in parallel
+    await Promise.all(structuredDataOperations);
+    
+    const dbTime = Date.now() - dbStart;
+    console.log('Database operations completed in', dbTime, 'ms');
 
     // Increment usage count for the user
     try {
@@ -430,118 +595,38 @@ REMEMBER: Your goal is to ENHANCE the ATS compatibility of this resume by improv
       // Don't fail the entire operation if usage tracking fails
     }
 
-    // Calculate ATS score for the optimized resume
-    console.log('Calculating ATS score for optimized resume...');
-    
-    try {
-      const atsPrompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following OPTIMIZED resume against the job description and provide a comprehensive ATS compatibility score.
-
-IMPORTANT: This resume has been optimized specifically for this job description, so the score should be significantly HIGHER than a typical unoptimized resume.
-
-CRITICAL: Return ONLY valid JSON in this exact structure:
-
-{
-  "overall_score": <number between 80-100 for optimized resumes>,
-  "category_scores": {
-    "keyword_match": <number between 80-100>,
-    "skills_alignment": <number between 80-100>,
-    "experience_relevance": <number between 80-100>,
-    "format_compliance": <number between 85-100>
-  },
-  "recommendations": [
-    "specific actionable recommendation 1",
-    "specific actionable recommendation 2",
-    "specific actionable recommendation 3"
-  ],
-  "keyword_analysis": {
-    "matched_keywords": ["keyword1", "keyword2", "keyword3"],
-    "missing_keywords": ["missing1", "missing2"]
-  },
-  "strengths": [
-    "strength 1",
-    "strength 2",
-    "strength 3"
-  ],
-  "areas_for_improvement": [
-    "improvement area 1",
-    "improvement area 2"
-  ]
-}
-
-Job Title: ${jobDescription.title}
-
-Job Description:
-${jobDescription.parsed_text}
-
-OPTIMIZED Resume Content:
-${generatedText}
-
-Return ONLY the JSON structure above, no additional text.`;
-
-      const atsResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text. Optimized resumes should score 80+ overall.'
-            },
-            {
-              role: 'user',
-              content: atsPrompt
-            }
-          ],
-          max_tokens: 2000,
-          temperature: 0.3,
-        }),
-      });
-
-      if (atsResponse.ok) {
-        const atsData = await atsResponse.json();
-        const atsResult = atsData.choices[0].message.content;
-
-        let atsScoring;
-        try {
-          atsScoring = JSON.parse(atsResult);
-          
-          // Update the optimized resume with ATS scoring
-          await supabase
-            .from('optimized_resumes')
-            .update({
-              ats_score: atsScoring.overall_score,
-              ats_feedback: atsScoring,
-              scoring_criteria: atsScoring.category_scores,
-              scored_at: new Date().toISOString()
-            })
-            .eq('id', optimizedResume.id);
-
-          console.log('Successfully calculated and saved optimized ATS score:', atsScoring.overall_score);
-        } catch (atsParseError) {
-          console.error('Failed to parse ATS scoring JSON:', atsParseError);
-        }
-      } else {
-        console.error('Failed to calculate ATS score for optimized resume');
-      }
-    } catch (atsError) {
-      console.error('Error calculating optimized ATS score:', atsError);
+    // Start background ATS scoring (non-blocking)
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (openAIApiKey) {
+      console.log('Starting background ATS scoring...');
+      EdgeRuntime.waitUntil(
+        performATSScoring(optimizedResume.id, supabase, openAIApiKey)
+      );
     }
+
+    const totalTime = Date.now() - startTime;
+    console.log(`=== RESUME OPTIMIZATION COMPLETE === Total time: ${totalTime}ms`);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      optimizedResume: optimizedResume
+      optimizedResume: optimizedResume,
+      processingTime: {
+        total: totalTime,
+        optimization: optimizationTime,
+        database: dbTime
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
+    const totalTime = Date.now() - startTime;
     console.error('Error in optimize-resume function:', error);
+    console.log(`=== RESUME OPTIMIZATION FAILED === Total time: ${totalTime}ms`);
+    
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error.message,
+      processingTime: totalTime
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
