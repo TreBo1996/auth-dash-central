@@ -1,371 +1,1544 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { FileText, Mail, Award } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { ApplicationStatus } from '@/components/job-hub/JobStatusSelector';
-import { ApplicationPreviewButtons } from './ApplicationPreviewButtons';
+import { ResumeOptimizer } from '@/components/ResumeOptimizer';
+import { ATSScoreDisplay } from '@/components/ATSScoreDisplay';
+import { ContactSection } from '@/components/resume-editor/ContactSection';
+import { ExperienceSection } from '@/components/resume-editor/ExperienceSection';
+import { SkillsSection } from '@/components/resume-editor/SkillsSection';
+import { EducationSection } from '@/components/resume-editor/EducationSection';
+import { CertificationsSection } from '@/components/resume-editor/CertificationsSection';
+import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
+import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
+import { ResumePreview } from '@/components/resume-templates/ResumePreview';
+import { CoverLetterGenerator } from '@/components/CoverLetterGenerator';
+import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { InlineFileUpload } from './InlineFileUpload';
+import { FileText, Sparkles, Send, CheckCircle, Eye, ArrowLeft, AlertCircle, Upload, Save, Download, Edit, Target, Palette, ExternalLink } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { EEOFormsSection, EEOResponses } from './EEOFormsSection';
+
+interface Resume {
+  id: string;
+  file_name: string | null;
+  parsed_text: string | null;
+  type: 'original' | 'optimized';
+  job_title?: string;
+}
+
+interface JobPosting {
+  id: string;
+  title: string;
+  description: string;
+  requirements: string[];
+  source?: string;
+  data_source?: string; // 'employer' or 'apify' to distinguish job sources
+  job_url?: string;
+  apply_url?: string;
+  company?: string;
+  employer_job_posting_id?: string; // For employer jobs in cached_jobs, stores actual job posting ID
+  employer_profile: {
+    company_name: string;
+  } | null;
+}
 
 interface JobApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  job?: {
-    id: string;
-    title: string;
-    company: string | null;
-    location: string | null;
-    salary_range: string | null;
-    parsed_text: string;
-    source: string | null;
-    job_url: string | null;
-    created_at: string;
-    is_applied?: boolean;
-    is_saved?: boolean;
-    application_status?: ApplicationStatus;
-  };
-  jobPosting?: any;
-  onStatusUpdate?: (jobId: string, field: string, value: boolean | ApplicationStatus) => void;
-  onApplicationSubmitted?: () => void;
+  jobPosting: JobPosting;
+  onApplicationSubmitted: () => void;
 }
 
 export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   isOpen,
   onClose,
-  job,
   jobPosting,
-  onStatusUpdate,
   onApplicationSubmitted
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
-
-  // Use either job or jobPosting data
-  const jobData = job || jobPosting;
-
-  const [step, setStep] = useState(1);
-  const [optimizedResume, setOptimizedResume] = useState<any>(null);
-  const [coverLetter, setCoverLetter] = useState<any>(null);
-  const [contactName, setContactName] = useState('');
-  const [contactEmail, setContactEmail] = useState('');
-  const [additionalNotes, setAdditionalNotes] = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  
+  // Comprehensive workflow step management
+  const [step, setStep] = useState<'choose' | 'upload' | 'ats-score' | 'optimize' | 'edit-resume' | 'templates' | 'cover-letter' | 'eeo-forms' | 'final-submit' | 'external-apply' | 'success'>('choose');
+  const [originalIntent, setOriginalIntent] = useState<'optimize' | 'existing' | null>(null);
+  
+  // Resume management
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('');
+  const [optimizedResumeId, setOptimizedResumeId] = useState<string>('');
+  const [optimizedResumeContent, setOptimizedResumeContent] = useState<string>('');
+  const [loadingResumes, setLoadingResumes] = useState(false);
+  
+  // Job description management
+  const [jobDescriptionId, setJobDescriptionId] = useState<string>('');
+  const [creatingJobDescription, setCreatingJobDescription] = useState(false);
+  
+  // ATS and optimization
+  const [atsScore, setAtsScore] = useState<number | undefined>();
+  const [atsFeedback, setAtsFeedback] = useState<any>(undefined);
+  
+  // Resume editing
+  const [editableResumeData, setEditableResumeData] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Template selection
+  const [selectedTemplate, setSelectedTemplate] = useState('modern-ats');
+  const [selectedColorScheme, setSelectedColorScheme] = useState('classic-monochrome');
+  const [isExporting, setIsExporting] = useState(false);
+  
+  // Cover letter
+  const [coverLetter, setCoverLetter] = useState('');
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  
+  // Application submission
+  const [submitting, setSubmitting] = useState(false);
+  
+  // EEO forms
+  const [eeoResponses, setEeoResponses] = useState<EEOResponses>({});
+  
+  const isMobile = useIsMobile();
+  const companyName = jobPosting.employer_profile?.company_name || jobPosting.company || 'Company Name Not Available';
 
   useEffect(() => {
-    if (isOpen && jobData) {
-      loadApplicationStack();
+    if (isOpen && user) {
+      console.log('🔄 Modal opened, loading user resumes...');
+      loadResumes();
     }
-  }, [isOpen, jobData?.id]);
+  }, [isOpen, user]);
 
-  const loadApplicationStack = async () => {
-    if (!jobData) return;
+  useEffect(() => {
+    // Debug logging for modal state
+    console.log('🔍 Modal Debug - Current state:', {
+      isOpen,
+      step,
+      userId: user?.id,
+      resumesCount: resumes.length,
+      selectedResumeId,
+      optimizedResumeId,
+      jobDescriptionId,
+      submitting
+    });
+  }, [isOpen, step, user, resumes.length, selectedResumeId, optimizedResumeId, jobDescriptionId, submitting]);
+
+  const loadResumes = async () => {
+    if (!user) {
+      console.log('❌ No user found, cannot load resumes');
+      return;
+    }
 
     try {
-      setLoading(true);
-      setError('');
+      setLoadingResumes(true);
+      console.log('📋 Loading resumes for user:', user.id);
+      
+      // Fetch original resumes
+      const { data: originalResumes, error: originalError } = await supabase
+        .from('resumes')
+        .select('id, file_name, parsed_text')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-      // Fetch optimized resume
-      const { data: resumeData, error: resumeError } = await supabase
+      if (originalError) {
+        console.error('❌ Error loading original resumes:', originalError);
+        throw originalError;
+      }
+
+      // Fetch optimized resumes with job description titles
+      const { data: optimizedResumes, error: optimizedError } = await supabase
         .from('optimized_resumes')
-        .select('*')
-        .eq('job_description_id', jobData.id)
-        .eq('user_id', user!.id)
-        .single();
+        .select(`
+          id, 
+          generated_text,
+          job_descriptions!inner(title)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-      if (resumeError) {
-        console.warn('No optimized resume found:', resumeError);
+      if (optimizedError) {
+        console.error('❌ Error loading optimized resumes:', optimizedError);
+        throw optimizedError;
       }
 
-      setOptimizedResume(resumeData);
-
-      // Fetch cover letter
-      const { data: coverLetterData, error: coverLetterError } = await supabase
-        .from('cover_letters')
-        .select('*')
-        .eq('job_description_id', jobData.id)
-        .eq('user_id', user!.id)
-        .single();
-
-      if (coverLetterError) {
-        console.warn('No cover letter found:', coverLetterError);
+      // Combine and format all resumes
+      const allResumes: Resume[] = [
+        ...(originalResumes || []).map(resume => ({
+          id: resume.id,
+          file_name: resume.file_name,
+          parsed_text: resume.parsed_text,
+          type: 'original' as const
+        })),
+        ...(optimizedResumes || []).map(resume => ({
+          id: resume.id,
+          file_name: `${resume.job_descriptions?.title || 'Optimized Resume'}`,
+          parsed_text: resume.generated_text,
+          type: 'optimized' as const,
+          job_title: resume.job_descriptions?.title
+        }))
+      ];
+      
+      console.log('✅ Loaded all resumes:', allResumes.length);
+      setResumes(allResumes);
+      
+      // Check if user has no resumes - redirect to upload with optimize intent
+      if (allResumes.length === 0) {
+        console.log('⚠️ No resumes found on apply, redirecting to upload with optimize intent');
+        setOriginalIntent('optimize');
+        setStep('upload');
       }
-
-      setCoverLetter(coverLetterData);
     } catch (error) {
-      console.error('Error loading application stack:', error);
-      setError('Failed to load application stack. Please try again.');
+      console.error('Error loading resumes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your resumes",
+        variant: "destructive"
+      });
     } finally {
-      setLoading(false);
+      setLoadingResumes(false);
     }
   };
 
-  const handleNext = () => {
-    setStep(prev => prev + 1);
-  };
-
-  const handleBack = () => {
-    setStep(prev => prev - 1);
-  };
-
-  const handleSubmitApplication = async () => {
-    if (!jobData) return;
-
+  const createJobDescription = async () => {
+    if (!user) {
+      console.log('❌ No user found, cannot create job description');
+      return null;
+    }
+    
+    setCreatingJobDescription(true);
     try {
-      setLoading(true);
-      setError('');
+      console.log('📝 Creating job description for:', jobPosting.title);
+      
+      // Check if job description already exists for this job posting
+      const { data: existingJobDesc } = await supabase
+        .from('job_descriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', jobPosting.title)
+        .eq('parsed_text', jobPosting.description)
+        .eq('source', 'application')
+        .maybeSingle();
 
-      // Simulate application submission
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Update application status if callback is provided
-      if (onStatusUpdate && job) {
-        await onStatusUpdate(job.id, 'application_status', 'applied');
+      if (existingJobDesc) {
+        console.log('✅ Found existing job description:', existingJobDesc.id);
+        setJobDescriptionId(existingJobDesc.id);
+        return existingJobDesc.id;
       }
 
+      // Create new job description
+      const { data: newJobDesc, error } = await supabase
+        .from('job_descriptions')
+        .insert({
+          user_id: user.id,
+          title: jobPosting.title,
+          parsed_text: jobPosting.description,
+          source: 'application',
+          company: companyName
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('❌ Error creating job description:', error);
+        throw error;
+      }
+      
+      console.log('✅ Created new job description:', newJobDesc.id);
+      setJobDescriptionId(newJobDesc.id);
+      return newJobDesc.id;
+    } catch (error) {
+      console.error('Error creating job description:', error);
       toast({
-        title: "Application Submitted",
-        description: "Your application has been successfully submitted!",
+        title: "Error",
+        description: "Failed to prepare job description for optimization",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setCreatingJobDescription(false);
+    }
+  };
+
+  const handleOptimizeClick = async () => {
+    console.log('🎯 Optimize button clicked');
+    
+    // Check if user has any resumes
+    if (availableResumes.length === 0) {
+      console.log('⚠️ No resumes available, redirecting to upload with optimize intent');
+      setOriginalIntent('optimize');
+      setStep('upload');
+      return;
+    }
+    
+    const jobDescId = await createJobDescription();
+    if (jobDescId) {
+      console.log('✅ Job description ready, moving to optimize step');
+      setStep('optimize');
+    }
+  };
+
+  const handleOptimizationComplete = async () => {
+    console.log('✅ Optimization complete, loading optimized resume...');
+    
+    // Get the most recent optimized resume and load its structured data
+    try {
+      const { data } = await supabase
+        .from('optimized_resumes')
+        .select('id, generated_text, ats_score, ats_feedback')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        console.log('✅ Found optimized resume:', data.id);
+        setOptimizedResumeId(data.id);
+        setOptimizedResumeContent(data.generated_text || '');
+        
+        // Set ATS data if available
+        if (data.ats_score) {
+          setAtsScore(data.ats_score);
+          setAtsFeedback(data.ats_feedback);
+        }
+        
+        // Load editable resume data for editor
+        await loadEditableResumeData(data.id);
+        
+        setStep('edit-resume');
+      } else {
+        console.log('⚠️ No optimized resume found, going to final-submit');
+        setStep('final-submit');
+      }
+    } catch (error) {
+      console.error('Error getting optimized resume:', error);
+      setStep('final-submit');
+    }
+  };
+
+  const loadEditableResumeData = async (resumeId: string) => {
+    try {
+      console.log('🔄 Loading structured resume data for editing...');
+      const structuredData = await fetchStructuredResumeData(resumeId);
+      
+      // Transform StructuredResumeData to EditableResumeData format (same as ResumeEditor.tsx)
+      const editableData = {
+        contactInfo: {
+          name: structuredData.name || 'Professional Name',
+          email: structuredData.email || '',
+          phone: structuredData.phone || '',
+          location: structuredData.location || ''
+        },
+        summary: structuredData.summary || '',
+        experience: structuredData.experience.map(exp => ({
+          title: exp.title || 'Job Title',
+          company: exp.company || 'Company Name',
+          duration: exp.duration || '2023 - 2024',
+          bullets: exp.bullets || ['Job responsibility']
+        })),
+        skills: structuredData.skills || [],
+        education: structuredData.education.map(edu => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          institution: edu.school || 'University Name',
+          degree: edu.degree || 'Degree',
+          year: edu.year || '2020'
+        })),
+        certifications: structuredData.certifications?.map(cert => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: cert.name || 'Certification Name',
+          issuer: cert.issuer || 'Issuing Organization',
+          year: cert.year || '2023'
+        })) || []
+      };
+      
+      setEditableResumeData(editableData);
+      console.log('✅ Loaded and transformed resume data for editing');
+    } catch (error) {
+      console.error('Error loading structured resume data:', error);
+      // Fallback to basic structure
+      setEditableResumeData({
+        contactInfo: { name: '', email: '', phone: '', location: '' },
+        summary: '',
+        experience: [],
+        skills: [],
+        education: [],
+        certifications: []
+      });
+    }
+  };
+
+  const handleATSScoreUpdate = (newScore: number, newFeedback: any) => {
+    setAtsScore(newScore);
+    setAtsFeedback(newFeedback);
+  };
+
+  const handleResumeDataChange = (newData: any) => {
+    setEditableResumeData(newData);
+  };
+
+  const handleSaveResumeChanges = async () => {
+    if (!optimizedResumeId || !editableResumeData) return;
+    
+    setIsSaving(true);
+    try {
+      // Save contact info to resume_sections
+      const { error: contactError } = await supabase
+        .from('resume_sections')
+        .upsert({
+          optimized_resume_id: optimizedResumeId,
+          section_type: 'contact',
+          content: {
+            name: editableResumeData.contactInfo.name,
+            email: editableResumeData.contactInfo.email,
+            phone: editableResumeData.contactInfo.phone,
+            location: editableResumeData.contactInfo.location
+          }
+        }, {
+          onConflict: 'optimized_resume_id,section_type'
+        });
+      if (contactError) throw contactError;
+
+      // Save summary to resume_sections
+      const { error: summaryError } = await supabase
+        .from('resume_sections')
+        .upsert({
+          optimized_resume_id: optimizedResumeId,
+          section_type: 'summary',
+          content: {
+            summary: editableResumeData.summary
+          }
+        }, {
+          onConflict: 'optimized_resume_id,section_type'
+        });
+      if (summaryError) throw summaryError;
+
+      // Delete existing experiences and insert new ones
+      await supabase.from('resume_experiences').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.experience.length > 0) {
+        const { error: expError } = await supabase
+          .from('resume_experiences')
+          .insert(editableResumeData.experience.map((exp: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            title: exp.title,
+            company: exp.company,
+            duration: exp.duration,
+            bullets: exp.bullets,
+            display_order: index
+          })));
+        if (expError) throw expError;
+      }
+
+      // Delete existing skills and insert new ones
+      await supabase.from('resume_skills').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.skills.length > 0) {
+        const { error: skillsError } = await supabase
+          .from('resume_skills')
+          .insert(editableResumeData.skills.map((skill: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            category: skill.category,
+            items: skill.items,
+            display_order: index
+          })));
+        if (skillsError) throw skillsError;
+      }
+
+      // Delete existing education and insert new ones
+      await supabase.from('resume_education').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.education.length > 0) {
+        const { error: eduError } = await supabase
+          .from('resume_education')
+          .insert(editableResumeData.education.map((edu: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            degree: edu.degree,
+            school: edu.institution,
+            year: edu.year,
+            display_order: index
+          })));
+        if (eduError) throw eduError;
+      }
+
+      // Delete existing certifications and insert new ones
+      await supabase.from('resume_certifications').delete().eq('optimized_resume_id', optimizedResumeId);
+      if (editableResumeData.certifications.length > 0) {
+        const { error: certError } = await supabase
+          .from('resume_certifications')
+          .insert(editableResumeData.certifications.map((cert: any, index: number) => ({
+            optimized_resume_id: optimizedResumeId,
+            name: cert.name,
+            issuer: cert.issuer,
+            year: cert.year,
+            display_order: index
+          })));
+        if (certError) throw certError;
+      }
+      
+      toast({
+        title: "Resume Saved",
+        description: "Your resume changes have been saved successfully."
+      });
+      
+      setStep('templates');
+    } catch (error) {
+      console.error('Error saving resume changes:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save resume changes. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+  };
+
+  const handleColorSchemeSelect = (schemeId: string) => {
+    setSelectedColorScheme(schemeId);
+  };
+
+  const handleExportPDF = async () => {
+    if (!optimizedResumeId || !editableResumeData) {
+      toast({
+        title: "Export Error",
+        description: "No resume data available for export.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsExporting(true);
+    try {
+      const templateConfig = newTemplateConfigs[selectedTemplate];
+      const colorScheme = templateConfig.colorSchemes.find(
+        scheme => scheme.id === selectedColorScheme
+      );
+      
+      await generateNewProfessionalPDF(
+        selectedTemplate,
+        editableResumeData,
+        `${jobPosting.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_resume.pdf`,
+        selectedColorScheme
+      );
+      
+      toast({
+        title: "Resume Exported!",
+        description: "Your resume has been downloaded successfully."
+      });
+      
+      setStep('cover-letter');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export resume. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCoverLetterGenerated = (generatedText: string) => {
+    setCoverLetter(generatedText);
+    // Check if this is an employer job that needs EEO forms
+    if (jobPosting.data_source === 'employer') {
+      setStep('eeo-forms');
+    } else {
+      setStep('final-submit');
+    }
+  };
+
+  const handleProceedWithExistingResume = async () => {
+    if (!selectedResumeId) return;
+    
+    console.log('✅ User chose existing resume, going directly to cover letter...');
+    
+    // Set the selected resume as our working resume
+    setOptimizedResumeId(selectedResumeId);
+    
+    // Mark this as an existing resume workflow to skip editing steps
+    setOriginalIntent('existing');
+    
+    // Skip directly to cover letter generation
+    setStep('cover-letter');
+  };
+
+  const handleViewFullResume = () => {
+    if (optimizedResumeId) {
+      console.log('👀 Opening resume editor for:', optimizedResumeId);
+      window.open(`/resume-editor/${optimizedResumeId}`, '_blank');
+    }
+  };
+
+  const submitApplication = async () => {
+    if (!selectedResumeId && !optimizedResumeId) {
+      console.log('❌ No resume selected for application');
+      toast({
+        title: "Resume Required",
+        description: "Please select a resume to proceed with your application.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Handle external jobs differently - only route to external for scraped jobs, not employer jobs
+    if (jobPosting.source === 'database' && jobPosting.data_source !== 'employer') {
+      handleExternalJobApplication();
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      console.log('📤 Submitting internal job application...', {
+        jobId: jobPosting.id,
+        userId: user?.id,
+        resumeId: selectedResumeId || optimizedResumeId,
+        hasCoverLetter: !!coverLetter
       });
 
-      if (onApplicationSubmitted) {
-        onApplicationSubmitted();
+      // Create job description entry if it doesn't exist
+      const { data: existingJobDesc } = await supabase
+        .from('job_descriptions')
+        .select('id')
+        .eq('user_id', user!.id)
+        .eq('title', jobPosting.title)
+        .eq('source', 'application')
+        .maybeSingle();
+
+      let jobDescriptionId = existingJobDesc?.id;
+
+      if (!jobDescriptionId) {
+        const { data: newJobDesc, error: jobDescError } = await supabase
+          .from('job_descriptions')
+          .insert({
+            user_id: user!.id,
+            title: jobPosting.title,
+            parsed_text: jobPosting.description,
+            source: 'application',
+            company: companyName
+          })
+          .select('id')
+          .single();
+
+        if (jobDescError) throw jobDescError;
+        jobDescriptionId = newJobDesc.id;
       }
 
-      onClose();
+      // Submit application to internal job
+      // For employer jobs, use the actual job posting ID, not the cached job ID
+      const jobPostingId = jobPosting.data_source === 'employer' && jobPosting.employer_job_posting_id 
+        ? jobPosting.employer_job_posting_id 
+        : jobPosting.id;
+
+      console.log('Submitting application with job_posting_id:', jobPostingId, 'for job source:', jobPosting.data_source);
+
+      const { error: applicationError } = await supabase
+        .from('job_applications')
+        .insert({
+          job_posting_id: jobPostingId,
+          applicant_id: user!.id,
+          resume_id: selectedResumeId || optimizedResumeId,
+          cover_letter: coverLetter || null,
+          status: 'pending'
+        });
+
+      if (applicationError) {
+        console.error('❌ Error submitting application:', applicationError);
+        throw applicationError;
+      }
+
+      // Get the application ID for storing EEO responses
+      const { data: applicationData, error: applicationFetchError } = await supabase
+        .from('job_applications')
+        .select('id')
+        .eq('job_posting_id', jobPostingId)
+        .eq('applicant_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (applicationFetchError) {
+        console.error('❌ Error fetching application ID:', applicationFetchError);
+        throw applicationFetchError;
+      }
+
+      // Store EEO responses if this is an employer job and user provided responses
+      if (jobPosting.data_source === 'employer' && Object.keys(eeoResponses).length > 0) {
+        const { error: eeoError } = await supabase
+          .from('job_application_eeo_responses')
+          .insert({
+            job_application_id: applicationData.id,
+            eeo_responses: eeoResponses as any
+          });
+
+        if (eeoError) {
+          console.error('❌ Error storing EEO responses:', eeoError);
+          // Don't throw here - the application was successful, EEO is supplementary
+        } else {
+          console.log('✅ EEO responses stored successfully');
+        }
+      }
+
+      // Sync status with Job Hub if job exists there
+      await syncJobHubStatus(jobDescriptionId);
+
+      console.log('✅ Internal job application submitted successfully');
+      setStep('success');
+      
+      toast({
+        title: "Application Submitted!",
+        description: `Your application to ${jobPosting.title} at ${companyName} has been successfully submitted.`,
+      });
+
+      // Auto-close modal after 3 seconds
+      setTimeout(() => {
+        onApplicationSubmitted();
+        resetModal();
+      }, 3000);
+
     } catch (error) {
       console.error('Error submitting application:', error);
-      setError('Failed to submit application. Please try again.');
+      toast({
+        title: "Application Failed",
+        description: "Failed to submit your application. Please try again.",
+        variant: "destructive"
+      });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const renderTemplateStep = () => {
-    if (!optimizedResume || !coverLetter) {
-      return (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Preparing your application materials...</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Your Application Stack is Ready!</h3>
-          <p className="text-gray-600 mb-6">
-            Review your optimized resume and cover letter before applying.
-          </p>
-        </div>
-
-        {/* Application Stack Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Resume Card */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
-              <h4 className="font-medium">Optimized Resume</h4>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  <Award className="h-3 w-3" />
-                  {optimizedResume.ats_score}% ATS Score
-                </Badge>
-                {optimizedResume.job_fit_level && (
-                  <Badge variant="outline">
-                    {optimizedResume.job_fit_level} Fit
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm text-gray-600">
-                Tailored specifically for this position
-              </p>
-            </div>
-          </div>
-
-          {/* Cover Letter Card */}
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-600" />
-              <h4 className="font-medium">Cover Letter</h4>
-            </div>
-            <div className="space-y-2">
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Mail className="h-3 w-3" />
-                AI Generated
-              </Badge>
-              <p className="text-sm text-gray-600">
-                Personalized for {jobData?.company || 'this company'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Preview Buttons */}
-        <ApplicationPreviewButtons
-          resumeId={optimizedResume.id}
-          coverLetter={coverLetter}
-          onResumeEdit={() => navigate(`/resume-editor/${optimizedResume.id}`)}
-          onCoverLetterEdit={() => {
-            if (coverLetter?.id) {
-              navigate(`/cover-letters/edit/${coverLetter.id}`);
-            } else {
-              navigate('/cover-letters');
-            }
-          }}
-          onCoverLetterDownload={() => {
-            if (!coverLetter || !jobData) return;
-            
-            const fileName = `cover-letter-${jobData.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${jobData.company?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'company'}-${new Date().toISOString().split('T')[0]}.txt`;
-            const blob = new Blob([coverLetter.generated_text], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            
-            toast({
-              title: "Download Complete",
-              description: "Cover letter has been downloaded successfully."
-            });
-          }}
-        />
-
-        {/* Application Instructions */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">Ready to Apply?</h4>
-          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-            <li>Click <strong>Preview Resume</strong> and <strong>Preview Cover Letter</strong> to review your materials</li>
-            <li>Make any final edits if needed using the edit buttons in the preview modals</li>
-            <li>Download both documents from the preview modals</li>
-            <li>Continue below to submit your application</li>
-          </ol>
-        </div>
-      </div>
-    );
+  const handleExternalJobApplication = () => {
+    // Save resume and cover letter data are already saved
+    // Just show external application step
+    setStep('external-apply');
   };
 
-  const renderContactStep = () => (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="contact-name">Full Name</Label>
-        <Input
-          id="contact-name"
-          type="text"
-          placeholder="Enter your full name"
-          value={contactName}
-          onChange={(e) => setContactName(e.target.value)}
-        />
-      </div>
-      <div>
-        <Label htmlFor="contact-email">Email Address</Label>
-        <Input
-          id="contact-email"
-          type="email"
-          placeholder="Enter your email address"
-          value={contactEmail}
-          onChange={(e) => setContactEmail(e.target.value)}
-        />
-      </div>
-      <div>
-        <Label htmlFor="additional-notes">Additional Notes</Label>
-        <Textarea
-          id="additional-notes"
-          placeholder="Include any additional notes for the employer"
-          value={additionalNotes}
-          onChange={(e) => setAdditionalNotes(e.target.value)}
-        />
-      </div>
-    </div>
-  );
+  const handleExternalApply = () => {
+    const externalUrl = jobPosting.apply_url || jobPosting.job_url;
+    
+    if (externalUrl) {
+      // Open external application in new tab
+      window.open(externalUrl, '_blank');
+      
+      // Redirect current tab to dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+      
+      toast({
+        title: "Application Opened",
+        description: "External application opened in new tab. Your resume and cover letter are saved to your dashboard.",
+      });
+    } else {
+      toast({
+        title: "No Application URL",
+        description: "This job posting doesn't have an application URL.",
+        variant: "destructive"
+      });
+    }
+  };
 
-  const renderApplicationStep = () => (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="terms"
-          checked={termsAccepted}
-          onCheckedChange={(checked) => setTermsAccepted(!!checked)}
-        />
-        <Label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-          I agree to the terms and conditions
-        </Label>
-      </div>
-      <Alert>
-        <AlertDescription>
-          By proceeding, you acknowledge that you have reviewed all the information and
-          are ready to submit your application.
-        </AlertDescription>
-      </Alert>
-    </div>
-  );
+  const handleUploadSuccess = async (resumeId: string) => {
+    console.log('✅ Resume uploaded successfully:', resumeId);
+    
+    // Reload resumes to include the new one
+    await loadResumes();
+    
+    // Set the newly uploaded resume as selected
+    setSelectedResumeId(resumeId);
+    
+    // Determine next step based on original intent
+    if (originalIntent === 'optimize') {
+      // User wanted to optimize, so proceed with optimization
+      const jobDescId = await createJobDescription();
+      if (jobDescId) {
+        setStep('optimize');
+      }
+    } else {
+      // User just wanted to upload, so go to final-submit step
+      setStep('final-submit');
+    }
+  };
 
-  if (!jobData) {
-    return null;
-  }
+  const handleUploadAndOptimize = async () => {
+    setOriginalIntent('optimize');
+    setStep('upload');
+  };
+
+  const handleUploadOnly = () => {
+    setOriginalIntent('existing');
+    setStep('upload');
+  };
+
+  const syncJobHubStatus = async (jobDescId: string | null = null) => {
+    if (!user) return;
+    
+    try {
+      // Find matching job description in user's Job Hub
+      const { data: existingJobDesc, error: findError } = await supabase
+        .from('job_descriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', jobPosting.title)
+        .eq('company', companyName)
+        .maybeSingle();
+
+      if (findError) {
+        console.error('Error finding job description for sync:', findError);
+        return;
+      }
+
+      const targetJobDescId = existingJobDesc?.id || jobDescId;
+      
+      if (targetJobDescId) {
+        // Update the job description status to reflect application
+        const { error: updateError } = await supabase
+          .from('job_descriptions')
+          .update({
+            application_status: 'applied',
+            is_applied: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', targetJobDescId);
+
+        if (updateError) {
+          console.error('Error syncing Job Hub status:', updateError);
+        } else {
+          console.log('✅ Job Hub status synced successfully');
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing Job Hub status:', error);
+    }
+  };
+
+  const resetModal = () => {
+    console.log('🔄 Resetting modal state');
+    setStep('choose');
+    setSelectedResumeId('');
+    setCoverLetter('');
+    setOptimizedResumeId('');
+    setOptimizedResumeContent('');
+    setJobDescriptionId('');
+    setOriginalIntent(null);
+    setEeoResponses({});
+  };
+
+  const availableResumes = resumes.filter(resume => resume.parsed_text);
+  const jobDescriptions = jobDescriptionId ? [{
+    id: jobDescriptionId,
+    title: jobPosting.title,
+    parsed_text: jobPosting.description
+  }] : [];
+
+  const getProgressPercentage = () => {
+    // Adjust progress based on workflow type and whether EEO forms are needed
+    const needsEEO = jobPosting.data_source === 'employer';
+    
+    if (originalIntent === 'existing') {
+      // Quick apply workflow: choose -> ats-score -> cover-letter -> (eeo-forms) -> final-submit
+      const totalSteps = needsEEO ? 6 : 5;
+      let currentStep = 1;
+      
+      switch (step) {
+        case 'choose': currentStep = 1; break;
+        case 'ats-score': currentStep = 2; break;
+        case 'cover-letter': currentStep = 3; break;
+        case 'eeo-forms': currentStep = 4; break;
+        case 'final-submit': 
+        case 'external-apply': currentStep = needsEEO ? 5 : 4; break;
+        case 'success': currentStep = needsEEO ? 6 : 5; break;
+        default: currentStep = 1;
+      }
+      
+      return Math.round((currentStep / totalSteps) * 100);
+    } else {
+      // Full optimization workflow
+      const totalSteps = needsEEO ? 10 : 9;
+      let currentStep = 1;
+      
+      switch (step) {
+        case 'choose': currentStep = 1; break;
+        case 'upload': currentStep = 2; break;
+        case 'ats-score': currentStep = 3; break;
+        case 'optimize': currentStep = 4; break;
+        case 'edit-resume': currentStep = 5; break;
+        case 'templates': currentStep = 6; break;
+        case 'cover-letter': currentStep = 7; break;
+        case 'eeo-forms': currentStep = 8; break;
+        case 'final-submit': 
+        case 'external-apply': currentStep = needsEEO ? 9 : 8; break;
+        case 'success': currentStep = needsEEO ? 10 : 9; break;
+        default: currentStep = 1;
+      }
+      
+      return Math.round((currentStep / totalSteps) * 100);
+    }
+  };
+
+  const getCurrentStepText = () => {
+    const needsEEO = jobPosting.data_source === 'employer';
+    
+    if (originalIntent === 'existing') {
+      const totalSteps = needsEEO ? 6 : 5;
+      switch (step) {
+        case 'choose': return `Step 1 of ${totalSteps}`;
+        case 'ats-score': return `Step 2 of ${totalSteps}`;
+        case 'cover-letter': return `Step 3 of ${totalSteps}`;
+        case 'eeo-forms': return `Step 4 of ${totalSteps}`;
+        case 'final-submit': 
+        case 'external-apply': return `Step ${needsEEO ? 5 : 4} of ${totalSteps}`;
+        case 'success': return `Step ${totalSteps} of ${totalSteps}`;
+        default: return `Step 1 of ${totalSteps}`;
+      }
+    } else {
+      const totalSteps = needsEEO ? 10 : 9;
+      switch (step) {
+        case 'choose': return `Step 1 of ${totalSteps}`;
+        case 'upload': return `Step 2 of ${totalSteps}`;
+        case 'ats-score': return `Step 3 of ${totalSteps}`;
+        case 'optimize': return `Step 4 of ${totalSteps}`;
+        case 'edit-resume': return `Step 5 of ${totalSteps}`;
+        case 'templates': return `Step 6 of ${totalSteps}`;
+        case 'cover-letter': return `Step 7 of ${totalSteps}`;
+        case 'eeo-forms': return `Step 8 of ${totalSteps}`;
+        case 'final-submit': 
+        case 'external-apply': return `Step ${needsEEO ? 9 : 8} of ${totalSteps}`;
+        case 'success': return `Step ${totalSteps} of ${totalSteps}`;
+        default: return `Step 1 of ${totalSteps}`;
+      }
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${step === 'templates' ? 'max-w-[95vw]' : 'max-w-4xl'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
-          <DialogTitle>Apply for {jobData.title} at {jobData.company}</DialogTitle>
+          <DialogTitle className="text-xl">Apply to {jobPosting.title}</DialogTitle>
+          <DialogDescription className="text-lg">
+            at {companyName}
+          </DialogDescription>
+          
+          {/* Progress Indicator */}
+          <div className="space-y-2 mt-4">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{getCurrentStepText()}</span>
+              <span>{getProgressPercentage()}% Complete</span>
+            </div>
+            <Progress value={getProgressPercentage()} className="h-2" />
+          </div>
         </DialogHeader>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+        <div className="space-y-6">
+          {step === 'choose' && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">How would you like to apply?</h3>
+              
+              {loadingResumes ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading your resumes...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors border-2 hover:border-blue-200"
+                    onClick={() => setStep('ats-score')}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Use Existing Resume
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Apply with one of your uploaded resumes
+                      </p>
+                      {availableResumes.length > 0 && (
+                        <p className="text-xs text-green-600 mt-2">
+                          {availableResumes.length} resume(s) available
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
 
-        <div className="py-4">
-          {step === 1 && renderTemplateStep()}
-          {step === 2 && renderContactStep()}
-          {step === 3 && renderApplicationStep()}
-        </div>
-
-        <div className="flex justify-between pt-6">
-          {step > 1 ? (
-            <Button variant="secondary" onClick={handleBack} disabled={loading}>
-              Back
-            </Button>
-          ) : (
-            <div></div>
+                  <Card 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors border-2 border-purple-200 hover:border-purple-300"
+                    onClick={handleOptimizeClick}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-700">
+                        <Sparkles className="h-5 w-5" />
+                        Create Optimized Resume
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        AI-optimize your resume for this specific job
+                      </p>
+                      {creatingJobDescription && (
+                        <p className="text-xs text-blue-600 mt-2">Preparing job description...</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
           )}
-          {step < 3 ? (
-            <Button onClick={handleNext} disabled={loading || (step === 2 && (!contactName || !contactEmail))}>
-              Next
-            </Button>
-          ) : (
-            <Button
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              onClick={handleSubmitApplication}
-              disabled={loading || !termsAccepted}
-            >
-              Submit Application
-            </Button>
+
+          {step === 'ats-score' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Select Resume</h3>
+                <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              {availableResumes.length === 0 ? (
+                <Card className="border-orange-200 bg-orange-50">
+                  <CardContent className="py-8 text-center">
+                    <AlertCircle className="h-12 w-12 mx-auto text-orange-500 mb-4" />
+                    <h4 className="font-semibold text-orange-900 mb-2">No Resumes Found</h4>
+                    <p className="text-orange-700 mb-4">
+                      You need to upload a resume before you can apply for jobs.
+                    </p>
+                    <div className="space-y-2">
+                      <Button 
+                        onClick={handleUploadOnly}
+                        className="bg-orange-600 hover:bg-orange-700"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Resume Here
+                      </Button>
+                      <p className="text-sm text-orange-600">or</p>
+                      <Button 
+                        onClick={handleUploadAndOptimize} 
+                        disabled={creatingJobDescription}
+                        variant="outline"
+                        className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                      >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {creatingJobDescription ? 'Preparing...' : 'Upload & Optimize Resume'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a resume" />
+                    </SelectTrigger>
+                    <SelectContent>
+                       {availableResumes.map(resume => (
+                         <SelectItem key={resume.id} value={resume.id}>
+                           {resume.type === 'optimized' 
+                             ? `${resume.file_name} (Optimized)`
+                             : `${resume.file_name || 'Untitled Resume'} (Original)`
+                           }
+                         </SelectItem>
+                       ))}
+                    </SelectContent>
+                  </Select>
+
+                   {selectedResumeId && (
+                      <Button 
+                        onClick={handleProceedWithExistingResume}
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                      >
+                        Quick Apply with This Resume
+                      </Button>
+                   )}
+                </>
+              )}
+            </div>
+          )}
+
+          {step === 'upload' && (
+            <InlineFileUpload
+              onUploadSuccess={handleUploadSuccess}
+              onCancel={() => setStep('choose')}
+            />
+          )}
+
+          {step === 'optimize' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">AI Resume Optimization</h3>
+                <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              {jobDescriptions.length > 0 ? (
+                <ResumeOptimizer
+                  resumes={resumes}
+                  jobDescriptions={jobDescriptions}
+                  onOptimizationComplete={handleOptimizationComplete}
+                  navigateToEditor={false}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Preparing job description for optimization...</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+
+          {step === 'edit-resume' && editableResumeData && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Edit className="h-5 w-5" />
+                  Edit Resume
+                </h3>
+                <Button variant="outline" onClick={() => setStep('choose')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              {/* ATS Score Display */}
+              {atsScore && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-blue-700">
+                      <Target className="h-5 w-5" />
+                      Current ATS Score
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ATSScoreDisplay
+                      optimizedResumeId={optimizedResumeId}
+                      atsScore={atsScore}
+                      atsFeedback={atsFeedback}
+                      onScoreUpdate={handleATSScoreUpdate}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Resume Editor Sections */}
+              <div className="space-y-4">
+                 <ContactSection
+                   contactInfo={editableResumeData.contactInfo || { name: '', email: '', phone: '', location: '' }}
+                   onChange={(contactInfo) => handleResumeDataChange({ ...editableResumeData, contactInfo })}
+                 />
+
+                 <ExperienceSection
+                   experiences={editableResumeData.experience || []}
+                   onChange={(experience) => handleResumeDataChange({ ...editableResumeData, experience })}
+                   jobDescriptionId={jobDescriptionId}
+                 />
+
+                <SkillsSection
+                  skills={editableResumeData.skills || []}
+                  onChange={(skills) => handleResumeDataChange({ ...editableResumeData, skills })}
+                  jobDescriptionId={jobDescriptionId}
+                />
+
+                <EducationSection
+                  education={editableResumeData.education || []}
+                  onChange={(education) => handleResumeDataChange({ ...editableResumeData, education })}
+                />
+
+                <CertificationsSection
+                  certifications={editableResumeData.certifications || []}
+                  onChange={(certifications) => handleResumeDataChange({ ...editableResumeData, certifications })}
+                />
+              </div>
+
+              {/* Save and Continue */}
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  onClick={handleSaveResumeChanges} 
+                  disabled={isSaving}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-blue-600"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving Changes...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save & Continue to Templates
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 'templates' && editableResumeData && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  Choose Template & Export
+                </h3>
+                <Button variant="outline" onClick={() => setStep('edit-resume')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Editor
+                </Button>
+              </div>
+
+              <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-8`}>
+                {/* Template and Color Selection - Left Column */}
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Select Template</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <TemplateSelector
+                        selectedTemplate={selectedTemplate}
+                        onTemplateSelect={handleTemplateSelect}
+                        isMobile={isMobile}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Color Scheme</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ColorSchemeSelector
+                        colorSchemes={newTemplateConfigs[selectedTemplate]?.colorSchemes || []}
+                        selectedScheme={selectedColorScheme}
+                        onSchemeSelect={handleColorSchemeSelect}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Button 
+                    onClick={handleExportPDF}
+                    disabled={isExporting}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    size="lg"
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Resume PDF
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Resume Preview - Takes up 2 columns */}
+                <div className="col-span-2 space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Preview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2">
+                      <div className="border rounded-lg overflow-hidden">
+                        <ResumePreview
+                          template={selectedTemplate}
+                          resumeData={JSON.stringify(editableResumeData)}
+                          optimizedResumeId={optimizedResumeId}
+                          selectedColorScheme={selectedColorScheme}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 'cover-letter' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Generate Cover Letter
+                </h3>
+                <Button variant="outline" onClick={() => setStep('templates')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Templates
+                </Button>
+              </div>
+
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-700">
+                    <CheckCircle className="h-5 w-5" />
+                    Resume Downloaded Successfully!
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-green-700">
+                    Your optimized resume has been downloaded. Now let's create a personalized cover letter for this position.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <CoverLetterGenerator
+                onComplete={handleCoverLetterGenerated}
+                onCancel={() => setStep('templates')}
+              />
+
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    // Skip to EEO forms if employer job, otherwise final submit
+                    if (jobPosting.data_source === 'employer') {
+                      setStep('eeo-forms');
+                    } else {
+                      setStep('final-submit');
+                    }
+                  }}
+                  className="flex-1"
+                >
+                  Skip Cover Letter
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* EEO Forms Step - Only for Employer Jobs */}
+          {step === 'eeo-forms' && jobPosting.data_source === 'employer' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Equal Employment Opportunity</h3>
+                <Button variant="outline" onClick={() => setStep('cover-letter')}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              <EEOFormsSection 
+                responses={eeoResponses}
+                onResponsesChange={setEeoResponses}
+              />
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1"
+                >
+                  Skip EEO Forms
+                </Button>
+                <Button 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  Continue to Submit
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 'final-submit' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Finalize Application</h3>
+                <Button variant="outline" onClick={() => {
+                  // Route back to EEO forms if employer job, otherwise cover letter
+                  if (jobPosting.data_source === 'employer') {
+                    setStep('eeo-forms');
+                  } else {
+                    setStep('cover-letter');
+                  }
+                }}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </div>
+
+              {coverLetter && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      AI-Generated Cover Letter Ready
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-white rounded p-4 border border-green-200 max-h-48 overflow-y-auto">
+                      <p className="text-sm whitespace-pre-wrap">{coverLetter}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Separator />
+
+              <div className="flex justify-between items-center pt-4">
+                <div className="text-sm text-muted-foreground">
+                  {optimizedResumeId ? (
+                    <span className="text-green-600 font-medium">✓ Using AI-optimized resume</span>
+                  ) : selectedResumeId ? (
+                    'Using selected resume'
+                  ) : (
+                    'No resume selected'
+                  )}
+                </div>
+                  <Button 
+                    onClick={submitApplication}
+                    disabled={submitting || (!selectedResumeId && !optimizedResumeId)}
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {submitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        {(jobPosting.source === 'database' && jobPosting.data_source !== 'employer') ? 'Continue to External Site' : 'Submit Application'}
+                      </>
+                    )}
+                  </Button>
+              </div>
+            </div>
+          )}
+
+          {/* External Application Step */}
+          {step === 'external-apply' && (
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
+                  <ExternalLink className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold">External Application</h3>
+                  <p className="text-muted-foreground">
+                    You'll be taken to the company's website to complete your application
+                  </p>
+                </div>
+              </div>
+
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-600" />
+                      <h4 className="font-semibold text-blue-900">What happens next:</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-blue-800">
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        Your resume and cover letter are saved to your RezLit dashboard
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 text-blue-600" />
+                        A new tab will open with the job application page
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4 text-gray-600" />
+                        This tab will redirect to your dashboard
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800">Important</h4>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      This will take you outside of RezLit to complete your application on the company's website.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setStep('final-submit')}
+                  className="flex-1"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <Button 
+                  onClick={handleExternalApply}
+                  size="lg"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Apply on Company Site
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 'success' && (
+            <div className="space-y-4 text-center py-8">
+              <div className="flex justify-center mb-4">
+                <CheckCircle className="h-16 w-16 text-green-500" />
+              </div>
+              
+              <h3 className="text-2xl font-bold text-green-700">Application Submitted!</h3>
+              
+              <div className="space-y-2 text-gray-600">
+                <p>Your application to <strong>{jobPosting.title}</strong></p>
+                <p>at <strong>{companyName}</strong> has been successfully submitted.</p>
+              </div>
+
+              <Card className="bg-gray-50 mt-6">
+                <CardContent className="pt-6">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Resume:</span>
+                      <span className="font-medium">
+                        {optimizedResumeId ? 'AI-Optimized Resume' : 'Selected Resume'}
+                      </span>
+                    </div>
+                    {coverLetter && (
+                      <div className="flex justify-between">
+                        <span>Cover Letter:</span>
+                        <span className="font-medium">{coverLetter.length} characters</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Submitted:</span>
+                      <span className="font-medium">Just now</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <p className="text-sm text-gray-500 mt-4">
+                This window will close automatically in a few seconds...
+              </p>
+            </div>
           )}
         </div>
       </DialogContent>
