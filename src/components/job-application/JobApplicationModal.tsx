@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,7 +24,7 @@ import { ApplicationPreviewButtons } from './ApplicationPreviewButtons';
 interface JobApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  job: {
+  job?: {
     id: string;
     title: string;
     company: string | null;
@@ -37,18 +38,25 @@ interface JobApplicationModalProps {
     is_saved?: boolean;
     application_status?: ApplicationStatus;
   };
-  onStatusUpdate: (jobId: string, field: string, value: boolean | ApplicationStatus) => void;
+  jobPosting?: any;
+  onStatusUpdate?: (jobId: string, field: string, value: boolean | ApplicationStatus) => void;
+  onApplicationSubmitted?: () => void;
 }
 
 export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   isOpen,
   onClose,
   job,
-  onStatusUpdate
+  jobPosting,
+  onStatusUpdate,
+  onApplicationSubmitted
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Use either job or jobPosting data
+  const jobData = job || jobPosting;
 
   const [step, setStep] = useState(1);
   const [optimizedResume, setOptimizedResume] = useState<any>(null);
@@ -61,12 +69,14 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && jobData) {
       loadApplicationStack();
     }
-  }, [isOpen, job.id]);
+  }, [isOpen, jobData?.id]);
 
   const loadApplicationStack = async () => {
+    if (!jobData) return;
+
     try {
       setLoading(true);
       setError('');
@@ -75,7 +85,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       const { data: resumeData, error: resumeError } = await supabase
         .from('optimized_resumes')
         .select('*')
-        .eq('job_description_id', job.id)
+        .eq('job_description_id', jobData.id)
         .eq('user_id', user!.id)
         .single();
 
@@ -89,7 +99,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       const { data: coverLetterData, error: coverLetterError } = await supabase
         .from('cover_letters')
         .select('*')
-        .eq('job_description_id', job.id)
+        .eq('job_description_id', jobData.id)
         .eq('user_id', user!.id)
         .single();
 
@@ -115,6 +125,8 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
   };
 
   const handleSubmitApplication = async () => {
+    if (!jobData) return;
+
     try {
       setLoading(true);
       setError('');
@@ -122,13 +134,19 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
       // Simulate application submission
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Update application status
-      await onStatusUpdate(job.id, 'application_status', 'applied');
+      // Update application status if callback is provided
+      if (onStatusUpdate && job) {
+        await onStatusUpdate(job.id, 'application_status', 'applied');
+      }
 
       toast({
         title: "Application Submitted",
         description: "Your application has been successfully submitted!",
       });
+
+      if (onApplicationSubmitted) {
+        onApplicationSubmitted();
+      }
 
       onClose();
     } catch (error) {
@@ -196,7 +214,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
                 AI Generated
               </Badge>
               <p className="text-sm text-gray-600">
-                Personalized for {job.company || 'this company'}
+                Personalized for {jobData?.company || 'this company'}
               </p>
             </div>
           </div>
@@ -215,9 +233,9 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
             }
           }}
           onCoverLetterDownload={() => {
-            if (!coverLetter) return;
+            if (!coverLetter || !jobData) return;
             
-            const fileName = `cover-letter-${job.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${job.company?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'company'}-${new Date().toISOString().split('T')[0]}.txt`;
+            const fileName = `cover-letter-${jobData.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${jobData.company?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'company'}-${new Date().toISOString().split('T')[0]}.txt`;
             const blob = new Blob([coverLetter.generated_text], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             
@@ -305,11 +323,15 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
     </div>
   );
 
+  if (!jobData) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Apply for {job.title} at {job.company}</DialogTitle>
+          <DialogTitle>Apply for {jobData.title} at {jobData.company}</DialogTitle>
         </DialogHeader>
 
         {error && (

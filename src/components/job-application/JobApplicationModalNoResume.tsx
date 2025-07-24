@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,7 +22,7 @@ import { ApplicationPreviewButtons } from './ApplicationPreviewButtons';
 interface JobApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  job: {
+  job?: {
     id: string;
     title: string;
     company: string | null;
@@ -31,16 +32,23 @@ interface JobApplicationModalProps {
     source: string | null;
     job_url: string | null;
   };
+  jobPosting?: any;
+  onApplicationSubmitted?: () => void;
 }
 
 export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = ({
   isOpen,
   onClose,
-  job
+  job,
+  jobPosting,
+  onApplicationSubmitted
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Use either job or jobPosting data
+  const jobData = job || jobPosting;
 
   const [step, setStep] = useState(1);
   const [coverLetter, setCoverLetter] = useState<any>(null);
@@ -60,12 +68,14 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && jobData) {
       generateCoverLetter();
     }
-  }, [isOpen, job]);
+  }, [isOpen, jobData]);
 
   const generateCoverLetter = async () => {
+    if (!jobData) return;
+
     try {
       setLoading(true);
       setError('');
@@ -84,9 +94,9 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
       // Call the function to generate the cover letter
       const { data, error } = await supabase.functions.invoke('generate-cover-letter', {
         body: {
-          job_description: job.parsed_text,
-          job_title: job.title,
-          company_name: job.company || 'Company',
+          job_description: jobData.parsed_text || jobData.description,
+          job_title: jobData.title,
+          company_name: jobData.company || 'Company',
           applicant_name: userName
         }
       });
@@ -99,8 +109,8 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
         .insert([
           {
             user_id: user!.id,
-            job_description_id: job.id,
-            title: `Cover Letter for ${job.title} at ${job.company || 'Company'}`,
+            job_description_id: jobData.id,
+            title: `Cover Letter for ${jobData.title} at ${jobData.company || 'Company'}`,
             generated_text: data,
           }
         ])
@@ -135,6 +145,8 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
   };
 
   const handleSubmit = async () => {
+    if (!jobData) return;
+
     try {
       setSubmitting(true);
       setError('');
@@ -147,17 +159,16 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
 
       // Construct the application data
       const applicationData = {
-        ...contactInfo,
-        ...applicationDetails,
-        job_id: job.id,
-        user_id: user!.id,
-        cover_letter_id: coverLetter?.id,
-        application_date: new Date().toISOString(),
+        job_posting_id: jobData.id,
+        applicant_id: user!.id,
+        cover_letter: coverLetter?.generated_text || '',
+        status: 'pending',
+        notes: applicationDetails.additional_notes
       };
 
       // Submit the application data to the database
       const { error } = await supabase
-        .from('applications')
+        .from('job_applications')
         .insert([applicationData]);
 
       if (error) throw error;
@@ -166,6 +177,11 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
         title: "Success",
         description: "Application submitted successfully!",
       });
+      
+      if (onApplicationSubmitted) {
+        onApplicationSubmitted();
+      }
+      
       onClose();
     } catch (error: any) {
       console.error('Error submitting application:', error);
@@ -216,7 +232,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
               </Badge>
             </div>
             <p className="text-sm text-gray-600">
-              Tailored specifically for the {job.title} position at {job.company || 'this company'}
+              Tailored specifically for the {jobData?.title} position at {jobData?.company || 'this company'}
             </p>
           </div>
         </div>
@@ -232,9 +248,9 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
             }
           }}
           onCoverLetterDownload={() => {
-            if (!coverLetter) return;
+            if (!coverLetter || !jobData) return;
             
-            const fileName = `cover-letter-${job.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${job.company?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'company'}-${new Date().toISOString().split('T')[0]}.txt`;
+            const fileName = `cover-letter-${jobData.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${jobData.company?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'company'}-${new Date().toISOString().split('T')[0]}.txt`;
             const blob = new Blob([coverLetter.generated_text], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             
@@ -321,7 +337,7 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
   const renderApplicationStep = () => (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="cover_letter">Additional Notes</Label>
+        <Label htmlFor="additional_notes">Additional Notes</Label>
         <Textarea
           id="additional_notes"
           name="additional_notes"
@@ -333,11 +349,15 @@ export const JobApplicationModalNoResume: React.FC<JobApplicationModalProps> = (
     </div>
   );
 
+  if (!jobData) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Apply for {job.title} at {job.company}</DialogTitle>
+          <DialogTitle>Apply for {jobData.title} at {jobData.company}</DialogTitle>
         </DialogHeader>
 
         {error && (
