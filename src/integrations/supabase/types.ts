@@ -33,6 +33,7 @@ export type Database = {
           is_expired: boolean | null
           job_board: string | null
           job_function: string | null
+          job_recommendation_category: string | null
           job_type: string | null
           job_url: string
           last_seen_at: string
@@ -69,6 +70,7 @@ export type Database = {
           is_expired?: boolean | null
           job_board?: string | null
           job_function?: string | null
+          job_recommendation_category?: string | null
           job_type?: string | null
           job_url: string
           last_seen_at?: string
@@ -105,6 +107,7 @@ export type Database = {
           is_expired?: boolean | null
           job_board?: string | null
           job_function?: string | null
+          job_recommendation_category?: string | null
           job_type?: string | null
           job_url?: string
           last_seen_at?: string
@@ -529,6 +532,33 @@ export type Database = {
           job_id?: string
           job_source?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      job_categories: {
+        Row: {
+          category_name: string
+          created_at: string
+          description: string | null
+          id: string
+          keywords: string[]
+          updated_at: string
+        }
+        Insert: {
+          category_name: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          keywords?: string[]
+          updated_at?: string
+        }
+        Update: {
+          category_name?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          keywords?: string[]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1541,6 +1571,10 @@ export type Database = {
           current_usage: number
           limit_reached: boolean
         }[]
+      }
+      categorize_job_title: {
+        Args: { job_title: string }
+        Returns: string
       }
       cleanup_old_jobs: {
         Args: Record<PropertyKey, never>
