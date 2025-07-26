@@ -33,6 +33,7 @@ export type Database = {
           is_expired: boolean | null
           job_board: string | null
           job_function: string | null
+          job_page_link: string | null
           job_recommendation_category: string | null
           job_type: string | null
           job_url: string
@@ -70,6 +71,7 @@ export type Database = {
           is_expired?: boolean | null
           job_board?: string | null
           job_function?: string | null
+          job_page_link?: string | null
           job_recommendation_category?: string | null
           job_type?: string | null
           job_url: string
@@ -107,6 +109,7 @@ export type Database = {
           is_expired?: boolean | null
           job_board?: string | null
           job_function?: string | null
+          job_page_link?: string | null
           job_recommendation_category?: string | null
           job_type?: string | null
           job_url?: string
