@@ -340,7 +340,7 @@ CRITICAL OPTIMIZATION INSTRUCTIONS FOR USER ADDITIONS:
 These are legitimate experiences the user wants highlighted - treat them as raw material that needs professional enhancement and optimization, not just insertion.`;
     }
 
-    // Optimized prompt (streamlined while maintaining functionality)
+    // Enhanced prompt with bullet point optimization focus
     const prompt = `You are an expert ATS optimization specialist. Your PRIMARY OBJECTIVE is to enhance the existing resume content for better ATS compatibility while maintaining complete accuracy and authenticity.
 
 CRITICAL CONTACT INFORMATION EXTRACTION - HIGHEST PRIORITY:
@@ -366,23 +366,46 @@ CRITICAL AUTHENTICITY REQUIREMENTS:
 5. **NO NEW CERTIFICATIONS**: Only include certifications that already exist in the original resume
 6. **KEYWORD INTEGRATION**: Naturally integrate relevant job description keywords into existing content without changing the fundamental meaning
 
+CRITICAL BULLET POINT OPTIMIZATION STRATEGIES:
+**ANALYZE EACH BULLET POINT AGAINST JOB REQUIREMENTS:**
+- Map existing bullet points to specific job requirements and responsibilities
+- Identify keywords from the job description that can be naturally integrated
+- Replace generic action verbs with job-specific strong action verbs
+- Enhance bullet points with industry-specific terminology from the job description
+- Structure bullet points to start with strong action verbs for better ATS parsing
+- Add relevant technical skills and keywords where they naturally fit
+- Optimize for ATS by using exact keywords from job posting when appropriate
+
+**BULLET POINT ENHANCEMENT EXAMPLES:**
+- Original: "Handled customer service issues"
+- Enhanced: "Resolved customer inquiries and technical support requests, maintaining 95% customer satisfaction through effective problem-solving and communication"
+
+- Original: "Worked on team projects" 
+- Enhanced: "Collaborated with cross-functional teams on strategic initiatives, contributing to project delivery and stakeholder alignment"
+
+**JOB-SPECIFIC OPTIMIZATION:**
+- If job mentions "data analysis" → integrate "analyzed data", "data-driven insights", "statistical analysis" into relevant bullet points
+- If job requires "project management" → enhance bullets with "managed projects", "coordinated deliverables", "stakeholder communication"
+- If job emphasizes "leadership" → strengthen bullets with "led teams", "mentored", "drove initiatives"
+- Match the language and terminology used in the job description exactly when possible
+
 ATS OPTIMIZATION STRATEGIES:
 - Improve keyword density by rephrasing existing content with job description terminology
-- Enhance action verbs while preserving the original responsibilities
-- Restructure existing bullet points for better ATS readability
+- Enhance action verbs to match job description language (e.g., if job says "manage," use "managed" instead of "handled")
+- Restructure existing bullet points for better ATS readability and keyword matching
 - **SKILLS LIMITATION**: Select ONLY the top 6 most relevant skills from the original resume that match the job description - organize them into 1-2 skill categories maximum
 - Prioritize skills that appear in or closely relate to the job description requirements
 - Improve formatting for ATS compatibility
 - Enhance existing education and certification descriptions (if any exist)
 
 CONTENT ENHANCEMENT RULES:
-- Improve clarity and professional tone of existing bullet points
-- Integrate job description keywords naturally into existing responsibilities
-- Enhance action verbs but keep the same underlying activities
+- Improve clarity and professional tone of existing bullet points with job-specific keywords
+- Integrate job description keywords naturally into existing responsibilities without changing core meaning
+- Enhance action verbs to match job description language and requirements
 - Maintain the original timeline and progression of roles
 - NEVER add responsibilities or achievements that weren't in the original resume
 - **SKILLS SELECTION**: Choose MAXIMUM 6 individual skills from the original resume that are most relevant to the job description
-- Focus on better articulation rather than content expansion
+- Focus on keyword optimization and professional articulation rather than content expansion
 
 You MUST return ONLY valid JSON. The structure should match the original resume's sections exactly:
 
@@ -598,25 +621,115 @@ Return ONLY the enhanced resume as valid JSON.`;
       // Don't fail the entire operation if usage tracking fails
     }
 
-    // Start background ATS scoring (non-blocking)
+    // Perform ATS scoring synchronously
+    console.log('Starting synchronous ATS scoring...');
+    const scoringStart = Date.now();
+    
+    let atsScore = null;
+    let atsFeedback = null;
+    
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (openAIApiKey) {
-      console.log('Starting background ATS scoring...');
-      EdgeRuntime.waitUntil(
-        performATSScoring(optimizedResume.id, supabase, openAIApiKey)
-      );
+      try {
+        // Perform ATS scoring on the optimized resume
+        const resumeContent = generatedText;
+        const jobTitle = jobDescription.title;
+        const jobDesc = jobDescription.parsed_text;
+
+        const atsPrompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following optimized resume against the job description and provide a comprehensive ATS compatibility score.
+
+CRITICAL: Return ONLY valid JSON in this exact structure:
+
+{
+  "overall_score": <number between 0-100>,
+  "category_scores": {
+    "keyword_match": <number between 0-100>,
+    "skills_alignment": <number between 0-100>,
+    "experience_relevance": <number between 0-100>,
+    "format_compliance": <number between 0-100>
+  },
+  "recommendations": [
+    "specific actionable recommendation 1",
+    "specific actionable recommendation 2",
+    "specific actionable recommendation 3"
+  ],
+  "keyword_analysis": {
+    "matched_keywords": ["keyword1", "keyword2", "keyword3"],
+    "missing_keywords": ["missing1", "missing2", "missing3"]
+  },
+  "strengths": [
+    "strength 1",
+    "strength 2"
+  ],
+  "areas_for_improvement": [
+    "improvement area 1",
+    "improvement area 2"
+  ]
+}
+
+SCORING CRITERIA:
+- keyword_match: How well resume keywords match job description (0-100)
+- skills_alignment: How well skills align with job requirements (0-100)
+- experience_relevance: How relevant experience is to the role (0-100)
+- format_compliance: How ATS-friendly the resume format is (0-100)
+
+Job Title: ${jobTitle}
+
+Job Description:
+${jobDesc}
+
+Optimized Resume Content:
+${resumeContent}
+
+Return ONLY the JSON structure above, no additional text.`;
+
+        const atsResponse = await callOpenAI(
+          atsPrompt,
+          'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text.',
+          2000,
+          'Synchronous ATS Scoring'
+        );
+
+        const atsResult = atsResponse.choices[0].message.content;
+        const atsScoring = JSON.parse(atsResult);
+
+        // Update the optimized resume with ATS scoring
+        await supabase
+          .from('optimized_resumes')
+          .update({
+            ats_score: atsScoring.overall_score,
+            ats_feedback: atsScoring,
+            scoring_criteria: atsScoring.category_scores,
+            scored_at: new Date().toISOString()
+          })
+          .eq('id', optimizedResume.id);
+
+        atsScore = atsScoring.overall_score;
+        atsFeedback = atsScoring;
+        
+        console.log('Successfully completed synchronous ATS scoring:', atsScore);
+      } catch (atsError) {
+        console.error('ATS scoring failed:', atsError);
+        // Continue without ATS scoring - don't fail the entire optimization
+      }
     }
 
+    const scoringTime = Date.now() - scoringStart;
     const totalTime = Date.now() - startTime;
     console.log(`=== RESUME OPTIMIZATION COMPLETE === Total time: ${totalTime}ms`);
 
     return new Response(JSON.stringify({ 
       success: true, 
-      optimizedResume: optimizedResume,
+      optimizedResume: {
+        ...optimizedResume,
+        ats_score: atsScore,
+        ats_feedback: atsFeedback
+      },
       processingTime: {
         total: totalTime,
         optimization: optimizationTime,
-        database: dbTime
+        database: dbTime,
+        ats_scoring: scoringTime
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

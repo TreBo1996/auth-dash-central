@@ -121,12 +121,6 @@ const ResumeEditor: React.FC = () => {
       setAtsScore(optimizedResume.ats_score);
       setAtsFeedback(optimizedResume.ats_feedback);
 
-      // Auto-trigger ATS scoring if no score exists
-      if (!optimizedResume.ats_score) {
-        console.log('ResumeEditor: No ATS score found, triggering automatic scoring...');
-        handleAutoATSScoring(resumeId!, optimizedResume.job_description_id);
-      }
-
       // Fetch structured data
       setLoadingStep('Fetching structured resume data...');
       console.log('ResumeEditor: Fetching structured resume data...');
@@ -192,36 +186,6 @@ const ResumeEditor: React.FC = () => {
   const handleATSScoreUpdate = (newScore: number, newFeedback: any) => {
     setAtsScore(newScore);
     setAtsFeedback(newFeedback);
-  };
-
-  const handleAutoATSScoring = async (optimizedResumeId: string, jobDescriptionId: string) => {
-    try {
-      console.log('ResumeEditor: Auto-triggering ATS scoring...');
-      
-      // Call the calculate-ats-score function directly for objective scoring
-      const { data: atsResult, error: atsError } = await supabase.functions.invoke('calculate-ats-score', {
-        body: { optimizedResumeId }
-      });
-
-      if (atsError) {
-        console.error('ResumeEditor: ATS scoring error:', atsError);
-        return;
-      }
-
-      if (atsResult?.success && atsResult.ats_score) {
-        console.log('ResumeEditor: Auto ATS scoring completed:', atsResult.ats_score);
-        setAtsScore(atsResult.ats_score);
-        setAtsFeedback(atsResult.ats_feedback);
-        
-        toast({
-          title: "ATS Score Updated",
-          description: `Your resume scored ${atsResult.ats_score}/100 for ATS compatibility.`
-        });
-      }
-    } catch (error) {
-      console.error('ResumeEditor: Auto ATS scoring failed:', error);
-      // Fail silently - user can still manually trigger scoring
-    }
   };
 
   const handleExport = () => {

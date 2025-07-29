@@ -375,10 +375,13 @@ export const ResumeOptimizer: React.FC<ResumeOptimizerProps> = ({
               </div>
             </div>
 
-            <Button onClick={handleAnalyzeATS} disabled={!selectedResumeId || !selectedJobDescId || isLoadingATS} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
+            <Button onClick={handleAnalyzeATS} disabled={!selectedResumeId || !selectedJobDescId || isLoadingATS || isOptimizing} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
               {isLoadingATS ? <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Analyzing Current Score...
+                </> : isOptimizing ? <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Optimizing resume & calculating ATS score...
                 </> : <>
                   <Sparkles className="h-4 w-4 mr-2" />
                   Analyze & Optimize Resume
