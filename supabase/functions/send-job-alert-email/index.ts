@@ -87,7 +87,7 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
                 </div>
                 <div class="job-actions">
                     <a href="https://rezlit.com${job.job_page_link}" class="btn btn-primary">View Job Details</a>
-                    <a href="https://rezlit.com/resume-optimizer?job=${encodeURIComponent(job.job_page_link)}" class="btn btn-secondary">Create Optimized Resume</a>
+                    <a href="https://rezlit.com/upload?job=${encodeURIComponent(job.job_page_link)}" class="btn btn-secondary">Create Optimized Resume</a>
                 </div>
             </div>
             `).join('')}
@@ -127,8 +127,9 @@ const handler = async (req: Request): Promise<Response> => {
       // Send a test email with sample data
       console.log('[EMAIL] Sending test email to:', testEmail);
       
-      // For now, just return success - in production, you'd integrate with Resend
-      // const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+      // Initialize Resend for sending emails
+      const { Resend } = await import('npm:resend@2.0.0');
+      const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
       
       const sampleJobs: JobRecommendation[] = [
         {
@@ -159,20 +160,20 @@ const handler = async (req: Request): Promise<Response> => {
 
       const emailHTML = generateEmailHTML(testUserName || 'Test User', sampleJobs);
       
-      // TODO: Implement actual email sending with Resend
-      // const emailResponse = await resend.emails.send({
-      //   from: 'RezLit Job Alerts <jobs@rezlit.com>',
-      //   to: [testEmail],
-      //   subject: `🎯 Your Daily Job Matches - ${new Date().toLocaleDateString()}`,
-      //   html: emailHTML,
-      // });
+      // Send the actual email using Resend
+      const emailResponse = await resend.emails.send({
+        from: 'RezLit Job Alerts <jobs@rezlit.com>',
+        to: [testEmail],
+        subject: `🎯 Your Daily Job Matches - ${new Date().toLocaleDateString()}`,
+        html: emailHTML,
+      });
 
       console.log('[EMAIL] Test email would be sent with HTML length:', emailHTML.length);
 
       return new Response(JSON.stringify({
         success: true,
         message: 'Test email sent successfully',
-        // emailId: emailResponse.data?.id
+        emailId: emailResponse.data?.id
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -182,6 +183,10 @@ const handler = async (req: Request): Promise<Response> => {
     if (action === 'send-campaign' && runId) {
       // Send email campaign to all users from a recommendation run
       console.log('[EMAIL] Starting email campaign for run:', runId);
+      
+      // Initialize Resend for campaign emails
+      const { Resend } = await import('npm:resend@2.0.0');
+      const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
       // Get all user recommendations for this run
       const { data: recommendations, error: recError } = await supabase
@@ -202,7 +207,7 @@ const handler = async (req: Request): Promise<Response> => {
           )
         `)
         .eq('run_id', runId)
-        .not('email_sent_at', 'is', null);
+        .is('email_sent_at', null);
 
       if (recError) {
         console.error('[EMAIL] Error fetching recommendations:', recError);
@@ -240,13 +245,13 @@ const handler = async (req: Request): Promise<Response> => {
           const { user, jobs } = data;
           const emailHTML = generateEmailHTML(user.full_name || 'Job Seeker', jobs);
           
-          // TODO: Implement actual email sending with Resend
-          // const emailResponse = await resend.emails.send({
-          //   from: 'RezLit Job Alerts <jobs@rezlit.com>',
-          //   to: [user.email],
-          //   subject: `🎯 Your Daily Job Matches - ${new Date().toLocaleDateString()}`,
-          //   html: emailHTML,
-          // });
+          // Send the actual email using Resend
+          const emailResponse = await resend.emails.send({
+            from: 'RezLit Job Alerts <jobs@rezlit.com>',
+            to: [user.email],
+            subject: `🎯 Your Daily Job Matches - ${new Date().toLocaleDateString()}`,
+            html: emailHTML,
+          });
 
           // Update recommendation records with email sent timestamp
           await supabase

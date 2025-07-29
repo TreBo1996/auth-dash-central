@@ -1,14 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, Loader2, X, AlertTriangle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, Loader2, X, AlertTriangle, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { parseDocument } from '@/utils/documentParser';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 const UploadResumePage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -18,10 +18,23 @@ const UploadResumePage: React.FC = () => {
   const [fileInfo, setFileInfo] = useState<{name: string, size: number, type: string} | null>(null);
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [jobContext, setJobContext] = useState<{jobUrl: string, jobTitle?: string} | null>(null);
+
+  // Check for job URL parameter from email links
+  useEffect(() => {
+    const jobParam = searchParams.get('job');
+    if (jobParam) {
+      setJobContext({ jobUrl: jobParam });
+      toast({
+        title: "Job Context Detected",
+        description: "This resume will be optimized for the specific job you clicked from.",
+        duration: 5000
+      });
+    }
+  }, [searchParams, toast]);
 
   // Check authentication status on component mount
   React.useEffect(() => {
@@ -306,10 +319,27 @@ const UploadResumePage: React.FC = () => {
   return <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Resume</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {jobContext ? 'Upload Resume for Job Optimization' : 'Upload Resume'}
+          </h1>
           <p className="text-gray-600">
-            Upload your resume in PDF or DOCX format to get started
+            {jobContext 
+              ? 'Upload your resume to create an ATS-optimized version for this specific job'
+              : 'Upload your resume in PDF or DOCX format to get started'
+            }
           </p>
+          
+          {jobContext && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-800">
+                <ExternalLink className="h-4 w-4" />
+                <span className="font-medium">Job Context Detected</span>
+              </div>
+              <p className="text-sm text-blue-700 mt-1">
+                Your resume will be optimized for the job you selected from the email recommendation.
+              </p>
+            </div>
+          )}
           
         </div>
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { JobDatabaseManager } from './JobDatabaseManager';
@@ -21,7 +22,9 @@ import {
   Users,
   Mail,
   Download,
-  Send
+  Send,
+  UserCheck,
+  Zap
 } from 'lucide-react';
 import { EmailTemplatePreview } from './EmailTemplatePreview';
 
@@ -52,15 +55,19 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
   const [csvLoading, setCsvLoading] = useState(false);
   const [emailCampaignLoading, setEmailCampaignLoading] = useState(false);
   const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [sendAllUsersLoading, setSendAllUsersLoading] = useState(false);
   const [lastRun, setLastRun] = useState<any>(null);
   const [recentRuns, setRecentRuns] = useState<any[]>([]);
   const [totalRecommendations, setTotalRecommendations] = useState<number>(0);
+  const [userProfiles, setUserProfiles] = useState<any[]>([]);
+  const [selectedTestUser, setSelectedTestUser] = useState<string>('');
 
   useEffect(() => {
     if (isAdmin) {
       loadStatistics();
       loadRecentRuns();
       loadTotalRecommendations();
+      loadUserProfiles();
     }
   }, [isAdmin]);
 
@@ -111,6 +118,21 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
       setTotalRecommendations(count || 0);
     } catch (error) {
       console.error('Error loading total recommendations:', error);
+    }
+  };
+
+  const loadUserProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .not('email', 'is', null)
+        .order('full_name');
+      
+      if (error) throw error;
+      setUserProfiles(data || []);
+    } catch (error) {
+      console.error('Error loading user profiles:', error);
     }
   };
 
@@ -494,6 +516,95 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     }
   };
 
+  const sendToAllUsers = async () => {
+    setSendAllUsersLoading(true);
+    
+    try {
+      console.log("Generating fresh recommendations and sending emails to all users...");
+      
+      // First generate fresh recommendations
+      const { data: recommendationData, error: recError } = await supabase.functions.invoke('generate-daily-job-recommendations');
+      
+      if (recError) {
+        console.error("Recommendations error:", recError);
+        toast({
+          title: "Error",
+          description: `Failed to generate recommendations: ${recError.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Fresh recommendations generated:", recommendationData);
+
+      // Now send emails with the new run
+      const { data: emailData, error: emailError } = await supabase.functions.invoke('send-job-alert-email', {
+        body: { 
+          action: 'send-campaign',
+          runId: recommendationData.runId
+        }
+      });
+      
+      if (emailError) {
+        console.error("Email campaign error:", emailError);
+        toast({
+          title: "Error",
+          description: `Failed to send email campaign: ${emailError.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Emails sent to all users:", emailData);
+
+      toast({
+        title: "Success",
+        description: `Generated ${recommendationData.recommendationsGenerated} recommendations and sent emails to ${emailData.emailsSent} users`,
+        duration: 10000
+      });
+
+      // Update local state
+      setLastRun(recommendationData);
+      
+      // Refresh statistics and recent runs
+      loadStatistics();
+      loadRecentRuns();
+      loadTotalRecommendations();
+    } catch (error: any) {
+      console.error("Send to all users failed:", error);
+      toast({
+        title: "Error",
+        description: `Send to all users failed: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setSendAllUsersLoading(false);
+    }
+  };
+
+  const sendTestEmailToUser = async () => {
+    if (!selectedTestUser) {
+      toast({
+        title: "Error",
+        description: "Please select a user to send test email to.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const user = userProfiles.find(u => u.id === selectedTestUser);
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Selected user not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await sendTestEmail(user.email);
+  };
+
   if (!isAdmin) {
     return null;
   }
@@ -808,36 +919,111 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
             </div>
           </div>
 
-          {/* Send Email Campaign */}
+          {/* Direct Email Sending Options */}
           <div className="border-t border-blue-200 pt-4">
-            <h4 className="font-semibold text-blue-800 mb-2">Send Job Alert Campaign</h4>
+            <h4 className="font-semibold text-blue-800 mb-2">Direct Email Sending (Resend)</h4>
             <p className="text-sm text-blue-700 mb-4">
-              Send personalized job alert emails to all users from the latest recommendation run.
+              Send job alert emails directly using Resend integration.
             </p>
             
-            <Button 
-              onClick={sendEmailCampaign}
-              disabled={emailCampaignLoading || !lastRun}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {emailCampaignLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending Campaign...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Email Campaign
-                </>
-              )}
-            </Button>
-            
-            {!lastRun && (
-              <p className="text-xs text-orange-600 mt-2">
-                Generate recommendations first to send email campaign
-              </p>
-            )}
+            <div className="space-y-4">
+              {/* Send to All Users */}
+              <div className="p-4 bg-white rounded-lg border">
+                <h5 className="font-medium text-blue-800 mb-2">Send Fresh Recommendations to All Users</h5>
+                <p className="text-sm text-blue-600 mb-3">
+                  Generate fresh recommendations and immediately send personalized emails to all users.
+                </p>
+                <Button 
+                  onClick={sendToAllUsers}
+                  disabled={sendAllUsersLoading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {sendAllUsersLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating & Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="mr-2 h-4 w-4" />
+                      Send to All Users
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Send Campaign from Last Run */}
+              <div className="p-4 bg-white rounded-lg border">
+                <h5 className="font-medium text-blue-800 mb-2">Send Campaign from Last Run</h5>
+                <p className="text-sm text-blue-600 mb-3">
+                  Send emails using existing recommendations from the latest run.
+                </p>
+                <Button 
+                  onClick={sendEmailCampaign}
+                  disabled={emailCampaignLoading || !lastRun}
+                  variant="outline"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  {emailCampaignLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending Campaign...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send from Last Run
+                    </>
+                  )}
+                </Button>
+                
+                {!lastRun && (
+                  <p className="text-xs text-orange-600 mt-2">
+                    Generate recommendations first to use this option
+                  </p>
+                )}
+              </div>
+
+              {/* Test Email to Specific User */}
+              <div className="p-4 bg-white rounded-lg border">
+                <h5 className="font-medium text-blue-800 mb-2">Send Test Email to Specific User</h5>
+                <p className="text-sm text-blue-600 mb-3">
+                  Send a test email with sample job recommendations to a specific user.
+                </p>
+                <div className="flex gap-2 mb-2">
+                  <Select value={selectedTestUser} onValueChange={setSelectedTestUser}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a user..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userProfiles.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name || user.email} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button 
+                    onClick={sendTestEmailToUser}
+                    disabled={testEmailLoading || !selectedTestUser}
+                    variant="outline"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    {testEmailLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        Send Test Email
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>
