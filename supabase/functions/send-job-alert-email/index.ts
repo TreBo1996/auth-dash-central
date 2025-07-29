@@ -144,44 +144,136 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const supabase = createClient(supabaseUrl!, supabaseKey!);
-    const { action, runId, testEmail, testUserName } = await req.json();
+    const body = await req.json();
+    const { action, runId, testEmail, testUserId, testUserName } = body;
 
     if (action === 'send-test') {
-      // Send a test email with sample data
-      console.log('[EMAIL] Sending test email to:', testEmail);
+      console.log('[EMAIL] Sending test email to:', testEmail, 'with user ID:', testUserId);
       
       // Initialize Resend for sending emails
       const { Resend } = await import('npm:resend@2.0.0');
       const resend = new Resend(resendApiKey);
       
-      const sampleJobs: JobRecommendation[] = [
-        {
-          title: "Senior Software Engineer",
-          company: "TechCorp Inc.",
-          location: "San Francisco, CA",
-          salary: "$120,000 - $180,000",
-          job_page_link: "/job/database/sample-1",
-          match_score: 95
-        },
-        {
-          title: "Full Stack Developer",
-          company: "InnovateTech",
-          location: "Remote",
-          salary: "$90,000 - $140,000",
-          job_page_link: "/job/database/sample-2",
-          match_score: 88
-        },
-        {
-          title: "Frontend Developer",
-          company: "DesignFirst Studios",
-          location: "Austin, TX", 
-          salary: "$80,000 - $120,000",
-          job_page_link: "/job/database/sample-3",
-          match_score: 82
-        }
-      ];
+      let jobs: JobRecommendation[] = [];
+      let userName = testUserName || 'Test User';
 
-      const emailHTML = generateEmailHTML(testUserName || 'Test User', sampleJobs);
+      // Generate real recommendations if testUserId is provided
+      if (testUserId) {
+        try {
+          console.log('[EMAIL] Generating real job recommendations for user:', testUserId);
+          
+          // Get user preferences
+          const { data: userProfile, error: userError } = await supabase
+            .from('profiles')
+            .select('full_name, desired_job_title, experience_level, preferred_location, work_setting_preference, job_type_preference')
+            .eq('id', testUserId)
+            .single();
+
+          if (userError) {
+            console.error('[EMAIL] Error fetching user profile:', userError);
+          } else if (userProfile) {
+            userName = userProfile.full_name || userName;
+            console.log('[EMAIL] User profile loaded:', { 
+              name: userName, 
+              jobTitle: userProfile.desired_job_title,
+              experience: userProfile.experience_level,
+              location: userProfile.preferred_location
+            });
+
+            // Query quality jobs from the last 30 days
+            const { data: qualityJobs, error: jobsError } = await supabase
+              .from('cached_jobs')
+              .select('id, title, company, location, description, salary, job_url, job_page_link, scraped_at, quality_score')
+              .gte('quality_score', 6)
+              .gte('scraped_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+              .eq('is_expired', false)
+              .is('archived_at', null)
+              .order('quality_score', { ascending: false })
+              .limit(50);
+
+            if (jobsError) {
+              console.error('[EMAIL] Error fetching jobs:', jobsError);
+            } else if (qualityJobs && qualityJobs.length > 0) {
+              console.log('[EMAIL] Found', qualityJobs.length, 'quality jobs for matching');
+
+              // Calculate match scores for each job
+              const jobsWithScores = qualityJobs.map(job => {
+                // Title similarity (70% weight)
+                const titleSimilarity = userProfile.desired_job_title 
+                  ? calculateTitleSimilarity(userProfile.desired_job_title, job.title)
+                  : 0.5;
+
+                // Experience match (30% weight)  
+                const experienceMatch = userProfile.experience_level
+                  ? calculateExperienceMatch(userProfile.experience_level, job.title)
+                  : 0.5;
+
+                const matchScore = Math.round((titleSimilarity * 0.7 + experienceMatch * 0.3) * 100);
+
+                return {
+                  ...job,
+                  match_score: matchScore,
+                  title_similarity: titleSimilarity,
+                  experience_match: experienceMatch
+                };
+              });
+
+              // Sort by match score and take top 5
+              const topMatches = jobsWithScores
+                .sort((a, b) => b.match_score - a.match_score)
+                .slice(0, 5);
+
+              // Convert to JobRecommendation format
+              jobs = topMatches.map(job => ({
+                title: job.title,
+                company: job.company,
+                location: job.location || 'Location not specified',
+                salary: job.salary || 'Salary not disclosed',
+                job_page_link: job.job_page_link || job.job_url || `/job/${job.id}`,
+                match_score: job.match_score
+              }));
+
+              console.log('[EMAIL] Generated', jobs.length, 'real job recommendations with scores:', 
+                jobs.map(j => `${j.title} (${j.match_score}%)`).join(', '));
+            }
+          }
+        } catch (error) {
+          console.error('[EMAIL] Error generating real recommendations:', error);
+        }
+      }
+
+      // Fall back to sample jobs if no real jobs found
+      if (jobs.length === 0) {
+        console.log('[EMAIL] Using sample jobs for test email');
+        jobs = [
+          {
+            title: "Senior Software Engineer",
+            company: "TechCorp Inc.",
+            location: "San Francisco, CA",
+            salary: "$120,000 - $180,000",
+            job_page_link: "/job/database/sample-1",
+            match_score: 95
+          },
+          {
+            title: "Full Stack Developer",
+            company: "InnovateTech",
+            location: "Remote",
+            salary: "$90,000 - $140,000",
+            job_page_link: "/job/database/sample-2",
+            match_score: 88
+          },
+          {
+            title: "Frontend Developer",
+            company: "DesignFirst Studios",
+            location: "Austin, TX", 
+            salary: "$80,000 - $120,000",
+            job_page_link: "/job/database/sample-3",
+            match_score: 82
+          }
+        ];
+      }
+
+      const emailHTML = generateEmailHTML(userName, jobs);
       
       // Send the actual email using Resend
       const emailResponse = await resend.emails.send({
@@ -191,12 +283,15 @@ const handler = async (req: Request): Promise<Response> => {
         html: emailHTML,
       });
 
-      console.log('[EMAIL] Test email would be sent with HTML length:', emailHTML.length);
+      console.log('[EMAIL] Test email sent with HTML length:', emailHTML.length);
 
       return new Response(JSON.stringify({
         success: true,
         message: 'Test email sent successfully',
-        emailId: emailResponse.data?.id
+        emailId: emailResponse.data?.id,
+        jobCount: jobs.length,
+        userName: userName,
+        realData: testUserId ? true : false
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }
@@ -332,5 +427,59 @@ const handler = async (req: Request): Promise<Response> => {
     });
   }
 };
+
+// Helper functions for job matching
+function calculateTitleSimilarity(userTitle: string, jobTitle: string): number {
+  if (!userTitle || !jobTitle) return 0;
+  
+  const normalizeTitle = (title: string) => 
+    title.toLowerCase()
+      .replace(/\b(senior|sr|junior|jr|lead|principal|staff)\b/g, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  
+  const userWords = normalizeTitle(userTitle).split(' ').filter(w => w.length > 2);
+  const jobWords = normalizeTitle(jobTitle).split(' ').filter(w => w.length > 2);
+  
+  if (userWords.length === 0 || jobWords.length === 0) return 0;
+  
+  const matchedWords = userWords.filter(userWord => 
+    jobWords.some(jobWord => 
+      jobWord.includes(userWord) || userWord.includes(jobWord)
+    )
+  );
+  
+  return matchedWords.length / userWords.length;
+}
+
+function calculateExperienceMatch(userLevel: string, jobTitle: string): number {
+  if (!userLevel || !jobTitle) return 0.5;
+  
+  const title = jobTitle.toLowerCase();
+  const level = userLevel.toLowerCase();
+  
+  if (level.includes('entry') || level.includes('junior')) {
+    if (title.includes('junior') || title.includes('jr') || title.includes('entry')) return 1;
+    if (title.includes('senior') || title.includes('sr') || title.includes('lead')) return 0.3;
+    return 0.7;
+  }
+  
+  if (level.includes('mid') || level.includes('intermediate')) {
+    if (title.includes('senior') || title.includes('sr')) return 0.8;
+    if (title.includes('junior') || title.includes('jr')) return 0.6;
+    if (title.includes('lead') || title.includes('principal')) return 0.7;
+    return 0.9;
+  }
+  
+  if (level.includes('senior')) {
+    if (title.includes('senior') || title.includes('sr') || title.includes('lead')) return 1;
+    if (title.includes('principal') || title.includes('staff')) return 0.8;
+    if (title.includes('junior') || title.includes('jr')) return 0.4;
+    return 0.7;
+  }
+  
+  return 0.5;
+}
 
 serve(handler);

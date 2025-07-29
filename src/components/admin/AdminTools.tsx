@@ -418,16 +418,17 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     }
   };
 
-  const sendTestEmail = async (testEmail: string) => {
+  const sendTestEmail = async (testEmail: string, testUserId?: string) => {
     setTestEmailLoading(true);
     
     try {
-      console.log("Sending test email to:", testEmail);
+      console.log("Sending test email to:", testEmail, "with user ID:", testUserId);
       
       const { data, error } = await supabase.functions.invoke('send-job-alert-email', {
         body: { 
           action: 'send-test',
           testEmail,
+          testUserId,
           testUserName: 'Test User'
         }
       });
@@ -446,7 +447,7 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
 
       toast({
         title: "Success",
-        description: `Test email sent successfully to ${testEmail}`,
+        description: `Test email sent successfully to ${testEmail}${testUserId ? ' with real job recommendations' : ' with sample data'}`,
       });
 
     } catch (error: any) {

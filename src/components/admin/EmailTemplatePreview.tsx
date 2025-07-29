@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { generateJobAlertEmailHTML, sampleJobs } from '@/utils/emailTemplate';
@@ -13,12 +14,13 @@ import {
   Loader2,
   Settings,
   RefreshCw,
-  Users
+  Users,
+  UserCheck
 } from 'lucide-react';
 
 interface EmailTemplatePreviewProps {
   lastRun: any;
-  onSendTest: (email: string) => void;
+  onSendTest: (email: string, testUserId?: string) => void;
   isLoading?: boolean;
 }
 
@@ -33,10 +35,23 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
   const [userName, setUserName] = useState('Sarah Johnson');
   const [emailStats, setEmailStats] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [useRealData, setUseRealData] = useState(true);
+  const [selectedTestUser, setSelectedTestUser] = useState<string>('');
+  const [userProfiles, setUserProfiles] = useState<any[]>([]);
+  const [selectedUserPreferences, setSelectedUserPreferences] = useState<any>(null);
 
   useEffect(() => {
     loadEmailStats();
+    loadUserProfiles();
   }, []);
+
+  useEffect(() => {
+    if (selectedTestUser) {
+      loadUserPreferences(selectedTestUser);
+    } else {
+      setSelectedUserPreferences(null);
+    }
+  }, [selectedTestUser]);
 
   const loadEmailStats = async () => {
     setLoadingStats(true);
@@ -65,8 +80,48 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
     }
   };
 
+  const loadUserProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .not('email', 'is', null)
+        .order('full_name');
+      
+      if (error) throw error;
+      setUserProfiles(data || []);
+    } catch (error) {
+      console.error('Error loading user profiles:', error);
+    }
+  };
+
+  const loadUserPreferences = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('desired_job_title, experience_level, preferred_location, work_setting_preference, job_type_preference')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      setSelectedUserPreferences(data);
+    } catch (error) {
+      console.error('Error loading user preferences:', error);
+      setSelectedUserPreferences(null);
+    }
+  };
+
   const handleSendTestEmail = () => {
-    if (!testEmail.trim()) {
+    if (useRealData && !selectedTestUser) {
+      toast({
+        title: "Error",
+        description: "Please select a test user for real data testing",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!useRealData && !testEmail.trim()) {
       toast({
         title: "Error",
         description: "Please enter a test email address",
@@ -75,7 +130,11 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
       return;
     }
 
-    onSendTest(testEmail);
+    const emailToSend = useRealData 
+      ? userProfiles.find(u => u.id === selectedTestUser)?.email || testEmail
+      : testEmail;
+
+    onSendTest(emailToSend, useRealData ? selectedTestUser : undefined);
   };
 
   const emailHTML = generateJobAlertEmailHTML(userName, sampleJobs);
@@ -196,19 +255,99 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
           </div>
 
           {/* Test Email Section */}
-          <div className="border-t pt-4 space-y-3">
+          <div className="border-t pt-4 space-y-4">
             <h4 className="font-semibold text-blue-800">Send Test Email</h4>
+            
+            {/* Real Data Toggle */}
+            <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="useRealData"
+                  checked={useRealData}
+                  onChange={(e) => setUseRealData(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="useRealData" className="text-sm font-medium text-blue-800">
+                  Use real job recommendations
+                </Label>
+              </div>
+              <UserCheck className="h-4 w-4 text-blue-600" />
+            </div>
+
+            {useRealData ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="testUser" className="text-sm">Select Test User</Label>
+                    <Select value={selectedTestUser} onValueChange={setSelectedTestUser}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a user..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {userProfiles.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.full_name || 'Unnamed User'} ({user.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {selectedTestUser && (
+                    <div>
+                      <Label htmlFor="customEmail" className="text-sm">Custom Email (Optional)</Label>
+                      <Input
+                        id="customEmail"
+                        value={testEmail}
+                        onChange={(e) => setTestEmail(e.target.value)}
+                        placeholder="Override email address"
+                        type="email"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                {selectedUserPreferences && (
+                  <div className="p-3 bg-white rounded border text-sm">
+                    <p className="font-semibold text-blue-800 mb-2">Selected User Preferences:</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-600">Job Title:</span>
+                        <span className="ml-1 font-medium">{selectedUserPreferences.desired_job_title || 'Not specified'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Experience:</span>
+                        <span className="ml-1 font-medium">{selectedUserPreferences.experience_level || 'Not specified'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Location:</span>
+                        <span className="ml-1 font-medium">{selectedUserPreferences.preferred_location || 'Not specified'}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Work Setting:</span>
+                        <span className="ml-1 font-medium">{selectedUserPreferences.work_setting_preference || 'Not specified'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="testEmail" className="text-sm">Test Email Address</Label>
+                <Input
+                  id="testEmail"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="Enter test email address"
+                  type="email"
+                />
+              </div>
+            )}
+
             <div className="flex gap-2">
-              <Input
-                value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
-                placeholder="Enter test email address"
-                type="email"
-                className="flex-1"
-              />
               <Button
                 onClick={handleSendTestEmail}
-                disabled={isLoading || !testEmail.trim()}
+                disabled={isLoading || (useRealData ? !selectedTestUser : !testEmail.trim())}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 {isLoading ? (
@@ -216,11 +355,15 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
                 ) : (
                   <Send className="h-4 w-4 mr-2" />
                 )}
-                Send Test
+                {useRealData ? 'Send with Real Jobs' : 'Send with Sample Jobs'}
               </Button>
             </div>
+            
             <p className="text-sm text-blue-600">
-              Send a test email to verify the template appears correctly in email clients.
+              {useRealData 
+                ? 'Test with real job recommendations based on selected user preferences.'
+                : 'Send a test email with sample jobs to verify template rendering.'
+              }
             </p>
           </div>
 
