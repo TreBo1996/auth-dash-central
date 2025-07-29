@@ -39,9 +39,9 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
         .greeting { font-size: 18px; color: #1f2937; margin-bottom: 20px; }
         .intro { font-size: 16px; color: #4b5563; margin-bottom: 30px; line-height: 1.6; }
         .job-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-        .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 12px; }
-        .job-title { font-size: 18px; font-weight: bold; color: #1f2937; margin: 0; flex: 1; min-width: 0; }
-        .match-badge { background-color: #10b981; color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; flex-shrink: 0; white-space: nowrap; }
+        .job-header { display: flex; align-items: center; margin-bottom: 12px; gap: 16px; flex-wrap: wrap; }
+        .job-title { font-size: 18px; font-weight: bold; color: #1f2937; margin: 0; }
+        .match-badge { background-color: #10b981; color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; flex-shrink: 0; white-space: nowrap; margin-left: auto; }
         .company { font-size: 16px; color: #6b7280; margin: 4px 0; }
         .job-details { display: flex; gap: 20px; margin: 12px 0; font-size: 14px; color: #6b7280; }
         .detail-item { display: flex; align-items: center; gap: 6px; }
