@@ -125,19 +125,17 @@ async function performATSScoring(optimizedResumeId: string, supabase: any, openA
     const jobDescription = optimizedResume.job_descriptions.parsed_text;
     const jobTitle = optimizedResume.job_descriptions.title;
 
-    const atsPrompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following OPTIMIZED resume against the job description and provide a comprehensive ATS compatibility score.
-
-IMPORTANT: This resume has been optimized specifically for this job description, so the score should be significantly HIGHER than a typical unoptimized resume.
+    const atsPrompt = `You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume against the job description and provide a comprehensive ATS compatibility score.
 
 CRITICAL: Return ONLY valid JSON in this exact structure:
 
 {
-  "overall_score": <number between 80-100 for optimized resumes>,
+  "overall_score": <number between 0-100>,
   "category_scores": {
-    "keyword_match": <number between 80-100>,
-    "skills_alignment": <number between 80-100>,
-    "experience_relevance": <number between 80-100>,
-    "format_compliance": <number between 85-100>
+    "keyword_match": <number between 0-100>,
+    "skills_alignment": <number between 0-100>,
+    "experience_relevance": <number between 0-100>,
+    "format_compliance": <number between 0-100>
   },
   "recommendations": [
     "specific actionable recommendation 1",
@@ -146,12 +144,11 @@ CRITICAL: Return ONLY valid JSON in this exact structure:
   ],
   "keyword_analysis": {
     "matched_keywords": ["keyword1", "keyword2", "keyword3"],
-    "missing_keywords": ["missing1", "missing2"]
+    "missing_keywords": ["missing1", "missing2", "missing3"]
   },
   "strengths": [
     "strength 1",
-    "strength 2",
-    "strength 3"
+    "strength 2"
   ],
   "areas_for_improvement": [
     "improvement area 1",
@@ -159,19 +156,25 @@ CRITICAL: Return ONLY valid JSON in this exact structure:
   ]
 }
 
+SCORING CRITERIA:
+- keyword_match: How well resume keywords match job description (0-100)
+- skills_alignment: How well skills align with job requirements (0-100)
+- experience_relevance: How relevant experience is to the role (0-100)
+- format_compliance: How ATS-friendly the resume format is (0-100)
+
 Job Title: ${jobTitle}
 
 Job Description:
 ${jobDescription}
 
-OPTIMIZED Resume Content:
+Resume Content:
 ${resumeContent}
 
 Return ONLY the JSON structure above, no additional text.`;
 
     const atsResponse = await callOpenAI(
       atsPrompt,
-      'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text. Optimized resumes should score 80+ overall.',
+      'You are an expert ATS analyzer. Always return valid JSON only, never include markdown or additional text.',
       2000,
       'Background ATS Scoring'
     );
