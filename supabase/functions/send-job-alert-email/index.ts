@@ -30,8 +30,8 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Daily Job Recommendations</title>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background: linear-gradient(to bottom, #eff6ff, #f0f9ff); }
-        .container { max-width: 600px; margin: 0 auto; background: linear-gradient(to bottom, #ffffff, #f8fafc); border-radius: 8px; }
+        body { margin: 0; padding: 20px; font-family: 'Arial', sans-serif; background: linear-gradient(to bottom, #eff6ff, #f0f9ff); min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
         .header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #9333ea 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; }
         .header p { color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px; }
