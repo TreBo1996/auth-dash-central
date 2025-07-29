@@ -63,7 +63,10 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎯 Your Job Matches</h1>
+            <div style="margin-bottom: 20px;">
+                <img src="https://rezlit.com/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" alt="RezLit" style="height: 40px; width: auto; display: inline-block;" />
+            </div>
+            <h1>Your Job Matches</h1>
             <p>Personalized recommendations for ${currentDate}</p>
         </div>
         
@@ -87,7 +90,7 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
                 </div>
                 <div class="job-actions">
                     <a href="https://rezlit.com${job.job_page_link}" class="btn btn-primary">View Job Details</a>
-                    <a href="https://rezlit.com/upload?job=${encodeURIComponent(job.job_page_link)}" class="btn btn-secondary">Create Optimized Resume</a>
+                    <a href="https://rezlit.com/upload?job=https://rezlit.com${job.job_page_link}" class="btn btn-secondary">Create Optimized Resume</a>
                 </div>
             </div>
             `).join('')}

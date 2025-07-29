@@ -870,60 +870,12 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
             )}
           </div>
 
-          {/* Mailchimp Integration Panel */}
-          <div className="border-t border-blue-200 pt-4">
-            <h4 className="font-semibold text-blue-800 mb-2">Mailchimp Integration</h4>
-            <p className="text-sm text-blue-700 mb-4">
-              Update Mailchimp subscriber merge fields with job recommendation data for email campaigns.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button 
-                onClick={updateMailchimpMergeFields}
-                disabled={mailchimpLoading || !lastRun}
-                variant="outline"
-                className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-100"
-              >
-                {mailchimpLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating Mailchimp...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Update Mailchimp Merge Fields
-                  </>
-                )}
-              </Button>
 
-              <Button 
-                onClick={exportRecommendationsCSV}
-                disabled={csvLoading || !lastRun}
-                variant="outline"
-                className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-100"
-                title={!lastRun ? "No successful recommendation run found - generate recommendations first" : "Export latest recommendations as CSV"}
-              >
-                {csvLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Exporting...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    {lastRun ? 'Export Recommendations CSV' : 'CSV Export (No Data)'}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Direct Email Sending Options */}
+          {/* Job Alert Email System */}
           <div className="border-t border-blue-200 pt-4">
-            <h4 className="font-semibold text-blue-800 mb-2">Direct Email Sending (Resend)</h4>
+            <h4 className="font-semibold text-blue-800 mb-2">Job Alert Email System</h4>
             <p className="text-sm text-blue-700 mb-4">
-              Send job alert emails directly using Resend integration.
+              Send personalized job recommendations to users via email. The system automatically filters users who haven't received emails recently and have job recommendations available.
             </p>
             
             <div className="space-y-4">
