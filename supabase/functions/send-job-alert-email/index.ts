@@ -119,11 +119,31 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    console.log('[EMAIL] Function started, checking environment variables...');
+    
+    // Check if required environment variables are available
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    
+    console.log('[EMAIL] Environment check:', {
+      supabaseUrl: supabaseUrl ? 'Set' : 'Missing',
+      supabaseKey: supabaseKey ? 'Set' : 'Missing', 
+      resendApiKey: resendApiKey ? 'Set' : 'Missing'
+    });
 
+    if (!resendApiKey) {
+      console.error('[EMAIL] RESEND_API_KEY is not configured');
+      return new Response(JSON.stringify({
+        error: 'RESEND_API_KEY not configured in Supabase secrets',
+        success: false
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders }
+      });
+    }
+
+    const supabase = createClient(supabaseUrl!, supabaseKey!);
     const { action, runId, testEmail, testUserName } = await req.json();
 
     if (action === 'send-test') {
@@ -132,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       // Initialize Resend for sending emails
       const { Resend } = await import('npm:resend@2.0.0');
-      const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+      const resend = new Resend(resendApiKey);
       
       const sampleJobs: JobRecommendation[] = [
         {
