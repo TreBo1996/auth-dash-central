@@ -109,7 +109,7 @@ const generateEmailHTML = (userName: string = "Sarah Johnson", jobs: SampleJob[]
             <div style="margin-bottom: 20px;">
                 <img src="${window.location.origin}/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" alt="RezLit" style="height: 40px; width: auto; display: inline-block;" />
             </div>
-            <h1>🎯 Your Job Matches</h1>
+            <h1>Your Job Matches</h1>
             <p>Personalized recommendations for ${currentDate}</p>
         </div>
         
