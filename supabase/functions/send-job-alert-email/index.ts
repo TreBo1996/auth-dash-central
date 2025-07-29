@@ -330,13 +330,13 @@ const handler = async (req: Request): Promise<Response> => {
 
               const topMatches = qualifiedJobs.slice(0, 5);
 
-              // Convert to JobRecommendation format
+              // Convert to JobRecommendation format - always use internal job detail pages
               jobs = topMatches.map(job => ({
                 title: job.title,
                 company: job.company,
                 location: job.location || 'Location not specified',
                 salary: job.salary || 'Salary not disclosed',
-                job_page_link: job.job_page_link || job.job_url || `/job/${job.id}`,
+                job_page_link: `/job/database/${job.id}`,
                 match_score: job.match_score
               }));
 
@@ -358,7 +358,7 @@ const handler = async (req: Request): Promise<Response> => {
             company: "TechCorp Inc.",
             location: "San Francisco, CA",
             salary: "$120,000 - $180,000",
-            job_page_link: "/job/database/sample-1",
+            job_page_link: "/job/database/00000000-0000-0000-0000-000000000001",
             match_score: 95
           },
           {
@@ -366,15 +366,15 @@ const handler = async (req: Request): Promise<Response> => {
             company: "InnovateTech",
             location: "Remote",
             salary: "$90,000 - $140,000",
-            job_page_link: "/job/database/sample-2",
+            job_page_link: "/job/database/00000000-0000-0000-0000-000000000002",
             match_score: 88
           },
           {
             title: "Frontend Developer",
             company: "DesignFirst Studios",
-            location: "Austin, TX", 
+            location: "Austin, TX",
             salary: "$80,000 - $120,000",
-            job_page_link: "/job/database/sample-3",
+            job_page_link: "/job/database/00000000-0000-0000-0000-000000000003",
             match_score: 82
           }
         ];
