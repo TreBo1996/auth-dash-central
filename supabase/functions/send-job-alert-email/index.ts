@@ -180,10 +180,10 @@ const handler = async (req: Request): Promise<Response> => {
               location: userProfile.preferred_location
             });
 
-            // Query quality jobs from the last 30 days
+            // Query quality jobs from the last 30 days with job recommendation category
             const { data: qualityJobs, error: jobsError } = await supabase
               .from('cached_jobs')
-              .select('id, title, company, location, description, salary, job_url, job_page_link, scraped_at, quality_score')
+              .select('id, title, company, location, description, salary, job_url, job_page_link, scraped_at, quality_score, job_recommendation_category')
               .gte('quality_score', 6)
               .gte('scraped_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
               .eq('is_expired', false)
@@ -196,9 +196,9 @@ const handler = async (req: Request): Promise<Response> => {
             } else if (qualityJobs && qualityJobs.length > 0) {
               console.log('[EMAIL] Found', qualityJobs.length, 'quality jobs for matching');
 
-              // Pre-filter jobs by category to improve relevance
+              // Pre-filter jobs by category to improve relevance using database categories
               const filteredJobs = userProfile.desired_job_title 
-                ? preFilterJobsByCategory(userProfile.desired_job_title, qualityJobs)
+                ? await preFilterJobsByCategory(supabase, userProfile.desired_job_title, qualityJobs)
                 : qualityJobs;
 
               console.log('[EMAIL] After category filtering:', filteredJobs.length, 'jobs remain');
@@ -545,48 +545,98 @@ function calculateExperienceMatch(userLevel: string, jobTitle: string): number {
   return 0.7; // Default neutral match
 }
 
-function preFilterJobsByCategory(userTitle: string, jobs: any[]): any[] {
-  if (!userTitle) return jobs;
+// Helper function to map user job title to job category using database
+async function mapUserTitleToCategory(supabase: any, userJobTitle: string): Promise<string | null> {
+  if (!userJobTitle) return null;
   
-  const userTitleLower = userTitle.toLowerCase();
+  const normalizedTitle = userJobTitle.toLowerCase();
   
-  // Define job categories and their related keywords
-  const categories = {
-    project: ['project', 'program', 'portfolio', 'scrum', 'agile', 'pm'],
-    product: ['product', 'pm', 'roadmap', 'strategy'],
-    data: ['data', 'analytics', 'analyst', 'scientist', 'research'],
-    engineering: ['software', 'engineer', 'developer', 'technical', 'coding', 'programming'],
-    sales: ['sales', 'business development', 'account', 'revenue'],
-    marketing: ['marketing', 'brand', 'campaign', 'digital', 'content'],
-    design: ['design', 'ux', 'ui', 'creative', 'visual'],
-    finance: ['finance', 'accounting', 'financial', 'budget', 'analyst'],
-    operations: ['operations', 'ops', 'process', 'logistics', 'supply']
-  };
+  // Get all job categories with their keywords
+  const { data: categories, error } = await supabase
+    .from('job_categories')
+    .select('category_name, keywords');
+    
+  if (error || !categories) {
+    console.error('[EMAIL] Error fetching job categories:', error);
+    return null;
+  }
   
-  // Determine user's category
-  let userCategory = '';
-  for (const [category, keywords] of Object.entries(categories)) {
-    if (keywords.some(keyword => userTitleLower.includes(keyword))) {
-      userCategory = category;
-      break;
+  // Find the best matching category
+  for (const category of categories) {
+    const keywords = category.keywords || [];
+    for (const keyword of keywords) {
+      if (normalizedTitle.includes(keyword.toLowerCase())) {
+        console.log(`[EMAIL] Mapped "${userJobTitle}" to category "${category.category_name}" via keyword "${keyword}"`);
+        return category.category_name;
+      }
     }
   }
   
-  if (!userCategory) return jobs; // Return all jobs if category unclear
+  console.log(`[EMAIL] No category match found for "${userJobTitle}"`);
+  return null;
+}
+
+// Helper function to pre-filter jobs by category for better relevance
+async function preFilterJobsByCategory(supabase: any, userJobTitle: string, jobs: any[]): Promise<any[]> {
+  // Map user's job title to a category
+  const userCategory = await mapUserTitleToCategory(supabase, userJobTitle);
   
-  // Filter jobs to prioritize same category, but include others
-  const sameCategory = jobs.filter(job => {
-    const jobTitleLower = job.title.toLowerCase();
-    return categories[userCategory].some(keyword => jobTitleLower.includes(keyword));
-  });
+  if (!userCategory) {
+    console.log('[EMAIL] No user category found, returning all jobs');
+    return jobs;
+  }
   
-  const otherJobs = jobs.filter(job => {
-    const jobTitleLower = job.title.toLowerCase();
-    return !categories[userCategory].some(keyword => jobTitleLower.includes(keyword));
-  });
+  console.log(`[EMAIL] Filtering jobs for category: ${userCategory}`);
   
-  // Return same category jobs first, then others (with reduced priority)
-  return [...sameCategory, ...otherJobs.slice(0, Math.max(10, 50 - sameCategory.length))];
+  // Filter jobs that match the user's category
+  const categoryFilteredJobs = jobs.filter(job => 
+    job.job_recommendation_category === userCategory
+  );
+  
+  console.log(`[EMAIL] Found ${categoryFilteredJobs.length} jobs in category "${userCategory}"`);
+  
+  // If we have enough jobs in the category, return them
+  if (categoryFilteredJobs.length >= 3) {
+    return categoryFilteredJobs;
+  }
+  
+  // Define related categories for fallback
+  const relatedCategories: { [key: string]: string[] } = {
+    'Project Manager': ['Business Analyst', 'Operations'],
+    'Software Engineer': ['Data Scientist'],
+    'Business Analyst': ['Project Manager', 'Operations'],
+    'Marketing': ['Sales'],
+    'Sales': ['Marketing'],
+    'Data Scientist': ['Software Engineer'],
+    'Human Resources': ['Operations'],
+    'Finance': ['Operations'],
+    'Operations': ['Project Manager', 'Business Analyst']
+  };
+  
+  // Try to include related categories
+  const related = relatedCategories[userCategory] || [];
+  let expandedJobs = [...categoryFilteredJobs];
+  
+  for (const relatedCategory of related) {
+    const relatedCategoryJobs = jobs.filter(job => 
+      job.job_recommendation_category === relatedCategory
+    );
+    expandedJobs = [...expandedJobs, ...relatedCategoryJobs];
+    
+    if (expandedJobs.length >= 10) break; // Limit expansion
+  }
+  
+  console.log(`[EMAIL] After related category expansion: ${expandedJobs.length} jobs`);
+  
+  // If still not enough, add some high-quality jobs from any category
+  if (expandedJobs.length < 5) {
+    const additionalJobs = jobs
+      .filter(job => !expandedJobs.find(ej => ej.id === job.id))
+      .slice(0, 10 - expandedJobs.length);
+    expandedJobs = [...expandedJobs, ...additionalJobs];
+  }
+  
+  return expandedJobs;
 }
 
 serve(handler);
