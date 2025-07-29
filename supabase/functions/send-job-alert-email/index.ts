@@ -124,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if required environment variables are available
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const resendApiKey = Deno.env.get('Resend_API_KEY');
     
     console.log('[EMAIL] Environment check:', {
       supabaseUrl: supabaseUrl ? 'Set' : 'Missing',
