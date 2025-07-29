@@ -30,8 +30,8 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Daily Job Recommendations</title>
     <style>
-        body { margin: 0; padding: 20px; font-family: 'Arial', sans-serif; background: linear-gradient(to bottom, #eff6ff, #f0f9ff); min-height: 100vh; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
+        body { margin: 0; padding: 20px; font-family: 'Arial', sans-serif; background-color: #f9fafb; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; }
         .header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #9333ea 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; }
         .header p { color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px; }
@@ -66,7 +66,7 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
             <div style="margin-bottom: 20px;">
                 <img src="https://rezlit.com/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" alt="RezLit" style="height: 40px; width: auto; display: inline-block;" />
             </div>
-            <h1>RezLit New Job Matches - ${currentDate}</h1>
+            <h1>New Job Matches - ${currentDate}</h1>
             <p>Personalized recommendations just for you</p>
         </div>
         
