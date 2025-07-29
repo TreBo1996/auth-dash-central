@@ -53,8 +53,8 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Special handling for test user - always return premium (v2)
-    if (user.email === 'tcurry0725@gmail.com') {
+    // Special handling for test users - always return premium (v2)
+    if (user.email === 'tcurry0725@gmail.com' || user.email === 'yani.curry@gmail.com') {
       logStep("Test user detected, returning premium status", { email: user.email });
       return new Response(JSON.stringify({
         subscribed: true,
