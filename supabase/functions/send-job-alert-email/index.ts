@@ -405,110 +405,224 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    if (action === 'send-campaign' && runId) {
-      // Send email campaign to all users from a recommendation run
-      console.log('[EMAIL] Starting email campaign for run:', runId);
-      
+    if (action === 'send-campaign') {
+      // Send emails to all users with desired job titles using enhanced recommendation logic
+      console.log(`[EMAIL] Starting enhanced campaign for all active users`);
+
       // Initialize Resend for campaign emails
       const { Resend } = await import('npm:resend@2.0.0');
       const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 
-      // Get all user recommendations for this run
-      const { data: recommendations, error: recError } = await supabase
-        .from('user_job_recommendations')
-        .select(`
-          user_id,
-          match_score,
-          cached_jobs!inner(
-            title,
-            company,
-            location,
-            salary,
-            job_page_link
-          ),
-          profiles!inner(
-            full_name,
-            email
-          )
-        `)
-        .eq('run_id', runId)
-        .is('email_sent_at', null);
+      // Get all users who have desired_job_title set (only send to users with profiles completed)
+      const { data: eligibleUsers, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, desired_job_title, experience_level, preferred_location, work_setting_preference')
+        .not('desired_job_title', 'is', null)
+        .not('desired_job_title', 'eq', '')
+        .not('email', 'is', null);
 
-      if (recError) {
-        console.error('[EMAIL] Error fetching recommendations:', recError);
-        throw recError;
+      if (usersError) {
+        console.error('[EMAIL] Error fetching eligible users:', usersError);
+        throw usersError;
       }
 
-      // Group recommendations by user
-      const userRecommendations = new Map();
-      
-      for (const rec of recommendations || []) {
-        const userId = rec.user_id;
-        if (!userRecommendations.has(userId)) {
-          userRecommendations.set(userId, {
-            user: rec.profiles,
-            jobs: []
-          });
-        }
-        
-        userRecommendations.get(userId).jobs.push({
-          title: rec.cached_jobs.title,
-          company: rec.cached_jobs.company,
-          location: rec.cached_jobs.location,
-          salary: rec.cached_jobs.salary,
-          job_page_link: rec.cached_jobs.job_page_link,
-          match_score: rec.match_score
+      if (!eligibleUsers || eligibleUsers.length === 0) {
+        console.log('[EMAIL] No eligible users found with desired job titles');
+        return new Response(JSON.stringify({ 
+          success: true,
+          message: 'No users found with desired job titles set',
+          emailsSent: 0,
+          totalEligibleUsers: 0
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders }
         });
       }
 
-      let emailsSent = 0;
-      const errors: string[] = [];
+      console.log(`[EMAIL] Found ${eligibleUsers.length} eligible users with job titles`);
 
-      // Send emails to each user
-      for (const [userId, data] of userRecommendations) {
+      // Get quality jobs for matching (same logic as test emails)
+      const { data: jobs, error: jobsError } = await supabase
+        .from('cached_jobs')
+        .select('*')
+        .gte('quality_score', 3)
+        .eq('is_expired', false)
+        .is('archived_at', null)
+        .gte('scraped_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
+        .order('scraped_at', { ascending: false })
+        .limit(200);
+
+      if (jobsError) {
+        console.error('[EMAIL] Error fetching jobs:', jobsError);
+        throw jobsError;
+      }
+
+      console.log(`[EMAIL] Found ${jobs?.length || 0} quality jobs for matching`);
+
+      let emailsSent = 0;
+      let emailsFailed = 0;
+      let usersSkipped = 0;
+
+      // Process each eligible user
+      for (const user of eligibleUsers) {
         try {
-          const { user, jobs } = data;
-          const emailHTML = generateEmailHTML(user.full_name || 'Job Seeker', jobs);
-          
-          // Send the actual email using Resend
-          const emailResponse = await resend.emails.send({
-            from: 'RezLit Job Alerts <jobs@rezlit.com>',
+          console.log(`[EMAIL] Processing user: ${user.full_name} (${user.desired_job_title})`);
+
+          // Use the same enhanced job recommendation logic from test emails
+          const userProfile = {
+            name: user.full_name || 'Job Seeker',
+            jobTitle: user.desired_job_title,
+            experience: user.experience_level || 'mid',
+            location: user.preferred_location || 'Remote'
+          };
+
+          // Map user title to category
+          const { data: categoryData } = await supabase
+            .from('job_categories')
+            .select('*');
+
+          let userCategory = 'Other';
+          const normalizedTitle = userProfile.jobTitle.toLowerCase();
+
+          for (const cat of categoryData || []) {
+            const keywords = cat.keywords || [];
+            for (const keyword of keywords) {
+              if (normalizedTitle.includes(keyword.toLowerCase())) {
+                userCategory = cat.category_name;
+                console.log(`[EMAIL] Mapped "${userProfile.jobTitle}" to category "${userCategory}" via keyword "${keyword}"`);
+                break;
+              }
+            }
+            if (userCategory !== 'Other') break;
+          }
+
+          // Filter jobs by category
+          const categoryJobs = jobs?.filter(job => 
+            job.job_recommendation_category === userCategory
+          ) || [];
+
+          console.log(`[EMAIL] Found ${categoryJobs.length} jobs in category "${userCategory}"`);
+
+          if (categoryJobs.length === 0) {
+            console.log(`[EMAIL] No jobs found for user ${user.full_name} in category ${userCategory}`);
+            usersSkipped++;
+            continue;
+          }
+
+          // Apply location filtering
+          const locationFilteredJobs = applyLocationFiltering(
+            categoryJobs,
+            userProfile.location,
+            user.work_setting_preference || 'hybrid'
+          );
+
+          console.log(`[EMAIL] After location filtering: ${locationFilteredJobs.length} jobs remain`);
+
+          if (locationFilteredJobs.length === 0) {
+            console.log(`[EMAIL] No jobs found for user ${user.full_name} after location filtering`);
+            usersSkipped++;
+            continue;
+          }
+
+          // Calculate match scores and apply adaptive filtering
+          const jobsWithScores = locationFilteredJobs.map(job => {
+            const titleSimilarity = calculateTitleSimilarity(userProfile.jobTitle, job.title);
+            const experienceMatch = calculateExperienceMatch(userProfile.experience, job.experience_level || 'mid');
+            const locationScore = calculateLocationMatch(userProfile.location, job.location || '', job.remote_type, user.work_setting_preference || 'hybrid');
+            
+            const baseMatch = (titleSimilarity / 100) * 70 + experienceMatch * 20 + (job.quality_score / 10) * 10;
+            const finalMatch = Math.min(100, Math.max(0, baseMatch + locationScore.bonus));
+
+            return {
+              ...job,
+              match_score: Math.round(finalMatch),
+              title_similarity: titleSimilarity
+            };
+          });
+
+          // Apply adaptive filtering (same logic as test emails)
+          const qualifiedJobs = jobsWithScores.filter(job => {
+            const isLocal = job.location?.toLowerCase().includes(userProfile.location.toLowerCase());
+            const isRemote = job.remote_type === 'remote' || 
+                           job.location?.toLowerCase().includes('remote') ||
+                           job.title?.toLowerCase().includes('remote');
+
+            const matchThreshold = (isLocal || isRemote) ? 75 : 85;
+            const titleThreshold = (isLocal || isRemote) ? 80 : 90;
+
+            const qualifies = job.match_score >= matchThreshold && job.title_similarity >= titleThreshold;
+            
+            if (qualifies) {
+              const typeStr = isLocal ? "LOCAL" : isRemote ? "REMOTE" : "OTHER";
+              const thresholdStr = (isLocal || isRemote) ? "relaxed thresholds" : "standard thresholds";
+              console.log(`[EMAIL] ✅ ${typeStr} Job "${job.title}" qualifies (${thresholdStr}): ${job.match_score}% match, ${job.title_similarity}% title similarity`);
+            }
+
+            return qualifies;
+          });
+
+          console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the adaptive filtering criteria`);
+
+          if (qualifiedJobs.length === 0) {
+            console.log(`[EMAIL] No qualified jobs found for user ${user.full_name}`);
+            usersSkipped++;
+            continue;
+          }
+
+          // Take top 5 matches
+          const topMatches = qualifiedJobs
+            .sort((a, b) => b.match_score - a.match_score)
+            .slice(0, 5);
+
+          // Convert to JobRecommendation format - always use internal job detail pages
+          const jobRecommendations = topMatches.map(job => ({
+            title: job.title,
+            company: job.company,
+            location: job.location || 'Location not specified',
+            salary: job.salary || 'Salary not disclosed',
+            job_page_link: `/job/database/${job.id}`,
+            match_score: job.match_score
+          }));
+
+          console.log(`[EMAIL] Generated ${jobRecommendations.length} real job recommendations with scores: ${jobRecommendations.map(j => `${j.title} (${j.match_score}%)`).join(', ')}`);
+
+          // Generate email HTML
+          const emailHTML = generateEmailHTML(userProfile.name, jobRecommendations);
+
+          // Send email
+          const emailResult = await resend.emails.send({
+            from: 'RezLit Jobs <jobs@mail.rezlit.com>',
             to: [user.email],
-            subject: `🎯 Your Daily Job Matches - ${new Date().toLocaleDateString()}`,
+            subject: `🚀 ${jobRecommendations.length} New Job Matches for You`,
             html: emailHTML,
           });
 
-          // Update recommendation records with email sent timestamp
-          await supabase
-            .from('user_job_recommendations')
-            .update({ email_sent_at: new Date().toISOString() })
-            .eq('run_id', runId)
-            .eq('user_id', userId);
+          if (emailResult.error) {
+            console.error(`[EMAIL] Failed to send email to ${user.email}:`, emailResult.error);
+            emailsFailed++;
+          } else {
+            console.log(`[EMAIL] Email sent successfully to ${user.email} with ${jobRecommendations.length} job recommendations`);
+            emailsSent++;
+          }
 
-          emailsSent++;
-          console.log(`[EMAIL] Sent email to ${user.email} with ${jobs.length} jobs`);
-          
+          // Add a small delay between emails
+          await new Promise(resolve => setTimeout(resolve, 200));
+
         } catch (error) {
-          console.error(`[EMAIL] Error sending to user ${userId}:`, error);
-          errors.push(`User ${userId}: ${error.message}`);
+          console.error(`[EMAIL] Error processing user ${user.id}:`, error);
+          emailsFailed++;
         }
       }
 
-      // Update the run with email campaign completion
-      await supabase
-        .from('daily_recommendation_runs')
-        .update({
-          mailchimp_updated_at: new Date().toISOString(),
-          notes: `Email campaign completed. Sent ${emailsSent} emails. ${errors.length > 0 ? 'Errors: ' + errors.slice(0, 3).join('; ') : ''}`
-        })
-        .eq('id', runId);
+      console.log(`[EMAIL] Enhanced campaign completed: ${emailsSent} sent, ${emailsFailed} failed, ${usersSkipped} skipped (no matches)`);
 
-      return new Response(JSON.stringify({
+      return new Response(JSON.stringify({ 
         success: true,
+        message: `Enhanced campaign completed successfully`,
         emailsSent,
-        totalUsers: userRecommendations.size,
-        errors: errors.length,
-        message: `Successfully sent ${emailsSent} job alert emails`
+        emailsFailed,
+        usersSkipped,
+        totalEligibleUsers: eligibleUsers.length
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders }

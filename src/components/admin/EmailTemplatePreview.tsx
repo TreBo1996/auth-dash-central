@@ -21,13 +21,17 @@ import {
 interface EmailTemplatePreviewProps {
   lastRun: any;
   onSendTest: (email: string, testUserId?: string) => void;
+  onSendToAllUsers: () => void;
   isLoading?: boolean;
+  isSendingToAll?: boolean;
 }
 
 export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({ 
   lastRun, 
   onSendTest, 
-  isLoading = false 
+  onSendToAllUsers,
+  isLoading = false,
+  isSendingToAll = false 
 }) => {
   const { toast } = useToast();
   const [previewMode, setPreviewMode] = useState<'html' | 'preview'>('preview');
@@ -365,6 +369,54 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
                 : 'Send a test email with sample jobs to verify template rendering.'
               }
             </p>
+          </div>
+
+          {/* Send Recommendations to All Users */}
+          <div className="border-t pt-4 space-y-4">
+            <h4 className="font-semibold text-blue-800">Send Recommendations to All Users</h4>
+            
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h5 className="font-medium text-blue-800 mb-1">Campaign to Active Users</h5>
+                  <p className="text-sm text-blue-600">
+                    Send personalized job recommendations to all users who have set their desired job title.
+                    This uses the same enhanced matching logic as the test emails above.
+                  </p>
+                </div>
+                <Users className="h-5 w-5 text-blue-600 mt-1" />
+              </div>
+              
+              <div className="space-y-3">
+                <div className="text-sm text-blue-700 bg-white p-3 rounded border">
+                  <p className="font-medium mb-1">What happens when you click "Send to All Users":</p>
+                  <ul className="text-xs space-y-1 ml-4 list-disc">
+                    <li>Filters users who have a desired job title set in their profile</li>
+                    <li>Generates personalized job recommendations for each user</li>
+                    <li>Sends individual emails with real job matches</li>
+                    <li>All jobs link to our internal job detail pages</li>
+                  </ul>
+                </div>
+                
+                <Button
+                  onClick={onSendToAllUsers}
+                  disabled={isSendingToAll}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isSendingToAll ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending to All Users...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send to All Users
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Email Campaign Status */}

@@ -521,33 +521,18 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     setSendAllUsersLoading(true);
     
     try {
-      console.log("Generating fresh recommendations and sending emails to all users...");
+      console.log("Sending enhanced recommendations to all users with job titles...");
       
-      // First generate fresh recommendations
-      const { data: recommendationData, error: recError } = await supabase.functions.invoke('generate-daily-job-recommendations');
-      
-      if (recError) {
-        console.error("Recommendations error:", recError);
-        toast({
-          title: "Error",
-          description: `Failed to generate recommendations: ${recError.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("Fresh recommendations generated:", recommendationData);
-
-      // Now send emails with the new run
+      // Use the enhanced campaign logic directly (no pre-generation needed)
       const { data: emailData, error: emailError } = await supabase.functions.invoke('send-job-alert-email', {
         body: { 
-          action: 'send-campaign',
-          runId: recommendationData.runId
+          action: 'send-campaign'
+          // No runId needed - the enhanced logic will handle everything
         }
       });
       
       if (emailError) {
-        console.error("Email campaign error:", emailError);
+        console.error("Enhanced email campaign error:", emailError);
         toast({
           title: "Error",
           description: `Failed to send email campaign: ${emailError.message}`,
@@ -556,26 +541,30 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
         return;
       }
 
-      console.log("Emails sent to all users:", emailData);
+      console.log("Enhanced emails sent to all users:", emailData);
 
       toast({
         title: "Success",
-        description: `Generated ${recommendationData.recommendationsGenerated} recommendations and sent emails to ${emailData.emailsSent} users`,
+        description: `Sent personalized job recommendations to ${emailData.emailsSent} users${emailData.usersSkipped > 0 ? ` (${emailData.usersSkipped} users skipped - no job matches)` : ''}`,
         duration: 10000
       });
 
-      // Update local state
-      setLastRun(recommendationData);
+      // Update local state with campaign results
+      setLastRun({
+        usersProcessed: emailData.emailsSent,
+        recommendationsGenerated: emailData.emailsSent * 5, // Estimate 5 jobs per user
+        message: `Enhanced campaign sent to ${emailData.emailsSent} users`
+      });
       
-      // Refresh statistics and recent runs
+      // Refresh statistics
       loadStatistics();
       loadRecentRuns();
       loadTotalRecommendations();
     } catch (error: any) {
-      console.error("Send to all users failed:", error);
+      console.error("Enhanced send to all users failed:", error);
       toast({
         title: "Error",
-        description: `Send to all users failed: ${error.message}`,
+        description: `Enhanced send to all users failed: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -880,30 +869,6 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
             </p>
             
             <div className="space-y-4">
-              {/* Send to All Users */}
-              <div className="p-4 bg-white rounded-lg border">
-                <h5 className="font-medium text-blue-800 mb-2">Send Fresh Recommendations to All Users</h5>
-                <p className="text-sm text-blue-600 mb-3">
-                  Generate fresh recommendations and immediately send personalized emails to all users.
-                </p>
-                <Button 
-                  onClick={sendToAllUsers}
-                  disabled={sendAllUsersLoading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {sendAllUsersLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating & Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="mr-2 h-4 w-4" />
-                      Send to All Users
-                    </>
-                  )}
-                </Button>
-              </div>
 
               {/* Send Campaign from Last Run */}
               <div className="p-4 bg-white rounded-lg border">
@@ -983,11 +948,13 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     </Card>
 
     {/* Email Template Preview Section */}
-    <EmailTemplatePreview 
-      lastRun={lastRun}
-      onSendTest={sendTestEmail}
-      isLoading={testEmailLoading}
-    />
+      <EmailTemplatePreview 
+        lastRun={lastRun} 
+        onSendTest={sendTestEmail} 
+        onSendToAllUsers={sendToAllUsers}
+        isLoading={testEmailLoading}
+        isSendingToAll={sendAllUsersLoading}
+      />
     </div>
   );
 };
