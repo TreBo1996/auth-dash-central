@@ -30,24 +30,24 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Daily Job Recommendations</title>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-        .header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #9333ea 100%); padding: 40px 30px; text-align: center; }
+        body { margin: 0; padding: 0; font-family: 'Arial', sans-serif; background: linear-gradient(to bottom, #eff6ff, #f0f9ff); }
+        .container { max-width: 600px; margin: 0 auto; background: linear-gradient(to bottom, #ffffff, #f8fafc); border-radius: 8px; }
+        .header { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #9333ea 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
         .header h1 { color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; }
         .header p { color: #e0e7ff; margin: 10px 0 0 0; font-size: 16px; }
         .content { padding: 30px; }
         .greeting { font-size: 18px; color: #1f2937; margin-bottom: 20px; }
         .intro { font-size: 16px; color: #4b5563; margin-bottom: 30px; line-height: 1.6; }
         .job-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px; background-color: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-        .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .job-title { font-size: 18px; font-weight: bold; color: #1f2937; margin: 0; }
-        .match-badge { background-color: #10b981; color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 12px; }
+        .job-title { font-size: 18px; font-weight: bold; color: #1f2937; margin: 0; flex: 1; min-width: 0; }
+        .match-badge { background-color: #10b981; color: #ffffff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; flex-shrink: 0; white-space: nowrap; }
         .company { font-size: 16px; color: #6b7280; margin: 4px 0; }
         .job-details { display: flex; gap: 20px; margin: 12px 0; font-size: 14px; color: #6b7280; }
         .detail-item { display: flex; align-items: center; gap: 6px; }
         .job-actions { margin-top: 16px; }
         .btn { display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; margin-right: 12px; margin-bottom: 8px; }
-        .btn-primary { background-color: #2563eb; color: #ffffff; }
+        .btn-primary { background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #9333ea 100%); color: #ffffff !important; text-decoration: none; }
         .btn-secondary { background-color: #f3f4f6; color: #374151; }
         .footer { background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb; }
         .footer-text { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
@@ -66,8 +66,8 @@ const generateEmailHTML = (userName: string, jobs: JobRecommendation[]): string 
             <div style="margin-bottom: 20px;">
                 <img src="https://rezlit.com/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" alt="RezLit" style="height: 40px; width: auto; display: inline-block;" />
             </div>
-            <h1>Your Job Matches</h1>
-            <p>Personalized recommendations for ${currentDate}</p>
+            <h1>RezLit New Job Matches - ${currentDate}</h1>
+            <p>Personalized recommendations just for you</p>
         </div>
         
         <div class="content">
