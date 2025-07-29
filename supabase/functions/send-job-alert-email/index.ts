@@ -183,7 +183,7 @@ const handler = async (req: Request): Promise<Response> => {
             // Query quality jobs from the last 90 days with job recommendation category
             const { data: qualityJobs, error: jobsError } = await supabase
               .from('cached_jobs')
-              .select('id, title, company, location, description, salary, job_url, job_page_link, scraped_at, quality_score, job_recommendation_category')
+              .select('id, title, company, location, description, salary, job_url, job_page_link, scraped_at, quality_score, job_recommendation_category, remote_type')
               .gte('quality_score', 6)
               .gte('scraped_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
               .eq('is_expired', false)
@@ -203,37 +203,51 @@ const handler = async (req: Request): Promise<Response> => {
 
               console.log('[EMAIL] After category filtering:', filteredJobs.length, 'jobs remain');
 
+              // Enhanced location-based filtering
+              const locationFilteredJobs = applyLocationFiltering(
+                filteredJobs, 
+                userProfile.preferred_location, 
+                userProfile.work_setting_preference
+              );
+
+              console.log('[EMAIL] After location filtering:', locationFilteredJobs.length, 'jobs remain');
+
               // Calculate match scores for each job
-              const jobsWithScores = filteredJobs.map(job => {
-                // Title similarity (85% weight - increased for better matching)
+              const jobsWithScores = locationFilteredJobs.map(job => {
+                // Title similarity (70% weight)
                 const titleSimilarity = userProfile.desired_job_title 
                   ? calculateTitleSimilarity(userProfile.desired_job_title, job.title)
                   : 0.5;
 
-                // Experience match (15% weight - reduced)  
+                // Experience match (10% weight)  
                 const experienceMatch = userProfile.experience_level
                   ? calculateExperienceMatch(userProfile.experience_level, job.title)
                   : 0.5;
 
-                // Location preference bonus (if applicable)
-                let locationBonus = 0;
-                if (userProfile.preferred_location && job.location) {
-                  const userLocation = userProfile.preferred_location.toLowerCase();
-                  const jobLocation = job.location.toLowerCase();
-                  if (jobLocation.includes(userLocation) || userLocation.includes(jobLocation)) {
-                    locationBonus = 0.05; // 5% bonus for location match
-                  }
-                }
+                // Enhanced location scoring
+                const locationMatch = calculateLocationMatch(
+                  userProfile.preferred_location, 
+                  job.location, 
+                  job.remote_type
+                );
 
-                const matchScore = Math.round((titleSimilarity * 0.9 + experienceMatch * 0.05 + locationBonus) * 100);
+                // Calculate base score
+                let baseScore = titleSimilarity * 0.7 + experienceMatch * 0.1;
+                
+                // Apply location adjustments
+                baseScore += locationMatch.bonus * 0.01; // Convert bonus points to percentage
+                baseScore -= locationMatch.penalty * 0.01; // Apply penalty
 
-                console.log(`[EMAIL] Job: "${job.title}" | Title similarity: ${Math.round(titleSimilarity * 100)}% | Overall match: ${matchScore}%`);
+                const matchScore = Math.round(Math.max(0, Math.min(100, baseScore * 100)));
+
+                console.log(`[EMAIL] Job: "${job.title}" | Title similarity: ${Math.round(titleSimilarity * 100)}% | Location: ${locationMatch.reason} (${locationMatch.penalty > 0 ? '-' + locationMatch.penalty : '+' + locationMatch.bonus} pts) | Overall match: ${matchScore}%`);
 
                 return {
                   ...job,
                   match_score: matchScore,
                   title_similarity: titleSimilarity,
-                  experience_match: experienceMatch
+                  experience_match: experienceMatch,
+                  location_match: locationMatch
                 };
               });
 
@@ -463,7 +477,125 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-// Helper functions for job matching
+// Helper functions for job matching and location filtering
+
+function parseLocation(location: string): { city: string; state: string; full: string } {
+  if (!location) return { city: '', state: '', full: '' };
+  
+  const normalized = location.trim();
+  const parts = normalized.split(',').map(p => p.trim());
+  
+  if (parts.length >= 2) {
+    return {
+      city: parts[0].toLowerCase(),
+      state: parts[1].toLowerCase(),
+      full: normalized.toLowerCase()
+    };
+  }
+  
+  return {
+    city: normalized.toLowerCase(),
+    state: '',
+    full: normalized.toLowerCase()
+  };
+}
+
+function calculateLocationMatch(userLocation: string, jobLocation: string, jobRemoteType: string): {
+  isMatch: boolean;
+  penalty: number;
+  bonus: number;
+  reason: string;
+} {
+  // Remote jobs have no location penalty
+  if (jobRemoteType && jobRemoteType.toLowerCase().includes('remote')) {
+    return { isMatch: true, penalty: 0, bonus: 0, reason: 'remote job' };
+  }
+  
+  if (!userLocation || !jobLocation) {
+    return { isMatch: false, penalty: 15, bonus: 0, reason: 'missing location data' };
+  }
+  
+  const userLoc = parseLocation(userLocation);
+  const jobLoc = parseLocation(jobLocation);
+  
+  // Exact city match
+  if (userLoc.city && jobLoc.city && userLoc.city === jobLoc.city) {
+    return { isMatch: true, penalty: 0, bonus: 10, reason: 'exact city match' };
+  }
+  
+  // City name variations (St. vs Saint, etc.)
+  if (userLoc.city && jobLoc.city) {
+    const userCityNormalized = userLoc.city.replace(/^st\.?\s/i, 'saint ');
+    const jobCityNormalized = jobLoc.city.replace(/^st\.?\s/i, 'saint ');
+    if (userCityNormalized === jobCityNormalized) {
+      return { isMatch: true, penalty: 0, bonus: 10, reason: 'city name variation match' };
+    }
+  }
+  
+  // Same state, different city
+  if (userLoc.state && jobLoc.state && userLoc.state === jobLoc.state) {
+    return { isMatch: true, penalty: 15, bonus: 0, reason: 'same state, different city' };
+  }
+  
+  // Different state/location
+  return { isMatch: false, penalty: 30, bonus: 0, reason: 'different location' };
+}
+
+function applyLocationFiltering(jobs: any[], userLocation: string, workSetting: string): any[] {
+  if (!userLocation || jobs.length === 0) {
+    console.log('[EMAIL] No location filtering applied - missing user location or no jobs');
+    return jobs;
+  }
+
+  console.log(`[EMAIL] Applying location filtering for "${userLocation}" with work setting: "${workSetting}"`);
+
+  // Separate jobs by location compatibility
+  const localJobs: any[] = [];
+  const remoteJobs: any[] = [];
+  const sameStateJobs: any[] = [];
+  const otherLocationJobs: any[] = [];
+
+  for (const job of jobs) {
+    const locationMatch = calculateLocationMatch(userLocation, job.location, job.remote_type);
+    
+    if (locationMatch.reason === 'remote job') {
+      remoteJobs.push(job);
+    } else if (locationMatch.reason === 'exact city match' || locationMatch.reason === 'city name variation match') {
+      localJobs.push(job);
+    } else if (locationMatch.reason === 'same state, different city') {
+      sameStateJobs.push(job);
+    } else {
+      otherLocationJobs.push(job);
+    }
+  }
+
+  console.log(`[EMAIL] Location breakdown: ${localJobs.length} local, ${remoteJobs.length} remote, ${sameStateJobs.length} same state, ${otherLocationJobs.length} other locations`);
+
+  // Apply work setting preferences
+  let filteredJobs: any[] = [];
+
+  if (workSetting === 'remote') {
+    // Remote preference: prioritize remote jobs, then local for hybrid options
+    filteredJobs = [...remoteJobs, ...localJobs.slice(0, 3), ...sameStateJobs.slice(0, 2)];
+  } else if (workSetting === 'onsite') {
+    // Onsite preference: prioritize local, then same state, limit remote
+    filteredJobs = [...localJobs, ...sameStateJobs, ...remoteJobs.slice(0, 2)];
+  } else {
+    // Hybrid or default: balanced approach
+    // If we have sufficient local jobs (3+), prioritize them and remote
+    if (localJobs.length >= 3) {
+      filteredJobs = [...localJobs, ...remoteJobs, ...sameStateJobs.slice(0, 3)];
+    } else {
+      // Insufficient local jobs, prioritize remote as fallback
+      filteredJobs = [...localJobs, ...remoteJobs, ...sameStateJobs, ...otherLocationJobs.slice(0, 5)];
+    }
+  }
+
+  console.log(`[EMAIL] After work setting filtering (${workSetting}): ${filteredJobs.length} jobs remain`);
+
+  return filteredJobs;
+}
+
 function calculateTitleSimilarity(userTitle: string, jobTitle: string): number {
   if (!userTitle || !jobTitle) return 0;
   
