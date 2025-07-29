@@ -20,8 +20,10 @@ import {
   Shield,
   Users,
   Mail,
-  Download
+  Download,
+  Send
 } from 'lucide-react';
+import { EmailTemplatePreview } from './EmailTemplatePreview';
 
 interface JobStatistics {
   total_active_jobs: number;
@@ -48,6 +50,8 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [mailchimpLoading, setMailchimpLoading] = useState(false);
   const [csvLoading, setCsvLoading] = useState(false);
+  const [emailCampaignLoading, setEmailCampaignLoading] = useState(false);
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [lastRun, setLastRun] = useState<any>(null);
   const [recentRuns, setRecentRuns] = useState<any[]>([]);
   const [totalRecommendations, setTotalRecommendations] = useState<number>(0);
@@ -392,6 +396,104 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
     }
   };
 
+  const sendTestEmail = async (testEmail: string) => {
+    setTestEmailLoading(true);
+    
+    try {
+      console.log("Sending test email to:", testEmail);
+      
+      const { data, error } = await supabase.functions.invoke('send-job-alert-email', {
+        body: { 
+          action: 'send-test',
+          testEmail,
+          testUserName: 'Test User'
+        }
+      });
+      
+      if (error) {
+        console.error("Test email error:", error);
+        toast({
+          title: "Error",
+          description: `Failed to send test email: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Test email result:", data);
+
+      toast({
+        title: "Success",
+        description: `Test email sent successfully to ${testEmail}`,
+      });
+
+    } catch (error: any) {
+      console.error("Test email failed:", error);
+      toast({
+        title: "Error",
+        description: `Test email failed: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setTestEmailLoading(false);
+    }
+  };
+
+  const sendEmailCampaign = async () => {
+    if (!lastRun?.runId) {
+      toast({
+        title: "Error",
+        description: "No recent recommendation run found. Generate recommendations first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEmailCampaignLoading(true);
+    
+    try {
+      console.log("Starting email campaign for run:", lastRun.runId);
+      
+      const { data, error } = await supabase.functions.invoke('send-job-alert-email', {
+        body: { 
+          action: 'send-campaign',
+          runId: lastRun.runId
+        }
+      });
+      
+      if (error) {
+        console.error("Email campaign error:", error);
+        toast({
+          title: "Error",
+          description: `Failed to send email campaign: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Email campaign result:", data);
+
+      toast({
+        title: "Success",
+        description: `Email campaign sent successfully to ${data.emailsSent} users`,
+        duration: 10000
+      });
+
+      // Refresh statistics and recent runs
+      loadStatistics();
+      loadRecentRuns();
+    } catch (error: any) {
+      console.error("Email campaign failed:", error);
+      toast({
+        title: "Error",
+        description: `Email campaign failed: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setEmailCampaignLoading(false);
+    }
+  };
+
   if (!isAdmin) {
     return null;
   }
@@ -706,34 +808,47 @@ export const AdminTools: React.FC<AdminToolsProps> = ({ isAdmin }) => {
             </div>
           </div>
 
-          {/* Email Template Preview */}
+          {/* Send Email Campaign */}
           <div className="border-t border-blue-200 pt-4">
-            <h4 className="font-semibold text-blue-800 mb-2">Email Template Preview</h4>
-            <div className="bg-white rounded-lg p-4 text-sm border">
-              <div className="space-y-2">
-                <div className="font-semibold text-blue-800">Subject: Your Daily Job Recommendations - *|RECOMMENDATION_DATE|*</div>
-                <div className="text-blue-700">
-                  Hi *|USER_NAME|*,<br/><br/>
-                  Here are your top 5 personalized job matches for today:<br/><br/>
-                  
-                  <strong>1. *|JOB1_TITLE|* at *|JOB1_COMPANY|*</strong><br/>
-                  📍 *|JOB1_LOCATION|* | 💰 *|JOB1_SALARY|*<br/>
-                  Match: *|JOB1_MATCH_REASON|*<br/>
-                  <span className="text-blue-600">[View Job] [Create Optimized Resume]</span><br/><br/>
-                  
-                  <em>... (Jobs 2-5 follow same format)</em><br/><br/>
-                  
-                  Ready to apply? Create an optimized resume for each job in seconds!
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-blue-600 mt-2">
-              Create a single campaign in Mailchimp using merge fields. Each user will receive personalized job recommendations.
+            <h4 className="font-semibold text-blue-800 mb-2">Send Job Alert Campaign</h4>
+            <p className="text-sm text-blue-700 mb-4">
+              Send personalized job alert emails to all users from the latest recommendation run.
             </p>
+            
+            <Button 
+              onClick={sendEmailCampaign}
+              disabled={emailCampaignLoading || !lastRun}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {emailCampaignLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending Campaign...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send Email Campaign
+                </>
+              )}
+            </Button>
+            
+            {!lastRun && (
+              <p className="text-xs text-orange-600 mt-2">
+                Generate recommendations first to send email campaign
+              </p>
+            )}
           </div>
         </div>
       </CardContent>
     </Card>
+
+    {/* Email Template Preview Section */}
+    <EmailTemplatePreview 
+      lastRun={lastRun}
+      onSendTest={sendTestEmail}
+      isLoading={testEmailLoading}
+    />
     </div>
   );
 };
