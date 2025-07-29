@@ -251,11 +251,15 @@ const handler = async (req: Request): Promise<Response> => {
                 };
               });
 
-              // Apply strict filtering: 85% match score and 60% title similarity
-              const qualifiedJobs = jobsWithScores
+              // Enhanced filtering with fallback logic
+              const MIN_MATCH_SCORE = 75; // Reduced from 85
+              const MIN_TITLE_SIMILARITY = 0.4; // Reduced from 0.6
+              const FALLBACK_MATCH_SCORE = 70;
+              
+              let qualifiedJobs = jobsWithScores
                 .filter(job => {
-                  const passesMatch = job.match_score >= 85;
-                  const passesTitleSimilarity = job.title_similarity >= 0.6;
+                  const passesMatch = job.match_score >= MIN_MATCH_SCORE;
+                  const passesTitleSimilarity = job.title_similarity >= MIN_TITLE_SIMILARITY;
                   
                   if (passesMatch && passesTitleSimilarity) {
                     console.log(`[EMAIL] ✅ Job "${job.title}" qualifies: ${job.match_score}% match, ${Math.round(job.title_similarity * 100)}% title similarity`);
@@ -267,9 +271,17 @@ const handler = async (req: Request): Promise<Response> => {
                 })
                 .sort((a, b) => b.match_score - a.match_score);
 
-              console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the 85% match threshold`);
+              console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the ${MIN_MATCH_SCORE}% match threshold`);
+              
+              // If insufficient jobs, use fallback criteria
+              if (qualifiedJobs.length < 3) {
+                console.log(`[EMAIL] Insufficient jobs at ${MIN_MATCH_SCORE}% threshold, trying ${FALLBACK_MATCH_SCORE}% fallback`);
+                qualifiedJobs = jobsWithScores
+                  .filter(job => job.match_score >= FALLBACK_MATCH_SCORE)
+                  .sort((a, b) => b.match_score - a.match_score);
+                console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the ${FALLBACK_MATCH_SCORE}% fallback threshold`);
+              }
 
-              // Only return highly qualified jobs - no fallback to lower quality
               const topMatches = qualifiedJobs.slice(0, 5);
 
               // Convert to JobRecommendation format
@@ -538,7 +550,7 @@ function calculateLocationMatch(userLocation: string, jobLocation: string, jobRe
   }
   
   // Different state/location
-  return { isMatch: false, penalty: 30, bonus: 0, reason: 'different location' };
+  return { isMatch: false, penalty: 20, bonus: 0, reason: 'different location' };
 }
 
 function applyLocationFiltering(jobs: any[], userLocation: string, workSetting: string): any[] {
