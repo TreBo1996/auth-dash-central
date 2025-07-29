@@ -180,16 +180,16 @@ const handler = async (req: Request): Promise<Response> => {
               location: userProfile.preferred_location
             });
 
-            // Query quality jobs from the last 30 days with job recommendation category
+            // Query quality jobs from the last 90 days with job recommendation category
             const { data: qualityJobs, error: jobsError } = await supabase
               .from('cached_jobs')
               .select('id, title, company, location, description, salary, job_url, job_page_link, scraped_at, quality_score, job_recommendation_category')
               .gte('quality_score', 6)
-              .gte('scraped_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+              .gte('scraped_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
               .eq('is_expired', false)
               .is('archived_at', null)
               .order('quality_score', { ascending: false })
-              .limit(50);
+              .limit(200);
 
             if (jobsError) {
               console.error('[EMAIL] Error fetching jobs:', jobsError);
@@ -225,7 +225,9 @@ const handler = async (req: Request): Promise<Response> => {
                   }
                 }
 
-                const matchScore = Math.round((titleSimilarity * 0.85 + experienceMatch * 0.15 + locationBonus) * 100);
+                const matchScore = Math.round((titleSimilarity * 0.9 + experienceMatch * 0.05 + locationBonus) * 100);
+
+                console.log(`[EMAIL] Job: "${job.title}" | Title similarity: ${Math.round(titleSimilarity * 100)}% | Overall match: ${matchScore}%`);
 
                 return {
                   ...job,
@@ -235,15 +237,26 @@ const handler = async (req: Request): Promise<Response> => {
                 };
               });
 
-              // Filter to minimum threshold and sort by match score
+              // Apply strict filtering: 85% match score and 60% title similarity
               const qualifiedJobs = jobsWithScores
-                .filter(job => job.match_score >= 50 && job.title_similarity >= 0.3) // Minimum thresholds
+                .filter(job => {
+                  const passesMatch = job.match_score >= 85;
+                  const passesTitleSimilarity = job.title_similarity >= 0.6;
+                  
+                  if (passesMatch && passesTitleSimilarity) {
+                    console.log(`[EMAIL] ✅ Job "${job.title}" qualifies: ${job.match_score}% match, ${Math.round(job.title_similarity * 100)}% title similarity`);
+                    return true;
+                  } else {
+                    console.log(`[EMAIL] ❌ Job "${job.title}" filtered out: ${job.match_score}% match, ${Math.round(job.title_similarity * 100)}% title similarity`);
+                    return false;
+                  }
+                })
                 .sort((a, b) => b.match_score - a.match_score);
 
-              // Take top 5 or fall back to top scoring jobs if less than 3 qualified
-              const topMatches = qualifiedJobs.length >= 3 
-                ? qualifiedJobs.slice(0, 5)
-                : jobsWithScores.sort((a, b) => b.match_score - a.match_score).slice(0, 5);
+              console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the 85% match threshold`);
+
+              // Only return highly qualified jobs - no fallback to lower quality
+              const topMatches = qualifiedJobs.slice(0, 5);
 
               // Convert to JobRecommendation format
               jobs = topMatches.map(job => ({
