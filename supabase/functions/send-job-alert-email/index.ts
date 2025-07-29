@@ -251,35 +251,81 @@ const handler = async (req: Request): Promise<Response> => {
                 };
               });
 
-              // Enhanced filtering with fallback logic
-              const MIN_MATCH_SCORE = 75; // Reduced from 85
-              const MIN_TITLE_SIMILARITY = 0.4; // Reduced from 0.6
-              const FALLBACK_MATCH_SCORE = 70;
+              // Enhanced filtering with adaptive thresholds based on remote vs local jobs
+              const isRemoteUser = userProfile.work_setting_preference === 'remote';
+              const isHybridUser = userProfile.work_setting_preference === 'hybrid';
+              
+              // Different thresholds for remote vs local jobs
+              const REMOTE_MIN_MATCH_SCORE = 50;
+              const REMOTE_MIN_TITLE_SIMILARITY = 20; // Convert to percentage to match new function
+              const LOCAL_MIN_MATCH_SCORE = 75;
+              const LOCAL_MIN_TITLE_SIMILARITY = 40;
+              
+              console.log(`[EMAIL] User work preference: ${userProfile.work_setting_preference || 'not specified'}`);
               
               let qualifiedJobs = jobsWithScores
                 .filter(job => {
-                  const passesMatch = job.match_score >= MIN_MATCH_SCORE;
-                  const passesTitleSimilarity = job.title_similarity >= MIN_TITLE_SIMILARITY;
+                  // Check if job is remote
+                  const isJobRemote = job.location_match.reason.includes('remote job');
+                  
+                  // Use adaptive thresholds
+                  const minMatchScore = (isRemoteUser || isHybridUser) && isJobRemote ? 
+                    REMOTE_MIN_MATCH_SCORE : LOCAL_MIN_MATCH_SCORE;
+                  const minTitleSimilarity = (isRemoteUser || isHybridUser) && isJobRemote ? 
+                    REMOTE_MIN_TITLE_SIMILARITY : LOCAL_MIN_TITLE_SIMILARITY;
+                  
+                  const passesMatch = job.match_score >= minMatchScore;
+                  const passesTitleSimilarity = job.title_similarity >= minTitleSimilarity;
+                  
+                  const jobType = isJobRemote ? 'REMOTE' : 'LOCAL';
+                  const threshold = isJobRemote ? 'relaxed' : 'standard';
                   
                   if (passesMatch && passesTitleSimilarity) {
-                    console.log(`[EMAIL] ✅ Job "${job.title}" qualifies: ${job.match_score}% match, ${Math.round(job.title_similarity * 100)}% title similarity`);
+                    console.log(`[EMAIL] ✅ ${jobType} Job "${job.title}" qualifies (${threshold} thresholds): ${job.match_score}% match, ${Math.round(job.title_similarity)}% title similarity`);
                     return true;
                   } else {
-                    console.log(`[EMAIL] ❌ Job "${job.title}" filtered out: ${job.match_score}% match, ${Math.round(job.title_similarity * 100)}% title similarity`);
+                    console.log(`[EMAIL] ❌ ${jobType} Job "${job.title}" filtered out (${threshold} thresholds): ${job.match_score}% match, ${Math.round(job.title_similarity)}% title similarity`);
                     return false;
                   }
                 })
-                .sort((a, b) => b.match_score - a.match_score);
+                .sort((a, b) => {
+                  // Prioritize remote jobs for remote/hybrid users
+                  if ((isRemoteUser || isHybridUser)) {
+                    const aIsRemote = a.location_match.reason.includes('remote job');
+                    const bIsRemote = b.location_match.reason.includes('remote job');
+                    if (aIsRemote !== bIsRemote) {
+                      return bIsRemote ? 1 : -1; // Remote jobs first
+                    }
+                  }
+                  return b.match_score - a.match_score;
+                });
 
-              console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the ${MIN_MATCH_SCORE}% match threshold`);
+              console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the adaptive filtering criteria`);
               
-              // If insufficient jobs, use fallback criteria
+              // Enhanced fallback logic
               if (qualifiedJobs.length < 3) {
-                console.log(`[EMAIL] Insufficient jobs at ${MIN_MATCH_SCORE}% threshold, trying ${FALLBACK_MATCH_SCORE}% fallback`);
-                qualifiedJobs = jobsWithScores
-                  .filter(job => job.match_score >= FALLBACK_MATCH_SCORE)
+                console.log(`[EMAIL] Insufficient qualified jobs (${qualifiedJobs.length}), applying enhanced fallback logic...`);
+                
+                // First fallback: Category-specific jobs regardless of score
+                const categoryJobs = jobsWithScores
+                  .filter(job => {
+                    // Must be in correct category and have some title similarity
+                    return job.title_similarity >= 10; // Very low threshold
+                  })
                   .sort((a, b) => b.match_score - a.match_score);
-                console.log(`[EMAIL] ${qualifiedJobs.length} jobs meet the ${FALLBACK_MATCH_SCORE}% fallback threshold`);
+                
+                console.log(`[EMAIL] Category fallback found ${categoryJobs.length} jobs`);
+                
+                if (categoryJobs.length >= 3) {
+                  qualifiedJobs = categoryJobs.slice(0, 5);
+                  console.log(`[EMAIL] Using category fallback: ${qualifiedJobs.length} jobs`);
+                } else {
+                  // Last resort: Take best jobs available
+                  qualifiedJobs = jobsWithScores
+                    .sort((a, b) => b.match_score - a.match_score)
+                    .slice(0, 3);
+                  console.log(`[EMAIL] Using last resort fallback: ${qualifiedJobs.length} jobs`);
+                }
               }
 
               const topMatches = qualifiedJobs.slice(0, 5);
@@ -629,12 +675,33 @@ function calculateTitleSimilarity(userTitle: string, jobTitle: string): number {
   const userTitleNorm = normalizeTitle(userTitle);
   const jobTitleNorm = normalizeTitle(jobTitle);
   
-  // Exact phrase match gets highest score
-  if (userTitleNorm === jobTitleNorm) return 1.0;
+  // Enhanced exact matching - check both normalized and original titles
+  if (userTitleNorm === jobTitleNorm) return 100; // Return percentage for clearer logging
+  
+  // Check original titles for exact match (case-insensitive)
+  if (userTitle.toLowerCase() === jobTitle.toLowerCase()) return 100;
   
   // Check for exact phrase within the job title
   if (jobTitleNorm.includes(userTitleNorm) || userTitleNorm.includes(jobTitleNorm)) {
-    return 0.9;
+    return 90;
+  }
+  
+  // Handle common abbreviations and variations
+  const titleVariations: { [key: string]: string[] } = {
+    'project manager': ['pm', 'program manager', 'project mgr'],
+    'software engineer': ['software developer', 'dev', 'engineer'],
+    'data scientist': ['data analyst', 'ml engineer'],
+    'business analyst': ['ba', 'business systems analyst'],
+    'product manager': ['product owner', 'po'],
+  };
+  
+  // Check for variations
+  for (const [base, variations] of Object.entries(titleVariations)) {
+    if (userTitleNorm.includes(base) || variations.some(v => userTitleNorm.includes(v))) {
+      if (jobTitleNorm.includes(base) || variations.some(v => jobTitleNorm.includes(v))) {
+        return 95; // High score for variations
+      }
+    }
   }
   
   const userWords = userTitleNorm.split(' ').filter(w => w.length > 2);
@@ -658,20 +725,20 @@ function calculateTitleSimilarity(userTitle: string, jobTitle: string): number {
     totalWeight += weight;
   }
   
-  const similarity = totalWeight > 0 ? weightedScore / totalWeight : 0;
+  const similarity = totalWeight > 0 ? (weightedScore / totalWeight) * 100 : 0; // Convert to percentage
   
-  // Penalize completely different job categories
+  // Reduce penalty for different categories (was too harsh)
   const userCore = userWords.filter(w => coreKeywords.includes(w));
   const jobCore = jobWords.filter(w => coreKeywords.includes(w));
   
   if (userCore.length > 0 && jobCore.length > 0) {
     const coreOverlap = userCore.some(w => jobCore.includes(w));
     if (!coreOverlap) {
-      return Math.min(similarity * 0.3, 0.3); // Major penalty for different categories
+      return Math.min(similarity * 0.5, 50); // Reduced penalty - was too harsh at 0.3
     }
   }
   
-  return Math.min(similarity, 1);
+  return Math.min(similarity, 100);
 }
 
 function calculateExperienceMatch(userLevel: string, jobTitle: string): number {
