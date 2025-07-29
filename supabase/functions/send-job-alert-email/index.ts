@@ -518,9 +518,17 @@ function calculateLocationMatch(userLocation: string, jobLocation: string, jobRe
   bonus: number;
   reason: string;
 } {
-  // Remote jobs have no location penalty
-  if (jobRemoteType && jobRemoteType.toLowerCase().includes('remote')) {
-    return { isMatch: true, penalty: 0, bonus: 0, reason: 'remote job' };
+  // Enhanced remote detection - check both remote_type field and location field
+  const remoteKeywords = ['remote', 'anywhere', 'work from home', 'wfh', 'telecommute', 'virtual', 'home-based', 'distributed', 'remote work', 'remote position'];
+  const isRemoteByType = jobRemoteType && jobRemoteType.toLowerCase().includes('remote');
+  const isRemoteByLocation = jobLocation && remoteKeywords.some(keyword => 
+    jobLocation.toLowerCase().includes(keyword.toLowerCase())
+  );
+  
+  // Remote jobs get no penalty regardless of user location
+  if (isRemoteByType || isRemoteByLocation) {
+    const detectionMethod = isRemoteByType ? 'remote_type field' : 'location field';
+    return { isMatch: true, penalty: 0, bonus: 0, reason: `remote job (detected via ${detectionMethod})` };
   }
   
   if (!userLocation || !jobLocation) {
