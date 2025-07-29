@@ -196,19 +196,36 @@ const handler = async (req: Request): Promise<Response> => {
             } else if (qualityJobs && qualityJobs.length > 0) {
               console.log('[EMAIL] Found', qualityJobs.length, 'quality jobs for matching');
 
+              // Pre-filter jobs by category to improve relevance
+              const filteredJobs = userProfile.desired_job_title 
+                ? preFilterJobsByCategory(userProfile.desired_job_title, qualityJobs)
+                : qualityJobs;
+
+              console.log('[EMAIL] After category filtering:', filteredJobs.length, 'jobs remain');
+
               // Calculate match scores for each job
-              const jobsWithScores = qualityJobs.map(job => {
-                // Title similarity (70% weight)
+              const jobsWithScores = filteredJobs.map(job => {
+                // Title similarity (85% weight - increased for better matching)
                 const titleSimilarity = userProfile.desired_job_title 
                   ? calculateTitleSimilarity(userProfile.desired_job_title, job.title)
                   : 0.5;
 
-                // Experience match (30% weight)  
+                // Experience match (15% weight - reduced)  
                 const experienceMatch = userProfile.experience_level
                   ? calculateExperienceMatch(userProfile.experience_level, job.title)
                   : 0.5;
 
-                const matchScore = Math.round((titleSimilarity * 0.7 + experienceMatch * 0.3) * 100);
+                // Location preference bonus (if applicable)
+                let locationBonus = 0;
+                if (userProfile.preferred_location && job.location) {
+                  const userLocation = userProfile.preferred_location.toLowerCase();
+                  const jobLocation = job.location.toLowerCase();
+                  if (jobLocation.includes(userLocation) || userLocation.includes(jobLocation)) {
+                    locationBonus = 0.05; // 5% bonus for location match
+                  }
+                }
+
+                const matchScore = Math.round((titleSimilarity * 0.85 + experienceMatch * 0.15 + locationBonus) * 100);
 
                 return {
                   ...job,
@@ -218,10 +235,15 @@ const handler = async (req: Request): Promise<Response> => {
                 };
               });
 
-              // Sort by match score and take top 5
-              const topMatches = jobsWithScores
-                .sort((a, b) => b.match_score - a.match_score)
-                .slice(0, 5);
+              // Filter to minimum threshold and sort by match score
+              const qualifiedJobs = jobsWithScores
+                .filter(job => job.match_score >= 50 && job.title_similarity >= 0.3) // Minimum thresholds
+                .sort((a, b) => b.match_score - a.match_score);
+
+              // Take top 5 or fall back to top scoring jobs if less than 3 qualified
+              const topMatches = qualifiedJobs.length >= 3 
+                ? qualifiedJobs.slice(0, 5)
+                : jobsWithScores.sort((a, b) => b.match_score - a.match_score).slice(0, 5);
 
               // Convert to JobRecommendation format
               jobs = topMatches.map(job => ({
@@ -439,47 +461,132 @@ function calculateTitleSimilarity(userTitle: string, jobTitle: string): number {
       .replace(/\s+/g, ' ')
       .trim();
   
-  const userWords = normalizeTitle(userTitle).split(' ').filter(w => w.length > 2);
-  const jobWords = normalizeTitle(jobTitle).split(' ').filter(w => w.length > 2);
+  const userTitleNorm = normalizeTitle(userTitle);
+  const jobTitleNorm = normalizeTitle(jobTitle);
+  
+  // Exact phrase match gets highest score
+  if (userTitleNorm === jobTitleNorm) return 1.0;
+  
+  // Check for exact phrase within the job title
+  if (jobTitleNorm.includes(userTitleNorm) || userTitleNorm.includes(jobTitleNorm)) {
+    return 0.9;
+  }
+  
+  const userWords = userTitleNorm.split(' ').filter(w => w.length > 2);
+  const jobWords = jobTitleNorm.split(' ').filter(w => w.length > 2);
   
   if (userWords.length === 0 || jobWords.length === 0) return 0;
   
-  const matchedWords = userWords.filter(userWord => 
-    jobWords.some(jobWord => 
-      jobWord.includes(userWord) || userWord.includes(jobWord)
-    )
-  );
+  // Core job function keywords (higher weight)
+  const coreKeywords = ['project', 'program', 'product', 'data', 'software', 'sales', 'marketing', 'finance', 'operations', 'analyst', 'engineer', 'developer', 'designer', 'manager', 'director', 'coordinator'];
   
-  return matchedWords.length / userWords.length;
+  let weightedScore = 0;
+  let totalWeight = 0;
+  
+  for (const userWord of userWords) {
+    const isCore = coreKeywords.includes(userWord);
+    const weight = isCore ? 3 : 1; // Core keywords get 3x weight
+    
+    if (jobWords.includes(userWord)) {
+      weightedScore += weight;
+    }
+    totalWeight += weight;
+  }
+  
+  const similarity = totalWeight > 0 ? weightedScore / totalWeight : 0;
+  
+  // Penalize completely different job categories
+  const userCore = userWords.filter(w => coreKeywords.includes(w));
+  const jobCore = jobWords.filter(w => coreKeywords.includes(w));
+  
+  if (userCore.length > 0 && jobCore.length > 0) {
+    const coreOverlap = userCore.some(w => jobCore.includes(w));
+    if (!coreOverlap) {
+      return Math.min(similarity * 0.3, 0.3); // Major penalty for different categories
+    }
+  }
+  
+  return Math.min(similarity, 1);
 }
 
 function calculateExperienceMatch(userLevel: string, jobTitle: string): number {
   if (!userLevel || !jobTitle) return 0.5;
   
-  const title = jobTitle.toLowerCase();
-  const level = userLevel.toLowerCase();
+  const jobLower = jobTitle.toLowerCase();
+  const userLower = userLevel.toLowerCase();
   
-  if (level.includes('entry') || level.includes('junior')) {
-    if (title.includes('junior') || title.includes('jr') || title.includes('entry')) return 1;
-    if (title.includes('senior') || title.includes('sr') || title.includes('lead')) return 0.3;
-    return 0.7;
+  // Experience level matching logic (reduced weight)
+  if (userLower.includes('entry') || userLower.includes('junior')) {
+    if (jobLower.includes('senior') || jobLower.includes('lead') || jobLower.includes('principal')) {
+      return 0.3;
+    }
+    if (jobLower.includes('junior') || jobLower.includes('entry') || (!jobLower.includes('senior') && !jobLower.includes('lead'))) {
+      return 0.9;
+    }
   }
   
-  if (level.includes('mid') || level.includes('intermediate')) {
-    if (title.includes('senior') || title.includes('sr')) return 0.8;
-    if (title.includes('junior') || title.includes('jr')) return 0.6;
-    if (title.includes('lead') || title.includes('principal')) return 0.7;
+  if (userLower.includes('mid') || userLower.includes('intermediate')) {
+    if (jobLower.includes('senior') || jobLower.includes('lead')) {
+      return 0.8;
+    }
+    if (jobLower.includes('junior') || jobLower.includes('entry')) {
+      return 0.7;
+    }
     return 0.9;
   }
   
-  if (level.includes('senior')) {
-    if (title.includes('senior') || title.includes('sr') || title.includes('lead')) return 1;
-    if (title.includes('principal') || title.includes('staff')) return 0.8;
-    if (title.includes('junior') || title.includes('jr')) return 0.4;
-    return 0.7;
+  if (userLower.includes('senior') || userLower.includes('experienced')) {
+    if (jobLower.includes('junior') || jobLower.includes('entry')) {
+      return 0.5;
+    }
+    return 0.9;
   }
   
-  return 0.5;
+  return 0.7; // Default neutral match
+}
+
+function preFilterJobsByCategory(userTitle: string, jobs: any[]): any[] {
+  if (!userTitle) return jobs;
+  
+  const userTitleLower = userTitle.toLowerCase();
+  
+  // Define job categories and their related keywords
+  const categories = {
+    project: ['project', 'program', 'portfolio', 'scrum', 'agile', 'pm'],
+    product: ['product', 'pm', 'roadmap', 'strategy'],
+    data: ['data', 'analytics', 'analyst', 'scientist', 'research'],
+    engineering: ['software', 'engineer', 'developer', 'technical', 'coding', 'programming'],
+    sales: ['sales', 'business development', 'account', 'revenue'],
+    marketing: ['marketing', 'brand', 'campaign', 'digital', 'content'],
+    design: ['design', 'ux', 'ui', 'creative', 'visual'],
+    finance: ['finance', 'accounting', 'financial', 'budget', 'analyst'],
+    operations: ['operations', 'ops', 'process', 'logistics', 'supply']
+  };
+  
+  // Determine user's category
+  let userCategory = '';
+  for (const [category, keywords] of Object.entries(categories)) {
+    if (keywords.some(keyword => userTitleLower.includes(keyword))) {
+      userCategory = category;
+      break;
+    }
+  }
+  
+  if (!userCategory) return jobs; // Return all jobs if category unclear
+  
+  // Filter jobs to prioritize same category, but include others
+  const sameCategory = jobs.filter(job => {
+    const jobTitleLower = job.title.toLowerCase();
+    return categories[userCategory].some(keyword => jobTitleLower.includes(keyword));
+  });
+  
+  const otherJobs = jobs.filter(job => {
+    const jobTitleLower = job.title.toLowerCase();
+    return !categories[userCategory].some(keyword => jobTitleLower.includes(keyword));
+  });
+  
+  // Return same category jobs first, then others (with reduced priority)
+  return [...sameCategory, ...otherJobs.slice(0, Math.max(10, 50 - sameCategory.length))];
 }
 
 serve(handler);
