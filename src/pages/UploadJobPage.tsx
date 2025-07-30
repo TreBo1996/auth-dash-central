@@ -14,6 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 import { parseDocument } from '@/utils/documentParser';
 import { useNavigate } from 'react-router-dom';
 import { useJobDescriptionPersistence } from '@/hooks/useJobDescriptionPersistence';
+import { JobDescriptionLimitModal } from '@/components/job-upload/JobDescriptionLimitModal';
+import { JobDescriptionUsageCard } from '@/components/job-upload/JobDescriptionUsageCard';
+import { PaymentModal } from '@/components/subscription/PaymentModal';
 
 const UploadJobPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -21,6 +24,9 @@ const UploadJobPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedContent, setParsedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [limitUsage, setLimitUsage] = useState({ current: 0, limit: 0 });
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -228,11 +234,8 @@ const UploadJobPage: React.FC = () => {
 
       const canUse = usageCheck[0];
       if (!canUse.can_use) {
-        toast({
-          title: "Monthly Limit Reached",
-          description: `You have reached your monthly limit of job description saves. You have used ${canUse.current_usage} saves this month.`,
-          variant: "destructive"
-        });
+        setLimitUsage({ current: canUse.current_usage, limit: 3 });
+        setShowLimitModal(true);
         return;
       }
 
@@ -300,6 +303,15 @@ const UploadJobPage: React.FC = () => {
     setShowPreview(false);
   };
 
+  const handleUpgrade = () => {
+    setShowLimitModal(false);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentModalClose = () => {
+    setShowPaymentModal(false);
+  };
+
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-8">
@@ -318,6 +330,9 @@ const UploadJobPage: React.FC = () => {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Usage Card */}
+        <JobDescriptionUsageCard onUpgrade={handleUpgrade} />
 
         {!showPreview ? (
           <Card>
@@ -513,6 +528,22 @@ const UploadJobPage: React.FC = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Limit Reached Modal */}
+        <JobDescriptionLimitModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          onUpgrade={handleUpgrade}
+          currentUsage={limitUsage.current}
+          limit={limitUsage.limit}
+        />
+
+        {/* Payment Modal */}
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={handlePaymentModalClose}
+          returnUrl={window.location.href}
+        />
       </div>
     </DashboardLayout>
   );
