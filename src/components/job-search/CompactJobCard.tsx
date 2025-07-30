@@ -14,13 +14,25 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 
 interface CompactJobCardProps {
   job: UnifiedJob;
+  id?: string;
+  isExpanded?: boolean;
+  onExpandChange?: (expanded: boolean) => void;
 }
 
-export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job }) => {
+export const CompactJobCard: React.FC<CompactJobCardProps> = ({ 
+  job, 
+  id,
+  isExpanded: externalIsExpanded,
+  onExpandChange 
+}) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalIsExpanded, setInternalIsExpanded] = useState(false);
+  
+  // Use external expanded state if provided, otherwise use internal state
+  const isExpanded = externalIsExpanded !== undefined ? externalIsExpanded : internalIsExpanded;
+  const setIsExpanded = onExpandChange || setInternalIsExpanded;
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
@@ -133,16 +145,20 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job }) => {
 
   return (
     <>
-      <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/20 hover:border-l-primary cursor-pointer">
-        <Link to={getJobUrl()}>
-          <CardContent className="p-4">
+      <Card 
+        id={id}
+        className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/20 hover:border-l-primary"
+      >
+        <CardContent className="p-4">
             <div className="space-y-3">
               {/* Header */}
               <div className="flex justify-between items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors line-clamp-1">
+              <div className="flex-1 min-w-0">
+                <Link to={getJobUrl()}>
+                  <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors line-clamp-1 cursor-pointer">
                     {toTitleCase(job.title)}
                   </h3>
+                </Link>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                     <div className="flex items-center gap-1">
                       <Building className="h-3 w-3" />
@@ -283,7 +299,6 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job }) => {
               </div>
             </div>
           </CardContent>
-        </Link>
       </Card>
 
       <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} />

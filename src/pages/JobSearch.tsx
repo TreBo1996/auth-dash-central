@@ -35,6 +35,7 @@ export const JobSearch: React.FC = () => {
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [currentFilters, setCurrentFilters] = useState<JobSearchFilters | null>(null);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   
   // Use the optimized search hook
@@ -156,6 +157,15 @@ export const JobSearch: React.FC = () => {
     resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const handleMiniJobSelect = (selectedJob: UnifiedJob) => {
+    // Find the job in current jobs and scroll to it
+    const jobElement = document.getElementById(`job-${selectedJob.id}`);
+    if (jobElement) {
+      jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setExpandedJobId(selectedJob.id);
+    }
+  };
+
   // Restore state on component mount
   useEffect(() => {
     // Check URL parameters first
@@ -239,7 +249,7 @@ export const JobSearch: React.FC = () => {
                   <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
                   {allJobs.slice(0, 5).map((job, index) => (
                     <React.Fragment key={`mini-${job.id}-${index}`}>
-                      <MiniJobCard job={job} />
+                      <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
                       {/* In-feed ad after every 3 mini jobs */}
                       {(index + 1) % 3 === 0 && index < 4 && (
                         <GoogleAd 
@@ -325,7 +335,12 @@ export const JobSearch: React.FC = () => {
                 <div className="space-y-3">
                   {currentJobs.map((job, index) => (
                     <React.Fragment key={`${job.id}-${index}`}>
-                      <CompactJobCard job={job} />
+                      <CompactJobCard 
+                        job={job} 
+                        id={`job-${job.id}`}
+                        isExpanded={expandedJobId === job.id}
+                        onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
+                      />
                       {/* Inline Ad every 5 jobs */}
                       {(index + 1) % 5 === 0 && index < currentJobs.length - 1 && (
                         <GoogleAd 

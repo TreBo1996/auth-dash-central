@@ -8,21 +8,23 @@ import { toTitleCase } from '@/lib/utils';
 
 interface MiniJobCardProps {
   job: UnifiedJob;
+  onJobSelect?: (job: UnifiedJob) => void;
 }
 
-export const MiniJobCard: React.FC<MiniJobCardProps> = ({ job }) => {
-  const getJobUrl = () => {
-    if (job.source === 'employer') {
-      return `/job/employer/${job.id}`;
-    } else {
-      return `/job/database/${job.id}`;
+export const MiniJobCard: React.FC<MiniJobCardProps> = ({ job, onJobSelect }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onJobSelect) {
+      onJobSelect(job);
     }
   };
 
   return (
-    <Card className="hover:shadow-sm transition-all duration-200 border-l-2 border-l-primary/30 hover:border-l-primary">
-      <Link to={getJobUrl()}>
-        <CardContent className="p-3">
+    <Card 
+      className="hover:shadow-sm transition-all duration-200 border-l-2 border-l-primary/30 hover:border-l-primary cursor-pointer"
+      onClick={handleClick}
+    >
+      <CardContent className="p-3">
           <div className="space-y-2">
             {/* Job Title */}
             <h4 className="font-medium text-sm line-clamp-2 text-foreground hover:text-primary transition-colors">
@@ -60,7 +62,6 @@ export const MiniJobCard: React.FC<MiniJobCardProps> = ({ job }) => {
             )}
           </div>
         </CardContent>
-      </Link>
     </Card>
   );
 };
