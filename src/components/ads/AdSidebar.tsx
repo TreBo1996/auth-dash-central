@@ -7,6 +7,32 @@ import { Lightbulb, TrendingUp, Users } from 'lucide-react';
 export const AdSidebar: React.FC = () => {
   return (
     <div className="space-y-6">
+      {/* Community Stats - Moved to top */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Users className="h-4 w-4 text-blue-500" />
+            RezLit Community
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-xs text-muted-foreground space-y-2">
+            <div className="flex justify-between">
+              <span>Active Job Seekers</span>
+              <Badge variant="secondary" className="text-xs">50,000+</Badge>
+            </div>
+            <div className="flex justify-between">
+              <span>Jobs Posted Today</span>
+              <Badge variant="secondary" className="text-xs">1,200+</Badge>
+            </div>
+            <div className="flex justify-between">
+              <span>Success Stories</span>
+              <Badge variant="secondary" className="text-xs">15,000+</Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Primary Ad Slot */}
       <GoogleAd 
         adSlot="1234567890"
@@ -79,32 +105,6 @@ export const AdSidebar: React.FC = () => {
         adFormat="rectangle"
         className="min-h-[150px]"
       />
-
-      {/* Community Stats */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4 text-blue-500" />
-            RezLit Community
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-xs text-muted-foreground space-y-2">
-            <div className="flex justify-between">
-              <span>Active Job Seekers</span>
-              <Badge variant="secondary" className="text-xs">50,000+</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span>Jobs Posted Today</span>
-              <Badge variant="secondary" className="text-xs">1,200+</Badge>
-            </div>
-            <div className="flex justify-between">
-              <span>Success Stories</span>
-              <Badge variant="secondary" className="text-xs">15,000+</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
