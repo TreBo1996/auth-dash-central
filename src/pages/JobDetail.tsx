@@ -656,7 +656,7 @@ const JobDetail: React.FC = () => {
                           <Sparkles className="h-5 w-5 mr-2" />
                           Get Started Free
                         </Button>
-                        <Button size="lg" variant="outline" onClick={() => navigate('/auth')}>
+                        <Button size="lg" variant="outline" onClick={() => navigate('/')}>
                           Learn More
                         </Button>
                       </div>
