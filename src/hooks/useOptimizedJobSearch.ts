@@ -19,7 +19,7 @@ interface SearchResult {
 }
 
 interface UseOptimizedJobSearchReturn {
-  searchJobs: (filters: SearchFilters) => Promise<SearchResult>;
+  searchJobs: (filters: SearchFilters, offset?: number, limit?: number) => Promise<SearchResult>;
   loading: boolean;
   clearCache: () => void;
 }
@@ -71,28 +71,31 @@ export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
     }
   };
 
-  const searchJobs = useCallback(async (filters: SearchFilters): Promise<SearchResult> => {
-    // Clear previous debounce
-    if (debounceRef.current) {
+  const searchJobs = useCallback(async (filters: SearchFilters, offset: number = 0, limit: number = 50): Promise<SearchResult> => {
+    // Clear previous debounce only for new searches (offset = 0)
+    if (offset === 0 && debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
     return new Promise((resolve, reject) => {
-      debounceRef.current = setTimeout(async () => {
+      const performSearch = async () => {
         try {
           setLoading(true);
 
-          const cacheKey = getCacheKey(filters);
-          const cachedResult = getCachedResult(cacheKey);
-          
-          if (cachedResult) {
-            console.log('Returning cached search results');
-            setLoading(false);
-            resolve(cachedResult);
-            return;
+          // Only use cache for initial searches (offset = 0)
+          if (offset === 0) {
+            const cacheKey = getCacheKey(filters);
+            const cachedResult = getCachedResult(cacheKey);
+            
+            if (cachedResult) {
+              console.log('Returning cached search results');
+              setLoading(false);
+              resolve(cachedResult);
+              return;
+            }
           }
 
-          console.log('Performing optimized job search:', filters);
+          console.log('Performing optimized job search:', filters, { offset, limit });
 
           // Use the fast-job-search edge function for optimized searching
           const { data, error } = await supabase.functions.invoke('fast-job-search', {
@@ -104,8 +107,8 @@ export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
               seniorityLevel: filters.seniorityLevel || '',
               company: filters.company || '',
               maxAge: filters.maxAge || 30,
-              limit: 100,
-              offset: 0
+              limit,
+              offset
             }
           });
 
@@ -143,7 +146,11 @@ export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
             total: data.total || transformedJobs.length
           };
 
-          setCachedResult(cacheKey, result);
+          // Only cache initial searches
+          if (offset === 0) {
+            setCachedResult(getCacheKey(filters), result);
+          }
+          
           setLoading(false);
           resolve(result);
 
@@ -156,7 +163,14 @@ export const useOptimizedJobSearch = (): UseOptimizedJobSearchReturn => {
             total: 0
           });
         }
-      }, 300); // 300ms debounce
+      };
+
+      // Use debounce only for initial searches
+      if (offset === 0) {
+        debounceRef.current = setTimeout(performSearch, 300);
+      } else {
+        performSearch();
+      }
     });
   }, []);
 

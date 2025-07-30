@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { JobCard } from './JobCard';
-import { JobSearchPagination } from './JobSearchPagination';
+
 import { Loader2, Search, Briefcase, AlertTriangle } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
 
@@ -103,13 +103,6 @@ export const JobSearchResults: React.FC<JobSearchResultsProps> = ({
         ))}
       </div>
 
-      {pagination && onPageChange && pagination.totalPages > 1 && (
-        <JobSearchPagination
-          pagination={pagination}
-          onPageChange={onPageChange}
-          loading={loading}
-        />
-      )}
     </div>
   );
 };

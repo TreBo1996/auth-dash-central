@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CollapsibleFilters } from '@/components/job-search/CollapsibleFilters';
 import { MiniJobCard } from '@/components/job-search/MiniJobCard';
 import { CompactJobCard } from '@/components/job-search/CompactJobCard';
-import { JobSearchPagination } from '@/components/job-search/JobSearchPagination';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { AdSidebar } from '@/components/ads/AdSidebar';
 import { GoogleAd } from '@/components/ads/GoogleAd';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,29 +25,32 @@ interface JobSearchFilters {
   maxAge?: number;
 }
 
-const JOBS_PER_PAGE = 10;
+const JOBS_PER_BATCH = 20;
 const SEARCH_STATE_KEY = 'job-search-state';
 
 export const JobSearch: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allJobs, setAllJobs] = useState<UnifiedJob[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [miniJobs, setMiniJobs] = useState<UnifiedJob[]>([]);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [currentFilters, setCurrentFilters] = useState<JobSearchFilters | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [hasMoreJobs, setHasMoreJobs] = useState(true);
+  const [hasMoreMiniJobs, setHasMoreMiniJobs] = useState(true);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const miniJobsRef = useRef<HTMLDivElement>(null);
   
   // Use the optimized search hook
   const { searchJobs, loading } = useOptimizedJobSearch();
 
   // State persistence utilities
-  const saveSearchState = (filters: JobSearchFilters, jobs: UnifiedJob[], page: number, performed: boolean, warnings: string[]) => {
+  const saveSearchState = (filters: JobSearchFilters, jobs: UnifiedJob[], performed: boolean, warnings: string[]) => {
     try {
       const state = {
         filters,
         jobs,
-        currentPage: page,
         searchPerformed: performed,
         warnings,
         timestamp: Date.now()
@@ -74,7 +77,7 @@ export const JobSearch: React.FC = () => {
     return null;
   };
 
-  const updateURLParams = (filters: JobSearchFilters, page: number) => {
+  const updateURLParams = (filters: JobSearchFilters) => {
     const newParams = new URLSearchParams();
     if (filters.query) newParams.set('q', filters.query);
     if (filters.location) newParams.set('location', filters.location);
@@ -82,7 +85,6 @@ export const JobSearch: React.FC = () => {
     if (filters.employmentType) newParams.set('type', filters.employmentType);
     if (filters.seniorityLevel) newParams.set('level', filters.seniorityLevel);
     if (filters.company) newParams.set('company', filters.company);
-    if (page > 1) newParams.set('page', page.toString());
     
     setSearchParams(newParams, { replace: true });
   };
@@ -116,66 +118,108 @@ export const JobSearch: React.FC = () => {
   };
 
   const handleSearch = async (searchFilters: JobSearchFilters) => {
-    const newPage = 1;
-    setCurrentPage(newPage);
     setCurrentFilters(searchFilters);
+    setAllJobs([]);
+    setMiniJobs([]);
+    setExpandedJobId(null);
+    setHasMoreJobs(true);
+    setHasMoreMiniJobs(true);
     
     try {
-      // Use optimized search
-      const searchResult = await searchJobs(searchFilters);
+      // Use optimized search with initial batch
+      const searchResult = await searchJobs(searchFilters, 0, JOBS_PER_BATCH);
       
       setAllJobs(searchResult.jobs);
+      setMiniJobs(searchResult.jobs.slice(0, 10)); // First 10 for mini jobs
+      setTotalJobs(searchResult.total);
       setWarnings(searchResult.warnings);
       setSearchPerformed(true);
+      setHasMoreJobs(searchResult.jobs.length < searchResult.total);
+      setHasMoreMiniJobs(searchResult.jobs.length < searchResult.total);
       
       // Save state and update URL
-      saveSearchState(searchFilters, searchResult.jobs, newPage, true, searchResult.warnings);
-      updateURLParams(searchFilters, newPage);
+      saveSearchState(searchFilters, searchResult.jobs, true, searchResult.warnings);
+      updateURLParams(searchFilters);
       
     } catch (error) {
       console.error('Search error:', error);
       const errorWarnings = ['Search failed. Please try again.'];
       setAllJobs([]);
+      setMiniJobs([]);
       setWarnings(errorWarnings);
       setSearchPerformed(true);
+      setHasMoreJobs(false);
+      setHasMoreMiniJobs(false);
       
       // Save error state
-      saveSearchState(searchFilters, [], newPage, true, errorWarnings);
+      saveSearchState(searchFilters, [], true, errorWarnings);
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const loadMoreJobs = async () => {
+    if (!currentFilters || !hasMoreJobs || loading) return;
     
-    // Update URL and save state
-    if (currentFilters) {
-      updateURLParams(currentFilters, page);
-      saveSearchState(currentFilters, allJobs, page, searchPerformed, warnings);
+    try {
+      const searchResult = await searchJobs(currentFilters, allJobs.length, JOBS_PER_BATCH);
+      
+      if (searchResult.jobs.length > 0) {
+        setAllJobs(prev => [...prev, ...searchResult.jobs]);
+        setHasMoreJobs(allJobs.length + searchResult.jobs.length < totalJobs);
+      } else {
+        setHasMoreJobs(false);
+      }
+    } catch (error) {
+      console.error('Error loading more jobs:', error);
+      setHasMoreJobs(false);
     }
+  };
+
+  const loadMoreMiniJobs = async () => {
+    if (!currentFilters || !hasMoreMiniJobs || loading) return;
     
-    // Scroll to the results section
-    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+      const searchResult = await searchJobs(currentFilters, miniJobs.length, 10);
+      
+      if (searchResult.jobs.length > 0) {
+        setMiniJobs(prev => [...prev, ...searchResult.jobs]);
+        setHasMoreMiniJobs(miniJobs.length + searchResult.jobs.length < totalJobs);
+      } else {
+        setHasMoreMiniJobs(false);
+      }
+    } catch (error) {
+      console.error('Error loading more mini jobs:', error);
+      setHasMoreMiniJobs(false);
+    }
   };
 
   const handleMiniJobSelect = (selectedJob: UnifiedJob) => {
-    // Find the job in current jobs and scroll to it
+    // Find the job in all jobs and scroll to it
     const jobElement = document.getElementById(`job-${selectedJob.id}`);
     if (jobElement) {
       jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setExpandedJobId(selectedJob.id);
+    } else {
+      // If job not in current view, try to load more jobs until we find it
+      const jobIndex = allJobs.findIndex(job => job.id === selectedJob.id);
+      if (jobIndex === -1) {
+        // Job might not be loaded yet, trigger loading more jobs
+        loadMoreJobs();
+      }
     }
   };
+
+  // Infinite scroll hooks
+  const { lastElementRef } = useInfiniteScroll(hasMoreJobs, loadMoreJobs, { enabled: !loading });
+  const { lastElementRef: lastMiniElementRef } = useInfiniteScroll(hasMoreMiniJobs, loadMoreMiniJobs, { enabled: !loading });
 
   // Restore state on component mount
   useEffect(() => {
     // Check URL parameters first
     const urlFilters = getFiltersFromURL();
-    const urlPage = parseInt(searchParams.get('page') || '1');
     
     if (urlFilters) {
       // User came with URL parameters - perform search
       setCurrentFilters(urlFilters);
-      setCurrentPage(urlPage);
       handleSearch(urlFilters);
       return;
     }
@@ -185,30 +229,19 @@ export const JobSearch: React.FC = () => {
     if (savedState) {
       setCurrentFilters(savedState.filters);
       setAllJobs(savedState.jobs);
-      setCurrentPage(savedState.currentPage);
+      setMiniJobs(savedState.jobs.slice(0, 10));
       setSearchPerformed(savedState.searchPerformed);
       setWarnings(savedState.warnings);
+      setTotalJobs(savedState.jobs.length);
+      setHasMoreJobs(savedState.jobs.length >= JOBS_PER_BATCH);
+      setHasMoreMiniJobs(savedState.jobs.length >= 10);
       
       // Update URL to match restored state
-      updateURLParams(savedState.filters, savedState.currentPage);
+      updateURLParams(savedState.filters);
     }
   }, []); // Only run on mount
 
-  // Calculate pagination
-  const totalJobs = allJobs.length;
-  const totalPages = Math.ceil(totalJobs / JOBS_PER_PAGE);
-  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
-  const endIndex = startIndex + JOBS_PER_PAGE;
-  const currentJobs = allJobs.slice(startIndex, endIndex);
-
-  const pagination = totalJobs > 0 ? {
-    currentPage,
-    totalPages,
-    hasNextPage: currentPage < totalPages,
-    hasPreviousPage: currentPage > 1,
-    totalResults: totalJobs,
-    resultsPerPage: JOBS_PER_PAGE
-  } : null;
+  // No pagination needed for infinite scroll
 
   return (
     <DashboardLayout>
@@ -243,23 +276,35 @@ export const JobSearch: React.FC = () => {
                 filters={currentFilters || undefined}
               />
               
-              {/* Mini Job Cards */}
-              {allJobs.length > 0 && (
-                <div className="space-y-3">
+              {/* Mini Job Cards with Infinite Scroll */}
+              {miniJobs.length > 0 && (
+                <div className="space-y-3" ref={miniJobsRef}>
                   <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
-                  {allJobs.slice(0, 5).map((job, index) => (
-                    <React.Fragment key={`mini-${job.id}-${index}`}>
-                      <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
-                      {/* In-feed ad after every 3 mini jobs */}
-                      {(index + 1) % 3 === 0 && index < 4 && (
-                        <GoogleAd 
-                          adSlot="3333333333"
-                          adFormat="rectangle"
-                          className="w-full h-[100px]"
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                    {miniJobs.map((job, index) => (
+                      <React.Fragment key={`mini-${job.id}-${index}`}>
+                        <div 
+                          ref={index === miniJobs.length - 1 ? lastMiniElementRef : null}
+                        >
+                          <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
+                        </div>
+                        {/* In-feed ad after every 5 mini jobs */}
+                        {(index + 1) % 5 === 0 && (
+                          <GoogleAd 
+                            adSlot="3333333333"
+                            adFormat="rectangle"
+                            className="w-full h-[100px]"
+                          />
+                        )}
+                      </React.Fragment>
+                    ))}
+                    {/* Loading indicator for mini jobs */}
+                    {loading && hasMoreMiniJobs && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -273,10 +318,7 @@ export const JobSearch: React.FC = () => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-lg font-semibold">
-                      {pagination ? 
-                        `Showing ${((pagination.currentPage - 1) * pagination.resultsPerPage) + 1}-${Math.min(pagination.currentPage * pagination.resultsPerPage, pagination.totalResults)} of ${pagination.totalResults} jobs` : 
-                        `Found ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`
-                      }
+                      {`Showing ${allJobs.length} of ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
                     </h2>
                   </div>
                 </div>
@@ -318,7 +360,7 @@ export const JobSearch: React.FC = () => {
               )}
 
               {/* No Results */}
-              {searchPerformed && totalJobs === 0 && !loading && (
+              {searchPerformed && allJobs.length === 0 && !loading && (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -330,19 +372,23 @@ export const JobSearch: React.FC = () => {
                 </Card>
               )}
 
-              {/* Job Results */}
-              {currentJobs.length > 0 && (
+              {/* Job Results with Infinite Scroll */}
+              {allJobs.length > 0 && (
                 <div className="space-y-3">
-                  {currentJobs.map((job, index) => (
+                  {allJobs.map((job, index) => (
                     <React.Fragment key={`${job.id}-${index}`}>
-                      <CompactJobCard 
-                        job={job} 
-                        id={`job-${job.id}`}
-                        isExpanded={expandedJobId === job.id}
-                        onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
-                      />
-                      {/* Inline Ad every 5 jobs */}
-                      {(index + 1) % 5 === 0 && index < currentJobs.length - 1 && (
+                      <div 
+                        ref={index === allJobs.length - 1 ? lastElementRef : null}
+                      >
+                        <CompactJobCard 
+                          job={job} 
+                          id={`job-${job.id}`}
+                          isExpanded={expandedJobId === job.id}
+                          onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
+                        />
+                      </div>
+                      {/* Inline Ad every 8 jobs */}
+                      {(index + 1) % 8 === 0 && (
                         <GoogleAd 
                           adSlot="5555555555"
                           adFormat="horizontal"
@@ -351,17 +397,21 @@ export const JobSearch: React.FC = () => {
                       )}
                     </React.Fragment>
                   ))}
-                </div>
-              )}
-
-              {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
-                <div className="mt-6">
-                  <JobSearchPagination
-                    pagination={pagination}
-                    onPageChange={handlePageChange}
-                    loading={loading}
-                  />
+                  
+                  {/* Loading indicator for infinite scroll */}
+                  {loading && hasMoreJobs && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                      <span>Loading more jobs...</span>
+                    </div>
+                  )}
+                  
+                  {/* End of results indicator */}
+                  {!hasMoreJobs && allJobs.length > 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>You've reached the end of the results</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

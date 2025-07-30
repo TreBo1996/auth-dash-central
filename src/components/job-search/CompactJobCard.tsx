@@ -187,17 +187,19 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
               </div>
 
               {/* Description */}
-              <div className="text-sm text-muted-foreground leading-relaxed">
-                {!isExpanded ? (
-                  <p className="line-clamp-2">{truncateDescription(job.description)}</p>
-                ) : (
-                  <div className="space-y-2">
-                    {formatDescription(job.description)}
-                  </div>
-                )}
-                
-                {job.description.length > 150 && (
-                  <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+              <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  {!isExpanded ? (
+                    <p className="line-clamp-2">{truncateDescription(job.description)}</p>
+                  ) : (
+                    <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                      <div className="space-y-2 mt-2">
+                        {formatDescription(job.description)}
+                      </div>
+                    </CollapsibleContent>
+                  )}
+                  
+                  {job.description.length > 150 && (
                     <CollapsibleTrigger asChild>
                       <Button 
                         variant="ghost" 
@@ -219,9 +221,9 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
                         )}
                       </Button>
                     </CollapsibleTrigger>
-                  </Collapsible>
-                )}
-              </div>
+                  )}
+                </div>
+              </Collapsible>
 
               {/* Job Details */}
               <div className="flex flex-wrap gap-2">
