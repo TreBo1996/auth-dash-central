@@ -6,7 +6,7 @@ import { Lightbulb, TrendingUp, Users } from 'lucide-react';
 
 export const AdSidebar: React.FC = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide">
       {/* Community Stats - Moved to top */}
       <Card>
         <CardHeader className="pb-3">

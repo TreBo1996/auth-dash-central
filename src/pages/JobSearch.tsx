@@ -163,8 +163,9 @@ export const JobSearch: React.FC = () => {
       const searchResult = await searchJobs(currentFilters, allJobs.length, JOBS_PER_BATCH);
       
       if (searchResult.jobs.length > 0) {
-        setAllJobs(prev => [...prev, ...searchResult.jobs]);
-        setHasMoreJobs(allJobs.length + searchResult.jobs.length < totalJobs);
+        const newJobs = [...allJobs, ...searchResult.jobs];
+        setAllJobs(newJobs);
+        setHasMoreJobs(newJobs.length < totalJobs);
       } else {
         setHasMoreJobs(false);
       }
@@ -181,8 +182,9 @@ export const JobSearch: React.FC = () => {
       const searchResult = await searchJobs(currentFilters, miniJobs.length, 10);
       
       if (searchResult.jobs.length > 0) {
-        setMiniJobs(prev => [...prev, ...searchResult.jobs]);
-        setHasMoreMiniJobs(miniJobs.length + searchResult.jobs.length < totalJobs);
+        const newMiniJobs = [...miniJobs, ...searchResult.jobs];
+        setMiniJobs(newMiniJobs);
+        setHasMoreMiniJobs(newMiniJobs.length < totalJobs);
       } else {
         setHasMoreMiniJobs(false);
       }
@@ -276,12 +278,12 @@ export const JobSearch: React.FC = () => {
                 filters={currentFilters || undefined}
               />
               
-              {/* Mini Job Cards with Infinite Scroll */}
-              {miniJobs.length > 0 && (
-                <div className="space-y-3" ref={miniJobsRef}>
-                  <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
-                  <div 
-                    className="space-y-3 scrollbar-hide max-h-[calc(100vh-300px)] overflow-y-auto hover:cursor-pointer"
+          {/* Mini Job Cards with Infinite Scroll */}
+          {miniJobs.length > 0 && (
+            <div className="space-y-3" ref={miniJobsRef}>
+              <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
+              <div 
+                className="space-y-3 scrollbar-hide max-h-[calc(100vh-300px)] overflow-y-auto hover:cursor-pointer"
                     onMouseEnter={(e) => {
                       e.currentTarget.style.overflowY = 'auto';
                       document.body.style.overflow = 'hidden';
@@ -290,23 +292,23 @@ export const JobSearch: React.FC = () => {
                       document.body.style.overflow = 'auto';
                     }}
                   >
-                    {miniJobs.map((job, index) => (
-                      <React.Fragment key={`mini-${job.id}-${index}`}>
-                        <div 
-                          ref={index === miniJobs.length - 1 ? lastMiniElementRef : null}
-                        >
-                          <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
-                        </div>
-                        {/* In-feed ad after every 5 mini jobs */}
-                        {(index + 1) % 5 === 0 && (
-                          <GoogleAd 
-                            adSlot="3333333333"
-                            adFormat="rectangle"
-                            className="w-full h-[100px]"
-                          />
-                        )}
-                      </React.Fragment>
-                    ))}
+                  {miniJobs.map((job, index) => (
+                    <div key={`mini-${job.id}-${index}`}>
+                      <div 
+                        ref={index === miniJobs.length - 1 ? lastMiniElementRef : null}
+                      >
+                        <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
+                      </div>
+                      {/* In-feed ad after every 5 mini jobs */}
+                      {(index + 1) % 5 === 0 && (
+                        <GoogleAd 
+                          adSlot="3333333333"
+                          adFormat="rectangle"
+                          className="w-full h-[100px]"
+                        />
+                      )}
+                    </div>
+                  ))}
                     {/* Loading indicator for mini jobs */}
                     {loading && hasMoreMiniJobs && (
                       <div className="flex items-center justify-center py-4">
@@ -323,7 +325,7 @@ export const JobSearch: React.FC = () => {
           <AnimatedSection delay={150} className="col-span-12 lg:col-span-6">
             <div 
               ref={resultsRef} 
-              className="space-y-4 scroll-mt-4 max-h-[calc(100vh-150px)] overflow-y-auto scrollbar-hide hover:cursor-pointer"
+              className="space-y-4 scroll-mt-4 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide hover:cursor-pointer"
               onMouseEnter={(e) => {
                 e.currentTarget.style.overflowY = 'auto';
                 document.body.style.overflow = 'hidden';
@@ -395,7 +397,7 @@ export const JobSearch: React.FC = () => {
               {allJobs.length > 0 && (
                 <div className="space-y-3">
                   {allJobs.map((job, index) => (
-                    <React.Fragment key={`${job.id}-${index}`}>
+                    <div key={`${job.id}-${index}`}>
                       <div 
                         ref={index === allJobs.length - 1 ? lastElementRef : null}
                       >
@@ -414,7 +416,7 @@ export const JobSearch: React.FC = () => {
                           className="w-full h-[100px] my-4"
                         />
                       )}
-                    </React.Fragment>
+                    </div>
                   ))}
                   
                   {/* Loading indicator for infinite scroll */}
