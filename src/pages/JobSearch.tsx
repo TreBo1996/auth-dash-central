@@ -122,18 +122,20 @@ export const JobSearch: React.FC = () => {
     setAllJobs([]);
     setMiniJobs([]);
     setExpandedJobId(null);
-    setHasMoreJobs(false);
-    setHasMoreMiniJobs(false);
+    setHasMoreJobs(true);
+    setHasMoreMiniJobs(true);
     
     try {
-      // Load ALL results at once (no pagination limits)
-      const searchResult = await searchJobs(searchFilters, 0, 1000); // High limit to get all results
+      // Use optimized search with initial batch
+      const searchResult = await searchJobs(searchFilters, 0, JOBS_PER_BATCH);
       
       setAllJobs(searchResult.jobs);
-      setMiniJobs(searchResult.jobs); // All jobs for mini view
+      setMiniJobs(searchResult.jobs.slice(0, 10)); // First 10 for mini jobs
       setTotalJobs(searchResult.total);
       setWarnings(searchResult.warnings);
       setSearchPerformed(true);
+      setHasMoreJobs(searchResult.jobs.length < searchResult.total);
+      setHasMoreMiniJobs(searchResult.jobs.length < searchResult.total);
       
       // Save state and update URL
       saveSearchState(searchFilters, searchResult.jobs, true, searchResult.warnings);
@@ -146,13 +148,51 @@ export const JobSearch: React.FC = () => {
       setMiniJobs([]);
       setWarnings(errorWarnings);
       setSearchPerformed(true);
+      setHasMoreJobs(false);
+      setHasMoreMiniJobs(false);
       
       // Save error state
       saveSearchState(searchFilters, [], true, errorWarnings);
     }
   };
 
-  // Remove load more functions since we're loading all results at once
+  const loadMoreJobs = async () => {
+    if (!currentFilters || !hasMoreJobs || loading) return;
+    
+    try {
+      const searchResult = await searchJobs(currentFilters, allJobs.length, JOBS_PER_BATCH);
+      
+      if (searchResult.jobs.length > 0) {
+        const newJobs = [...allJobs, ...searchResult.jobs];
+        setAllJobs(newJobs);
+        setHasMoreJobs(newJobs.length < totalJobs);
+      } else {
+        setHasMoreJobs(false);
+      }
+    } catch (error) {
+      console.error('Error loading more jobs:', error);
+      setHasMoreJobs(false);
+    }
+  };
+
+  const loadMoreMiniJobs = async () => {
+    if (!currentFilters || !hasMoreMiniJobs || loading) return;
+    
+    try {
+      const searchResult = await searchJobs(currentFilters, miniJobs.length, 10);
+      
+      if (searchResult.jobs.length > 0) {
+        const newMiniJobs = [...miniJobs, ...searchResult.jobs];
+        setMiniJobs(newMiniJobs);
+        setHasMoreMiniJobs(newMiniJobs.length < totalJobs);
+      } else {
+        setHasMoreMiniJobs(false);
+      }
+    } catch (error) {
+      console.error('Error loading more mini jobs:', error);
+      setHasMoreMiniJobs(false);
+    }
+  };
 
   const handleMiniJobSelect = (selectedJob: UnifiedJob) => {
     // Find the job in all jobs and scroll to it
@@ -160,10 +200,19 @@ export const JobSearch: React.FC = () => {
     if (jobElement) {
       jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setExpandedJobId(selectedJob.id);
+    } else {
+      // If job not in current view, try to load more jobs until we find it
+      const jobIndex = allJobs.findIndex(job => job.id === selectedJob.id);
+      if (jobIndex === -1) {
+        // Job might not be loaded yet, trigger loading more jobs
+        loadMoreJobs();
       }
+    }
   };
 
-  // Remove infinite scroll since we're loading all results at once
+  // Infinite scroll hooks
+  const { lastElementRef } = useInfiniteScroll(hasMoreJobs, loadMoreJobs, { enabled: !loading });
+  const { lastElementRef: lastMiniElementRef } = useInfiniteScroll(hasMoreMiniJobs, loadMoreMiniJobs, { enabled: !loading });
 
   // Restore state on component mount
   useEffect(() => {
@@ -182,10 +231,12 @@ export const JobSearch: React.FC = () => {
     if (savedState) {
       setCurrentFilters(savedState.filters);
       setAllJobs(savedState.jobs);
-      setMiniJobs(savedState.jobs);
+      setMiniJobs(savedState.jobs.slice(0, 10));
       setSearchPerformed(savedState.searchPerformed);
       setWarnings(savedState.warnings);
       setTotalJobs(savedState.jobs.length);
+      setHasMoreJobs(savedState.jobs.length >= JOBS_PER_BATCH);
+      setHasMoreMiniJobs(savedState.jobs.length >= 10);
       
       // Update URL to match restored state
       updateURLParams(savedState.filters);
@@ -232,7 +283,7 @@ export const JobSearch: React.FC = () => {
             <div className="space-y-3" ref={miniJobsRef}>
               <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
               <div 
-                className="space-y-3 scrollbar-hide h-[calc(100vh-300px)] overflow-y-auto hover:cursor-pointer"
+                className="space-y-3 scrollbar-hide max-h-[calc(100vh-300px)] overflow-y-auto hover:cursor-pointer"
                     onMouseEnter={(e) => {
                       e.currentTarget.style.overflowY = 'auto';
                       document.body.style.overflow = 'hidden';
@@ -241,19 +292,29 @@ export const JobSearch: React.FC = () => {
                       document.body.style.overflow = 'auto';
                     }}
                   >
-                   {miniJobs.map((job, index) => (
-                     <div key={`mini-${job.id}-${index}`}>
-                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
-                       {/* In-feed ad after every 5 mini jobs */}
-                       {(index + 1) % 5 === 0 && (
-                         <GoogleAd 
-                           adSlot="3333333333"
-                           adFormat="rectangle"
-                           className="w-full h-[100px]"
-                         />
-                       )}
-                     </div>
-                   ))}
+                  {miniJobs.map((job, index) => (
+                    <div key={`mini-${job.id}-${index}`}>
+                      <div 
+                        ref={index === miniJobs.length - 1 ? lastMiniElementRef : null}
+                      >
+                        <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
+                      </div>
+                      {/* In-feed ad after every 5 mini jobs */}
+                      {(index + 1) % 5 === 0 && (
+                        <GoogleAd 
+                          adSlot="3333333333"
+                          adFormat="rectangle"
+                          className="w-full h-[100px]"
+                        />
+                      )}
+                    </div>
+                  ))}
+                    {/* Loading indicator for mini jobs */}
+                    {loading && hasMoreMiniJobs && (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -264,7 +325,7 @@ export const JobSearch: React.FC = () => {
           <AnimatedSection delay={150} className="col-span-12 lg:col-span-6">
             <div 
               ref={resultsRef} 
-              className="space-y-4 scroll-mt-4 h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide hover:cursor-pointer"
+              className="space-y-4 scroll-mt-4 max-h-[calc(100vh-300px)] overflow-y-auto scrollbar-hide hover:cursor-pointer"
               onMouseEnter={(e) => {
                 e.currentTarget.style.overflowY = 'auto';
                 document.body.style.overflow = 'hidden';
@@ -335,24 +396,43 @@ export const JobSearch: React.FC = () => {
               {/* Job Results with Infinite Scroll */}
               {allJobs.length > 0 && (
                 <div className="space-y-3">
-                   {allJobs.map((job, index) => (
-                     <div key={`${job.id}-${index}`}>
-                       <CompactJobCard 
-                         job={job} 
-                         id={`job-${job.id}`}
-                         isExpanded={expandedJobId === job.id}
-                         onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
-                       />
-                       {/* Inline Ad every 8 jobs */}
-                       {(index + 1) % 8 === 0 && (
-                         <GoogleAd 
-                           adSlot="5555555555"
-                           adFormat="horizontal"
-                           className="w-full h-[100px] my-4"
-                         />
-                       )}
-                     </div>
-                   ))}
+                  {allJobs.map((job, index) => (
+                    <div key={`${job.id}-${index}`}>
+                      <div 
+                        ref={index === allJobs.length - 1 ? lastElementRef : null}
+                      >
+                        <CompactJobCard 
+                          job={job} 
+                          id={`job-${job.id}`}
+                          isExpanded={expandedJobId === job.id}
+                          onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
+                        />
+                      </div>
+                      {/* Inline Ad every 8 jobs */}
+                      {(index + 1) % 8 === 0 && (
+                        <GoogleAd 
+                          adSlot="5555555555"
+                          adFormat="horizontal"
+                          className="w-full h-[100px] my-4"
+                        />
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Loading indicator for infinite scroll */}
+                  {loading && hasMoreJobs && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                      <span>Loading more jobs...</span>
+                    </div>
+                  )}
+                  
+                  {/* End of results indicator */}
+                  {!hasMoreJobs && allJobs.length > 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>You've reached the end of the results</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
