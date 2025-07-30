@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { MapPin, Building, DollarSign, Clock, Save, Check, Briefcase, ExternalLink, Share2 } from 'lucide-react';
+import { MapPin, Building, DollarSign, Clock, Save, Check, Briefcase, ExternalLink, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UnifiedJob } from '@/types/job';
 import { toTitleCase } from '@/lib/utils';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface CompactJobCardProps {
   job: UnifiedJob;
@@ -19,6 +20,7 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { checkFeatureAccess, incrementUsage, isPremium } = useFeatureUsage();
@@ -122,6 +124,13 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job }) => {
     return text.slice(0, maxLength) + '...';
   };
 
+  const formatDescription = (text: string) => {
+    // Format job description with line breaks
+    return text.split('\n').map((line, index) => (
+      <p key={index} className="mb-2 last:mb-0">{line}</p>
+    ));
+  };
+
   return (
     <>
       <Card className="hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/20 hover:border-l-primary cursor-pointer">
@@ -162,9 +171,41 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({ job }) => {
               </div>
 
               {/* Description */}
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                {truncateDescription(job.description)}
-              </p>
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                {!isExpanded ? (
+                  <p className="line-clamp-2">{truncateDescription(job.description)}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {formatDescription(job.description)}
+                  </div>
+                )}
+                
+                {job.description.length > 150 && (
+                  <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+                    <CollapsibleTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-auto p-0 mt-2 text-primary hover:text-primary/80"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        {isExpanded ? (
+                          <>
+                            Show Less <ChevronUp className="h-3 w-3 ml-1" />
+                          </>
+                        ) : (
+                          <>
+                            Show More <ChevronDown className="h-3 w-3 ml-1" />
+                          </>
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </Collapsible>
+                )}
+              </div>
 
               {/* Job Details */}
               <div className="flex flex-wrap gap-2">

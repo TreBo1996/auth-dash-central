@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { JobSearchSidebar } from '@/components/job-search/JobSearchSidebar';
+import { CollapsibleFilters } from '@/components/job-search/CollapsibleFilters';
+import { MiniJobCard } from '@/components/job-search/MiniJobCard';
 import { CompactJobCard } from '@/components/job-search/CompactJobCard';
 import { JobSearchPagination } from '@/components/job-search/JobSearchPagination';
 import { AdSidebar } from '@/components/ads/AdSidebar';
@@ -223,14 +224,34 @@ export const JobSearch: React.FC = () => {
 
         {/* Three Column Layout */}
         <div className="grid grid-cols-12 gap-6">
-          {/* Left Sidebar - Search Filters */}
+          {/* Left Sidebar - Search Filters & Mini Jobs */}
           <AnimatedSection delay={100} className="col-span-12 lg:col-span-3">
-            <div className="lg:sticky lg:top-6">
-              <JobSearchSidebar 
+            <div className="lg:sticky lg:top-6 space-y-4">
+              <CollapsibleFilters 
                 onSearch={handleSearch} 
                 loading={loading}
                 filters={currentFilters || undefined}
               />
+              
+              {/* Mini Job Cards */}
+              {allJobs.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
+                  {allJobs.slice(0, 5).map((job, index) => (
+                    <React.Fragment key={`mini-${job.id}-${index}`}>
+                      <MiniJobCard job={job} />
+                      {/* In-feed ad after every 3 mini jobs */}
+                      {(index + 1) % 3 === 0 && index < 4 && (
+                        <GoogleAd 
+                          adSlot="3333333333"
+                          adFormat="rectangle"
+                          className="w-full h-[100px]"
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
             </div>
           </AnimatedSection>
 
