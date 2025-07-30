@@ -217,10 +217,10 @@ export const JobSearch: React.FC = () => {
         </AnimatedSection>
 
         {/* Three Column Layout */}
-        <div className="grid grid-cols-12 gap-6 min-h-[calc(100vh-250px)]">
+        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-250px)]">
           {/* Left Sidebar - Search Filters & Mini Jobs */}
-          <AnimatedSection delay={100} className="col-span-12 lg:col-span-3 flex flex-col">
-            <div className="space-y-4 flex-1 flex flex-col">
+          <AnimatedSection delay={100} className="col-span-12 lg:col-span-3 flex flex-col h-full">
+            <div className="space-y-4 flex flex-col h-full">
               <div className="flex-shrink-0">
                 <CollapsibleFilters 
                   onSearch={handleSearch} 
@@ -229,20 +229,11 @@ export const JobSearch: React.FC = () => {
                 />
               </div>
               
-              {/* Mini Job Cards with Infinite Scroll */}
+              {/* Mini Job Cards with Fixed Height */}
               {miniJobs.length > 0 && (
                 <div className="space-y-3 flex-1 flex flex-col min-h-0" ref={miniJobsRef}>
                   <h3 className="text-sm font-medium text-muted-foreground px-1 flex-shrink-0">Quick Jobs</h3>
-                  <div 
-                    className="space-y-3 scrollbar-hide flex-1 overflow-y-auto hover:cursor-pointer"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.overflowY = 'auto';
-                      document.body.style.overflow = 'hidden';
-                    }}
-                    onMouseLeave={(e) => {
-                      document.body.style.overflow = 'auto';
-                    }}
-                  >
+                  <div className="space-y-3 scrollbar-hide flex-1 overflow-y-auto min-h-0">
                     {miniJobs.map((job, index) => (
                       <div key={`mini-${job.id}-${index}`}>
                         <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
@@ -263,8 +254,8 @@ export const JobSearch: React.FC = () => {
           </AnimatedSection>
 
           {/* Main Content - Job Results */}
-          <AnimatedSection delay={150} className="col-span-12 lg:col-span-6 flex flex-col">
-            <div className="space-y-4 flex-1 flex flex-col min-h-0">
+          <AnimatedSection delay={150} className="col-span-12 lg:col-span-6 flex flex-col h-full">
+            <div className="space-y-4 flex flex-col h-full">
               {/* Results Header */}
               <div className="flex-shrink-0">
                 {searchPerformed && !loading && (
@@ -280,14 +271,7 @@ export const JobSearch: React.FC = () => {
               
               <div 
                 ref={resultsRef} 
-                className="space-y-4 scroll-mt-4 flex-1 overflow-y-auto scrollbar-hide hover:cursor-pointer min-h-0"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.overflowY = 'auto';
-                  document.body.style.overflow = 'hidden';
-                }}
-                onMouseLeave={(e) => {
-                  document.body.style.overflow = 'auto';
-                }}
+                className="space-y-4 scroll-mt-4 flex-1 overflow-y-auto scrollbar-hide min-h-0"
               >
                 {/* Warnings */}
                 {warnings.length > 0 && (
@@ -365,8 +349,8 @@ export const JobSearch: React.FC = () => {
           </AnimatedSection>
 
           {/* Right Sidebar - Ads and Content */}
-          <AnimatedSection delay={200} className="col-span-12 lg:col-span-3 flex flex-col min-h-0">
-            <div className="flex-1">
+          <AnimatedSection delay={200} className="col-span-12 lg:col-span-3 flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
               <AdSidebar />
             </div>
           </AnimatedSection>
