@@ -25,7 +25,7 @@ interface JobSearchFilters {
   maxAge?: number;
 }
 
-const JOBS_PER_BATCH = 20;
+const JOBS_PER_BATCH = 50;
 const SEARCH_STATE_KEY = 'job-search-state';
 
 export const JobSearch: React.FC = () => {
@@ -280,7 +280,16 @@ export const JobSearch: React.FC = () => {
               {miniJobs.length > 0 && (
                 <div className="space-y-3" ref={miniJobsRef}>
                   <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
-                  <div className="space-y-3 scrollbar-hide">
+                  <div 
+                    className="space-y-3 scrollbar-hide max-h-[calc(100vh-300px)] overflow-y-auto hover:cursor-pointer"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.overflowY = 'auto';
+                      document.body.style.overflow = 'hidden';
+                    }}
+                    onMouseLeave={(e) => {
+                      document.body.style.overflow = 'auto';
+                    }}
+                  >
                     {miniJobs.map((job, index) => (
                       <React.Fragment key={`mini-${job.id}-${index}`}>
                         <div 
@@ -312,7 +321,17 @@ export const JobSearch: React.FC = () => {
 
           {/* Main Content - Job Results */}
           <AnimatedSection delay={150} className="col-span-12 lg:col-span-6">
-            <div ref={resultsRef} className="space-y-4 scroll-mt-4">
+            <div 
+              ref={resultsRef} 
+              className="space-y-4 scroll-mt-4 max-h-[calc(100vh-150px)] overflow-y-auto scrollbar-hide hover:cursor-pointer"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.overflowY = 'auto';
+                document.body.style.overflow = 'hidden';
+              }}
+              onMouseLeave={(e) => {
+                document.body.style.overflow = 'auto';
+              }}
+            >
               {/* Results Header */}
               {searchPerformed && !loading && (
                 <div className="flex items-center justify-between mb-4">
