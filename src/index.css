@@ -496,3 +496,8 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari, Opera */
 }
+
+/* Job Search Page Height Utility */
+.job-search-container {
+  height: calc(100vh - 250px);
+}

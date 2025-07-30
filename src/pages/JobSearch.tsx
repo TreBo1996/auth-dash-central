@@ -217,7 +217,7 @@ export const JobSearch: React.FC = () => {
         </AnimatedSection>
 
         {/* Three Column Layout */}
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-250px)]">
+        <div className="grid grid-cols-12 gap-6 job-search-container">
           {/* Left Sidebar - Search Filters & Mini Jobs */}
           <AnimatedSection delay={100} className="col-span-12 lg:col-span-3 flex flex-col h-full">
             <div className="space-y-4 flex flex-col h-full">
