@@ -280,7 +280,7 @@ export const JobSearch: React.FC = () => {
               {miniJobs.length > 0 && (
                 <div className="space-y-3" ref={miniJobsRef}>
                   <h3 className="text-sm font-medium text-muted-foreground px-1">Quick Jobs</h3>
-                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                  <div className="space-y-3 scrollbar-hide">
                     {miniJobs.map((job, index) => (
                       <React.Fragment key={`mini-${job.id}-${index}`}>
                         <div 

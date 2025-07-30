@@ -486,3 +486,13 @@
 .animate-stagger-6 { animation-delay: 300ms; }
 .animate-stagger-7 { animation-delay: 350ms; }
 .animate-stagger-8 { animation-delay: 400ms; }
+
+/* Scrollbar hiding utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
