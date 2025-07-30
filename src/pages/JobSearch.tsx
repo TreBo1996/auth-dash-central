@@ -263,100 +263,104 @@ export const JobSearch: React.FC = () => {
           </AnimatedSection>
 
           {/* Main Content - Job Results */}
-          <AnimatedSection delay={150} className="col-span-12 lg:col-span-6 flex flex-col min-h-0">
-            <div 
-              ref={resultsRef} 
-              className="space-y-4 scroll-mt-4 flex-1 overflow-y-auto scrollbar-hide hover:cursor-pointer"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.overflowY = 'auto';
-                document.body.style.overflow = 'hidden';
-              }}
-              onMouseLeave={(e) => {
-                document.body.style.overflow = 'auto';
-              }}
-            >
+          <AnimatedSection delay={150} className="col-span-12 lg:col-span-6 flex flex-col">
+            <div className="space-y-4 flex-1 flex flex-col min-h-0">
               {/* Results Header */}
-              {searchPerformed && !loading && (
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold">
-                      {`Showing ${allJobs.length} of ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
-                    </h2>
-                  </div>
-                </div>
-              )}
-
-              {/* Warnings */}
-              {warnings.length > 0 && (
-                <Alert className="mb-4">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    {warnings.join('. ')}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Loading State */}
-              {loading && (
-                <Card>
-                  <CardContent className="py-8">
-                    <div className="flex items-center justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                      <span>Searching for jobs...</span>
+              <div className="flex-shrink-0">
+                {searchPerformed && !loading && (
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-lg font-semibold">
+                        {`Showing ${allJobs.length} of ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
+                      </h2>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                )}
+              </div>
+              
+              <div 
+                ref={resultsRef} 
+                className="space-y-4 scroll-mt-4 flex-1 overflow-y-auto scrollbar-hide hover:cursor-pointer min-h-0"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.overflowY = 'auto';
+                  document.body.style.overflow = 'hidden';
+                }}
+                onMouseLeave={(e) => {
+                  document.body.style.overflow = 'auto';
+                }}
+              >
+                {/* Warnings */}
+                {warnings.length > 0 && (
+                  <Alert className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {warnings.join('. ')}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-              {/* Initial State */}
-              {!searchPerformed && !loading && (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
-                    <p className="text-muted-foreground">
-                      Use the filters on the left to find your perfect job opportunity
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                {/* Loading State */}
+                {loading && (
+                  <Card>
+                    <CardContent className="py-8">
+                      <div className="flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                        <span>Searching for jobs...</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-              {/* No Results */}
-              {searchPerformed && allJobs.length === 0 && !loading && (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
-                    <p className="text-muted-foreground">
-                      Try adjusting your search criteria or explore different keywords
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+                {/* Initial State */}
+                {!searchPerformed && !loading && (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
+                      <p className="text-muted-foreground">
+                        Use the filters on the left to find your perfect job opportunity
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
-              {/* Job Results with Infinite Scroll */}
-              {allJobs.length > 0 && (
-                <div className="space-y-3">
-                   {allJobs.map((job, index) => (
-                     <div key={`${job.id}-${index}`}>
-                       <CompactJobCard 
-                         job={job} 
-                         id={`job-${job.id}`}
-                         isExpanded={expandedJobId === job.id}
-                         onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
-                       />
-                       {/* Inline Ad every 8 jobs */}
-                       {(index + 1) % 8 === 0 && (
-                         <GoogleAd 
-                           adSlot="5555555555"
-                           adFormat="horizontal"
-                           className="w-full h-[100px] my-4"
+                {/* No Results */}
+                {searchPerformed && allJobs.length === 0 && !loading && (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
+                      <p className="text-muted-foreground">
+                        Try adjusting your search criteria or explore different keywords
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Job Results with Infinite Scroll */}
+                {allJobs.length > 0 && (
+                  <div className="space-y-3">
+                     {allJobs.map((job, index) => (
+                       <div key={`${job.id}-${index}`}>
+                         <CompactJobCard 
+                           job={job} 
+                           id={`job-${job.id}`}
+                           isExpanded={expandedJobId === job.id}
+                           onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
                          />
-                       )}
-                     </div>
-                   ))}
-                </div>
-              )}
+                         {/* Inline Ad every 8 jobs */}
+                         {(index + 1) % 8 === 0 && (
+                           <GoogleAd 
+                             adSlot="5555555555"
+                             adFormat="horizontal"
+                             className="w-full h-[100px] my-4"
+                           />
+                         )}
+                       </div>
+                     ))}
+                  </div>
+                )}
+              </div>
             </div>
           </AnimatedSection>
 
