@@ -129,7 +129,7 @@ export const JobSearch: React.FC = () => {
   const handleMiniJobSelect = (selectedJob: UnifiedJob) => {
     const jobElement = document.getElementById(`job-${selectedJob.id}`);
     if (jobElement) {
-      jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      jobElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setExpandedJobId(selectedJob.id);
     }
   };
