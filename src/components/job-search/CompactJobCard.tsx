@@ -186,9 +186,9 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
                 )}
               </div>
 
-              {/* Description */}
+               {/* Description */}
               <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-                <div className="text-sm text-muted-foreground leading-relaxed">
+                <div className="text-sm text-foreground leading-relaxed">
                   {!isExpanded ? (
                     <p className="line-clamp-2">{truncateDescription(job.description)}</p>
                   ) : (

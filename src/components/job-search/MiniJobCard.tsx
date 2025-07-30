@@ -24,12 +24,28 @@ export const MiniJobCard: React.FC<MiniJobCardProps> = ({ job, onJobSelect }) =>
       className="hover:shadow-sm transition-all duration-200 border-l-2 border-l-primary/30 hover:border-l-primary cursor-pointer"
       onClick={handleClick}
     >
-      <CardContent className="p-3">
+        <CardContent className="p-3">
           <div className="space-y-2">
-            {/* Job Title */}
-            <h4 className="font-medium text-sm line-clamp-2 text-foreground hover:text-primary transition-colors">
-              {toTitleCase(job.title)}
-            </h4>
+            {/* Header with Title and Logo */}
+            <div className="flex justify-between items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium text-sm line-clamp-2 text-foreground hover:text-primary transition-colors">
+                  {toTitleCase(job.title)}
+                </h4>
+              </div>
+              
+              {/* Company Logo */}
+              {((job.source === 'employer' && job.employer_profile?.logo_url) || 
+                (job.source === 'database' && job.thumbnail)) && (
+                <div className="flex-shrink-0">
+                  <img 
+                    src={job.source === 'employer' ? job.employer_profile?.logo_url : job.thumbnail} 
+                    alt={job.company} 
+                    className="w-8 h-8 rounded object-cover border"
+                  />
+                </div>
+              )}
+            </div>
             
             {/* Company */}
             <div className="flex items-center gap-1 text-xs text-muted-foreground">

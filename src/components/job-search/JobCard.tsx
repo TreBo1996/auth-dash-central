@@ -184,9 +184,9 @@ export const JobCard: React.FC<JobCardProps> = ({
   const renderStructuredSection = (title: string, items: string[]) => {
     if (!items || items.length === 0) return null;
     return <div className="mb-4">
-        <h4 className="font-semibold text-sm mb-2 text-gray-800">{title}</h4>
+        <h4 className="font-semibold text-sm mb-2 text-foreground">{title}</h4>
         <ul className="list-disc list-inside space-y-1">
-          {items.map((item, index) => <li key={index} className="text-sm text-gray-700 leading-relaxed">{item}</li>)}
+          {items.map((item, index) => <li key={index} className="text-sm text-foreground leading-relaxed">{item}</li>)}
         </ul>
       </div>;
   };
@@ -197,7 +197,7 @@ export const JobCard: React.FC<JobCardProps> = ({
     const hasStructuredData = requirements.length > 0 || responsibilities.length > 0 || benefits.length > 0;
     if (!expanded) {
       const truncatedText = job.description.length > 300 ? job.description.slice(0, 300) + '...' : job.description;
-      return <div className="text-sm text-gray-700 leading-relaxed">
+      return <div className="text-sm text-foreground leading-relaxed">
           {formatTextWithBreaks(truncatedText)}
         </div>;
     }
@@ -207,12 +207,12 @@ export const JobCard: React.FC<JobCardProps> = ({
             {renderStructuredSection("Responsibilities", responsibilities)}
             {renderStructuredSection("Benefits", benefits)}
             {job.description && <div>
-                <h4 className="font-semibold text-sm mb-2 text-gray-800">Additional Details</h4>
-                <div className="text-sm text-gray-700 leading-relaxed">
+                <h4 className="font-semibold text-sm mb-2 text-foreground">Additional Details</h4>
+                <div className="text-sm text-foreground leading-relaxed">
                   {formatTextWithBreaks(job.description)}
                 </div>
               </div>}
-          </> : <div className="text-sm text-gray-700 leading-relaxed">
+          </> : <div className="text-sm text-foreground leading-relaxed">
             {formatTextWithBreaks(job.description)}
           </div>}
       </div>;
