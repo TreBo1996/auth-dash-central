@@ -497,7 +497,60 @@
   display: none;  /* Chrome, Safari, Opera */
 }
 
-/* Job Search Page Height Utility */
-.job-search-container {
-  height: calc(100vh - 250px);
+/* Job Search Page Layout */
+.job-search-page {
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+.job-search-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 1.5rem;
+  height: 100%;
+  overflow: hidden;
+}
+
+.job-search-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.job-search-scrollable {
+  flex: 1;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.job-search-scrollable::-webkit-scrollbar {
+  display: none;
+}
+
+.job-search-fixed-section {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  .job-search-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .job-search-page {
+    height: auto;
+    overflow: visible;
+  }
+  
+  .job-search-column {
+    height: auto;
+    overflow: visible;
+  }
+  
+  .job-search-scrollable {
+    overflow: visible;
+    max-height: 600px;
+  }
 }
