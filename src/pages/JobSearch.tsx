@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { JobSearchForm } from '@/components/job-search/JobSearchForm';
-import { JobSearchResults } from '@/components/job-search/JobSearchResults';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { JobSearchSidebar } from '@/components/job-search/JobSearchSidebar';
+import { CompactJobCard } from '@/components/job-search/CompactJobCard';
+import { JobSearchPagination } from '@/components/job-search/JobSearchPagination';
+import { AdSidebar } from '@/components/ads/AdSidebar';
+import { GoogleAd } from '@/components/ads/GoogleAd';
+import { Card, CardContent } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { supabase } from '@/integrations/supabase/client';
-import { Search } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Search, Briefcase, AlertTriangle } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
 import { useOptimizedJobSearch } from '@/hooks/useOptimizedJobSearch';
 import { AnimatedSection } from '@/components/common/AnimatedSection';
@@ -198,44 +201,143 @@ export const JobSearch: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header */}
         <AnimatedSection delay={0}>
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Find Your Next Job</h1>
-            <p className="text-muted-foreground">Search from our curated job database</p>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-2">Find Your Next Job</h1>
+            <p className="text-muted-foreground">Search from thousands of curated job opportunities</p>
           </div>
         </AnimatedSection>
 
-        <AnimatedSection delay={100}>
-          <div className="mb-8">
-            <JobSearchForm onSearch={handleSearch} loading={loading} />
-          </div>
-        </AnimatedSection>
-
-        <AnimatedSection delay={200}>
-          <div ref={resultsRef} className="space-y-8 scroll-mt-4">
-            <JobSearchResults 
-              jobs={currentJobs}
-              loading={loading} 
-              searchPerformed={searchPerformed}
-              pagination={pagination}
-              warnings={warnings}
-              onPageChange={handlePageChange}
+        {/* Top Banner Ad */}
+        <AnimatedSection delay={50}>
+          <div className="mb-6">
+            <GoogleAd 
+              adSlot="9999999999"
+              adFormat="horizontal"
+              className="w-full h-[90px]"
             />
-
-            {/* No results state */}
-            {searchPerformed && totalJobs === 0 && !loading && (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">
-                    No jobs found matching your search criteria. Try adjusting your search terms or filters.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </AnimatedSection>
+
+        {/* Three Column Layout */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Sidebar - Search Filters */}
+          <AnimatedSection delay={100} className="col-span-12 lg:col-span-3">
+            <div className="lg:sticky lg:top-6">
+              <JobSearchSidebar 
+                onSearch={handleSearch} 
+                loading={loading}
+                filters={currentFilters || undefined}
+              />
+            </div>
+          </AnimatedSection>
+
+          {/* Main Content - Job Results */}
+          <AnimatedSection delay={150} className="col-span-12 lg:col-span-6">
+            <div ref={resultsRef} className="space-y-4 scroll-mt-4">
+              {/* Results Header */}
+              {searchPerformed && !loading && (
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">
+                      {pagination ? 
+                        `Showing ${((pagination.currentPage - 1) * pagination.resultsPerPage) + 1}-${Math.min(pagination.currentPage * pagination.resultsPerPage, pagination.totalResults)} of ${pagination.totalResults} jobs` : 
+                        `Found ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`
+                      }
+                    </h2>
+                  </div>
+                </div>
+              )}
+
+              {/* Warnings */}
+              {warnings.length > 0 && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {warnings.join('. ')}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <Card>
+                  <CardContent className="py-8">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                      <span>Searching for jobs...</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Initial State */}
+              {!searchPerformed && !loading && (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
+                    <p className="text-muted-foreground">
+                      Use the filters on the left to find your perfect job opportunity
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* No Results */}
+              {searchPerformed && totalJobs === 0 && !loading && (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your search criteria or explore different keywords
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Job Results */}
+              {currentJobs.length > 0 && (
+                <div className="space-y-3">
+                  {currentJobs.map((job, index) => (
+                    <React.Fragment key={`${job.id}-${index}`}>
+                      <CompactJobCard job={job} />
+                      {/* Inline Ad every 5 jobs */}
+                      {(index + 1) % 5 === 0 && index < currentJobs.length - 1 && (
+                        <GoogleAd 
+                          adSlot="5555555555"
+                          adFormat="horizontal"
+                          className="w-full h-[100px] my-4"
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="mt-6">
+                  <JobSearchPagination
+                    pagination={pagination}
+                    onPageChange={handlePageChange}
+                    loading={loading}
+                  />
+                </div>
+              )}
+            </div>
+          </AnimatedSection>
+
+          {/* Right Sidebar - Ads and Content */}
+          <AnimatedSection delay={200} className="col-span-12 lg:col-span-3">
+            <div className="lg:sticky lg:top-6">
+              <AdSidebar />
+            </div>
+          </AnimatedSection>
+        </div>
       </div>
     </DashboardLayout>
   );
