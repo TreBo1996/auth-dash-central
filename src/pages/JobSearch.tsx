@@ -129,8 +129,14 @@ export const JobSearch: React.FC = () => {
   const handleMiniJobSelect = (selectedJob: UnifiedJob) => {
     const jobElement = document.getElementById(`job-${selectedJob.id}`);
     if (jobElement) {
-      jobElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setExpandedJobId(selectedJob.id);
+      // First collapse any currently expanded job
+      setExpandedJobId(null);
+      
+      // Wait for layout to stabilize, then scroll and expand
+      setTimeout(() => {
+        jobElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setExpandedJobId(selectedJob.id);
+      }, 100);
     }
   };
 
