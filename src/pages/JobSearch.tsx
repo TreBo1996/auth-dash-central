@@ -197,13 +197,14 @@ export const JobSearch: React.FC = () => {
                   {miniJobs.map((job, index) => (
                     <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
-                      {/* Small rectangle ad every 5 jobs */}
-                      {(index + 1) % 5 === 0 && (
+                      {/* Responsive square ad at positions 10 and 21 (at least 10 jobs apart) */}
+                      {((index + 1) === 10 || (index + 1) === 21) && (
                         <div className="mt-3">
                           <GoogleAd 
-                            adSlot="3333333333"
-                            adFormat="rectangle"
-                            className="w-full h-[120px]"
+                            adSlot="6228224703"
+                            adFormat="auto"
+                            className="w-full"
+                            style={{ minHeight: '120px' }}
                           />
                         </div>
                       )}
@@ -279,24 +280,13 @@ export const JobSearch: React.FC = () => {
               {allJobs.length > 0 && (
                 <div className="space-y-3">
                   {allJobs.map((job, index) => (
-                    <div key={`${job.id}-${index}`}>
-                      <CompactJobCard 
-                        job={job} 
-                        id={`job-${job.id}`}
-                        isExpanded={expandedJobId === job.id}
-                        onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
-                      />
-                      {/* Horizontal banner ad every 8 jobs */}
-                      {(index + 1) % 8 === 0 && (
-                        <div className="my-4">
-                          <GoogleAd 
-                            adSlot="5555555555"
-                            adFormat="horizontal"
-                            className="w-full h-[100px]"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <CompactJobCard 
+                      key={`${job.id}-${index}`}
+                      job={job} 
+                      id={`job-${job.id}`}
+                      isExpanded={expandedJobId === job.id}
+                      onExpandChange={(expanded) => setExpandedJobId(expanded ? job.id : null)}
+                    />
                   ))}
                 </div>
               )}
