@@ -111,7 +111,12 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    const url = `${window.location.origin}${getJobUrl()}`;
+    // Create job search URL with jobId parameter
+    const jobId = `${job.source}_${job.id}`;
+    const currentSearch = new URLSearchParams(window.location.search);
+    currentSearch.set('jobId', jobId);
+    const url = `${window.location.origin}/job-search?${currentSearch.toString()}`;
+    
     try {
       await navigator.clipboard.writeText(url);
       toast({
@@ -189,15 +194,11 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
                {/* Description */}
               <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
                 <div className="text-sm text-foreground leading-relaxed">
-                  {!isExpanded ? (
-                    <p className="line-clamp-2">{truncateDescription(job.description)}</p>
-                  ) : (
-                    <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                      <div className="space-y-2 mt-2">
-                        {formatDescription(job.description)}
-                      </div>
-                    </CollapsibleContent>
-                  )}
+                  <div className="space-y-2">
+                    {isExpanded ? formatDescription(job.description) : (
+                      <p className="line-clamp-2">{truncateDescription(job.description)}</p>
+                    )}
+                  </div>
                   
                   {job.description.length > 150 && (
                     <CollapsibleTrigger asChild>
