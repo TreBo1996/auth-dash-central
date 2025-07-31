@@ -190,7 +190,7 @@ export const JobSearch: React.FC = () => {
                 <div className="flex-shrink-0 mb-3">
                   <h3 className="text-sm font-medium text-muted-foreground">Quick Jobs</h3>
                 </div>
-                <div className="flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
+                <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
                   {miniJobs.map((job, index) => (
                     <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
