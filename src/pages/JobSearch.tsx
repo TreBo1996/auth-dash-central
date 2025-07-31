@@ -224,7 +224,7 @@ export const JobSearch: React.FC = () => {
             )}
             
             {/* Job Results - Scrollable */}
-            <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
+            <div className="h-[calc(100vh-290px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
               {/* Warnings */}
               {warnings.length > 0 && (
                 <Alert>
@@ -292,7 +292,7 @@ export const JobSearch: React.FC = () => {
 
           {/* Right Column - Ads Sidebar */}
           <div className="flex flex-col h-[calc(100vh-220px)] overflow-hidden hidden lg:flex">
-            <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="h-[calc(100vh-220px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <AdSidebar />
             </div>
           </div>
