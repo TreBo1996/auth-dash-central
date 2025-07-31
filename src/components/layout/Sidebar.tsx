@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Upload, FileText, User, LogOut, MessageSquare, Search, X, Mail, Lock, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
+import { SignupBenefitsModal } from '@/components/auth/SignupBenefitsModal';
 const navigation = [{
   name: 'Job Hub',
   href: '/job-hub',
@@ -57,6 +58,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const [showBenefitsModal, setShowBenefitsModal] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<string>('');
   
   const handleLogout = async () => {
     try {
@@ -94,19 +97,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     
     // For non-authenticated users trying to access protected routes
     if (!user && item.protected) {
-      toast({
-        title: "🚀 Premium Feature",
-        description: getFeatureDescription(item.name),
-        action: (
-          <Button 
-            onClick={() => window.location.href = '/auth'}
-            size="sm"
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
-          >
-            Sign Up Free
-          </Button>
-        )
-      });
+      setSelectedFeature(item.name);
+      setShowBenefitsModal(true);
     }
   };
 
@@ -192,6 +184,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
       </div>
+
+      <SignupBenefitsModal 
+        isOpen={showBenefitsModal}
+        onClose={() => setShowBenefitsModal(false)}
+        featureName={selectedFeature}
+      />
     </div>
   );
 };
