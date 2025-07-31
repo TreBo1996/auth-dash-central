@@ -55,7 +55,7 @@ export const SignupBenefitsModal: React.FC<SignupBenefitsModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-blue-50 border-indigo-200">
         <DialogHeader className="text-center space-y-4 pb-4">
-          <div className="mx-auto w-28 h-28 mb-2 flex items-center justify-center">
+          <div className="mx-auto w-28 h-28 mb-1 flex items-center justify-center">
             <img 
               src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
               alt="RezLit Logo" 
