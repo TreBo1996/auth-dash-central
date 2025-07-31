@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Search, ChevronDown, ChevronUp, X, MapPin, Building, Calendar, Briefcase, User } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface CollapsibleFiltersProps {
   onSearch: (data: {
@@ -101,16 +101,16 @@ export const CollapsibleFilters: React.FC<CollapsibleFiltersProps> = ({
             </div>
           </div>
 
-          {/* Collapsible Additional Filters */}
-          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <CollapsibleTrigger asChild>
+          {/* Popover Additional Filters */}
+          <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
               <Button variant="outline" className="w-full justify-between" type="button">
                 More Filters {activeFilters.length > 0 && `(${activeFilters.length})`}
                 {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
-            </CollapsibleTrigger>
+            </PopoverTrigger>
             
-            <CollapsibleContent className="space-y-4 mt-4 max-h-[400px] overflow-y-auto">
+            <PopoverContent className="w-80 p-4 space-y-4 max-h-[400px] overflow-y-auto" align="start">
               {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="job-location">Location</Label>
@@ -215,8 +215,8 @@ export const CollapsibleFilters: React.FC<CollapsibleFiltersProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+            </PopoverContent>
+          </Popover>
 
           {/* Search and Clear Buttons */}
           <div className="flex gap-2">
