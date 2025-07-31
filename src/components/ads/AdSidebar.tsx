@@ -66,13 +66,6 @@ export const AdSidebar: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Secondary Ad Slot */}
-      <GoogleAd 
-        adSlot="0987654321"
-        adFormat="rectangle"
-        className="min-h-[200px]"
-      />
-
       {/* Market Insights Card */}
       <Card>
         <CardHeader className="pb-3">
@@ -98,13 +91,6 @@ export const AdSidebar: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Tertiary Ad Slot */}
-      <GoogleAd 
-        adSlot="1122334455"
-        adFormat="rectangle"
-        className="min-h-[150px]"
-      />
     </div>
   );
 };
