@@ -122,7 +122,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
             {/* Top Row: Job Info */}
             <div className="space-y-2">
               <div className="flex items-start justify-between">
-                <h3 className="font-semibold text-base text-gray-900 leading-tight flex-1 pr-2">
+                <h3 className="font-semibold text-base bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300 leading-tight flex-1 pr-2">
                   {job.title}
                 </h3>
               </div>
@@ -260,7 +260,7 @@ export const JobHubCard: React.FC<JobHubCardProps> = ({ job, onStatusUpdate, onR
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg text-gray-900 truncate pr-2">
+                  <h3 className="font-semibold text-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300 truncate pr-2">
                     {job.title}
                   </h3>
                   <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
