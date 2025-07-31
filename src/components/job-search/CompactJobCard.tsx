@@ -155,7 +155,7 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
               <div className="flex justify-between items-start gap-3">
               <div className="flex-1 min-w-0">
                 <Link to={getJobUrl()}>
-                  <h3 className="font-semibold text-lg text-foreground hover:text-primary transition-colors line-clamp-1 cursor-pointer">
+                  <h3 className="font-bold text-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300 line-clamp-1 cursor-pointer">
                     {toTitleCase(job.title)}
                   </h3>
                 </Link>
@@ -228,18 +228,22 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
               {/* Job Details */}
               <div className="flex flex-wrap gap-2">
                 {job.salary && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge className="text-xs bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200">
                     <DollarSign className="h-3 w-3 mr-1" />
                     {job.salary}
                   </Badge>
                 )}
                 {job.employment_type && (
-                  <Badge variant="secondary" className="text-xs">
-                    {Array.isArray(job.employment_type) ? job.employment_type[0] : job.employment_type}
+                  <Badge className="text-xs bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200">
+                    {(() => {
+                      const type = Array.isArray(job.employment_type) ? job.employment_type[0] : job.employment_type;
+                      // Remove brackets if present
+                      return typeof type === 'string' ? type.replace(/[\[\]"]/g, '') : type;
+                    })()}
                   </Badge>
                 )}
                 {job.experience_level && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge className="text-xs bg-gradient-to-r from-orange-500 to-amber-600 text-white border-0 shadow-sm hover:shadow-md transition-all duration-200">
                     {job.experience_level}
                   </Badge>
                 )}

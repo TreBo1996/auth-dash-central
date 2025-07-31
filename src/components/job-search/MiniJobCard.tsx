@@ -29,7 +29,7 @@ export const MiniJobCard: React.FC<MiniJobCardProps> = ({ job, onJobSelect }) =>
             {/* Header with Title and Logo */}
             <div className="flex justify-between items-start gap-2">
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm line-clamp-2 text-foreground hover:text-primary transition-colors">
+                <h4 className="font-bold text-sm line-clamp-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300">
                   {toTitleCase(job.title)}
                 </h4>
               </div>
@@ -72,8 +72,12 @@ export const MiniJobCard: React.FC<MiniJobCardProps> = ({ job, onJobSelect }) =>
             
             {/* Employment Type Badge */}
             {job.employment_type && (
-              <Badge variant="secondary" className="text-xs h-5">
-                {Array.isArray(job.employment_type) ? job.employment_type[0] : job.employment_type}
+              <Badge className="text-xs h-5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 shadow-sm">
+                {(() => {
+                  const type = Array.isArray(job.employment_type) ? job.employment_type[0] : job.employment_type;
+                  // Remove brackets if present
+                  return typeof type === 'string' ? type.replace(/[\[\]"]/g, '') : type;
+                })()}
               </Badge>
             )}
           </div>
