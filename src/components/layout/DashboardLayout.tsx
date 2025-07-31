@@ -52,7 +52,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, full
           </div>
         )}
         
-        <div className="p-4 md:p-6 lg:p-8 min-h-full">
+        <div className={`${fullHeight ? 'h-full' : 'p-4 md:p-6 lg:p-8 min-h-full'}`}>
           <div className="animate-fade-in">
             {children}
           </div>
