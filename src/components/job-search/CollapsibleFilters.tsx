@@ -110,7 +110,7 @@ export const CollapsibleFilters: React.FC<CollapsibleFiltersProps> = ({
               </Button>
             </CollapsibleTrigger>
             
-            <CollapsibleContent className="space-y-4 mt-4">
+            <CollapsibleContent className="space-y-4 mt-4 max-h-[400px] overflow-y-auto">
               {/* Location */}
               <div className="space-y-2">
                 <Label htmlFor="job-location">Location</Label>

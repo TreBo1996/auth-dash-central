@@ -172,14 +172,6 @@ export const JobSearch: React.FC = () => {
             <p className="text-muted-foreground">Search from thousands of curated job opportunities</p>
           </div>
           
-          {/* Top Banner Ad */}
-          <div className="mb-4">
-            <GoogleAd 
-              adSlot="9999999999"
-              adFormat="horizontal"
-              className="w-full h-[90px]"
-            />
-          </div>
         </div>
 
         {/* Three Column Grid */}
