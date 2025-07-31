@@ -206,10 +206,6 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
                         variant="ghost" 
                         size="sm" 
                         className="h-auto p-0 mt-2 text-primary hover:text-primary/80"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
                       >
                         {isExpanded ? (
                           <>
