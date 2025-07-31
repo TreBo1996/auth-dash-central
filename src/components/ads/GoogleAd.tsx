@@ -59,7 +59,7 @@ export const GoogleAd: React.FC<GoogleAdProps> = ({
           display: 'block',
           ...style
         }}
-        data-ad-client="ca-pub-XXXXXXXXX" // Replace with your AdSense publisher ID
+        data-ad-client="ca-pub-3586730785374238"
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive="true"
