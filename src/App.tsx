@@ -88,16 +88,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/job-search" 
-                element={
-                  <ProtectedRoute>
-                    <RoleProtectedRoute requiredRole="job_seeker">
-                      <JobSearch />
-                    </RoleProtectedRoute>
-                  </ProtectedRoute>
-                } 
-              />
+        <Route path="/job-search" element={<JobSearch />} />
               <Route 
                 path="/upload-resume" 
                 element={

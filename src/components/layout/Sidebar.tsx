@@ -74,6 +74,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const getFeatureDescription = (name: string) => {
+    const descriptions: Record<string, string> = {
+      'Job Hub': 'Unlock your AI-powered job application dashboard',
+      'Resume Optimizer': 'Get AI-powered ATS optimization that beats 95% of job bots',
+      'AI Interview Coach': 'Practice with personalized AI interview questions',
+      'Cover Letters': 'Generate compelling, tailored cover letters in minutes',
+      'Upload Resume': 'Upload and optimize your resume with AI analysis',
+      'Upload Job Description': 'Save job descriptions and get personalized optimization',
+      'Profile': 'Manage your professional profile and preferences'
+    };
+    return descriptions[name] || `Create an account to access ${name}`;
+  };
+
   const handleLinkClick = (item: any) => {
     if (isMobile && onClose) {
       onClose();
@@ -82,15 +95,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // For non-authenticated users trying to access protected routes
     if (!user && item.protected) {
       toast({
-        title: "Sign Up Required",
-        description: `Create an account to access ${item.name}`,
+        title: "🚀 Premium Feature",
+        description: getFeatureDescription(item.name),
         action: (
           <Button 
             onClick={() => window.location.href = '/auth'}
             size="sm"
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
           >
-            Sign Up
+            Sign Up Free
           </Button>
         )
       });
@@ -137,17 +150,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className={`
                 flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group relative
                 ${isActive ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg transform scale-105' : 
-                  isProtected ? 'text-gray-400 hover:bg-gray-50 cursor-pointer' :
+                  isProtected ? 'text-gray-600 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-orange-50 hover:text-orange-700 cursor-pointer border border-orange-100 bg-gradient-to-r from-yellow-25 to-orange-25' :
                   'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-indigo-700 hover:scale-102'}
               `}
             >
               <item.icon className={`mr-3 h-5 w-5 transition-colors ${
                 isActive ? 'text-yellow-300' : 
-                isProtected ? 'text-gray-400' :
+                isProtected ? 'text-orange-600' :
                 'group-hover:text-indigo-600'
               }`} />
               <span className={isMobile ? 'text-base' : ''}>{item.name}</span>
-              {isProtected && <Lock className="ml-auto h-3 w-3 text-gray-400" />}
+              {isProtected && <Lock className="ml-auto h-3 w-3 text-orange-500" />}
               {isActive && <div className="ml-auto h-2 w-2 rounded-full bg-yellow-300 animate-pulse"></div>}
             </Link>
           );
