@@ -160,9 +160,9 @@ export const JobSearch: React.FC = () => {
         </div>
 
         {/* Three Column Grid - All columns same height */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-120px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
           {/* Left Column - Filters & Quick Jobs */}
-          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden">
+          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden">
             {/* Search Filters - Fixed */}
             <div className="flex-shrink-0 mb-4">
               <CollapsibleFilters onSearch={handleSearch} loading={loading} filters={currentFilters || undefined} />
@@ -188,7 +188,7 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Center Column - Main Job Results */}
-          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden lg:col-span-1">
+          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden lg:col-span-1">
             {/* Results Header - Fixed */}
             {searchPerformed && !loading && <div className="flex-shrink-0 mb-4">
                 <h2 className="text-lg font-semibold">
@@ -246,7 +246,7 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Right Column - Ads Sidebar */}
-          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden hidden lg:flex">
+          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden hidden lg:flex">
             <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <AdSidebar />
             </div>
