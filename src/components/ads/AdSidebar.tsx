@@ -35,8 +35,8 @@ export const AdSidebar: React.FC = () => {
 
       {/* Primary Ad Slot */}
       <GoogleAd 
-        adSlot="1234567890"
-        adFormat="vertical"
+        adSlot="1737766610"
+        adFormat="auto"
         className="min-h-[250px]"
       />
 
