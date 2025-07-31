@@ -213,7 +213,7 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Center Column - Main Job Results */}
-          <div className="flex flex-col overflow-hidden lg:col-span-1">
+          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden lg:col-span-1">
             {/* Results Header - Fixed */}
             {searchPerformed && !loading && (
               <div className="flex-shrink-0 mb-4">
@@ -291,7 +291,7 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Right Column - Ads Sidebar */}
-          <div className="flex flex-col overflow-hidden hidden lg:flex">
+          <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden hidden lg:flex">
             <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <AdSidebar />
             </div>
