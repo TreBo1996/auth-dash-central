@@ -7,9 +7,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  fullHeight?: boolean;
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, fullHeight }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -32,7 +33,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
       
-      <main className="flex-1 overflow-auto">
+      <main className={`flex-1 ${fullHeight ? 'overflow-hidden' : 'overflow-auto'}`}>
         {/* Mobile header with hamburger */}
         {isMobile && (
           <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-indigo-100 px-4 py-3 flex items-center justify-between z-30 shadow-sm">

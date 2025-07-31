@@ -163,7 +163,7 @@ export const JobSearch: React.FC = () => {
   }, []);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout fullHeight={true}>
       <div className="h-[calc(100vh-120px)] overflow-hidden">
         {/* Header Section */}
         <div className="flex-shrink-0 mb-6">
