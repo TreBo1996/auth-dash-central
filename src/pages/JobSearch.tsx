@@ -164,9 +164,9 @@ export const JobSearch: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="job-search-page">
+      <div className="h-[calc(100vh-120px)] overflow-hidden">
         {/* Header Section */}
-        <div className="job-search-fixed-section px-6 py-4">
+        <div className="flex-shrink-0 px-6 py-4">
           <div className="mb-4">
             <h1 className="text-2xl font-bold mb-2">Find Your Next Job</h1>
             <p className="text-muted-foreground">Search from thousands of curated job opportunities</p>
@@ -175,11 +175,11 @@ export const JobSearch: React.FC = () => {
         </div>
 
         {/* Three Column Grid */}
-        <div className="job-search-grid px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-6 h-full overflow-hidden">
           {/* Left Column - Filters & Quick Jobs */}
-          <div className="job-search-column">
+          <div className="flex flex-col h-full overflow-hidden">
             {/* Search Filters - Fixed */}
-            <div className="job-search-fixed-section mb-4">
+            <div className="flex-shrink-0 mb-4">
               <CollapsibleFilters 
                 onSearch={handleSearch} 
                 loading={loading}
@@ -189,11 +189,11 @@ export const JobSearch: React.FC = () => {
             
             {/* Quick Jobs - Scrollable */}
             {miniJobs.length > 0 && (
-              <div className="job-search-column">
-                <div className="job-search-fixed-section mb-3">
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="flex-shrink-0 mb-3">
                   <h3 className="text-sm font-medium text-muted-foreground">Quick Jobs</h3>
                 </div>
-                <div className="job-search-scrollable space-y-3">
+                <div className="flex-1 overflow-y-auto scrollbar-hide space-y-3">
                   {miniJobs.map((job, index) => (
                     <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
@@ -216,10 +216,10 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Center Column - Main Job Results */}
-          <div className="job-search-column">
+          <div className="flex flex-col h-full overflow-hidden lg:col-span-1">
             {/* Results Header - Fixed */}
             {searchPerformed && !loading && (
-              <div className="job-search-fixed-section mb-4">
+              <div className="flex-shrink-0 mb-4">
                 <h2 className="text-lg font-semibold">
                   {`Showing ${allJobs.length} of ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
                 </h2>
@@ -227,7 +227,7 @@ export const JobSearch: React.FC = () => {
             )}
             
             {/* Job Results - Scrollable */}
-            <div className="job-search-scrollable space-y-4">
+            <div className="flex-1 overflow-y-auto scrollbar-hide space-y-4">
               {/* Warnings */}
               {warnings.length > 0 && (
                 <Alert>
@@ -294,8 +294,8 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Right Column - Ads Sidebar */}
-          <div className="job-search-column">
-            <div className="job-search-scrollable">
+          <div className="flex flex-col h-full overflow-hidden hidden lg:flex">
+            <div className="flex-1 overflow-y-auto scrollbar-hide">
               <AdSidebar />
             </div>
           </div>
