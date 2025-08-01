@@ -118,7 +118,8 @@ export class MinimalistExecutivePdfGenerator {
     this.pdf.text(contact, (this.pageWidth - contactWidth) / 2, this.currentY);
     this.currentY += 20;
 
-    // Elegant line separator
+    // Elegant line separator - light gray
+    this.pdf.setDrawColor(200, 200, 200);
     this.pdf.setLineWidth(0.5);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
     this.currentY += 30;
@@ -281,7 +282,7 @@ export class MinimalistExecutivePdfGenerator {
   }
 
   private addSectionHeader(title: string): void {
-    this.checkPageBreak(50);
+    this.checkPageBreak(40);
     
     this.pdf.setFontSize(14);
     this.pdf.setFont('times', 'bold');
@@ -289,10 +290,10 @@ export class MinimalistExecutivePdfGenerator {
     this.pdf.text(title, (this.pageWidth - titleWidth) / 2, this.currentY);
     this.currentY += 12;
     
-    // Elegant underline
+    // Full-width light gray underline
+    this.pdf.setDrawColor(200, 200, 200);
     this.pdf.setLineWidth(0.5);
-    this.pdf.line((this.pageWidth - titleWidth) / 2, this.currentY, 
-                   (this.pageWidth + titleWidth) / 2, this.currentY);
-    this.currentY += 20;
+    this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
+    this.currentY += 15;
   }
 }
