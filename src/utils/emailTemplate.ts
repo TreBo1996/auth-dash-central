@@ -112,7 +112,7 @@ export const sampleJobs: JobRecommendation[] = [
     company: "TechCorp Inc.",
     location: "San Francisco, CA",
     salary: "$120,000 - $180,000",
-    job_page_link: "/job/database/sample-1",
+    job_page_link: "/job-search?jobId=database_sample-1&autoExpand=true",
     match_score: 95
   },
   {
@@ -120,7 +120,7 @@ export const sampleJobs: JobRecommendation[] = [
     company: "InnovateTech",
     location: "Remote",
     salary: "$90,000 - $140,000",
-    job_page_link: "/job/database/sample-2",
+    job_page_link: "/job-search?jobId=database_sample-2&autoExpand=true",
     match_score: 88
   },
   {
@@ -128,7 +128,7 @@ export const sampleJobs: JobRecommendation[] = [
     company: "DesignFirst Studios", 
     location: "Austin, TX",
     salary: "$80,000 - $120,000",
-    job_page_link: "/job/database/sample-3",
+    job_page_link: "/job-search?jobId=database_sample-3&autoExpand=true",
     match_score: 82
   }
 ];

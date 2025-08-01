@@ -330,13 +330,13 @@ const handler = async (req: Request): Promise<Response> => {
 
               const topMatches = qualifiedJobs.slice(0, 5);
 
-              // Convert to JobRecommendation format - always use internal job detail pages
+              // Convert to JobRecommendation format - use Job Search page with auto-expand
               jobs = topMatches.map(job => ({
                 title: job.title,
                 company: job.company,
                 location: job.location || 'Location not specified',
                 salary: job.salary || 'Salary not disclosed',
-                job_page_link: `/job/database/${job.id}`,
+                job_page_link: `/job-search?jobId=database_${job.id}&autoExpand=true`,
                 match_score: job.match_score
               }));
 
@@ -358,7 +358,7 @@ const handler = async (req: Request): Promise<Response> => {
             company: "TechCorp Inc.",
             location: "San Francisco, CA",
             salary: "$120,000 - $180,000",
-            job_page_link: "/job/database/00000000-0000-0000-0000-000000000001",
+            job_page_link: "/job-search?jobId=database_00000000-0000-0000-0000-000000000001&autoExpand=true",
             match_score: 95
           },
           {
@@ -366,7 +366,7 @@ const handler = async (req: Request): Promise<Response> => {
             company: "InnovateTech",
             location: "Remote",
             salary: "$90,000 - $140,000",
-            job_page_link: "/job/database/00000000-0000-0000-0000-000000000002",
+            job_page_link: "/job-search?jobId=database_00000000-0000-0000-0000-000000000002&autoExpand=true",
             match_score: 88
           },
           {
@@ -374,7 +374,7 @@ const handler = async (req: Request): Promise<Response> => {
             company: "DesignFirst Studios",
             location: "Austin, TX",
             salary: "$80,000 - $120,000",
-            job_page_link: "/job/database/00000000-0000-0000-0000-000000000003",
+            job_page_link: "/job-search?jobId=database_00000000-0000-0000-0000-000000000003&autoExpand=true",
             match_score: 82
           }
         ];
@@ -574,13 +574,13 @@ const handler = async (req: Request): Promise<Response> => {
             .sort((a, b) => b.match_score - a.match_score)
             .slice(0, 5);
 
-          // Convert to JobRecommendation format - always use internal job detail pages
+          // Convert to JobRecommendation format - use Job Search page with auto-expand
           const jobRecommendations = topMatches.map(job => ({
             title: job.title,
             company: job.company,
             location: job.location || 'Location not specified',
             salary: job.salary || 'Salary not disclosed',
-            job_page_link: `/job/database/${job.id}`,
+            job_page_link: `/job-search?jobId=database_${job.id}&autoExpand=true`,
             match_score: job.match_score
           }));
 

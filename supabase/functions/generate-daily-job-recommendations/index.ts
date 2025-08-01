@@ -52,7 +52,7 @@ const generateMailchimpMergeData = (user: any, jobs: any[]): any => {
     mergeData[`JOB${jobNum}_COMPANY`] = job.company || '';
     mergeData[`JOB${jobNum}_LOCATION`] = job.location || '';
     mergeData[`JOB${jobNum}_SALARY`] = job.salary || '';
-    mergeData[`JOB${jobNum}_URL`] = job.job_url || '';
+    mergeData[`JOB${jobNum}_URL`] = `/job-search?jobId=database_${job.id}&autoExpand=true`;
     mergeData[`JOB${jobNum}_MATCH_REASON`] = 
       `${Math.round(job.match_score)}% match - ${Math.round(job.title_similarity_score)}% title similarity`;
   });

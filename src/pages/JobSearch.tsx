@@ -134,6 +134,44 @@ export const JobSearch: React.FC = () => {
 
   // Restore state on component mount
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const jobId = urlParams.get('jobId');
+    const autoExpand = urlParams.get('autoExpand');
+    
+    // Handle direct job targeting from email links
+    if (jobId && autoExpand === 'true') {
+      // Extract source and id from jobId format: "source_id"
+      const [source, id] = jobId.split('_');
+      
+      if (source === 'database' && id) {
+        // Search for jobs that include this specific job ID
+        const filters: JobSearchFilters = {
+          query: '',
+          location: '',
+          remoteType: '',
+          employmentType: '',
+          seniorityLevel: '',
+          company: '',
+          maxAge: 30
+        };
+        
+        // Perform the search and then expand the target job
+        handleSearch(filters).then(() => {
+          // After search completes, expand the target job
+          setTimeout(() => {
+            setExpandedJobId(id);
+            // Scroll to the job card
+            const jobElement = document.getElementById(`job-card-${id}`);
+            if (jobElement) {
+              jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 500);
+        });
+        
+        return;
+      }
+    }
+    
     const urlFilters = getFiltersFromURL();
     if (urlFilters) {
       setCurrentFilters(urlFilters);
