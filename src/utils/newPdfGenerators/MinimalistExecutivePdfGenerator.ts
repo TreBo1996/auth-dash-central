@@ -137,7 +137,8 @@ export class MinimalistExecutivePdfGenerator {
     
     lines.forEach((line: string) => {
       this.checkPageBreak(18);
-      this.pdf.text(line, this.margin, this.currentY);
+      const lineWidth = this.pdf.getTextWidth(line);
+      this.pdf.text(line, (this.pageWidth - lineWidth) / 2, this.currentY);
       this.currentY += 16;
     });
     this.currentY += 15;
