@@ -131,15 +131,14 @@ export class MinimalistExecutivePdfGenerator {
     this.checkPageBreak(60);
     this.addSectionHeader('EXECUTIVE SUMMARY');
     
-    this.pdf.setFontSize(11);
+    this.pdf.setFontSize(10);
     this.pdf.setFont('helvetica', 'normal');
-    const lines = this.pdf.splitTextToSize(data.summary, this.usableWidth - 40);
+    const lines = this.pdf.splitTextToSize(data.summary, this.usableWidth - 20);
     
     lines.forEach((line: string) => {
       this.checkPageBreak(18);
-      const lineWidth = this.pdf.getTextWidth(line);
-      this.pdf.text(line, (this.pageWidth - lineWidth) / 2, this.currentY);
-      this.currentY += 14;
+      this.pdf.text(line, this.margin, this.currentY);
+      this.currentY += 16;
     });
     this.currentY += 15;
   }
