@@ -76,6 +76,14 @@ export class ModernATSPdfGenerator {
     ];
   }
 
+  private isMonochromeScheme(): boolean {
+    const accentMatch = this.colors.accent.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!accentMatch) return false;
+    
+    const saturation = parseInt(accentMatch[2]);
+    return saturation <= 5; // Consider schemes with very low saturation as monochrome
+  }
+
   private checkPageBreak(spaceNeeded: number = 50): void {
     if (this.currentY + spaceNeeded > this.pageHeight - this.margin) {
       this.pdf.addPage();
@@ -205,11 +213,15 @@ export class ModernATSPdfGenerator {
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      this.pdf.setFillColor(r, g, b, 0.1);
-      const dateWidth = this.pdf.getTextWidth(exp.duration) + 12;
-      this.pdf.rect(this.pageWidth - this.margin - dateWidth, this.currentY - 10, dateWidth, 14, 'F');
+      
+      if (!this.isMonochromeScheme()) {
+        this.pdf.setFillColor(r, g, b, 0.1);
+        const dateWidth = this.pdf.getTextWidth(exp.duration) + 12;
+        this.pdf.rect(this.pageWidth - this.margin - dateWidth, this.currentY - 10, dateWidth, 14, 'F');
+      }
+      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(exp.duration, this.pageWidth - this.margin - dateWidth + 6, this.currentY);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(exp.duration) : this.pdf.getTextWidth(exp.duration) + 6), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 
@@ -257,11 +269,15 @@ export class ModernATSPdfGenerator {
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      this.pdf.setFillColor(r, g, b, 0.1);
-      const yearWidth = this.pdf.getTextWidth(edu.year) + 12;
-      this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
+      
+      if (!this.isMonochromeScheme()) {
+        this.pdf.setFillColor(r, g, b, 0.1);
+        const yearWidth = this.pdf.getTextWidth(edu.year) + 12;
+        this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
+      }
+      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(edu.year, this.pageWidth - this.margin - yearWidth + 6, this.currentY);
+      this.pdf.text(edu.year, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(edu.year) : this.pdf.getTextWidth(edu.year) + 6), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 
@@ -288,11 +304,15 @@ export class ModernATSPdfGenerator {
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      this.pdf.setFillColor(r, g, b, 0.1);
-      const yearWidth = this.pdf.getTextWidth(cert.year) + 12;
-      this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
+      
+      if (!this.isMonochromeScheme()) {
+        this.pdf.setFillColor(r, g, b, 0.1);
+        const yearWidth = this.pdf.getTextWidth(cert.year) + 12;
+        this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
+      }
+      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(cert.year, this.pageWidth - this.margin - yearWidth + 6, this.currentY);
+      this.pdf.text(cert.year, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(cert.year) : this.pdf.getTextWidth(cert.year) + 6), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 

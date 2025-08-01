@@ -79,6 +79,14 @@ export class AcademicResearchPdfGenerator {
     ];
   }
 
+  private isMonochromeScheme(): boolean {
+    const accentMatch = this.colors.accent.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!accentMatch) return false;
+    
+    const saturation = parseInt(accentMatch[2]);
+    return saturation <= 5; // Consider schemes with very low saturation as monochrome
+  }
+
   private checkPageBreak(spaceNeeded: number = 50): void {
     if (this.currentY + spaceNeeded > this.pageHeight - this.margin) {
       this.pdf.addPage();

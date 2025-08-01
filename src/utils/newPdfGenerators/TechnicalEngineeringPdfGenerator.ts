@@ -75,6 +75,14 @@ export class TechnicalEngineeringPdfGenerator {
     ];
   }
 
+  private isMonochromeScheme(): boolean {
+    const accentMatch = this.colors.accent?.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!accentMatch) return false;
+    
+    const saturation = parseInt(accentMatch[2]);
+    return saturation <= 5; // Consider schemes with very low saturation as monochrome
+  }
+
   private checkPageBreak(spaceNeeded: number = 50): void {
     if (this.currentY + spaceNeeded > this.pageHeight - this.margin) {
       this.pdf.addPage();
@@ -253,12 +261,16 @@ export class TechnicalEngineeringPdfGenerator {
       this.pdf.setFontSize(9);
       this.pdf.setFont('courier', 'normal');
       const [r4, g4, b4] = this.parseHSL(this.colors.primary);
-      this.pdf.setFillColor(r4, g4, b4, 0.2);
-      this.pdf.setDrawColor(r4, g4, b4);
-      const durationWidth = this.pdf.getTextWidth(exp.duration) + 12;
-      this.pdf.rect(this.pageWidth - this.margin - durationWidth, this.currentY - 8, durationWidth, 12, 'FD');
+      
+      if (!this.isMonochromeScheme()) {
+        this.pdf.setFillColor(r4, g4, b4, 0.2);
+        this.pdf.setDrawColor(r4, g4, b4);
+        const durationWidth = this.pdf.getTextWidth(exp.duration) + 12;
+        this.pdf.rect(this.pageWidth - this.margin - durationWidth, this.currentY - 8, durationWidth, 12, 'FD');
+      }
+      
       this.pdf.setTextColor(r4, g4, b4);
-      this.pdf.text(exp.duration, this.pageWidth - this.margin - durationWidth + 6, this.currentY);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(exp.duration) : this.pdf.getTextWidth(exp.duration) + 6), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 
