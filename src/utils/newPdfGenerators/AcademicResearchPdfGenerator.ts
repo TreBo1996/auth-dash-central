@@ -1,13 +1,16 @@
 import jsPDF from 'jspdf';
 import { StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
+import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 
 export class AcademicResearchPdfGenerator {
   private pdf: jsPDF;
   private currentY: number;
-  private margin = 36;
+  private margin = 54; // 0.75 inch margins for academic format
   private pageWidth: number;
   private pageHeight: number;
   private usableWidth: number;
+  private config = newTemplateConfigs['academic-research'];
+  private colors: any;
 
   constructor() {
     this.pdf = new jsPDF({
@@ -21,8 +24,11 @@ export class AcademicResearchPdfGenerator {
     this.currentY = this.margin;
   }
 
-  async generate(resumeData: StructuredResumeData): Promise<jsPDF> {
+  async generate(resumeData: StructuredResumeData, colorScheme?: string): Promise<jsPDF> {
     console.log('AcademicResearchPdfGenerator: Starting generation');
+    
+    // Set color scheme  
+    this.setColorScheme(colorScheme);
     
     this.addHeader(resumeData);
     this.addResearchInterests(resumeData);
@@ -35,6 +41,42 @@ export class AcademicResearchPdfGenerator {
     this.addFooter(resumeData);
 
     return this.pdf;
+  }
+
+  private setColorScheme(colorSchemeId?: string): void {
+    const scheme = colorSchemeId 
+      ? this.config.colorSchemes.find(cs => cs.id === colorSchemeId)
+      : this.config.colorSchemes.find(cs => cs.id === this.config.defaultColorScheme);
+    
+    this.colors = scheme ? scheme.colors : this.config.colors;
+  }
+
+  private parseHSL(hsl: string): [number, number, number] {
+    const match = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!match) return [0, 0, 0];
+    
+    const h = parseInt(match[1]);
+    const s = parseInt(match[2]) / 100;
+    const l = parseInt(match[3]) / 100;
+    
+    // Convert HSL to RGB
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    
+    let r = 0, g = 0, b = 0;
+    if (h < 60) [r, g, b] = [c, x, 0];
+    else if (h < 120) [r, g, b] = [x, c, 0];
+    else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c];
+    else if (h < 300) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    
+    return [
+      Math.round((r + m) * 255),
+      Math.round((g + m) * 255), 
+      Math.round((b + m) * 255)
+    ];
   }
 
   private checkPageBreak(spaceNeeded: number = 50): void {

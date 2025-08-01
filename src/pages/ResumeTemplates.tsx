@@ -11,7 +11,7 @@ import { TemplateSelector } from '@/components/resume-templates/TemplateSelector
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
 import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
-import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { generateProfessionalPDF } from '@/utils/unifiedPdfGenerator';
 import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 import { parseResumeContent } from '@/components/resume-templates/utils/parseResumeContent';
 import { printResume } from '@/utils/pdfGenerator';
@@ -174,7 +174,7 @@ const ResumeTemplates: React.FC = () => {
         console.log('Fallback to text parsing');
         resumeData = parseResumeContent(optimizedResume.generated_text);
       }
-      await generateNewProfessionalPDF(selectedTemplate, resumeData, fileName, selectedColorScheme);
+      await generateProfessionalPDF(selectedTemplate, resumeData, fileName, selectedColorScheme);
       toast({
         title: "Success",
         description: "PDF downloaded successfully"

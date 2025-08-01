@@ -381,11 +381,53 @@ export class ProfessionalResumeGenerator {
 export const generateProfessionalPDF = async (
   templateId: string, 
   resumeData: string | StructuredResumeData, 
-  fileName: string
+  fileName: string,
+  colorScheme?: string
 ): Promise<void> => {
   console.log('UnifiedPdfGenerator: Starting PDF generation with template:', templateId);
-  const generator = new ProfessionalResumeGenerator();
-  const pdf = await generator.generateResume(resumeData, templateId);
-  console.log('UnifiedPdfGenerator: PDF generation completed for template:', templateId);
-  pdf.save(fileName);
+  
+  // Use template-specific generators for better visual accuracy
+  try {
+    if (templateId === 'modern-ats') {
+      const { ModernATSPdfGenerator } = await import('./newPdfGenerators/ModernATSPdfGenerator');
+      const generator = new ModernATSPdfGenerator();
+      const data = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
+      const pdf = await generator.generate(data, colorScheme);
+      pdf.save(fileName);
+    } else if (templateId === 'minimalist-executive') {
+      const { MinimalistExecutivePdfGenerator } = await import('./newPdfGenerators/MinimalistExecutivePdfGenerator');
+      const generator = new MinimalistExecutivePdfGenerator();
+      const data = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
+      const pdf = await generator.generate(data, colorScheme);
+      pdf.save(fileName);
+    } else if (templateId === 'creative-professional') {
+      const { CreativeProfessionalPdfGenerator } = await import('./newPdfGenerators/CreativeProfessionalPdfGenerator');
+      const generator = new CreativeProfessionalPdfGenerator();
+      const data = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
+      const pdf = await generator.generate(data, colorScheme);
+      pdf.save(fileName);
+    } else if (templateId === 'academic-research') {
+      const { AcademicResearchPdfGenerator } = await import('./newPdfGenerators/AcademicResearchPdfGenerator');
+      const generator = new AcademicResearchPdfGenerator();
+      const data = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
+      const pdf = await generator.generate(data, colorScheme);
+      pdf.save(fileName);
+    } else if (templateId === 'technical-engineering') {
+      const { TechnicalEngineeringPdfGenerator } = await import('./newPdfGenerators/TechnicalEngineeringPdfGenerator');
+      const generator = new TechnicalEngineeringPdfGenerator();
+      const data = typeof resumeData === 'string' ? parseResumeContent(resumeData) : resumeData;
+      const pdf = await generator.generate(data, colorScheme);
+      pdf.save(fileName);
+    } else {
+      // Fallback to unified generator for other templates
+      const generator = new ProfessionalResumeGenerator();
+      const pdf = await generator.generateResume(resumeData, templateId);
+      pdf.save(fileName);
+    }
+    
+    console.log('UnifiedPdfGenerator: PDF generation completed for template:', templateId);
+  } catch (error) {
+    console.error('UnifiedPdfGenerator: Error generating PDF:', error);
+    throw new Error('Failed to generate PDF: ' + (error instanceof Error ? error.message : 'Unknown error'));
+  }
 };

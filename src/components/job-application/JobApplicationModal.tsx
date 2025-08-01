@@ -19,7 +19,7 @@ import { TemplateSelector } from '@/components/resume-templates/TemplateSelector
 import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
 import { CoverLetterGenerator } from '@/components/CoverLetterGenerator';
-import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { generateProfessionalPDF } from '@/utils/unifiedPdfGenerator';
 import { fetchStructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -521,7 +521,7 @@ export const JobApplicationModal: React.FC<JobApplicationModalProps> = ({
         scheme => scheme.id === selectedColorScheme
       );
       
-      await generateNewProfessionalPDF(
+      await generateProfessionalPDF(
         selectedTemplate,
         editableResumeData,
         `${jobPosting.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_resume.pdf`,

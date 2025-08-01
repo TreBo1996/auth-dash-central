@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TemplateSelector } from '@/components/resume-templates/TemplateSelector';
 import { ColorSchemeSelector } from '@/components/resume-templates/ColorSchemeSelector';
 import { ResumePreview } from '@/components/resume-templates/ResumePreview';
-import { generateNewProfessionalPDF } from '@/utils/newPdfGenerators/NewPdfGeneratorFactory';
+import { generateProfessionalPDF } from '@/utils/unifiedPdfGenerator';
 import { fetchStructuredResumeData, StructuredResumeData } from '@/components/resume-templates/utils/fetchStructuredResumeData';
 import { newTemplateConfigs } from '@/components/resume-templates/configs/newTemplateConfigs';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -146,7 +146,7 @@ export const ResumeTemplateModal: React.FC<ResumeTemplateModalProps> = ({
       // Use the working PDF generator with structured data
       if (editableResumeData) {
         const fileName = `resume-${selectedTemplate}-${new Date().toISOString().split('T')[0]}.pdf`;
-        await generateNewProfessionalPDF(selectedTemplate, editableResumeData, fileName, selectedColorScheme);
+        await generateProfessionalPDF(selectedTemplate, editableResumeData, fileName, selectedColorScheme);
         toast({
           title: "Export Successful",
           description: "Your resume has been downloaded as a PDF."
