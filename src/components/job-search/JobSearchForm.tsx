@@ -7,6 +7,34 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, MapPin, Calendar, Briefcase, User, Building } from 'lucide-react';
 
+// Common location options across all job search components
+const locationOptions = [
+  { value: 'all', label: 'Any location' },
+  { value: 'remote', label: 'Remote' },
+  { value: 'new-york-ny', label: 'New York, NY' },
+  { value: 'san-francisco-ca', label: 'San Francisco, CA' },
+  { value: 'los-angeles-ca', label: 'Los Angeles, CA' },
+  { value: 'chicago-il', label: 'Chicago, IL' },
+  { value: 'boston-ma', label: 'Boston, MA' },
+  { value: 'seattle-wa', label: 'Seattle, WA' },
+  { value: 'austin-tx', label: 'Austin, TX' },
+  { value: 'denver-co', label: 'Denver, CO' },
+  { value: 'miami-fl', label: 'Miami, FL' },
+  { value: 'atlanta-ga', label: 'Atlanta, GA' },
+  { value: 'washington-dc', label: 'Washington, DC' },
+  { value: 'portland-or', label: 'Portland, OR' },
+  { value: 'california', label: 'California' },
+  { value: 'new-york', label: 'New York' },
+  { value: 'texas', label: 'Texas' },
+  { value: 'florida', label: 'Florida' },
+  { value: 'washington', label: 'Washington' },
+  { value: 'london-uk', label: 'London, UK' },
+  { value: 'toronto-canada', label: 'Toronto, Canada' },
+  { value: 'vancouver-canada', label: 'Vancouver, Canada' },
+  { value: 'berlin-germany', label: 'Berlin, Germany' },
+  { value: 'amsterdam-netherlands', label: 'Amsterdam, Netherlands' },
+];
+
 interface JobSearchFormProps {
   onSearch: (data: {
     query: string;
@@ -35,10 +63,10 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // At least one search parameter is required for database search
-    if (query.trim() || location.trim() || company.trim()) {
+    if (query.trim() || (location && location !== 'all') || company.trim()) {
       onSearch({
         query: query.trim(),
-        location: location.trim(),
+        location: location === 'all' ? '' : location,
         remoteType: remoteType === 'all' ? undefined : remoteType || undefined,
         employmentType: employmentType === 'all' ? undefined : employmentType || undefined,
         seniorityLevel: seniorityLevel === 'all' ? undefined : seniorityLevel || undefined,
@@ -71,17 +99,19 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="job-location">Location</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="job-location" 
-                  type="text" 
-                  placeholder="e.g., New York, San Francisco" 
-                  value={location} 
-                  onChange={e => setLocation(e.target.value)} 
-                  className="pl-10" 
-                />
-              </div>
+              <Select value={location} onValueChange={setLocation}>
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locationOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -174,13 +204,13 @@ export const JobSearchForm: React.FC<JobSearchFormProps> = ({
 
           <Button 
             type="submit" 
-            disabled={loading || (!query.trim() && !location.trim() && !company.trim())} 
+            disabled={loading || (!query.trim() && (!location || location === 'all') && !company.trim())} 
             className="w-full md:w-auto bg-indigo-700 hover:bg-indigo-600"
           >
             {loading ? 'Searching Database...' : 'Search Jobs'}
           </Button>
           
-          {!query.trim() && !location.trim() && !company.trim() && (
+          {!query.trim() && (!location || location === 'all') && !company.trim() && (
             <p className="text-sm text-muted-foreground">
               Please enter at least one search criteria (job title, location, or company)
             </p>

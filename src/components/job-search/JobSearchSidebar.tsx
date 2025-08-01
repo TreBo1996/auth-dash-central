@@ -7,6 +7,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, MapPin, Calendar, Briefcase, User, Building, Filter, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+// Common location options across all job search components
+const locationOptions = [
+  { value: 'all', label: 'Any location' },
+  { value: 'remote', label: 'Remote' },
+  { value: 'new-york-ny', label: 'New York, NY' },
+  { value: 'san-francisco-ca', label: 'San Francisco, CA' },
+  { value: 'los-angeles-ca', label: 'Los Angeles, CA' },
+  { value: 'chicago-il', label: 'Chicago, IL' },
+  { value: 'boston-ma', label: 'Boston, MA' },
+  { value: 'seattle-wa', label: 'Seattle, WA' },
+  { value: 'austin-tx', label: 'Austin, TX' },
+  { value: 'denver-co', label: 'Denver, CO' },
+  { value: 'miami-fl', label: 'Miami, FL' },
+  { value: 'atlanta-ga', label: 'Atlanta, GA' },
+  { value: 'washington-dc', label: 'Washington, DC' },
+  { value: 'portland-or', label: 'Portland, OR' },
+  { value: 'california', label: 'California' },
+  { value: 'new-york', label: 'New York' },
+  { value: 'texas', label: 'Texas' },
+  { value: 'florida', label: 'Florida' },
+  { value: 'washington', label: 'Washington' },
+  { value: 'london-uk', label: 'London, UK' },
+  { value: 'toronto-canada', label: 'Toronto, Canada' },
+  { value: 'vancouver-canada', label: 'Vancouver, Canada' },
+  { value: 'berlin-germany', label: 'Berlin, Germany' },
+  { value: 'amsterdam-netherlands', label: 'Amsterdam, Netherlands' },
+];
+
 interface JobSearchSidebarProps {
   onSearch: (data: {
     query: string;
@@ -44,10 +72,10 @@ export const JobSearchSidebar: React.FC<JobSearchSidebarProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim() || location.trim() || company.trim()) {
+    if (query.trim() || (location && location !== 'all') || company.trim()) {
       onSearch({
         query: query.trim(),
-        location: location.trim(),
+        location: location === 'all' ? '' : location,
         remoteType: remoteType === 'all' ? undefined : remoteType || undefined,
         employmentType: employmentType === 'all' ? undefined : employmentType || undefined,
         seniorityLevel: seniorityLevel === 'all' ? undefined : seniorityLevel || undefined,
@@ -70,7 +98,10 @@ export const JobSearchSidebar: React.FC<JobSearchSidebarProps> = ({
   const getActiveFilters = () => {
     const active = [];
     if (query) active.push({ label: query, type: 'query' });
-    if (location) active.push({ label: location, type: 'location' });
+    if (location && location !== 'all') {
+      const locationOption = locationOptions.find(opt => opt.value === location);
+      active.push({ label: locationOption?.label || location, type: 'location' });
+    }
     if (remoteType && remoteType !== 'all') active.push({ label: remoteType, type: 'remote' });
     if (employmentType && employmentType !== 'all') active.push({ label: employmentType, type: 'employment' });
     if (seniorityLevel && seniorityLevel !== 'all') active.push({ label: seniorityLevel, type: 'seniority' });
@@ -108,17 +139,19 @@ export const JobSearchSidebar: React.FC<JobSearchSidebarProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="job-location">Location</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="job-location" 
-                  type="text" 
-                  placeholder="e.g., New York, NY" 
-                  value={location} 
-                  onChange={e => setLocation(e.target.value)} 
-                  className="pl-10" 
-                />
-              </div>
+              <Select value={location} onValueChange={setLocation}>
+                <SelectTrigger>
+                  <MapPin className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locationOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
@@ -208,7 +241,7 @@ export const JobSearchSidebar: React.FC<JobSearchSidebarProps> = ({
             <div className="flex gap-2">
               <Button 
                 type="submit" 
-                disabled={loading || (!query.trim() && !location.trim() && !company.trim())} 
+                disabled={loading || (!query.trim() && (!location || location === 'all') && !company.trim())} 
                 className="flex-1"
               >
                 {loading ? 'Searching...' : 'Search Jobs'}
