@@ -171,7 +171,7 @@ export const JobSearch: React.FC = () => {
             {/* Quick Jobs - Scrollable */}
             {miniJobs.length > 0 && <div className="flex flex-col h-full min-h-0 overflow-hidden">
                 <div className="flex-shrink-0 mb-3">
-                  <h3 className="text-sm font-medium text-muted-foreground">Quick Jobs</h3>
+                  <h3 className="text-sm font-medium text-stone-950">Quick Jobs</h3>
                 </div>
                 <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
                   {miniJobs.map((job, index) => <div key={`mini-${job.id}-${index}`}>
