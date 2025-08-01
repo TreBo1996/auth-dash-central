@@ -11,7 +11,7 @@ export function toTitleCase(str: string): string {
   const articles = ['a', 'an', 'the'];
   const prepositions = ['in', 'on', 'at', 'for', 'with', 'by', 'of', 'to', 'from', 'up', 'out', 'off', 'over'];
   const conjunctions = ['and', 'or', 'but', 'nor', 'so', 'yet'];
-  const specialTerms = ['iOS', 'API', 'UI', 'UX', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'SQL', 'AWS', 'AI', 'ML', 'QA', 'DevOps', 'SaaS', 'CRM', 'ERP'];
+  const specialTerms = ['iOS', 'API', 'UI', 'UX', 'JavaScript', 'TypeScript', 'HTML', 'CSS', 'SQL', 'AWS', 'AI', 'ML', 'QA', 'DevOps', 'SaaS', 'CRM', 'ERP', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
   
   return str.toLowerCase()
     .split(' ')
