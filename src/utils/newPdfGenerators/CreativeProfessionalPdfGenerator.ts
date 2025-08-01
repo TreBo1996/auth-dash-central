@@ -241,19 +241,12 @@ export class CreativeProfessionalPdfGenerator {
       this.pdf.text(exp.company, leftMargin, this.currentY + 16);
       this.pdf.setTextColor(0, 0, 0);
 
-      // Duration badge
+      // Duration - simple colored text
       this.pdf.setFontSize(9);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      
-      if (!this.isMonochromeScheme()) {
-        this.pdf.setFillColor(r, g, b, 0.1);
-        const durationWidth = this.pdf.getTextWidth(exp.duration) + 12;
-        this.pdf.roundedRect(this.pageWidth - this.margin - durationWidth, this.currentY - 8, durationWidth, 12, 2, 2, 'F');
-      }
-      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(exp.duration, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(exp.duration) : this.pdf.getTextWidth(exp.duration) + 6), this.currentY);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - this.pdf.getTextWidth(exp.duration), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       
       this.currentY += 35;

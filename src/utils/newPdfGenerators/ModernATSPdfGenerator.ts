@@ -209,19 +209,12 @@ export class ModernATSPdfGenerator {
       this.pdf.setFont('helvetica', 'bold');
       this.pdf.text(exp.title, this.margin, this.currentY);
       
-      // Date badge
+      // Date - simple colored text
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      
-      if (!this.isMonochromeScheme()) {
-        this.pdf.setFillColor(r, g, b, 0.1);
-        const dateWidth = this.pdf.getTextWidth(exp.duration) + 12;
-        this.pdf.rect(this.pageWidth - this.margin - dateWidth, this.currentY - 10, dateWidth, 14, 'F');
-      }
-      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(exp.duration, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(exp.duration) : this.pdf.getTextWidth(exp.duration) + 6), this.currentY);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - this.pdf.getTextWidth(exp.duration), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 
@@ -265,19 +258,12 @@ export class ModernATSPdfGenerator {
       this.pdf.setFont('helvetica', 'bold');
       this.pdf.text(edu.degree, this.margin, this.currentY);
       
-      // Year badge
+      // Year - simple colored text
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      
-      if (!this.isMonochromeScheme()) {
-        this.pdf.setFillColor(r, g, b, 0.1);
-        const yearWidth = this.pdf.getTextWidth(edu.year) + 12;
-        this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
-      }
-      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(edu.year, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(edu.year) : this.pdf.getTextWidth(edu.year) + 6), this.currentY);
+      this.pdf.text(edu.year, this.pageWidth - this.margin - this.pdf.getTextWidth(edu.year), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 
@@ -300,19 +286,12 @@ export class ModernATSPdfGenerator {
       this.pdf.setFont('helvetica', 'bold');
       this.pdf.text(cert.name, this.margin, this.currentY);
       
-      // Year badge
+      // Year - simple colored text
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
       const [r, g, b] = this.parseHSL(this.colors.accent);
-      
-      if (!this.isMonochromeScheme()) {
-        this.pdf.setFillColor(r, g, b, 0.1);
-        const yearWidth = this.pdf.getTextWidth(cert.year) + 12;
-        this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
-      }
-      
       this.pdf.setTextColor(r, g, b);
-      this.pdf.text(cert.year, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(cert.year) : this.pdf.getTextWidth(cert.year) + 6), this.currentY);
+      this.pdf.text(cert.year, this.pageWidth - this.margin - this.pdf.getTextWidth(cert.year), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 

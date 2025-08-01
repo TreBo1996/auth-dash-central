@@ -257,20 +257,12 @@ export class TechnicalEngineeringPdfGenerator {
       this.pdf.setFont('helvetica', 'bold');
       this.pdf.text(exp.title, leftMargin, this.currentY);
       
-      // Duration badge
+      // Duration - simple colored text
       this.pdf.setFontSize(9);
       this.pdf.setFont('courier', 'normal');
       const [r4, g4, b4] = this.parseHSL(this.colors.primary);
-      
-      if (!this.isMonochromeScheme()) {
-        this.pdf.setFillColor(r4, g4, b4, 0.2);
-        this.pdf.setDrawColor(r4, g4, b4);
-        const durationWidth = this.pdf.getTextWidth(exp.duration) + 12;
-        this.pdf.rect(this.pageWidth - this.margin - durationWidth, this.currentY - 8, durationWidth, 12, 'FD');
-      }
-      
       this.pdf.setTextColor(r4, g4, b4);
-      this.pdf.text(exp.duration, this.pageWidth - this.margin - (this.isMonochromeScheme() ? this.pdf.getTextWidth(exp.duration) : this.pdf.getTextWidth(exp.duration) + 6), this.currentY);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - this.pdf.getTextWidth(exp.duration), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
 

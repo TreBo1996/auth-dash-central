@@ -160,8 +160,11 @@ export class AcademicResearchPdfGenerator {
       this.pdf.setFont('times', 'bold');
       this.pdf.text(edu.degree, this.margin, this.currentY);
       
-      const yearWidth = this.pdf.getTextWidth(edu.year);
-      this.pdf.text(edu.year, this.pageWidth - this.margin - yearWidth, this.currentY);
+      // Year - simple colored text
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setTextColor(r, g, b);
+      this.pdf.text(edu.year, this.pageWidth - this.margin - this.pdf.getTextWidth(edu.year), this.currentY);
+      this.pdf.setTextColor(0, 0, 0);
       this.currentY += 16;
 
       // Institution
@@ -185,8 +188,11 @@ export class AcademicResearchPdfGenerator {
       this.pdf.setFont('times', 'bold');
       this.pdf.text(exp.title, this.margin, this.currentY);
       
-      const dateWidth = this.pdf.getTextWidth(exp.duration);
-      this.pdf.text(exp.duration, this.pageWidth - this.margin - dateWidth, this.currentY);
+      // Date - simple colored text
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setTextColor(r, g, b);
+      this.pdf.text(exp.duration, this.pageWidth - this.margin - this.pdf.getTextWidth(exp.duration), this.currentY);
+      this.pdf.setTextColor(0, 0, 0);
       this.currentY += 16;
 
       // Institution
@@ -286,8 +292,11 @@ export class AcademicResearchPdfGenerator {
       this.pdf.setFont('times', 'bold');
       this.pdf.text(cert.name, this.margin, this.currentY);
       
-      const yearWidth = this.pdf.getTextWidth(cert.year);
-      this.pdf.text(cert.year, this.pageWidth - this.margin - yearWidth, this.currentY);
+      // Year - simple colored text
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setTextColor(r, g, b);
+      this.pdf.text(cert.year, this.pageWidth - this.margin - this.pdf.getTextWidth(cert.year), this.currentY);
+      this.pdf.setTextColor(0, 0, 0);
       this.currentY += 16;
 
       this.pdf.setFont('times', 'italic');
