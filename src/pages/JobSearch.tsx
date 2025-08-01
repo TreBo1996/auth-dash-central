@@ -143,8 +143,8 @@ export const JobSearch: React.FC = () => {
       // Extract source and id from jobId format: "source_id"
       const [source, id] = jobId.split('_');
       
-      if (source === 'database' && id) {
-        // Search for jobs that include this specific job ID
+      if ((source === 'database' || source === 'employer') && id) {
+        // Perform a broad search to include the target job and similar ones
         const filters: JobSearchFilters = {
           query: '',
           location: '',
@@ -160,8 +160,8 @@ export const JobSearch: React.FC = () => {
           // After search completes, expand the target job
           setTimeout(() => {
             setExpandedJobId(id);
-            // Scroll to the job card
-            const jobElement = document.getElementById(`job-card-${id}`);
+            // Scroll to the job card - fix ID selector to match actual DOM ID
+            const jobElement = document.getElementById(`job-${id}`);
             if (jobElement) {
               jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
