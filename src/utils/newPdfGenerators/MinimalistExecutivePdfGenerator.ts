@@ -128,7 +128,7 @@ export class MinimalistExecutivePdfGenerator {
   private addExecutiveSummary(data: StructuredResumeData): void {
     if (!data.summary) return;
     
-    this.checkPageBreak(80);
+    this.checkPageBreak(60);
     this.addSectionHeader('EXECUTIVE SUMMARY');
     
     this.pdf.setFontSize(11);
@@ -136,18 +136,18 @@ export class MinimalistExecutivePdfGenerator {
     const lines = this.pdf.splitTextToSize(data.summary, this.usableWidth - 40);
     
     lines.forEach((line: string) => {
-      this.checkPageBreak(20);
+      this.checkPageBreak(18);
       const lineWidth = this.pdf.getTextWidth(line);
       this.pdf.text(line, (this.pageWidth - lineWidth) / 2, this.currentY);
-      this.currentY += 16;
+      this.currentY += 14;
     });
-    this.currentY += 20;
+    this.currentY += 15;
   }
 
   private addCoreCompetencies(data: StructuredResumeData): void {
     if (data.skills.length === 0) return;
 
-    this.checkPageBreak(100);
+    this.checkPageBreak(70);
     this.addSectionHeader('CORE COMPETENCIES');
 
     const allSkills = data.skills.flatMap(group => group.items);
@@ -167,30 +167,30 @@ export class MinimalistExecutivePdfGenerator {
 
     // Left column
     leftCol.forEach(skill => {
-      this.checkPageBreak(20);
+      this.checkPageBreak(18);
       this.pdf.circle(leftX - 8, leftY - 3, 2, 'F');
       this.pdf.text(skill, leftX, leftY);
-      leftY += 16;
+      leftY += 14;
     });
 
     // Right column
     rightCol.forEach(skill => {
       this.pdf.circle(rightX - 8, rightY - 3, 2, 'F');
       this.pdf.text(skill, rightX, rightY);
-      rightY += 16;
+      rightY += 14;
     });
 
-    this.currentY = Math.max(leftY, rightY) + 20;
+    this.currentY = Math.max(leftY, rightY) + 15;
   }
 
   private addProfessionalExperience(data: StructuredResumeData): void {
     if (data.experience.length === 0) return;
 
-    this.checkPageBreak(100);
+    this.checkPageBreak(70);
     this.addSectionHeader('PROFESSIONAL EXPERIENCE');
 
     data.experience.forEach((exp, index) => {
-      this.checkPageBreak(120);
+      this.checkPageBreak(80);
       
       // Position and dates
       this.pdf.setFontSize(12);
@@ -202,41 +202,41 @@ export class MinimalistExecutivePdfGenerator {
       this.pdf.setTextColor(r, g, b);
       this.pdf.text(exp.duration, this.pageWidth - this.margin - this.pdf.getTextWidth(exp.duration), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
-      this.currentY += 18;
+      this.currentY += 16;
 
       // Company
       this.pdf.setFontSize(12);
       this.pdf.setFont('helvetica', 'normal');
       this.pdf.text(exp.company, this.margin, this.currentY);
-      this.currentY += 20;
+      this.currentY += 18;
 
       // Bullets with elegant dots
       this.pdf.setFontSize(11);
       exp.bullets.forEach(bullet => {
-        this.checkPageBreak(30);
+        this.checkPageBreak(25);
         this.pdf.circle(this.margin + 8, this.currentY - 3, 1.5, 'F');
         const lines = this.pdf.splitTextToSize(bullet, this.usableWidth - 20);
         lines.forEach((line: string, lineIndex: number) => {
           const x = lineIndex === 0 ? this.margin + 16 : this.margin + 16;
           this.pdf.text(line, x, this.currentY);
-          this.currentY += 16;
+          this.currentY += 14;
         });
       });
 
-      if (index < data.experience.length - 1) this.currentY += 20;
+      if (index < data.experience.length - 1) this.currentY += 15;
     });
 
-    this.currentY += 20;
+    this.currentY += 15;
   }
 
   private addEducation(data: StructuredResumeData): void {
     if (data.education.length === 0) return;
 
-    this.checkPageBreak(80);
+    this.checkPageBreak(50);
     this.addSectionHeader('EDUCATION');
 
     data.education.forEach(edu => {
-      this.checkPageBreak(50);
+      this.checkPageBreak(40);
       
       this.pdf.setFontSize(12);
       this.pdf.setFont('helvetica', 'bold');
@@ -247,22 +247,22 @@ export class MinimalistExecutivePdfGenerator {
       this.pdf.setTextColor(r, g, b);
       this.pdf.text(edu.year, this.pageWidth - this.margin - this.pdf.getTextWidth(edu.year), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
-      this.currentY += 18;
+      this.currentY += 16;
 
       this.pdf.setFont('helvetica', 'normal');
       this.pdf.text(edu.school, this.margin, this.currentY);
-      this.currentY += 20;
+      this.currentY += 18;
     });
   }
 
   private addCertifications(data: StructuredResumeData): void {
     if (!data.certifications?.length) return;
 
-    this.checkPageBreak(80);
+    this.checkPageBreak(50);
     this.addSectionHeader('CERTIFICATIONS');
 
     data.certifications.forEach(cert => {
-      this.checkPageBreak(50);
+      this.checkPageBreak(40);
       
       this.pdf.setFontSize(12);
       this.pdf.setFont('helvetica', 'bold');
@@ -273,11 +273,11 @@ export class MinimalistExecutivePdfGenerator {
       this.pdf.setTextColor(r, g, b);
       this.pdf.text(cert.year, this.pageWidth - this.margin - this.pdf.getTextWidth(cert.year), this.currentY);
       this.pdf.setTextColor(0, 0, 0);
-      this.currentY += 18;
+      this.currentY += 16;
 
       this.pdf.setFont('helvetica', 'normal');
       this.pdf.text(cert.issuer, this.margin, this.currentY);
-      this.currentY += 20;
+      this.currentY += 18;
     });
   }
 
