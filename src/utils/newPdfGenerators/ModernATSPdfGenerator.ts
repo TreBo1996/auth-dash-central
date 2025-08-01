@@ -124,7 +124,8 @@ export class ModernATSPdfGenerator {
     
     // Accent line
     this.pdf.setLineWidth(2);
-    this.pdf.setDrawColor(66, 133, 244); // Blue accent
+    const [r, g, b] = this.parseHSL(this.colors.accent);
+    this.pdf.setDrawColor(r, g, b);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
     this.currentY += 25;
   }
@@ -168,7 +169,8 @@ export class ModernATSPdfGenerator {
       const y = this.currentY;
       
       // Small bullet point
-      this.pdf.setFillColor(66, 133, 244);
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setFillColor(r, g, b);
       this.pdf.circle(x + 4, y - 3, 1.5, 'F');
       this.pdf.text(skill, x + 12, y);
       
@@ -202,10 +204,11 @@ export class ModernATSPdfGenerator {
       // Date badge
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.setFillColor(66, 133, 244, 0.1);
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setFillColor(r, g, b, 0.1);
       const dateWidth = this.pdf.getTextWidth(exp.duration) + 12;
       this.pdf.rect(this.pageWidth - this.margin - dateWidth, this.currentY - 10, dateWidth, 14, 'F');
-      this.pdf.setTextColor(66, 133, 244);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(exp.duration, this.pageWidth - this.margin - dateWidth + 6, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
@@ -220,7 +223,8 @@ export class ModernATSPdfGenerator {
       this.pdf.setFontSize(11);
       exp.bullets.forEach(bullet => {
         this.checkPageBreak(30);
-        this.pdf.setFillColor(66, 133, 244);
+        const [r, g, b] = this.parseHSL(this.colors.accent);
+        this.pdf.setFillColor(r, g, b);
         this.pdf.circle(this.margin + 6, this.currentY - 3, 1.5, 'F');
         const lines = this.pdf.splitTextToSize(bullet, this.usableWidth - 20);
         lines.forEach((line: string, lineIndex: number) => {
@@ -252,10 +256,11 @@ export class ModernATSPdfGenerator {
       // Year badge
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.setFillColor(66, 133, 244, 0.1);
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setFillColor(r, g, b, 0.1);
       const yearWidth = this.pdf.getTextWidth(edu.year) + 12;
       this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
-      this.pdf.setTextColor(66, 133, 244);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(edu.year, this.pageWidth - this.margin - yearWidth + 6, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
@@ -282,10 +287,11 @@ export class ModernATSPdfGenerator {
       // Year badge
       this.pdf.setFontSize(10);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.setFillColor(66, 133, 244, 0.1);
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setFillColor(r, g, b, 0.1);
       const yearWidth = this.pdf.getTextWidth(cert.year) + 12;
       this.pdf.rect(this.pageWidth - this.margin - yearWidth, this.currentY - 10, yearWidth, 14, 'F');
-      this.pdf.setTextColor(66, 133, 244);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(cert.year, this.pageWidth - this.margin - yearWidth + 6, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;

@@ -85,8 +85,9 @@ export class CreativeProfessionalPdfGenerator {
   private addHeader(data: StructuredResumeData): void {
     this.checkPageBreak(100);
     
-    // Purple accent bar
-    this.pdf.setFillColor(123, 31, 162); // Purple accent
+    // Accent bar
+    const [r, g, b] = this.parseHSL(this.colors.accent);
+    this.pdf.setFillColor(r, g, b);
     this.pdf.rect(this.margin, this.currentY, 4, 80, 'F');
     
     const headerX = this.margin + 15;
@@ -100,7 +101,8 @@ export class CreativeProfessionalPdfGenerator {
     if (data.experience.length > 0) {
       this.pdf.setFontSize(14);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.setTextColor(123, 31, 162);
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(data.experience[0].title, headerX, this.currentY + 45);
       this.pdf.setTextColor(0, 0, 0);
     }
@@ -147,7 +149,8 @@ export class CreativeProfessionalPdfGenerator {
       // Category header
       this.pdf.setFontSize(11);
       this.pdf.setFont('helvetica', 'bold');
-      this.pdf.setTextColor(123, 31, 162);
+      const [r, g, b] = this.parseHSL(this.colors.accent);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(skillGroup.category, leftMargin, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
@@ -171,16 +174,17 @@ export class CreativeProfessionalPdfGenerator {
         }
 
         // Tag background
-        this.pdf.setFillColor(123, 31, 162, 0.1);
+        const [r, g, b] = this.parseHSL(this.colors.accent);
+        this.pdf.setFillColor(r, g, b, 0.1);
         this.pdf.roundedRect(x, y - 10, tagWidth, tagHeight, 2, 2, 'F');
         
         // Tag border
-        this.pdf.setDrawColor(123, 31, 162, 0.3);
+        this.pdf.setDrawColor(r, g, b, 0.3);
         this.pdf.setLineWidth(0.5);
         this.pdf.roundedRect(x, y - 10, tagWidth, tagHeight, 2, 2, 'S');
         
         // Tag text
-        this.pdf.setTextColor(123, 31, 162);
+        this.pdf.setTextColor(r, g, b);
         this.pdf.text(skill, x + 6, y);
         this.pdf.setTextColor(0, 0, 0);
         
@@ -204,7 +208,8 @@ export class CreativeProfessionalPdfGenerator {
       this.checkPageBreak(120);
       
       // Timeline dot
-      this.pdf.setFillColor(123, 31, 162);
+      const [r2, g2, b2] = this.parseHSL(this.colors.accent);
+      this.pdf.setFillColor(r2, g2, b2);
       this.pdf.circle(timelineX, this.currentY + 5, 6, 'F');
       this.pdf.setFillColor(255, 255, 255);
       this.pdf.circle(timelineX, this.currentY + 5, 3, 'F');
@@ -223,7 +228,8 @@ export class CreativeProfessionalPdfGenerator {
       
       this.pdf.setFontSize(11);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.setTextColor(123, 31, 162);
+      const [r3, g3, b3] = this.parseHSL(this.colors.accent);
+      this.pdf.setTextColor(r3, g3, b3);
       this.pdf.text(exp.company, leftMargin, this.currentY + 16);
       this.pdf.setTextColor(0, 0, 0);
 
@@ -245,8 +251,9 @@ export class CreativeProfessionalPdfGenerator {
       exp.bullets.forEach(bullet => {
         this.checkPageBreak(30);
         
-        // Purple bullet point
-        this.pdf.setFillColor(123, 31, 162);
+        // Accent bullet point
+        const [r4, g4, b4] = this.parseHSL(this.colors.accent);
+        this.pdf.setFillColor(r4, g4, b4);
         this.pdf.circle(leftMargin + 6, this.currentY - 3, 1.5, 'F');
         
         const lines = this.pdf.splitTextToSize(bullet, this.usableWidth - 50);
@@ -286,7 +293,8 @@ export class CreativeProfessionalPdfGenerator {
         
         this.pdf.setFontSize(10);
         this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setTextColor(123, 31, 162);
+        const [r5, g5, b5] = this.parseHSL(this.colors.accent);
+        this.pdf.setTextColor(r5, g5, b5);
         this.pdf.text(edu.school, leftCol, eduY);
         eduY += 12;
         
@@ -310,7 +318,8 @@ export class CreativeProfessionalPdfGenerator {
         
         this.pdf.setFontSize(10);
         this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setTextColor(123, 31, 162);
+        const [r6, g6, b6] = this.parseHSL(this.colors.accent);
+        this.pdf.setTextColor(r6, g6, b6);
         this.pdf.text(cert.issuer, rightCol, certY);
         certY += 12;
         
@@ -327,8 +336,9 @@ export class CreativeProfessionalPdfGenerator {
   private addSectionHeader(title: string): void {
     this.checkPageBreak(50);
     
-    // Purple accent line
-    this.pdf.setFillColor(123, 31, 162);
+    // Accent line
+    const [r7, g7, b7] = this.parseHSL(this.colors.accent);
+    this.pdf.setFillColor(r7, g7, b7);
     this.pdf.rect(this.margin, this.currentY + 5, 20, 1, 'F');
     
     this.pdf.setFontSize(14);
@@ -338,8 +348,9 @@ export class CreativeProfessionalPdfGenerator {
   }
 
   private addSmallSectionHeader(title: string, x: number): void {
-    // Small purple accent line
-    this.pdf.setFillColor(123, 31, 162);
+    // Small accent line
+    const [r8, g8, b8] = this.parseHSL(this.colors.accent);
+    this.pdf.setFillColor(r8, g8, b8);
     this.pdf.rect(x, this.currentY + 5, 15, 1, 'F');
     
     this.pdf.setFontSize(12);

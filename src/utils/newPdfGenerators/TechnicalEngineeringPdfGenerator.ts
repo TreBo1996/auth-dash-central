@@ -95,7 +95,8 @@ export class TechnicalEngineeringPdfGenerator {
     if (data.experience.length > 0) {
       this.pdf.setFontSize(14);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.setTextColor(49, 130, 189); // Teal accent
+      const [r, g, b] = this.parseHSL(this.colors.primary);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(data.experience[0].title, this.margin, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 25;
@@ -118,9 +119,10 @@ export class TechnicalEngineeringPdfGenerator {
       const x = this.margin + (index * itemWidth);
       
       // Label badge
-      this.pdf.setFillColor(49, 130, 189, 0.2);
+      const [r, g, b] = this.parseHSL(this.colors.primary);
+      this.pdf.setFillColor(r, g, b, 0.2);
       this.pdf.rect(x, this.currentY - 8, 25, 12, 'F');
-      this.pdf.setTextColor(49, 130, 189);
+      this.pdf.setTextColor(r, g, b);
       this.pdf.text(item.label, x + 2, this.currentY);
       
       // Value
@@ -134,7 +136,8 @@ export class TechnicalEngineeringPdfGenerator {
     
     // Technical accent line
     this.pdf.setLineWidth(2);
-    this.pdf.setDrawColor(49, 130, 189);
+    const [r, g, b] = this.parseHSL(this.colors.primary);
+    this.pdf.setDrawColor(r, g, b);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
     this.currentY += 25;
   }
@@ -169,17 +172,19 @@ export class TechnicalEngineeringPdfGenerator {
       this.checkPageBreak(80);
       
       // Skill category box
-      this.pdf.setDrawColor(49, 130, 189);
+      const [r, g, b] = this.parseHSL(this.colors.primary);
+      this.pdf.setDrawColor(r, g, b);
       this.pdf.setLineWidth(1);
       this.pdf.rect(leftMargin, this.currentY - 15, this.usableWidth - 40, 60, 'S');
       
       // Category header with accent
       this.pdf.setFontSize(11);
       this.pdf.setFont('helvetica', 'bold');
-      this.pdf.setTextColor(49, 130, 189);
+      const [r2, g2, b2] = this.parseHSL(this.colors.primary);
+      this.pdf.setTextColor(r2, g2, b2);
       
       // Small bullet point
-      this.pdf.setFillColor(49, 130, 189);
+      this.pdf.setFillColor(r2, g2, b2);
       this.pdf.circle(leftMargin + 8, this.currentY - 3, 2, 'F');
       
       this.pdf.text(skillGroup.category.toUpperCase(), leftMargin + 15, this.currentY);
@@ -200,8 +205,9 @@ export class TechnicalEngineeringPdfGenerator {
         const y = this.currentY + (currentRow * 18);
         
         // Skill item box
-        this.pdf.setFillColor(49, 130, 189, 0.08);
-        this.pdf.setDrawColor(49, 130, 189, 0.3);
+        const [r3, g3, b3] = this.parseHSL(this.colors.primary);
+        this.pdf.setFillColor(r3, g3, b3, 0.08);
+        this.pdf.setDrawColor(r3, g3, b3, 0.3);
         this.pdf.setLineWidth(0.5);
         this.pdf.rect(x, y - 10, colWidth - 10, 14, 'FD');
         
@@ -233,7 +239,8 @@ export class TechnicalEngineeringPdfGenerator {
       this.checkPageBreak(120);
       
       // Project/position container
-      this.pdf.setDrawColor(49, 130, 189);
+      const [r, g, b] = this.parseHSL(this.colors.primary);
+      this.pdf.setDrawColor(r, g, b);
       this.pdf.setLineWidth(3);
       this.pdf.line(leftMargin - 10, this.currentY - 5, leftMargin - 10, this.currentY + 80);
       
@@ -245,11 +252,12 @@ export class TechnicalEngineeringPdfGenerator {
       // Duration badge
       this.pdf.setFontSize(9);
       this.pdf.setFont('courier', 'normal');
-      this.pdf.setFillColor(49, 130, 189, 0.2);
-      this.pdf.setDrawColor(49, 130, 189);
+      const [r4, g4, b4] = this.parseHSL(this.colors.primary);
+      this.pdf.setFillColor(r4, g4, b4, 0.2);
+      this.pdf.setDrawColor(r4, g4, b4);
       const durationWidth = this.pdf.getTextWidth(exp.duration) + 12;
       this.pdf.rect(this.pageWidth - this.margin - durationWidth, this.currentY - 8, durationWidth, 12, 'FD');
-      this.pdf.setTextColor(49, 130, 189);
+      this.pdf.setTextColor(r4, g4, b4);
       this.pdf.text(exp.duration, this.pageWidth - this.margin - durationWidth + 6, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 18;
@@ -259,10 +267,11 @@ export class TechnicalEngineeringPdfGenerator {
       this.pdf.setFont('helvetica', 'normal');
       
       // Small square bullet
-      this.pdf.setFillColor(49, 130, 189);
+      const [r5, g5, b5] = this.parseHSL(this.colors.primary);
+      this.pdf.setFillColor(r5, g5, b5);
       this.pdf.rect(leftMargin, this.currentY - 6, 6, 6, 'F');
       
-      this.pdf.setTextColor(49, 130, 189);
+      this.pdf.setTextColor(r5, g5, b5);
       this.pdf.text(exp.company, leftMargin + 12, this.currentY);
       this.pdf.setTextColor(0, 0, 0);
       this.currentY += 20;
@@ -276,9 +285,10 @@ export class TechnicalEngineeringPdfGenerator {
         // Technical arrow bullet
         this.pdf.setFontSize(8);
         this.pdf.setFont('courier', 'bold');
-        this.pdf.setFillColor(49, 130, 189, 0.3);
+        const [r6, g6, b6] = this.parseHSL(this.colors.primary);
+        this.pdf.setFillColor(r6, g6, b6, 0.3);
         this.pdf.rect(leftMargin + 5, this.currentY - 6, 12, 8, 'F');
-        this.pdf.setTextColor(49, 130, 189);
+        this.pdf.setTextColor(r6, g6, b6);
         this.pdf.text('▸', leftMargin + 7, this.currentY);
         this.pdf.setTextColor(0, 0, 0);
         
@@ -315,7 +325,8 @@ export class TechnicalEngineeringPdfGenerator {
       
       data.education.forEach(edu => {
         // Education item box
-        this.pdf.setDrawColor(49, 130, 189);
+        const [r, g, b] = this.parseHSL(this.colors.primary);
+        this.pdf.setDrawColor(r, g, b);
         this.pdf.setLineWidth(1);
         this.pdf.rect(leftCol, eduY - 15, colWidth, 45, 'S');
         
@@ -326,7 +337,8 @@ export class TechnicalEngineeringPdfGenerator {
         
         this.pdf.setFontSize(10);
         this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setTextColor(49, 130, 189);
+        const [r7, g7, b7] = this.parseHSL(this.colors.primary);
+        this.pdf.setTextColor(r7, g7, b7);
         this.pdf.text(edu.school, leftCol + 10, eduY);
         eduY += 12;
         
@@ -344,7 +356,8 @@ export class TechnicalEngineeringPdfGenerator {
       
       data.certifications!.forEach(cert => {
         // Certification item box
-        this.pdf.setDrawColor(49, 130, 189);
+        const [r, g, b] = this.parseHSL(this.colors.primary);
+        this.pdf.setDrawColor(r, g, b);
         this.pdf.setLineWidth(1);
         this.pdf.rect(rightCol, certY - 15, colWidth, 45, 'S');
         
@@ -355,7 +368,8 @@ export class TechnicalEngineeringPdfGenerator {
         
         this.pdf.setFontSize(10);
         this.pdf.setFont('helvetica', 'normal');
-        this.pdf.setTextColor(49, 130, 189);
+        const [r8, g8, b8] = this.parseHSL(this.colors.primary);
+        this.pdf.setTextColor(r8, g8, b8);
         this.pdf.text(cert.issuer, rightCol + 10, certY);
         certY += 12;
         
@@ -373,7 +387,8 @@ export class TechnicalEngineeringPdfGenerator {
     this.checkPageBreak(50);
     
     // Number badge
-    this.pdf.setFillColor(49, 130, 189);
+    const [r9, g9, b9] = this.parseHSL(this.colors.primary);
+    this.pdf.setFillColor(r9, g9, b9);
     this.pdf.circle(this.margin + 15, this.currentY, 12, 'F');
     
     this.pdf.setFontSize(10);
@@ -392,7 +407,8 @@ export class TechnicalEngineeringPdfGenerator {
 
   private addSmallSectionHeader(number: string, title: string, x: number): void {
     // Small number badge
-    this.pdf.setFillColor(49, 130, 189);
+    const [r10, g10, b10] = this.parseHSL(this.colors.primary);
+    this.pdf.setFillColor(r10, g10, b10);
     this.pdf.circle(x + 10, this.currentY, 10, 'F');
     
     this.pdf.setFontSize(8);
