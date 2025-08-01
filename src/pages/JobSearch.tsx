@@ -64,7 +64,7 @@ export const JobSearch: React.FC = () => {
     }
     return null;
   };
-  const updateURLParams = (filters: JobSearchFilters, jobId?: string | null) => {
+  const updateURLParams = (filters: JobSearchFilters) => {
     const newParams = new URLSearchParams();
     if (filters.query) newParams.set('q', filters.query);
     if (filters.location) newParams.set('location', filters.location);
@@ -72,7 +72,6 @@ export const JobSearch: React.FC = () => {
     if (filters.employmentType) newParams.set('type', filters.employmentType);
     if (filters.seniorityLevel) newParams.set('level', filters.seniorityLevel);
     if (filters.company) newParams.set('company', filters.company);
-    if (jobId) newParams.set('jobId', jobId);
     setSearchParams(newParams, {
       replace: true
     });
@@ -129,52 +128,18 @@ export const JobSearch: React.FC = () => {
           block: 'start'
         });
         setExpandedJobId(selectedJob.id);
-        // Update URL with jobId parameter
-        if (currentFilters) {
-          updateURLParams(currentFilters, `${selectedJob.source}_${selectedJob.id}`);
-        }
       }, 100);
     }
   };
 
-  const handleJobExpansion = (job: UnifiedJob, expanded: boolean) => {
-    const newExpandedId = expanded ? job.id : null;
-    setExpandedJobId(newExpandedId);
-    
-    // Update URL with jobId parameter
-    if (currentFilters) {
-      const jobId = expanded ? `${job.source}_${job.id}` : null;
-      updateURLParams(currentFilters, jobId);
-    }
-  };
-
-  // Restore state on component mount and handle jobId parameter
+  // Restore state on component mount
   useEffect(() => {
     const urlFilters = getFiltersFromURL();
-    const jobId = searchParams.get('jobId');
-    
     if (urlFilters) {
       setCurrentFilters(urlFilters);
-      handleSearch(urlFilters).then(() => {
-        // If jobId is present, expand that job after search completes
-        if (jobId) {
-          // Parse jobId format: "source_id"
-          const [source, id] = jobId.split('_', 2);
-          setTimeout(() => {
-            const jobElement = document.getElementById(`job-${id}`);
-            if (jobElement) {
-              jobElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-              });
-              setExpandedJobId(id);
-            }
-          }, 500); // Allow time for search results to render
-        }
-      });
+      handleSearch(urlFilters);
       return;
     }
-    
     const savedState = loadSearchState();
     if (savedState) {
       setCurrentFilters(savedState.filters);
@@ -184,21 +149,6 @@ export const JobSearch: React.FC = () => {
       setWarnings(savedState.warnings);
       setTotalJobs(savedState.jobs.length);
       updateURLParams(savedState.filters);
-      
-      // Handle jobId for saved state
-      if (jobId) {
-        const [source, id] = jobId.split('_', 2);
-        setTimeout(() => {
-          const jobElement = document.getElementById(`job-${id}`);
-          if (jobElement) {
-            jobElement.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start'
-            });
-            setExpandedJobId(id);
-          }
-        }, 100);
-      }
     }
   }, []);
   return <DashboardLayout fullHeight={true}>
@@ -271,7 +221,7 @@ export const JobSearch: React.FC = () => {
                   <CardContent className="py-12 text-center">
                     <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
-                    <p className="text-muted-foreground">
+                    <p className="text-neutral-950">
                       Use the filters on the left to find your perfect job opportunity
                     </p>
                   </CardContent>
@@ -290,7 +240,7 @@ export const JobSearch: React.FC = () => {
 
               {/* Job Results */}
               {allJobs.length > 0 && <div className="space-y-3">
-                  {allJobs.map((job, index) => <CompactJobCard key={`${job.id}-${index}`} job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => handleJobExpansion(job, expanded)} />)}
+                  {allJobs.map((job, index) => <CompactJobCard key={`${job.id}-${index}`} job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} />)}
                 </div>}
             </div>
           </div>
