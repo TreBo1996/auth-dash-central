@@ -31,6 +31,7 @@ export const JobSearch: React.FC = () => {
   const [currentFilters, setCurrentFilters] = useState<JobSearchFilters | null>(null);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [emailLinkLoading, setEmailLinkLoading] = useState(false);
   const {
     searchJobs,
     loading
@@ -316,17 +317,21 @@ export const JobSearch: React.FC = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const jobId = urlParams.get('jobId');
-    const autoExpand = urlParams.get('autoExpand');
+    const category = urlParams.get('category');
     
     // Handle direct job targeting from email links
-    if (jobId && autoExpand === 'true') {
-      console.log('Processing email link with jobId:', jobId);
+    if (jobId && category) {
+      console.log('Email link detected - setting loading state immediately');
+      setSearchPerformed(true);  // Prevent empty state message
+      setEmailLinkLoading(true);  // Show loading state for email link processing
+      console.log('Processing email link with jobId:', jobId, 'category:', category);
       
       // Validate jobId format
       if (!jobId.includes('_')) {
         console.error('Invalid jobId format. Expected: source_id, got:', jobId);
         setWarnings(['Invalid job link format. Please try searching manually.']);
         setSearchPerformed(true);
+        setEmailLinkLoading(false);
         return;
       }
       
@@ -337,6 +342,7 @@ export const JobSearch: React.FC = () => {
         console.error('Invalid jobId components:', { source, id });
         setWarnings(['Invalid job link. Please try searching manually.']);
         setSearchPerformed(true);
+        setEmailLinkLoading(false);
         return;
       }
       
@@ -344,6 +350,7 @@ export const JobSearch: React.FC = () => {
         console.error('Invalid job source:', source);
         setWarnings(['Unsupported job source. Please try searching manually.']);
         setSearchPerformed(true);
+        setEmailLinkLoading(false);
         return;
       }
       
@@ -367,6 +374,7 @@ export const JobSearch: React.FC = () => {
                 setTotalJobs(1);
                 setWarnings(['Found the specific job you were looking for!']);
                 setSearchPerformed(true);
+                setEmailLinkLoading(false);
                 
                 setTimeout(() => {
                   setExpandedJobId(id);
@@ -388,6 +396,7 @@ export const JobSearch: React.FC = () => {
               setTotalJobs(finalJobs.length);
               setWarnings([`Showing ${finalJobs.length} jobs in "${category}" category`]);
               setSearchPerformed(true);
+              setEmailLinkLoading(false);
               
               // Set filters to show the category search
               const searchFilters: JobSearchFilters = {
@@ -433,6 +442,7 @@ export const JobSearch: React.FC = () => {
               setTotalJobs(1);
               setWarnings(['Found the specific job you were looking for! (Category search failed)']);
               setSearchPerformed(true);
+              setEmailLinkLoading(false);
               
               setTimeout(() => {
                 setExpandedJobId(id);
@@ -447,11 +457,13 @@ export const JobSearch: React.FC = () => {
             console.error('Target job not found:', { source, id });
             setWarnings(['The job you were looking for is no longer available. It may have been removed or expired.']);
             setSearchPerformed(true);
+            setEmailLinkLoading(false);
           }
         }).catch(error => {
           console.error('Error fetching target job:', error);
           setWarnings(['Unable to load the requested job. There was a network error. Please try searching manually.']);
           setSearchPerformed(true);
+          setEmailLinkLoading(false);
         });
         
         return;
@@ -532,11 +544,11 @@ export const JobSearch: React.FC = () => {
                 </Alert>}
 
               {/* Loading State */}
-              {loading && <Card>
+              {(loading || emailLinkLoading) && <Card>
                   <CardContent className="py-8">
                     <div className="flex items-center justify-center">
                       <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                      <span>Searching for jobs...</span>
+                      <span>{emailLinkLoading ? 'Loading your job...' : 'Searching for jobs...'}</span>
                     </div>
                   </CardContent>
                 </Card>}
