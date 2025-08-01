@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Search, Briefcase, AlertTriangle } from 'lucide-react';
 import { UnifiedJob } from '@/types/job';
 import { useOptimizedJobSearch } from '@/hooks/useOptimizedJobSearch';
+import { supabase } from '@/integrations/supabase/client';
 interface JobSearchFilters {
   query: string;
   location: string;
@@ -91,6 +92,90 @@ export const JobSearch: React.FC = () => {
     }
     return null;
   };
+
+  // Function to fetch a specific job by ID
+  const fetchJobById = async (source: string, id: string): Promise<UnifiedJob | null> => {
+    try {
+      if (source === 'database') {
+        const { data, error } = await supabase
+          .from('cached_jobs')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error || !data) return null;
+        
+        return {
+          id: data.id,
+          title: data.title,
+          company: data.company,
+          location: data.location || '',
+          description: data.description || '',
+          salary: data.salary,
+          posted_at: data.posted_at || '',
+          job_url: data.job_url,
+          source: 'database',
+          via: data.via,
+          thumbnail: data.thumbnail,
+          job_type: data.job_type,
+          employment_type: data.employment_type,
+          experience_level: data.experience_level,
+          data_source: data.data_source,
+          apply_url: data.apply_url,
+          external_job_url: data.job_page_link
+        };
+      } else if (source === 'employer') {
+        const { data, error } = await supabase
+          .from('job_postings')
+          .select(`
+            *,
+            employer_profiles!inner (
+              company_name,
+              logo_url,
+              company_description,
+              industry,
+              company_size,
+              website
+            )
+          `)
+          .eq('id', id)
+          .eq('is_active', true)
+          .single();
+        
+        if (error || !data) return null;
+        
+        return {
+          id: data.id,
+          title: data.title,
+          company: data.employer_profiles.company_name,
+          location: data.location || '',
+          description: data.description,
+          salary: data.salary_min && data.salary_max 
+            ? `$${data.salary_min} - $${data.salary_max} ${data.salary_currency}`
+            : null,
+          posted_at: data.created_at,
+          job_url: `/job-posting/${data.id}`,
+          source: 'employer',
+          employer_profile: data.employer_profiles,
+          employment_type: data.employment_type,
+          experience_level: data.experience_level,
+          salary_min: data.salary_min,
+          salary_max: data.salary_max,
+          salary_currency: data.salary_currency,
+          requirements: data.requirements,
+          responsibilities: data.responsibilities,
+          benefits: data.benefits,
+          data_source: 'employer',
+          employer_job_posting_id: data.id
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching job by ID:', error);
+      return null;
+    }
+  };
   const handleSearch = async (searchFilters: JobSearchFilters) => {
     setCurrentFilters(searchFilters);
     setAllJobs([]);
@@ -144,28 +229,87 @@ export const JobSearch: React.FC = () => {
       const [source, id] = jobId.split('_');
       
       if ((source === 'database' || source === 'employer') && id) {
-        // Perform a broad search to include the target job and similar ones
-        const filters: JobSearchFilters = {
-          query: '',
-          location: '',
-          remoteType: '',
-          employmentType: '',
-          seniorityLevel: '',
-          company: '',
-          maxAge: 30
-        };
+        console.log('Fetching specific job:', { source, id });
         
-        // Perform the search and then expand the target job
-        handleSearch(filters).then(() => {
-          // After search completes, expand the target job
-          setTimeout(() => {
-            setExpandedJobId(id);
-            // Scroll to the job card - fix ID selector to match actual DOM ID
-            const jobElement = document.getElementById(`job-${id}`);
-            if (jobElement) {
-              jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // First, fetch the specific job by ID
+        fetchJobById(source, id).then(async (targetJob) => {
+          if (targetJob) {
+            console.log('Found target job:', targetJob.title);
+            
+            // Use the job's details to perform a targeted search for similar jobs
+            const searchFilters: JobSearchFilters = {
+              query: targetJob.title, // Search using the job title
+              location: targetJob.location, // Include location for better matching
+              remoteType: '',
+              employmentType: targetJob.employment_type || '',
+              seniorityLevel: '',
+              company: '',
+              maxAge: 30
+            };
+            
+            try {
+              const searchResult = await searchJobs(searchFilters, 0, 1000);
+              
+              // Ensure the target job is in the results
+              let finalJobs = searchResult.jobs;
+              const targetJobExists = finalJobs.some(job => job.id === targetJob.id);
+              
+              if (!targetJobExists) {
+                // Prepend the target job to the results if not found
+                finalJobs = [targetJob, ...finalJobs];
+                console.log('Added target job to results');
+              }
+              
+              setAllJobs(finalJobs);
+              setMiniJobs(finalJobs);
+              setTotalJobs(finalJobs.length);
+              setWarnings(searchResult.warnings);
+              setSearchPerformed(true);
+              setCurrentFilters(searchFilters);
+              
+              // Save state and update URL
+              saveSearchState(searchFilters, finalJobs, true, searchResult.warnings);
+              updateURLParams(searchFilters);
+              
+              // Expand and scroll to the target job
+              setTimeout(() => {
+                setExpandedJobId(id);
+                const jobElement = document.getElementById(`job-${id}`);
+                if (jobElement) {
+                  jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  console.log('Scrolled to target job');
+                } else {
+                  console.error('Could not find job element with ID:', `job-${id}`);
+                }
+              }, 500);
+              
+            } catch (error) {
+              console.error('Search error for target job:', error);
+              // Fallback: just show the target job
+              setAllJobs([targetJob]);
+              setMiniJobs([targetJob]);
+              setTotalJobs(1);
+              setWarnings(['Found the job you were looking for!']);
+              setSearchPerformed(true);
+              
+              setTimeout(() => {
+                setExpandedJobId(id);
+                const jobElement = document.getElementById(`job-${id}`);
+                if (jobElement) {
+                  jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }, 500);
             }
-          }, 500);
+          } else {
+            console.error('Target job not found:', { source, id });
+            // Show error message to user
+            setWarnings(['The job you were looking for is no longer available.']);
+            setSearchPerformed(true);
+          }
+        }).catch(error => {
+          console.error('Error fetching target job:', error);
+          setWarnings(['Unable to load the requested job. Please try searching manually.']);
+          setSearchPerformed(true);
         });
         
         return;
