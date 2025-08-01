@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, parseJobDescriptionForFormatting } from '@/lib/utils';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
 import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
 import { useApplyTracking } from '@/hooks/useApplyTracking';
@@ -676,7 +676,43 @@ const JobDetail: React.FC = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="prose max-w-none">
-                    <p className="whitespace-pre-wrap">{job.description}</p>
+                    <div className="space-y-2">
+                      {parseJobDescriptionForFormatting(job.description).map((line, index) => {
+                        if (!line.content.trim()) {
+                          return <br key={`br-${index}`} />;
+                        }
+                        
+                        if (line.isHeader) {
+                          return (
+                            <h3 key={`header-${index}`} className="font-semibold text-foreground mt-6 mb-3 first:mt-0 text-lg">
+                              {line.content}
+                            </h3>
+                          );
+                        }
+                        
+                        if (line.hasBoldText && line.boldParts) {
+                          return (
+                            <p key={`line-${index}`} className="mb-3 leading-relaxed">
+                              {line.boldParts.map((part, partIndex) => (
+                                part.isBold ? (
+                                  <strong key={partIndex} className="font-semibold text-foreground">
+                                    {part.text}
+                                  </strong>
+                                ) : (
+                                  <span key={partIndex}>{part.text}</span>
+                                )
+                              ))}
+                            </p>
+                          );
+                        }
+                        
+                        return (
+                          <p key={`line-${index}`} className="mb-3 leading-relaxed text-muted-foreground">
+                            {line.content}
+                          </p>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Structured sections for employer jobs */}

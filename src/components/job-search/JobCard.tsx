@@ -8,7 +8,7 @@ import { MapPin, Building, DollarSign, Clock, ExternalLink, Save, Check, Chevron
 import { Link, useNavigate } from 'react-router-dom';
 import { UnifiedJob } from '@/types/job';
 import { ExternalJobApplicationModal } from '../job-application/ExternalJobApplicationModal';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, parseJobDescriptionForFormatting } from '@/lib/utils';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 interface JobCardProps {
@@ -165,12 +165,42 @@ export const JobCard: React.FC<JobCardProps> = ({
     setExpanded(!expanded);
   };
   const formatTextWithBreaks = (text: string) => {
-    return text.split('\n').map((line, index) => (
-      <span key={index}>
-        {line}
-        {index < text.split('\n').length - 1 && <br />}
-      </span>
-    ));
+    const formattedLines = parseJobDescriptionForFormatting(text);
+    return formattedLines.map((line, index) => {
+      if (!line.content.trim()) {
+        return <br key={`br-${index}`} />;
+      }
+      
+      if (line.isHeader) {
+        return (
+          <span key={`header-${index}`} className="font-semibold text-foreground block mt-4 mb-2">
+            {line.content}
+          </span>
+        );
+      }
+      
+      if (line.hasBoldText && line.boldParts) {
+        return (
+          <span key={`line-${index}`} className="block mb-2">
+            {line.boldParts.map((part, partIndex) => (
+              part.isBold ? (
+                <strong key={partIndex} className="font-semibold text-foreground">
+                  {part.text}
+                </strong>
+              ) : (
+                <span key={partIndex}>{part.text}</span>
+              )
+            ))}
+          </span>
+        );
+      }
+      
+      return (
+        <span key={`line-${index}`} className="block mb-2">
+          {line.content}
+        </span>
+      );
+    });
   };
   const parseStructuredData = (jsonString: string | string[] | undefined) => {
     if (!jsonString) return [];

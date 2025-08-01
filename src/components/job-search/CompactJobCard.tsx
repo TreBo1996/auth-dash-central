@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MapPin, Building, DollarSign, Clock, Save, Check, Briefcase, ExternalLink, Share2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { UnifiedJob } from '@/types/job';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, parseJobDescriptionForFormatting } from '@/lib/utils';
 import { useFeatureUsage } from '@/hooks/useFeatureUsage';
 import { PaymentModal } from '@/components/subscription/PaymentModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -142,10 +142,42 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
   };
 
   const formatDescription = (text: string) => {
-    // Format job description with line breaks
-    return text.split('\n').map((line, index) => (
-      <p key={index} className="mb-2 last:mb-0">{line}</p>
-    ));
+    const formattedLines = parseJobDescriptionForFormatting(text);
+    return formattedLines.map((line, index) => {
+      if (!line.content.trim()) {
+        return <br key={`br-${index}`} />;
+      }
+      
+      if (line.isHeader) {
+        return (
+          <p key={`header-${index}`} className="font-semibold text-foreground mb-2 mt-3 first:mt-0">
+            {line.content}
+          </p>
+        );
+      }
+      
+      if (line.hasBoldText && line.boldParts) {
+        return (
+          <p key={`line-${index}`} className="mb-2 last:mb-0">
+            {line.boldParts.map((part, partIndex) => (
+              part.isBold ? (
+                <strong key={partIndex} className="font-semibold text-foreground">
+                  {part.text}
+                </strong>
+              ) : (
+                <span key={partIndex}>{part.text}</span>
+              )
+            ))}
+          </p>
+        );
+      }
+      
+      return (
+        <p key={`line-${index}`} className="mb-2 last:mb-0">
+          {line.content}
+        </p>
+      );
+    });
   };
 
   return (
