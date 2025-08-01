@@ -394,7 +394,7 @@ export const JobSearch: React.FC = () => {
               setAllJobs(finalJobs);
               setMiniJobs(finalJobs);
               setTotalJobs(finalJobs.length);
-              setWarnings([`Showing ${finalJobs.length} jobs in "${category}" category`]);
+              setWarnings([`Showing ${finalJobs.length} Similar Jobs`]);
               setSearchPerformed(true);
               setEmailLinkLoading(false);
               
@@ -411,7 +411,7 @@ export const JobSearch: React.FC = () => {
               setCurrentFilters(searchFilters);
               
               // Save state and update URL
-              saveSearchState(searchFilters, finalJobs, true, [`Showing jobs in category: ${category}`]);
+              saveSearchState(searchFilters, finalJobs, true, [`Showing Similar Jobs`]);
               updateURLParams(searchFilters);
               
               // Expand and scroll to the target job
