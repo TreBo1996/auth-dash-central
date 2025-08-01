@@ -93,8 +93,8 @@ export const JobSearch: React.FC = () => {
     return null;
   };
 
-  // Function to fetch a specific job by ID
-  const fetchJobById = async (source: string, id: string): Promise<UnifiedJob | null> => {
+  // Function to fetch a specific job by ID and get its recommendation category
+  const fetchJobById = async (source: string, id: string): Promise<{job: UnifiedJob, category: string} | null> => {
     try {
       if (source === 'database') {
         const { data, error } = await supabase
@@ -105,7 +105,7 @@ export const JobSearch: React.FC = () => {
         
         if (error || !data) return null;
         
-        return {
+        const job: UnifiedJob = {
           id: data.id,
           title: data.title,
           company: data.company,
@@ -123,6 +123,11 @@ export const JobSearch: React.FC = () => {
           data_source: data.data_source,
           apply_url: data.apply_url,
           external_job_url: data.job_page_link
+        };
+        
+        return {
+          job,
+          category: data.job_recommendation_category || 'Other'
         };
       } else if (source === 'employer') {
         const { data, error } = await supabase
@@ -144,7 +149,7 @@ export const JobSearch: React.FC = () => {
         
         if (error || !data) return null;
         
-        return {
+        const job: UnifiedJob = {
           id: data.id,
           title: data.title,
           company: data.employer_profiles.company_name,
@@ -168,12 +173,82 @@ export const JobSearch: React.FC = () => {
           data_source: 'employer',
           employer_job_posting_id: data.id
         };
+        
+        // For employer jobs, categorize based on title
+        const category = await categorizeJobTitle(data.title);
+        
+        return {
+          job,
+          category: category || 'Other'
+        };
       }
       
       return null;
     } catch (error) {
       console.error('Error fetching job by ID:', error);
       return null;
+    }
+  };
+
+  // Function to categorize job title (simple version)
+  const categorizeJobTitle = async (title: string): Promise<string> => {
+    const normalized = title.toLowerCase();
+    
+    if (normalized.includes('software') || normalized.includes('developer') || normalized.includes('engineer')) {
+      return 'Technology';
+    } else if (normalized.includes('manager') || normalized.includes('director') || normalized.includes('lead')) {
+      return 'Management';
+    } else if (normalized.includes('marketing') || normalized.includes('sales')) {
+      return 'Sales & Marketing';
+    } else if (normalized.includes('data') || normalized.includes('analyst')) {
+      return 'Data & Analytics';
+    } else if (normalized.includes('design') || normalized.includes('creative')) {
+      return 'Design & Creative';
+    }
+    
+    return 'Other';
+  };
+
+  // Function to search jobs by recommendation category
+  const searchJobsByCategory = async (category: string): Promise<UnifiedJob[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('cached_jobs')
+        .select('*')
+        .eq('job_recommendation_category', category)
+        .eq('is_expired', false)
+        .is('archived_at', null)
+        .gte('quality_score', 3)
+        .order('quality_score', { ascending: false })
+        .limit(50);
+      
+      if (error) {
+        console.error('Error searching jobs by category:', error);
+        return [];
+      }
+      
+      return (data || []).map(job => ({
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        location: job.location || '',
+        description: job.description || '',
+        salary: job.salary,
+        posted_at: job.posted_at || '',
+        job_url: job.job_url,
+        source: 'database',
+        via: job.via,
+        thumbnail: job.thumbnail,
+        job_type: job.job_type,
+        employment_type: job.employment_type,
+        experience_level: job.experience_level,
+        data_source: job.data_source,
+        apply_url: job.apply_url,
+        external_job_url: job.job_page_link
+      }));
+    } catch (error) {
+      console.error('Error in searchJobsByCategory:', error);
+      return [];
     }
   };
   const handleSearch = async (searchFilters: JobSearchFilters) => {
@@ -225,50 +300,50 @@ export const JobSearch: React.FC = () => {
     
     // Handle direct job targeting from email links
     if (jobId && autoExpand === 'true') {
+      console.log('Processing email link with jobId:', jobId);
+      setSearchPerformed(true); // Set immediately to show loading instead of empty state
+      
       // Extract source and id from jobId format: "source_id"
       const [source, id] = jobId.split('_');
       
       if ((source === 'database' || source === 'employer') && id) {
         console.log('Fetching specific job:', { source, id });
         
-        // First, fetch the specific job by ID
-        fetchJobById(source, id).then(async (targetJob) => {
-          if (targetJob) {
-            console.log('Found target job:', targetJob.title);
-            
-            // Use the job's details to perform a targeted search for similar jobs
-            const searchFilters: JobSearchFilters = {
-              query: targetJob.title, // Search using the job title
-              location: targetJob.location, // Include location for better matching
-              remoteType: '',
-              employmentType: targetJob.employment_type || '',
-              seniorityLevel: '',
-              company: '',
-              maxAge: 30
-            };
+        // Fetch the specific job and its recommendation category
+        fetchJobById(source, id).then(async (result) => {
+          if (result) {
+            const { job: targetJob, category } = result;
+            console.log('Found target job:', targetJob.title, 'in category:', category);
             
             try {
-              const searchResult = await searchJobs(searchFilters, 0, 1000);
+              // Search for all jobs in the same recommendation category
+              const categoryJobs = await searchJobsByCategory(category);
+              console.log(`Found ${categoryJobs.length} jobs in category: ${category}`);
               
-              // Ensure the target job is in the results
-              let finalJobs = searchResult.jobs;
-              const targetJobExists = finalJobs.some(job => job.id === targetJob.id);
-              
-              if (!targetJobExists) {
-                // Prepend the target job to the results if not found
-                finalJobs = [targetJob, ...finalJobs];
-                console.log('Added target job to results');
-              }
+              // Ensure the target job is first in the results
+              let finalJobs = categoryJobs.filter(job => job.id !== targetJob.id);
+              finalJobs = [targetJob, ...finalJobs];
               
               setAllJobs(finalJobs);
               setMiniJobs(finalJobs);
               setTotalJobs(finalJobs.length);
-              setWarnings(searchResult.warnings);
+              setWarnings([`Showing jobs in category: ${category}`]);
               setSearchPerformed(true);
+              
+              // Set filters to show the category search
+              const searchFilters: JobSearchFilters = {
+                query: category,
+                location: '',
+                remoteType: '',
+                employmentType: '',
+                seniorityLevel: '',
+                company: '',
+                maxAge: 30
+              };
               setCurrentFilters(searchFilters);
               
               // Save state and update URL
-              saveSearchState(searchFilters, finalJobs, true, searchResult.warnings);
+              saveSearchState(searchFilters, finalJobs, true, [`Showing jobs in category: ${category}`]);
               updateURLParams(searchFilters);
               
               // Expand and scroll to the target job
@@ -284,7 +359,7 @@ export const JobSearch: React.FC = () => {
               }, 500);
               
             } catch (error) {
-              console.error('Search error for target job:', error);
+              console.error('Error searching jobs by category:', error);
               // Fallback: just show the target job
               setAllJobs([targetJob]);
               setMiniJobs([targetJob]);
@@ -302,7 +377,6 @@ export const JobSearch: React.FC = () => {
             }
           } else {
             console.error('Target job not found:', { source, id });
-            // Show error message to user
             setWarnings(['The job you were looking for is no longer available.']);
             setSearchPerformed(true);
           }
