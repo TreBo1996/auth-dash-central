@@ -57,6 +57,12 @@ const Auth: React.FC = () => {
     if (user) {
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
+      } else if (fromParam) {
+        // If there's a from parameter, redirect back with autoApply
+        const redirectUrl = fromParam.includes('?') 
+          ? `${fromParam}&autoApply=true`
+          : `${fromParam}?autoApply=true`;
+        navigate(redirectUrl);
       } else {
         navigate('/dashboard');
       }
@@ -182,6 +188,12 @@ const Auth: React.FC = () => {
       
       if (redirectParam === 'upload-resume') {
         navigate('/upload-resume');
+      } else if (fromParam) {
+        // If there's a from parameter, redirect back with autoApply
+        const redirectUrl = fromParam.includes('?') 
+          ? `${fromParam}&autoApply=true`
+          : `${fromParam}?autoApply=true`;
+        navigate(redirectUrl);
       } else {
         navigate('/job-hub');
       }

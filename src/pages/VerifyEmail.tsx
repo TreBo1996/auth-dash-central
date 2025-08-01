@@ -37,7 +37,11 @@ const VerifyEmail: React.FC = () => {
         // Redirect to original page or continue with onboarding
         setTimeout(() => {
           if (fromParam) {
-            navigate(fromParam);
+            // Add autoApply parameter to trigger application flow
+            const redirectUrl = fromParam.includes('?') 
+              ? `${fromParam}&autoApply=true`
+              : `${fromParam}?autoApply=true`;
+            navigate(redirectUrl);
           } else {
             // Let ProtectedRoute handle the role selection flow
             navigate('/job-hub');
@@ -62,7 +66,11 @@ const VerifyEmail: React.FC = () => {
 
           setTimeout(() => {
             if (fromParam) {
-              navigate(fromParam);
+              // Add autoApply parameter to trigger application flow
+              const redirectUrl = fromParam.includes('?') 
+                ? `${fromParam}&autoApply=true`
+                : `${fromParam}?autoApply=true`;
+              navigate(redirectUrl);
             } else {
               navigate('/job-hub');
             }

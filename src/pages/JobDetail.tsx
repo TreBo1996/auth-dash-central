@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toTitleCase, parseJobDescriptionForFormatting } from '@/lib/utils';
 import { JobApplicationModal } from '@/components/job-application/JobApplicationModal';
 import { JobApplicationModalNoResume } from '@/components/job-application/JobApplicationModalNoResume';
+import { AuthRequiredModal } from '@/components/auth/AuthRequiredModal';
 import { useApplyTracking } from '@/hooks/useApplyTracking';
 import { ApplyCounter } from '@/components/ApplyCounter';
 
@@ -69,6 +70,7 @@ const JobDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showNoResumeModal, setShowNoResumeModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -265,12 +267,7 @@ const JobDetail: React.FC = () => {
     }
 
     if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to apply for this job",
-        variant: "destructive"
-      });
-      navigate(`/auth?from=${encodeURIComponent(window.location.pathname)}`);
+      setShowAuthModal(true);
       return;
     }
 
@@ -901,6 +898,13 @@ const JobDetail: React.FC = () => {
           onApplicationSubmitted={handleApplicationSubmitted}
         />
       )}
+
+      <AuthRequiredModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        jobTitle={job?.title}
+        companyName={job?.company}
+      />
     </div>
   );
 };
