@@ -219,8 +219,9 @@ export class MinimalistExecutivePdfGenerator {
         lines.forEach((line: string, lineIndex: number) => {
           const x = lineIndex === 0 ? this.margin + 16 : this.margin + 16;
           this.pdf.text(line, x, this.currentY);
-          this.currentY += 14;
+          this.currentY += 16;
         });
+        this.currentY += 3; // Small gap between bullets
       });
 
       if (index < data.experience.length - 1) this.currentY += 15;
