@@ -95,15 +95,24 @@ export const JobSearch: React.FC = () => {
 
   // Function to fetch a specific job by ID and get its recommendation category
   const fetchJobById = async (source: string, id: string): Promise<{job: UnifiedJob, category: string} | null> => {
+    console.log(`fetchJobById: Attempting to fetch ${source} job with ID: ${id}`);
     try {
       if (source === 'database') {
         const { data, error } = await supabase
           .from('cached_jobs')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
         
-        if (error || !data) return null;
+        if (error) {
+          console.error('Database error fetching job:', error);
+          return null;
+        }
+        
+        if (!data) {
+          console.warn(`No job found in database with ID: ${id}`);
+          return null;
+        }
         
         const job: UnifiedJob = {
           id: data.id,
@@ -145,9 +154,17 @@ export const JobSearch: React.FC = () => {
           `)
           .eq('id', id)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
         
-        if (error || !data) return null;
+        if (error) {
+          console.error('Database error fetching employer job:', error);
+          return null;
+        }
+        
+        if (!data) {
+          console.warn(`No active employer job found with ID: ${id}`);
+          return null;
+        }
         
         const job: UnifiedJob = {
           id: data.id,
@@ -211,6 +228,7 @@ export const JobSearch: React.FC = () => {
 
   // Function to search jobs by recommendation category
   const searchJobsByCategory = async (category: string): Promise<UnifiedJob[]> => {
+    console.log(`searchJobsByCategory: Searching for jobs in category: ${category}`);
     try {
       const { data, error } = await supabase
         .from('cached_jobs')
@@ -226,6 +244,8 @@ export const JobSearch: React.FC = () => {
         console.error('Error searching jobs by category:', error);
         return [];
       }
+      
+      console.log(`Found ${data?.length || 0} jobs in category: ${category}`);
       
       return (data || []).map(job => ({
         id: job.id,
@@ -301,13 +321,33 @@ export const JobSearch: React.FC = () => {
     // Handle direct job targeting from email links
     if (jobId && autoExpand === 'true') {
       console.log('Processing email link with jobId:', jobId);
-      setSearchPerformed(true); // Set immediately to show loading instead of empty state
+      
+      // Validate jobId format
+      if (!jobId.includes('_')) {
+        console.error('Invalid jobId format. Expected: source_id, got:', jobId);
+        setWarnings(['Invalid job link format. Please try searching manually.']);
+        setSearchPerformed(true);
+        return;
+      }
       
       // Extract source and id from jobId format: "source_id"
-      const [source, id] = jobId.split('_');
+      const [source, id] = jobId.split('_', 2);
       
-      if ((source === 'database' || source === 'employer') && id) {
-        console.log('Fetching specific job:', { source, id });
+      if (!source || !id) {
+        console.error('Invalid jobId components:', { source, id });
+        setWarnings(['Invalid job link. Please try searching manually.']);
+        setSearchPerformed(true);
+        return;
+      }
+      
+      if (source !== 'database' && source !== 'employer') {
+        console.error('Invalid job source:', source);
+        setWarnings(['Unsupported job source. Please try searching manually.']);
+        setSearchPerformed(true);
+        return;
+      }
+      
+      console.log('Processing valid email link:', { source, id });
         
         // Fetch the specific job and its recommendation category
         fetchJobById(source, id).then(async (result) => {
@@ -318,7 +358,26 @@ export const JobSearch: React.FC = () => {
             try {
               // Search for all jobs in the same recommendation category
               const categoryJobs = await searchJobsByCategory(category);
-              console.log(`Found ${categoryJobs.length} jobs in category: ${category}`);
+              
+              if (categoryJobs.length === 0) {
+                console.warn(`No jobs found in category: ${category}, falling back to single job`);
+                // Fallback: just show the target job
+                setAllJobs([targetJob]);
+                setMiniJobs([targetJob]);
+                setTotalJobs(1);
+                setWarnings(['Found the specific job you were looking for!']);
+                setSearchPerformed(true);
+                
+                setTimeout(() => {
+                  setExpandedJobId(id);
+                  const jobElement = document.getElementById(`job-${id}`);
+                  if (jobElement) {
+                    jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    console.log('Scrolled to single target job');
+                  }
+                }, 500);
+                return;
+              }
               
               // Ensure the target job is first in the results
               let finalJobs = categoryJobs.filter(job => job.id !== targetJob.id);
@@ -327,7 +386,7 @@ export const JobSearch: React.FC = () => {
               setAllJobs(finalJobs);
               setMiniJobs(finalJobs);
               setTotalJobs(finalJobs.length);
-              setWarnings([`Showing jobs in category: ${category}`]);
+              setWarnings([`Showing ${finalJobs.length} jobs in "${category}" category`]);
               setSearchPerformed(true);
               
               // Set filters to show the category search
@@ -352,11 +411,19 @@ export const JobSearch: React.FC = () => {
                 const jobElement = document.getElementById(`job-${id}`);
                 if (jobElement) {
                   jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  console.log('Scrolled to target job');
+                  console.log('Scrolled to target job in category results');
                 } else {
                   console.error('Could not find job element with ID:', `job-${id}`);
+                  // Retry after a longer delay
+                  setTimeout(() => {
+                    const retryElement = document.getElementById(`job-${id}`);
+                    if (retryElement) {
+                      retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      console.log('Retry scroll successful');
+                    }
+                  }, 1000);
                 }
-              }, 500);
+              }, 1000);
               
             } catch (error) {
               console.error('Error searching jobs by category:', error);
@@ -364,7 +431,7 @@ export const JobSearch: React.FC = () => {
               setAllJobs([targetJob]);
               setMiniJobs([targetJob]);
               setTotalJobs(1);
-              setWarnings(['Found the job you were looking for!']);
+              setWarnings(['Found the specific job you were looking for! (Category search failed)']);
               setSearchPerformed(true);
               
               setTimeout(() => {
@@ -372,22 +439,22 @@ export const JobSearch: React.FC = () => {
                 const jobElement = document.getElementById(`job-${id}`);
                 if (jobElement) {
                   jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  console.log('Fallback scroll successful');
                 }
               }, 500);
             }
           } else {
             console.error('Target job not found:', { source, id });
-            setWarnings(['The job you were looking for is no longer available.']);
+            setWarnings(['The job you were looking for is no longer available. It may have been removed or expired.']);
             setSearchPerformed(true);
           }
         }).catch(error => {
           console.error('Error fetching target job:', error);
-          setWarnings(['Unable to load the requested job. Please try searching manually.']);
+          setWarnings(['Unable to load the requested job. There was a network error. Please try searching manually.']);
           setSearchPerformed(true);
         });
         
         return;
-      }
     }
     
     const urlFilters = getFiltersFromURL();
@@ -407,7 +474,9 @@ export const JobSearch: React.FC = () => {
       updateURLParams(savedState.filters);
     }
   }, []);
-  return <DashboardLayout fullHeight={true}>
+
+  return (
+    <DashboardLayout fullHeight={true}>
       <div className="h-screen overflow-hidden px-[10px]">
         {/* Header Section */}
         <div className="flex-shrink-0 mb-6">
@@ -509,5 +578,6 @@ export const JobSearch: React.FC = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>;
+    </DashboardLayout>
+  );
 };
