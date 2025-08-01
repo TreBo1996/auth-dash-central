@@ -317,14 +317,14 @@ export const JobSearch: React.FC = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const jobId = urlParams.get('jobId');
-    const category = urlParams.get('category');
+    const autoExpand = urlParams.get('autoExpand');
     
     // Handle direct job targeting from email links
-    if (jobId && category) {
+    if (jobId && autoExpand === 'true') {
       console.log('Email link detected - setting loading state immediately');
       setSearchPerformed(true);  // Prevent empty state message
       setEmailLinkLoading(true);  // Show loading state for email link processing
-      console.log('Processing email link with jobId:', jobId, 'category:', category);
+      console.log('Processing email link with jobId:', jobId);
       
       // Validate jobId format
       if (!jobId.includes('_')) {
@@ -356,11 +356,11 @@ export const JobSearch: React.FC = () => {
       
       console.log('Processing valid email link:', { source, id });
         
-        // Fetch the specific job and its recommendation category
-        fetchJobById(source, id).then(async (result) => {
-          if (result) {
-            const { job: targetJob, category } = result;
-            console.log('Found target job:', targetJob.title, 'in category:', category);
+      // Fetch the specific job first, then get its category and search for similar jobs
+      fetchJobById(source, id).then(async (result) => {
+        if (result) {
+          const { job: targetJob, category } = result;
+          console.log('Found target job:', targetJob.title, 'in category:', category);
             
             try {
               // Search for all jobs in the same recommendation category
