@@ -511,10 +511,10 @@ export const JobSearch: React.FC = () => {
                   <h3 className="text-sm font-medium text-stone-950">Quick Jobs</h3>
                 </div>
                 <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
-                  {miniJobs.map((job, index) => <div key={`mini-${job.id}-${index}`}>
+                   {miniJobs.map((job, index) => <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
-                      {/* Responsive square ad at positions 10 and 21 (at least 10 jobs apart) */}
-                      {(index + 1 === 10 || index + 1 === 21) && <div className="mt-3">
+                      {/* Responsive square ad every 5 jobs */}
+                      {(index + 1) % 5 === 0 && <div className="mt-3">
                           <GoogleAd adSlot="6228224703" adFormat="auto" className="w-full" style={{
                     minHeight: '120px'
                   }} />
@@ -577,7 +577,19 @@ export const JobSearch: React.FC = () => {
 
               {/* Job Results */}
               {allJobs.length > 0 && <div className="space-y-3">
-                  {allJobs.map((job, index) => <CompactJobCard key={`${job.id}-${index}`} job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} />)}
+                  {allJobs.map((job, index) => (
+                    <div key={`${job.id}-${index}`}>
+                      <CompactJobCard job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} />
+                      {/* In-feed ad every 5 jobs */}
+                      {(index + 1) % 5 === 0 && index < allJobs.length - 1 && (
+                        <div className="mt-3">
+                          <GoogleAd adSlot="1737766610" adFormat="auto" className="w-full" style={{
+                            minHeight: '120px'
+                          }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>}
             </div>
           </div>
