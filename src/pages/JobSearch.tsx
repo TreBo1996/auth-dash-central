@@ -514,7 +514,7 @@ export const JobSearch: React.FC = () => {
                   {miniJobs.map((job, index) => <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
                       {/* Responsive square ad at positions 10 and 21 (at least 10 jobs apart) */}
-                      {(index + 1 === 10 || index + 1 === 21) && <div className="mt-3">
+                      {(index + 1) % 3 === 0 && <div className="mt-3">
                           <GoogleAd adSlot="6228224703" adFormat="auto" className="w-full" style={{
                     minHeight: '120px'
                   }} />
@@ -577,7 +577,20 @@ export const JobSearch: React.FC = () => {
 
               {/* Job Results */}
               {allJobs.length > 0 && <div className="space-y-3">
-                  {allJobs.map((job, index) => <CompactJobCard key={`${job.id}-${index}`} job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} />)}
+                  {allJobs.map((job, index) => (
+                    <div key={`main-${job.id}-${index}`}>
+                      <CompactJobCard job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} />
+                      {(index + 1) % 5 === 0 && (
+                        <div className="my-6">
+                          <GoogleAd 
+                            adSlot="8234567890"
+                            adFormat="auto"
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>}
             </div>
           </div>
