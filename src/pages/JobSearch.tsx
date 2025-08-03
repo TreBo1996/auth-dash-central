@@ -490,35 +490,41 @@ export const JobSearch: React.FC = () => {
 
   return (
     <DashboardLayout fullHeight={true}>
-      <div className="h-full flex flex-col px-[10px]">
+      <div className="h-full px-[10px]">
         {/* Header Section */}
-        <div className="flex-shrink-0 mb-6">
+        <div className="py-6">
           <h1 className="text-2xl font-bold mb-2">Find Your Next Job</h1>
           <p className="text-muted-foreground">Search from thousands of curated job opportunities</p>
         </div>
 
-        {/* Three Column Flexbox Layout */}
-        <div className="flex flex-1 min-h-0 gap-6 flex-col lg:flex-row">
+        {/* CSS Grid Three Column Layout */}
+        <div 
+          className="grid gap-6 h-[calc(100%-120px)]"
+          style={{
+            gridTemplateColumns: '320px 1fr 320px',
+            gridTemplateRows: '1fr'
+          }}
+        >
           {/* Left Column - Filters & Quick Jobs */}
-          <div className="flex flex-col min-h-0 lg:w-80 lg:flex-shrink-0">
-            {/* Search Filters - Fixed */}
-            <div className="flex-shrink-0 mb-4">
+          <div className="grid grid-rows-[auto_1fr] gap-4 overflow-hidden">
+            {/* Search Filters */}
+            <div>
               <CollapsibleFilters onSearch={handleSearch} loading={loading} filters={currentFilters || undefined} />
             </div>
             
             {/* Quick Jobs - Scrollable */}
             {miniJobs.length > 0 && (
-              <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex-shrink-0 mb-3">
+              <div className="grid grid-rows-[auto_1fr] gap-3 overflow-hidden">
+                <div>
                   <h3 className="text-sm font-medium text-stone-950">Quick Jobs</h3>
                 </div>
-                <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
+                <div className="overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
                   {miniJobs.map((job, index) => (
                     <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
                       {/* Responsive square ad every 5 jobs */}
                       {(index + 1) % 5 === 0 && (
-                        <div className="mt-3 flex-shrink-0">
+                        <div className="mt-3">
                           <GoogleAd 
                             adSlot="6228224703" 
                             adFormat="auto" 
@@ -535,10 +541,10 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Center Column - Main Job Results */}
-          <div className="flex flex-col flex-1 min-h-0">
-            {/* Results Header - Fixed */}
+          <div className="grid grid-rows-[auto_1fr] gap-4 overflow-hidden">
+            {/* Results Header */}
             {searchPerformed && !loading && (
-              <div className="flex-shrink-0 mb-4">
+              <div>
                 <h2 className="text-lg font-semibold">
                   {`Showing ${allJobs.length} of ${totalJobs} job${totalJobs !== 1 ? 's' : ''}`}
                 </h2>
@@ -546,68 +552,60 @@ export const JobSearch: React.FC = () => {
             )}
             
             {/* Job Results - Scrollable */}
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
+            <div className="overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
               {/* Warnings */}
               {warnings.length > 0 && (
-                <div className="flex-shrink-0">
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      {warnings.join('. ')}
-                    </AlertDescription>
-                  </Alert>
-                </div>
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {warnings.join('. ')}
+                  </AlertDescription>
+                </Alert>
               )}
 
               {/* Loading State */}
               {(loading || emailLinkLoading) && (
-                <div className="flex-shrink-0">
-                  <Card>
-                    <CardContent className="py-8">
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                        <span>{emailLinkLoading ? 'Loading your job...' : 'Searching for jobs...'}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <Card>
+                  <CardContent className="py-8">
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                      <span>{emailLinkLoading ? 'Loading your job...' : 'Searching for jobs...'}</span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Initial State */}
               {!searchPerformed && !loading && (
-                <div className="flex-shrink-0">
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
-                      <p className="text-neutral-950">
-                        Use the filters on the left to find your perfect job opportunity
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
+                    <p className="text-neutral-950">
+                      Use the filters on the left to find your perfect job opportunity
+                    </p>
+                  </CardContent>
+                </Card>
               )}
 
               {/* No Results */}
               {searchPerformed && allJobs.length === 0 && !loading && (
-                <div className="flex-shrink-0">
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
-                      <p className="text-muted-foreground">
-                        Try adjusting your search criteria or explore different keywords
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your search criteria or explore different keywords
+                    </p>
+                  </CardContent>
+                </Card>
               )}
 
               {/* Job Results */}
               {allJobs.length > 0 && (
                 <div className="space-y-3">
                   {allJobs.map((job, index) => (
-                    <div key={`${job.id}-${index}`} className="flex-shrink-0">
+                    <div key={`${job.id}-${index}`}>
                       <CompactJobCard 
                         job={job} 
                         id={`job-${job.id}`} 
@@ -616,7 +614,7 @@ export const JobSearch: React.FC = () => {
                       />
                       {/* In-feed ad every 5 jobs */}
                       {(index + 1) % 5 === 0 && index < allJobs.length - 1 && (
-                        <div className="mt-3 flex-shrink-0">
+                        <div className="mt-3">
                           <GoogleAd 
                             adSlot="1737766610" 
                             adFormat="auto" 
@@ -633,10 +631,94 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Right Column - Ads Sidebar */}
-          <div className="hidden lg:flex flex-col min-h-0 lg:w-80 lg:flex-shrink-0">
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="overflow-hidden">
+            <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <AdSidebar />
             </div>
+          </div>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="lg:hidden space-y-6">
+          {/* Search Filters */}
+          <CollapsibleFilters onSearch={handleSearch} loading={loading} filters={currentFilters || undefined} />
+          
+          {/* Job Results */}
+          <div className="space-y-4">
+            {/* Warnings */}
+            {warnings.length > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  {warnings.join('. ')}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Loading State */}
+            {(loading || emailLinkLoading) && (
+              <Card>
+                <CardContent className="py-8">
+                  <div className="flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span>{emailLinkLoading ? 'Loading your job...' : 'Searching for jobs...'}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Initial State */}
+            {!searchPerformed && !loading && (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Start Your Job Search</h3>
+                  <p className="text-neutral-950">
+                    Use the filters above to find your perfect job opportunity
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Results */}
+            {searchPerformed && allJobs.length === 0 && !loading && (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search criteria or explore different keywords
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Job Results */}
+            {allJobs.length > 0 && (
+              <div className="space-y-3">
+                {allJobs.map((job, index) => (
+                  <div key={`${job.id}-${index}`}>
+                    <CompactJobCard 
+                      job={job} 
+                      id={`job-${job.id}`} 
+                      isExpanded={expandedJobId === job.id} 
+                      onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} 
+                    />
+                    {/* In-feed ad every 5 jobs */}
+                    {(index + 1) % 5 === 0 && index < allJobs.length - 1 && (
+                      <div className="mt-3">
+                        <GoogleAd 
+                          adSlot="1737766610" 
+                          adFormat="auto" 
+                          className="w-full" 
+                          style={{ minHeight: '120px' }} 
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
