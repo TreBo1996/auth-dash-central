@@ -32,6 +32,16 @@ export const JobSearch: React.FC = () => {
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [totalJobs, setTotalJobs] = useState(0);
   const [emailLinkLoading, setEmailLinkLoading] = useState(false);
+
+  // Prevent page scrolling for job search
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
   const {
     searchJobs,
     loading
@@ -489,7 +499,7 @@ export const JobSearch: React.FC = () => {
 
   return (
     <DashboardLayout fullHeight={true}>
-      <div className="h-screen overflow-hidden px-[10px]">
+      <div className="h-full overflow-hidden px-[10px]">
         {/* Header Section */}
         <div className="flex-shrink-0 mb-6">
           <h1 className="text-2xl font-bold mb-2">Find Your Next Job</h1>
@@ -497,9 +507,9 @@ export const JobSearch: React.FC = () => {
         </div>
 
         {/* Three Column Grid - All columns same height */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-100px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
           {/* Left Column - Filters & Quick Jobs */}
-          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden">
+          <div className="flex flex-col h-full overflow-hidden">
             {/* Search Filters - Fixed */}
             <div className="flex-shrink-0 mb-4">
               <CollapsibleFilters onSearch={handleSearch} loading={loading} filters={currentFilters || undefined} />
@@ -510,7 +520,7 @@ export const JobSearch: React.FC = () => {
                 <div className="flex-shrink-0 mb-3">
                   <h3 className="text-sm font-medium text-stone-950">Quick Jobs</h3>
                 </div>
-                <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
+                <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
                    {miniJobs.map((job, index) => <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
                       {/* Responsive square ad every 5 jobs */}
@@ -525,7 +535,7 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Center Column - Main Job Results */}
-          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden lg:col-span-1">
+          <div className="flex flex-col h-full overflow-hidden lg:col-span-1">
             {/* Results Header - Fixed */}
             {searchPerformed && !loading && <div className="flex-shrink-0 mb-4">
                 <h2 className="text-lg font-semibold">
@@ -595,7 +605,7 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Right Column - Ads Sidebar */}
-          <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden hidden lg:flex">
+          <div className="flex flex-col h-full overflow-hidden hidden lg:flex">
             <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <AdSidebar />
             </div>
