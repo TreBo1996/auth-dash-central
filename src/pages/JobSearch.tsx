@@ -498,15 +498,9 @@ export const JobSearch: React.FC = () => {
         </div>
 
         {/* CSS Grid Three Column Layout */}
-        <div 
-          className="grid gap-6 h-[calc(100%-120px)]"
-          style={{
-            gridTemplateColumns: '320px 1fr 320px',
-            gridTemplateRows: '1fr'
-          }}
-        >
+        <div className="grid grid-cols-[320px_1fr_320px] grid-rows-[1fr] gap-6 h-[calc(100%-80px)] overflow-hidden md:grid-cols-1 lg:grid-cols-[320px_1fr_320px]">
           {/* Left Column - Filters & Quick Jobs */}
-          <div className="grid grid-rows-[auto_1fr] gap-4 overflow-hidden">
+          <div className="hidden lg:flex flex-col gap-4 overflow-hidden">
             {/* Search Filters */}
             <div>
               <CollapsibleFilters onSearch={handleSearch} loading={loading} filters={currentFilters || undefined} />
@@ -514,11 +508,11 @@ export const JobSearch: React.FC = () => {
             
             {/* Quick Jobs - Scrollable */}
             {miniJobs.length > 0 && (
-              <div className="grid grid-rows-[auto_1fr] gap-3 overflow-hidden">
+              <div className="flex flex-col gap-3 overflow-hidden flex-1">
                 <div>
                   <h3 className="text-sm font-medium text-stone-950">Quick Jobs</h3>
                 </div>
-                <div className="overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
+                <div className="overflow-y-auto space-y-3 flex-1">
                   {miniJobs.map((job, index) => (
                     <div key={`mini-${job.id}-${index}`}>
                       <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
@@ -541,7 +535,12 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Center Column - Main Job Results */}
-          <div className="grid grid-rows-[auto_1fr] gap-4 overflow-hidden">
+          <div className="flex flex-col gap-4 overflow-hidden">
+            {/* Mobile filters */}
+            <div className="lg:hidden">
+              <CollapsibleFilters onSearch={handleSearch} loading={loading} filters={currentFilters || undefined} />
+            </div>
+            
             {/* Results Header */}
             {searchPerformed && !loading && (
               <div>
@@ -552,7 +551,7 @@ export const JobSearch: React.FC = () => {
             )}
             
             {/* Job Results - Scrollable */}
-            <div className="overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
+            <div className="overflow-y-auto space-y-4 flex-1">
               {/* Warnings */}
               {warnings.length > 0 && (
                 <Alert>
@@ -631,8 +630,8 @@ export const JobSearch: React.FC = () => {
           </div>
 
           {/* Right Column - Ads Sidebar */}
-          <div className="overflow-hidden">
-            <div className="h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="hidden lg:block overflow-hidden">
+            <div className="h-full overflow-y-auto">
               <AdSidebar />
             </div>
           </div>
