@@ -33,15 +33,6 @@ export const JobSearch: React.FC = () => {
   const [totalJobs, setTotalJobs] = useState(0);
   const [emailLinkLoading, setEmailLinkLoading] = useState(false);
 
-  // Prevent page scrolling for job search
-  useEffect(() => {
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, []);
   const {
     searchJobs,
     loading
@@ -499,7 +490,7 @@ export const JobSearch: React.FC = () => {
 
   return (
     <DashboardLayout fullHeight={true}>
-      <div className="h-full overflow-hidden px-[10px]">
+      <div className="h-screen overflow-hidden px-[10px]">
         {/* Header Section */}
         <div className="flex-shrink-0 mb-6">
           <h1 className="text-2xl font-bold mb-2">Find Your Next Job</h1>
