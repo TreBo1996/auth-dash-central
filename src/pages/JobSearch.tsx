@@ -533,8 +533,8 @@ export const JobSearch: React.FC = () => {
                 </h2>
               </div>}
             
-            {/* Job Results - Scrollable */}
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-4">
+            {/* Fixed Header Section */}
+            <div className="space-y-4">
               {/* Warnings */}
               {warnings.length > 0 && <Alert>
                   <AlertTriangle className="h-4 w-4" />
@@ -574,9 +574,12 @@ export const JobSearch: React.FC = () => {
                     </p>
                   </CardContent>
                 </Card>}
+            </div>
 
-              {/* Job Results */}
-              {allJobs.length > 0 && <div className="space-y-3">
+            {/* Job Results - Scrollable Container */}
+            {allJobs.length > 0 && (
+              <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="space-y-3">
                   {allJobs.map((job, index) => (
                     <div key={`main-${job.id}-${index}`}>
                       <CompactJobCard 
@@ -596,8 +599,9 @@ export const JobSearch: React.FC = () => {
                       )}
                     </div>
                   ))}
-                </div>}
-            </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Ads Sidebar */}
