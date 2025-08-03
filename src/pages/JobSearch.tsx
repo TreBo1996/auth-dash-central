@@ -490,7 +490,7 @@ export const JobSearch: React.FC = () => {
 
   return (
     <DashboardLayout fullHeight={true}>
-      <div className="h-screen overflow-hidden px-[10px]">
+      <div className="h-full flex flex-col px-[10px]">
         {/* Header Section */}
         <div className="flex-shrink-0 mb-6">
           <h1 className="text-2xl font-bold mb-2">Find Your Next Job</h1>
@@ -498,7 +498,7 @@ export const JobSearch: React.FC = () => {
         </div>
 
         {/* Three Column Grid - All columns same height */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-180px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
           {/* Left Column - Filters & Quick Jobs */}
           <div className="flex flex-col h-full overflow-hidden">
             {/* Search Filters - Fixed */}
