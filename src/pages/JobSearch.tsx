@@ -578,7 +578,7 @@ export const JobSearch: React.FC = () => {
               {/* Job Results */}
               {allJobs.length > 0 && <div className="space-y-3">
                   {allJobs.map((job, index) => (
-                    <React.Fragment key={`main-${job.id}-${index}`}>
+                    <div key={`main-${job.id}-${index}`}>
                       <CompactJobCard 
                         job={job} 
                         id={`job-${job.id}`} 
@@ -594,7 +594,7 @@ export const JobSearch: React.FC = () => {
                           />
                         </div>
                       )}
-                    </React.Fragment>
+                    </div>
                   ))}
                 </div>}
             </div>
