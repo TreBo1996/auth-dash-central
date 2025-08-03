@@ -577,20 +577,31 @@ export const JobSearch: React.FC = () => {
 
               {/* Job Results */}
               {allJobs.length > 0 && <div className="space-y-3">
-                  {allJobs.map((job, index) => (
-                    <div key={`main-${job.id}-${index}`}>
-                      <CompactJobCard job={job} id={`job-${job.id}`} isExpanded={expandedJobId === job.id} onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} />
-                      {(index + 1) % 5 === 0 && (
-                        <div className="my-6">
+                  {allJobs.flatMap((job, index) => {
+                    const elements = [
+                      <CompactJobCard 
+                        key={`job-${job.id}-${index}`}
+                        job={job} 
+                        id={`job-${job.id}`} 
+                        isExpanded={expandedJobId === job.id} 
+                        onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} 
+                      />
+                    ];
+                    
+                    if ((index + 1) % 5 === 0) {
+                      elements.push(
+                        <div key={`ad-main-${index}`} className="my-6">
                           <GoogleAd 
                             adSlot="8234567890"
                             adFormat="auto"
                             className="w-full"
                           />
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      );
+                    }
+                    
+                    return elements;
+                  })}
                 </div>}
             </div>
           </div>
