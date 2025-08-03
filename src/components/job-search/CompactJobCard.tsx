@@ -115,6 +115,7 @@ export const CompactJobCard: React.FC<CompactJobCardProps> = ({
     const jobId = `${job.source}_${job.id}`;
     const currentSearch = new URLSearchParams(window.location.search);
     currentSearch.set('jobId', jobId);
+    currentSearch.set('autoExpand', 'true');
     const url = `${window.location.origin}/job-search?${currentSearch.toString()}`;
     
     try {
