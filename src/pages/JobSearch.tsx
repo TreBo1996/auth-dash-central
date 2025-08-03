@@ -578,7 +578,7 @@ export const JobSearch: React.FC = () => {
 
             {/* Job Results - Scrollable Container */}
             {allJobs.length > 0 && (
-              <div className="h-[calc(100vh-250px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="h-[calc(100vh-100px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="space-y-3">
                   {allJobs.map((job, index) => (
                     <div key={`main-${job.id}-${index}`}>
