@@ -380,7 +380,7 @@ export const JobSearch: React.FC = () => {
                   setExpandedJobId(id);
                   const jobElement = document.getElementById(`job-${id}`);
                   if (jobElement) {
-                    jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                jobElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     console.log('Scrolled to single target job');
                   }
                 }, 500);
@@ -419,7 +419,7 @@ export const JobSearch: React.FC = () => {
                 setExpandedJobId(id);
                 const jobElement = document.getElementById(`job-${id}`);
                 if (jobElement) {
-                  jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  jobElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   console.log('Scrolled to target job in category results');
                 } else {
                   console.error('Could not find job element with ID:', `job-${id}`);
@@ -427,7 +427,7 @@ export const JobSearch: React.FC = () => {
                   setTimeout(() => {
                     const retryElement = document.getElementById(`job-${id}`);
                     if (retryElement) {
-                      retryElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      retryElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       console.log('Retry scroll successful');
                     }
                   }, 1000);
@@ -448,7 +448,7 @@ export const JobSearch: React.FC = () => {
                 setExpandedJobId(id);
                 const jobElement = document.getElementById(`job-${id}`);
                 if (jobElement) {
-                  jobElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  jobElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   console.log('Fallback scroll successful');
                 }
               }, 500);
