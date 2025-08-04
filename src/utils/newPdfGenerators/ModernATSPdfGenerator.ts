@@ -128,14 +128,14 @@ export class ModernATSPdfGenerator {
       this.pdf.text(item.value!, x + this.pdf.getTextWidth(item.label) + 6, contactY);
     });
 
-    this.currentY += 15;
+    this.currentY += 20;
     
     // Accent line
     this.pdf.setLineWidth(2);
     const [r, g, b] = this.parseHSL(this.colors.accent);
     this.pdf.setDrawColor(r, g, b);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    this.currentY += 15;
+    this.currentY += 25;
   }
 
   private addProfessionalSummary(data: StructuredResumeData): void {
@@ -153,7 +153,7 @@ export class ModernATSPdfGenerator {
       this.pdf.text(line, this.margin, this.currentY);
       this.currentY += 16;
     });
-    this.currentY += 12;
+    this.currentY += 24;
   }
 
   private addCoreSkills(data: StructuredResumeData): void {
@@ -192,7 +192,7 @@ export class ModernATSPdfGenerator {
     if (currentCol > 0) {
       this.currentY += 16;
     }
-    this.currentY += 12;
+    this.currentY += 24;
   }
 
   private addProfessionalExperience(data: StructuredResumeData): void {
@@ -239,10 +239,10 @@ export class ModernATSPdfGenerator {
         });
       });
 
-      if (index < data.experience.length - 1) this.currentY += 15;
+      if (index < data.experience.length - 1) this.currentY += 24;
     });
 
-    this.currentY += 12;
+    this.currentY += 24;
   }
 
   private addEducation(data: StructuredResumeData): void {
@@ -307,12 +307,12 @@ export class ModernATSPdfGenerator {
     this.pdf.setFontSize(14);
     this.pdf.setFont('helvetica', 'bold');
     this.pdf.text(title, this.margin, this.currentY);
-    this.currentY += 12;
+    this.currentY += 15;
     
     // Section underline
     this.pdf.setLineWidth(0.5);
     this.pdf.setDrawColor(200, 200, 200);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    this.currentY += 12;
+    this.currentY += 18;
   }
 }
