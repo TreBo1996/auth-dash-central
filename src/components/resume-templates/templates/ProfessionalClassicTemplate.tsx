@@ -43,7 +43,7 @@ export const ProfessionalClassicTemplate: React.FC<ProfessionalClassicTemplatePr
         fontSize: '11pt',
         lineHeight: '1.4',
         fontFamily: 'Helvetica, Arial, sans-serif',
-        minHeight: '11in',
+        minHeight: 'auto',
         width: '8.5in',
         padding: '0.5in',
         margin: '0 auto'

@@ -16,7 +16,7 @@ export const CreativeProfessionalTemplate: React.FC<CreativeProfessionalTemplate
   return <div className="w-full max-w-[8.5in] mx-auto bg-white p-12 text-sm leading-normal" style={{
     fontFamily: config.fonts.body,
     color: colors.text,
-    minHeight: '11in'
+    minHeight: 'auto'
   }}>
       {/* Header - Creative Modern Style */}
       <header className="mb-8 relative">

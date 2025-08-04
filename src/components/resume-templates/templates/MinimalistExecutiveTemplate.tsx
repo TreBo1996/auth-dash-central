@@ -14,7 +14,7 @@ export const MinimalistExecutiveTemplate: React.FC<MinimalistExecutiveTemplatePr
   return <div className="w-full max-w-[8.5in] mx-auto bg-white p-12 font-serif text-sm leading-relaxed" style={{
     fontFamily: config.fonts.body,
     color: colors.text,
-    minHeight: '11in'
+    minHeight: 'auto'
   }}>
       {/* Header - Centered Executive Style */}
       <header className="text-center mb-10 pb-6 border-b border-gray-200">

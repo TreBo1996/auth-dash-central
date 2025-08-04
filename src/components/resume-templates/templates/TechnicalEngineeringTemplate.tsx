@@ -20,7 +20,7 @@ export const TechnicalEngineeringTemplate: React.FC<TechnicalEngineeringTemplate
       style={{
         fontFamily: config.fonts.body,
         color: colors.text,
-        minHeight: '11in'
+        minHeight: 'auto'
       }}
     >
       {/* Header - Technical Professional Style */}

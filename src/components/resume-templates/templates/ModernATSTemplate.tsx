@@ -20,7 +20,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
       style={{
         fontFamily: config.fonts.body,
         color: colors.text,
-        minHeight: '11in'
+        minHeight: 'auto'
       }}
     >
       {/* Header - Modern Contact Bar */}
@@ -66,7 +66,7 @@ export const ModernATSTemplate: React.FC<ModernATSTemplateProps> = ({
           {resumeData.location && (
             <div className="flex items-center">
               <span className="font-medium">Location:</span>
-              <span className="ml-1">{resumeData.location}</span>
+              <span className="ml-2">{resumeData.location}</span>
             </div>
           )}
         </div>

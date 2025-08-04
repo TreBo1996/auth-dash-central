@@ -20,7 +20,7 @@ export const AcademicResearchTemplate: React.FC<AcademicResearchTemplateProps> =
       style={{
         fontFamily: config.fonts.body,
         color: colors.text,
-        minHeight: '11in'
+        minHeight: 'auto'
       }}
     >
       {/* Header - Traditional Academic Style */}
