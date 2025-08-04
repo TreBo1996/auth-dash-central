@@ -125,23 +125,23 @@ export class ModernATSPdfGenerator {
       this.pdf.setFont('helvetica', 'bold');
       this.pdf.text(item.label, x, contactY);
       this.pdf.setFont('helvetica', 'normal');
-      this.pdf.text(item.value!, x + this.pdf.getTextWidth(item.label) + 3, contactY);
+      this.pdf.text(item.value!, x + this.pdf.getTextWidth(item.label) + 6, contactY);
     });
 
-    this.currentY += 20;
+    this.currentY += 15;
     
     // Accent line
     this.pdf.setLineWidth(2);
     const [r, g, b] = this.parseHSL(this.colors.accent);
     this.pdf.setDrawColor(r, g, b);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    this.currentY += 25;
+    this.currentY += 15;
   }
 
   private addProfessionalSummary(data: StructuredResumeData): void {
     if (!data.summary) return;
     
-    this.checkPageBreak(80);
+    this.checkPageBreak(60);
     this.addSectionHeader('PROFESSIONAL SUMMARY');
     
     this.pdf.setFontSize(11);
@@ -153,13 +153,13 @@ export class ModernATSPdfGenerator {
       this.pdf.text(line, this.margin, this.currentY);
       this.currentY += 16;
     });
-    this.currentY += 20;
+    this.currentY += 12;
   }
 
   private addCoreSkills(data: StructuredResumeData): void {
     if (data.skills.length === 0) return;
 
-    this.checkPageBreak(100);
+    this.checkPageBreak(60);
     this.addSectionHeader('CORE SKILLS');
 
     const allSkills = data.skills.flatMap(group => group.items);
@@ -192,17 +192,17 @@ export class ModernATSPdfGenerator {
     if (currentCol > 0) {
       this.currentY += 16;
     }
-    this.currentY += 20;
+    this.currentY += 12;
   }
 
   private addProfessionalExperience(data: StructuredResumeData): void {
     if (data.experience.length === 0) return;
 
-    this.checkPageBreak(100);
+    this.checkPageBreak(60);
     this.addSectionHeader('PROFESSIONAL EXPERIENCE');
 
     data.experience.forEach((exp, index) => {
-      this.checkPageBreak(120);
+      this.checkPageBreak(80);
       
       // Position and company
       this.pdf.setFontSize(12);
@@ -239,16 +239,16 @@ export class ModernATSPdfGenerator {
         });
       });
 
-      if (index < data.experience.length - 1) this.currentY += 20;
+      if (index < data.experience.length - 1) this.currentY += 15;
     });
 
-    this.currentY += 20;
+    this.currentY += 12;
   }
 
   private addEducation(data: StructuredResumeData): void {
     if (data.education.length === 0) return;
 
-    this.checkPageBreak(80);
+    this.checkPageBreak(50);
     this.addSectionHeader('EDUCATION');
 
     data.education.forEach(edu => {
@@ -276,7 +276,7 @@ export class ModernATSPdfGenerator {
   private addCertifications(data: StructuredResumeData): void {
     if (!data.certifications?.length) return;
 
-    this.checkPageBreak(80);
+    this.checkPageBreak(50);
     this.addSectionHeader('CERTIFICATIONS');
 
     data.certifications.forEach(cert => {
@@ -302,7 +302,7 @@ export class ModernATSPdfGenerator {
   }
 
   private addSectionHeader(title: string): void {
-    this.checkPageBreak(50);
+    this.checkPageBreak(40);
     
     this.pdf.setFontSize(14);
     this.pdf.setFont('helvetica', 'bold');
@@ -313,6 +313,6 @@ export class ModernATSPdfGenerator {
     this.pdf.setLineWidth(0.5);
     this.pdf.setDrawColor(200, 200, 200);
     this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY);
-    this.currentY += 20;
+    this.currentY += 12;
   }
 }
