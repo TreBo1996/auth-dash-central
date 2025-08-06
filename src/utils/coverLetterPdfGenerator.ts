@@ -32,61 +32,85 @@ export class CoverLetterPDFGenerator {
     this.currentY = this.margin;
   }
 
+  /**
+   * Sanitize text to prevent PDF generation issues
+   */
+  private sanitizeText(text: string): string {
+    if (!text || typeof text !== 'string') return '';
+    
+    return text
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(/[\u2018\u2019]/g, "'") // Replace smart quotes
+      .replace(/[\u201C\u201D]/g, '"') // Replace smart quotes
+      .replace(/[\u2013\u2014]/g, '-') // Replace em/en dashes
+      .replace(/[\u2026]/g, '...') // Replace ellipsis
+      .trim();
+  }
+
   async generatePDF(coverLetterData: CoverLetterData, userId: string): Promise<Blob> {
-    // Get user contact information
-    const contactInfo = await getUserContactInfo(userId);
-    
-    // Add header with contact info
-    this.addHeader(contactInfo);
-    
-    // Add date
-    this.addDate();
-    
-    // Add recipient info if available
-    if (coverLetterData.job_descriptions) {
-      this.addRecipient(coverLetterData.job_descriptions);
+    try {
+      // Get user contact information
+      const contactInfo = await getUserContactInfo(userId);
+      
+      // Add header with contact info
+      this.addHeader(contactInfo);
+      
+      // Add date
+      this.addDate();
+      
+      // Add recipient info if available
+      if (coverLetterData.job_descriptions) {
+        this.addRecipient(coverLetterData.job_descriptions);
+      }
+      
+      // Add subject line
+      this.addSubject(coverLetterData.job_descriptions?.title || 'Job Application');
+      
+      // Add cover letter content
+      this.addContent(coverLetterData.generated_text);
+      
+      // Add closing signature
+      this.addClosing(contactInfo.name);
+      
+      return this.pdf.output('blob');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate PDF. Please try again.');
     }
-    
-    // Add subject line
-    this.addSubject(coverLetterData.job_descriptions?.title || 'Job Application');
-    
-    // Add cover letter content
-    this.addContent(coverLetterData.generated_text);
-    
-    // Add closing signature
-    this.addClosing(contactInfo.name);
-    
-    return this.pdf.output('blob');
   }
 
   private addHeader(contactInfo: ContactInfo): void {
-    this.pdf.setFont('times', 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(12);
     
     // Name (larger, bold)
-    if (contactInfo.name) {
-      this.pdf.setFont('times', 'bold');
+    const name = this.sanitizeText(contactInfo.name);
+    if (name) {
+      this.pdf.setFont('helvetica', 'bold');
       this.pdf.setFontSize(16);
-      this.pdf.text(contactInfo.name, this.margin, this.currentY);
+      this.pdf.text(name, this.margin, this.currentY);
       this.currentY += 20;
     }
     
     // Contact details
-    this.pdf.setFont('times', 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(11);
     
-    if (contactInfo.email) {
-      this.pdf.text(contactInfo.email, this.margin, this.currentY);
+    const email = this.sanitizeText(contactInfo.email);
+    if (email) {
+      this.pdf.text(email, this.margin, this.currentY);
       this.currentY += this.lineHeight;
     }
     
-    if (contactInfo.phone) {
-      this.pdf.text(contactInfo.phone, this.margin, this.currentY);
+    const phone = this.sanitizeText(contactInfo.phone);
+    if (phone) {
+      this.pdf.text(phone, this.margin, this.currentY);
       this.currentY += this.lineHeight;
     }
     
-    if (contactInfo.location) {
-      this.pdf.text(contactInfo.location, this.margin, this.currentY);
+    const location = this.sanitizeText(contactInfo.location);
+    if (location) {
+      this.pdf.text(location, this.margin, this.currentY);
       this.currentY += this.lineHeight;
     }
     
@@ -101,38 +125,41 @@ export class CoverLetterPDFGenerator {
       day: 'numeric'
     });
     
-    this.pdf.setFont('times', 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(12);
-    this.pdf.text(dateString, this.margin, this.currentY);
+    this.pdf.text(this.sanitizeText(dateString), this.margin, this.currentY);
     this.currentY += 24; // Space after date
   }
 
   private addRecipient(jobInfo: { title: string; company: string }): void {
-    this.pdf.setFont('times', 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(12);
     
     // Company name
-    if (jobInfo.company) {
-      this.pdf.text(`Hiring Manager`, this.margin, this.currentY);
+    const company = this.sanitizeText(jobInfo.company);
+    if (company) {
+      this.pdf.text('Hiring Manager', this.margin, this.currentY);
       this.currentY += this.lineHeight;
-      this.pdf.text(jobInfo.company, this.margin, this.currentY);
+      this.pdf.text(company, this.margin, this.currentY);
       this.currentY += 24; // Space after recipient
     }
   }
 
   private addSubject(jobTitle: string): void {
-    this.pdf.setFont('times', 'bold');
+    this.pdf.setFont('helvetica', 'bold');
     this.pdf.setFontSize(12);
-    this.pdf.text(`Re: ${jobTitle}`, this.margin, this.currentY);
+    const sanitizedTitle = this.sanitizeText(jobTitle);
+    this.pdf.text(`Re: ${sanitizedTitle}`, this.margin, this.currentY);
     this.currentY += 24; // Space after subject
   }
 
   private addContent(content: string): void {
-    this.pdf.setFont('times', 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(12);
     
-    // Split content into paragraphs
-    const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim());
+    // Sanitize and split content into paragraphs
+    const sanitizedContent = this.sanitizeText(content);
+    const paragraphs = sanitizedContent.split(/\n\s*\n/).filter(p => p.trim());
     
     paragraphs.forEach((paragraph, index) => {
       // Check if we need a new page
@@ -165,7 +192,7 @@ export class CoverLetterPDFGenerator {
   }
 
   private addClosing(name: string): void {
-    this.pdf.setFont('times', 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(12);
     
     // Check if we need a new page
@@ -179,23 +206,27 @@ export class CoverLetterPDFGenerator {
     this.currentY += 48; // Space for signature
     
     // Name
-    if (name) {
-      this.pdf.text(name, this.margin, this.currentY);
+    const sanitizedName = this.sanitizeText(name);
+    if (sanitizedName) {
+      this.pdf.text(sanitizedName, this.margin, this.currentY);
     }
   }
 
   private wrapText(text: string, maxWidth: number): string[] {
+    if (!text) return [];
+    
     const words = text.split(' ');
     const lines: string[] = [];
     let currentLine = '';
     
     words.forEach(word => {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const sanitizedWord = this.sanitizeText(word);
+      const testLine = currentLine ? `${currentLine} ${sanitizedWord}` : sanitizedWord;
       const testWidth = this.pdf.getTextWidth(testLine);
       
       if (testWidth > maxWidth && currentLine) {
         lines.push(currentLine);
-        currentLine = word;
+        currentLine = sanitizedWord;
       } else {
         currentLine = testLine;
       }
