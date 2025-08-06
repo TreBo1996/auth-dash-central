@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, Plus, Building, Calendar, Target, Zap, FileText, Clock, Award, Users, TrendingUp, Lightbulb, ChevronDown, ChevronUp, Rocket, Star, CheckCircle, Brain, Edit } from 'lucide-react';
+import { Mail, Plus, Building, Calendar, Target, Zap, FileText, Clock, Award, Users, TrendingUp, Lightbulb, ChevronDown, ChevronUp, Rocket, Star, CheckCircle, Brain, Edit, Download } from 'lucide-react';
+import { generateCoverLetterPDF } from '@/utils/coverLetterPdfGenerator';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
 import { useNavigate } from 'react-router-dom';
@@ -24,12 +26,14 @@ interface CoverLetterWithJob {
 export const CoverLetters: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [coverLetters, setCoverLetters] = useState<CoverLetterWithJob[]>([]);
   const [showGenerator, setShowGenerator] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedCoverLetter, setSelectedCoverLetter] = useState<CoverLetterWithJob | null>(null);
   const [showUsageGuide, setShowUsageGuide] = useState(false);
   const [showSuccessMetrics, setShowSuccessMetrics] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
 
   useEffect(() => {
     loadCoverLetters();
@@ -88,6 +92,45 @@ export const CoverLetters: React.FC = () => {
 
   const handleEditCoverLetter = (coverLetter: CoverLetterWithJob) => {
     navigate(`/cover-letters/edit/${coverLetter.id}`);
+  };
+
+  const handleDownloadPdf = async (coverLetter: CoverLetterWithJob) => {
+    if (!user) return;
+
+    setDownloadingPdf(coverLetter.id);
+    try {
+      // Convert to the format expected by the PDF generator
+      const coverLetterData = {
+        id: coverLetter.id,
+        title: coverLetter.title,
+        generated_text: coverLetter.generated_text,
+        created_at: coverLetter.created_at,
+        job_descriptions: {
+          title: coverLetter.job_title,
+          company: coverLetter.company
+        }
+      };
+      
+      await generateCoverLetterPDF(coverLetterData, user.id);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: "Your cover letter has been downloaded as a PDF."
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingPdf(null);
+    }
+  };
+
+  const handleViewCoverLetterPdf = async (coverLetter: CoverLetterWithJob) => {
+    await handleDownloadPdf(coverLetter);
   };
 
   if (showGenerator) {
@@ -350,6 +393,19 @@ export const CoverLetters: React.FC = () => {
                         <Edit className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleDownloadPdf(coverLetter)}
+                        disabled={downloadingPdf === coverLetter.id}
+                        className="px-2"
+                      >
+                        {downloadingPdf === coverLetter.id ? (
+                          <div className="animate-spin h-3 w-3 border border-current border-t-transparent rounded-full" />
+                        ) : (
+                          <Download className="h-3 w-3" />
+                        )}
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -364,6 +420,8 @@ export const CoverLetters: React.FC = () => {
             title={`${selectedCoverLetter.job_title} at ${selectedCoverLetter.company}`}
             type="cover-letter"
             onClose={handleClosePreview}
+            onEdit={() => handleEditCoverLetter(selectedCoverLetter)}
+            onDownloadPdf={() => handleViewCoverLetterPdf(selectedCoverLetter)}
           />
         )}
       </div>

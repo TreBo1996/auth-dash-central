@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, FileText, Building, Calendar, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, FileText, Building, Calendar, Loader2, Download } from 'lucide-react';
+import { generateCoverLetterPDF } from '@/utils/coverLetterPdfGenerator';
 
 interface CoverLetterData {
   id: string;
@@ -33,6 +34,7 @@ export const CoverLetterEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     if (id && user) {
@@ -143,6 +145,34 @@ export const CoverLetterEditor: React.FC = () => {
     navigate('/cover-letters');
   };
 
+  const handleDownloadPdf = async () => {
+    if (!coverLetter || !user) return;
+
+    setDownloadingPdf(true);
+    try {
+      const coverLetterData = {
+        ...coverLetter,
+        generated_text: editedContent // Use current edited content
+      };
+      
+      await generateCoverLetterPDF(coverLetterData, user.id);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: "Your cover letter has been downloaded as a PDF."
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'long',
@@ -212,18 +242,33 @@ export const CoverLetterEditor: React.FC = () => {
               </p>
             </div>
           </div>
-          <Button 
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              className="flex items-center gap-2"
+            >
+              {downloadingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {downloadingPdf ? 'Generating...' : 'Download PDF'}
+            </Button>
+            <Button 
+              onClick={handleSave}
+              disabled={!hasChanges || saving}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
         </div>
 
         {/* Job Information Card */}

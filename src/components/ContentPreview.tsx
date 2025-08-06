@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Dialog,
@@ -19,6 +18,7 @@ interface ContentPreviewProps {
   onClose: () => void;
   onEdit?: () => void;
   onDownload?: () => void;
+  onDownloadPdf?: () => void;
 }
 
 export const ContentPreview: React.FC<ContentPreviewProps> = ({
@@ -27,7 +27,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   type,
   onClose,
   onEdit,
-  onDownload
+  onDownload,
+  onDownloadPdf
 }) => {
   const getIcon = () => {
     switch (type) {
@@ -70,7 +71,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
           </div>
         </ScrollArea>
         
-        {(onEdit || onDownload) && (
+        {(onEdit || onDownload || onDownloadPdf) && (
           <DialogFooter>
             <div className="flex gap-2">
               {onDownload && (
@@ -81,6 +82,16 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
                 >
                   <Download className="h-4 w-4" />
                   Download
+                </Button>
+              )}
+              {onDownloadPdf && (
+                <Button 
+                  variant="outline" 
+                  onClick={onDownloadPdf} 
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Download PDF
                 </Button>
               )}
               {onEdit && (
