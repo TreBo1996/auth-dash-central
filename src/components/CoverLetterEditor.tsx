@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, FileText, Building, Calendar, Loader2, Download } from 'lucide-react';
-import { generateCoverLetterPDF } from '@/utils/coverLetterPdfGenerator';
+import { generateCoverLetterPreviewPDF } from '@/utils/coverLetterHtml2Pdf';
 
 interface CoverLetterData {
   id: string;
@@ -146,16 +146,15 @@ export const CoverLetterEditor: React.FC = () => {
   };
 
   const handleDownloadPdf = async () => {
-    if (!coverLetter || !user) return;
+    if (!coverLetter) return;
 
     setDownloadingPdf(true);
     try {
-      const coverLetterData = {
-        ...coverLetter,
-        generated_text: editedContent // Use current edited content
-      };
+      const safe = (s: string) => s ? s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : '';
+      const companySafe = safe(coverLetter.job_descriptions?.company || 'application');
+      const filename = `cover-letter-${companySafe}.pdf`;
       
-      await generateCoverLetterPDF(coverLetterData, user.id);
+      await generateCoverLetterPreviewPDF(editedContent, filename);
       
       toast({
         title: "PDF Downloaded",
