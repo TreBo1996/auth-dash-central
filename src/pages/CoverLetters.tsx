@@ -8,7 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Plus, Building, Calendar, Target, Zap, FileText, Clock, Award, Users, TrendingUp, Lightbulb, ChevronDown, ChevronUp, Rocket, Star, CheckCircle, Brain, Edit, Download } from 'lucide-react';
-import { generateCoverLetterPreviewPDF } from '@/utils/coverLetterHtml2Pdf';
+import { generateCoverLetterPDF } from '@/utils/coverLetterPdfGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ContextualUsageCounter } from '@/components/common/ContextualUsageCounter';
@@ -99,11 +99,19 @@ export const CoverLetters: React.FC = () => {
 
     setDownloadingPdf(coverLetter.id);
     try {
-      const safe = (s: string) => s ? s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : '';
-      const companySafe = safe(coverLetter.company) || 'application';
-      const filename = `cover-letter-${companySafe}.pdf`;
-
-      await generateCoverLetterPreviewPDF(coverLetter.generated_text, filename);
+      // Convert to the format expected by the PDF generator
+      const coverLetterData = {
+        id: coverLetter.id,
+        title: coverLetter.title,
+        generated_text: coverLetter.generated_text,
+        created_at: coverLetter.created_at,
+        job_descriptions: {
+          title: coverLetter.job_title,
+          company: coverLetter.company
+        }
+      };
+      
+      await generateCoverLetterPDF(coverLetterData, user.id);
       
       toast({
         title: "PDF Downloaded",

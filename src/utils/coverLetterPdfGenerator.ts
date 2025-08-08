@@ -47,61 +47,6 @@ export class CoverLetterPDFGenerator {
       .trim();
   }
 
-  /**
-   * Extract the actual letter body by removing any leading contact/header info from AI output
-   */
-  private extractLetterBody(text: string): string {
-    const sanitized = this.sanitizeText(text || '');
-    if (!sanitized) return '';
-
-    const lines = sanitized.split('\n');
-
-    // Patterns to detect start of letter
-    const salutationRegex = /^(dear\b|to whom\b|hello\b|hi\b|greetings\b)/i;
-    const subjectRegex = /^(re:|subject:)/i;
-    const contactLikeRegexes = [
-      /@/,
-      /\b\+?\d[\d\s().-]{6,}\b/,
-      /\b(street|st\.|ave\.|avenue|road|rd\.|blvd\.|suite|apt|apartment|\d{5}(?:-\d{4})?)\b/i,
-    ];
-
-    // Find first salutation line index
-    let startIdx = lines.findIndex(l => salutationRegex.test(l.trim()));
-
-    if (startIdx === -1) {
-      // If no salutation, strip leading contact-like block until first empty line that follows contact-like info
-      let encounteredContact = false;
-      let i = 0;
-      for (; i < lines.length; i++) {
-        const t = lines[i].trim();
-        if (!t) {
-          if (encounteredContact) { i++; break; }
-          continue;
-        }
-        if (subjectRegex.test(t) || contactLikeRegexes.some(rx => rx.test(t))) {
-          encounteredContact = true;
-          continue;
-        }
-        // If we already saw contact-like info and hit a non-contact line, break here
-        if (encounteredContact) { break; }
-      }
-      startIdx = i;
-    }
-
-    const body = lines.slice(startIdx).join('\n').trim();
-
-    // Quick cleanup of the very top lines to remove any lingering contact-like lines
-    const bodyLines = body.split('\n');
-    const cleanedTop = bodyLines.slice(0, 5).filter(l => {
-      const t = l.trim();
-      return !(subjectRegex.test(t) || contactLikeRegexes.some(rx => rx.test(t)));
-    });
-    const remainder = bodyLines.slice(5);
-    const cleaned = (cleanedTop.join('\n') + (remainder.length ? '\n' + remainder.join('\n') : '')).trim();
-
-    return cleaned || sanitized;
-  }
-
   async generatePDF(coverLetterData: CoverLetterData, userId: string): Promise<Blob> {
     try {
       // Get user contact information
@@ -121,9 +66,8 @@ export class CoverLetterPDFGenerator {
       // Add subject line
       this.addSubject(coverLetterData.job_descriptions?.title || 'Job Application');
       
-      // Add cover letter content (cleaned to avoid duplicated headers)
-      const letterBody = this.extractLetterBody(coverLetterData.generated_text);
-      this.addContent(letterBody);
+      // Add cover letter content
+      this.addContent(coverLetterData.generated_text);
       
       // Add closing signature
       this.addClosing(contactInfo.name);
@@ -212,37 +156,39 @@ export class CoverLetterPDFGenerator {
   private addContent(content: string): void {
     this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(12);
-
-    // Sanitize and render content preserving single newlines (pre-wrap behavior)
-    const sanitized = this.sanitizeText(content);
-    const rawLines = sanitized.split('\n');
-
-    const ensureSpace = (extra: number = 0) => {
-      if (this.currentY > this.pageHeight - this.margin - (50 + extra)) {
+    
+    // Sanitize and split content into paragraphs
+    const sanitizedContent = this.sanitizeText(content);
+    const paragraphs = sanitizedContent.split(/\n\s*\n/).filter(p => p.trim());
+    
+    paragraphs.forEach((paragraph, index) => {
+      // Check if we need a new page
+      if (this.currentY > this.pageHeight - this.margin - 100) {
         this.pdf.addPage();
         this.currentY = this.margin;
       }
-    };
-
-    rawLines.forEach((rawLine) => {
-      const line = rawLine.replace(/\s+$/g, ''); // trim right spaces to avoid creeping width
-
-      if (line.trim() === '') {
-        // Blank line -> explicit paragraph break
-        ensureSpace();
-        this.currentY += this.lineHeight; // create an empty line
-        return;
-      }
-
-      const wrapped = this.wrapText(line, this.pageWidth - (2 * this.margin));
-      wrapped.forEach((wLine) => {
-        ensureSpace();
-        this.pdf.text(wLine, this.margin, this.currentY);
+      
+      // Wrap text to fit within margins
+      const lines = this.wrapText(paragraph.trim(), this.pageWidth - (2 * this.margin));
+      
+      lines.forEach((line, lineIndex) => {
+        // Check for page break within paragraph
+        if (this.currentY > this.pageHeight - this.margin - 50) {
+          this.pdf.addPage();
+          this.currentY = this.margin;
+        }
+        
+        this.pdf.text(line, this.margin, this.currentY);
         this.currentY += this.lineHeight;
       });
+      
+      // Add space between paragraphs (except for the last one)
+      if (index < paragraphs.length - 1) {
+        this.currentY += 12;
+      }
     });
-
-    this.currentY += 12; // Small space after content
+    
+    this.currentY += 24; // Space after content
   }
 
   private addClosing(name: string): void {
