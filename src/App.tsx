@@ -39,6 +39,7 @@ import TermsOfService from '@/pages/TermsOfService';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import ResetPassword from '@/pages/ResetPassword';
 import AdsDiagnostics from '@/pages/AdsDiagnostics';
+import AdsTxtHandler from '@/components/AdsTxtHandler';
 
 function App() {
   return (
@@ -56,6 +57,9 @@ function App() {
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/ads-diagnostics" element={<AdsDiagnostics />} />
+              
+              {/* Ads.txt Route - serves the static file content with proper headers */}
+              <Route path="/ads.txt" element={<AdsTxtHandler />} />
               
               {/* Public Job Posting Route */}
               <Route 

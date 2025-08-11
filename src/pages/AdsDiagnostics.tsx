@@ -13,6 +13,10 @@ interface AdsResult {
   hasPublisherId: boolean;
   endsWithNewline: boolean;
   fetchedAt: string | null;
+  redirected?: boolean;
+  finalUrl?: string;
+  cacheControl?: string | null;
+  server?: string | null;
   error?: string;
 }
 
@@ -30,15 +34,23 @@ const AdsDiagnostics: React.FC = () => {
   const defaultTargets: Target[] = useMemo(() => [
     { key: 'live', label: 'Live (rezlit.com)', url: `${LIVE_ORIGIN}/ads.txt` },
     { key: 'www', label: 'Live www (www.rezlit.com)', url: `${WWW_ORIGIN}/ads.txt` },
-    { key: 'this', label: 'This origin', url: `${window.location.origin}/ads.txt` },
+    { key: 'live-http', label: 'Live HTTP (http://rezlit.com)', url: `http://rezlit.com/ads.txt` },
+    { key: 'www-http', label: 'Live HTTP www (http://www.rezlit.com)', url: `http://www.rezlit.com/ads.txt` },
+    { key: 'this', label: 'This origin (staging)', url: `${window.location.origin}/ads.txt` },
+    { key: 'react-route', label: 'React route test', url: `${LIVE_ORIGIN}/ads.txt` },
   ], []);
 
   const fetchOne = useCallback(async (target: Target) => {
     const url = target.url;
     try {
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await fetch(url, { 
+        cache: 'no-store',
+        redirect: 'follow'
+      });
       const text = await res.text().catch(() => '');
       const contentType = res.headers.get('content-type');
+      const cacheControl = res.headers.get('cache-control');
+      const server = res.headers.get('server');
       const hasPublisherId = text.includes(ADSENSE_PUB_ID);
       const endsWithNewline = text.endsWith('\n');
 
@@ -52,6 +64,10 @@ const AdsDiagnostics: React.FC = () => {
         hasPublisherId,
         endsWithNewline,
         fetchedAt: new Date().toISOString(),
+        redirected: res.redirected,
+        finalUrl: res.url !== url ? res.url : undefined,
+        cacheControl,
+        server,
       };
       setResults((prev) => ({ ...prev, [target.key]: data }));
     } catch (error: any) {
@@ -168,10 +184,31 @@ const AdsDiagnostics: React.FC = () => {
                             <strong>URL:</strong> {result.url}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div><strong>Status:</strong> {result.status ?? 'N/A'}{result.ok ? ' (OK)' : ''}</div>
+                            <div>
+                              <strong>Status:</strong> 
+                              <span className={result.status === 200 ? 'text-green-600 ml-1' : 'text-red-600 ml-1'}>
+                                {result.status ?? 'N/A'}{result.ok ? ' (OK)' : ''}
+                              </span>
+                            </div>
                             <div><strong>Content-Type:</strong> {result.contentType ?? 'N/A'}</div>
                             <div><strong>Length:</strong> {result.length ?? 'N/A'}</div>
                             <div><strong>Fetched At:</strong> {result.fetchedAt}</div>
+                            {result.redirected && (
+                              <div className="col-span-2">
+                                <strong>Redirected:</strong> Yes
+                                {result.finalUrl && (
+                                  <div className="text-sm text-muted-foreground">
+                                    Final URL: {result.finalUrl}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {result.cacheControl && (
+                              <div><strong>Cache-Control:</strong> {result.cacheControl}</div>
+                            )}
+                            {result.server && (
+                              <div><strong>Server:</strong> {result.server}</div>
+                            )}
                           </div>
 
                           {result.error && (
@@ -202,9 +239,27 @@ const AdsDiagnostics: React.FC = () => {
             </div>
 
             <div className="text-sm text-muted-foreground">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+                <h4 className="font-medium text-yellow-800 mb-2">Domain Configuration Issue Detected</h4>
+                <p className="text-yellow-700">
+                  If the staging domain (lovableproject.com) works but rezlit.com returns 404, this indicates 
+                  the custom domain is routing ALL requests to the React app instead of serving static files first.
+                </p>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+                <h4 className="font-medium text-blue-800 mb-2">Temporary Solution Implemented</h4>
+                <p className="text-blue-700">
+                  A React route has been added at /ads.txt to serve the content as a fallback. 
+                  This should work while the domain configuration is fixed.
+                </p>
+              </div>
+              
               Notes:
               <ul className="list-disc pl-5 mt-1 space-y-1">
-                <li>The canonical production URL is https://rezlit.com/ads.txt (200 OK, Content-Type text/plain).</li>
+                <li>The canonical production URL should be https://rezlit.com/ads.txt (200 OK, Content-Type text/plain).</li>
+                <li>Static files should be served before SPA routing fallback.</li>
+                <li>Check Lovable domain settings for proper static file serving configuration.</li>
                 <li>www and non-www should serve the same file or redirect to a single canonical host.</li>
                 <li>Browser CORS can block reading cross-origin files here; Googlebot is not subject to browser CORS.</li>
                 <li>After fixes, Google may take 24–48 hours to re-crawl.</li>
