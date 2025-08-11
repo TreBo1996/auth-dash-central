@@ -38,6 +38,7 @@ import JobHub from '@/pages/JobHub';
 import TermsOfService from '@/pages/TermsOfService';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import ResetPassword from '@/pages/ResetPassword';
+import AdsDiagnostics from '@/pages/AdsDiagnostics';
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/ads-diagnostics" element={<AdsDiagnostics />} />
               
               {/* Public Job Posting Route */}
               <Route 
