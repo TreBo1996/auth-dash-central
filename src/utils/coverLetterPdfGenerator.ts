@@ -29,7 +29,7 @@ export class CoverLetterPDFGenerator {
     
     this.pageWidth = this.pdf.internal.pageSize.getWidth();
     this.pageHeight = this.pdf.internal.pageSize.getHeight();
-    this.currentY = this.margin;
+    this.currentY = this.margin + 20; // Start a bit lower for better spacing
   }
 
   /**
@@ -80,41 +80,39 @@ export class CoverLetterPDFGenerator {
   }
 
   private addHeader(contactInfo: ContactInfo): void {
-    this.pdf.setFont('helvetica', 'normal');
-    this.pdf.setFontSize(12);
-    
-    // Name (larger, bold)
+    // Name (larger, bold, centered)
     const name = this.sanitizeText(contactInfo.name);
     if (name) {
       this.pdf.setFont('helvetica', 'bold');
-      this.pdf.setFontSize(16);
-      this.pdf.text(name, this.margin, this.currentY);
-      this.currentY += 20;
+      this.pdf.setFontSize(18);
+      const nameWidth = this.pdf.getTextWidth(name);
+      const nameX = (this.pageWidth - nameWidth) / 2;
+      this.pdf.text(name, nameX, this.currentY);
+      this.currentY += 24;
     }
     
-    // Contact details
+    // Contact details (centered, single line)
     this.pdf.setFont('helvetica', 'normal');
     this.pdf.setFontSize(11);
     
+    const contactParts = [];
     const email = this.sanitizeText(contactInfo.email);
-    if (email) {
-      this.pdf.text(email, this.margin, this.currentY);
-      this.currentY += this.lineHeight;
-    }
-    
     const phone = this.sanitizeText(contactInfo.phone);
-    if (phone) {
-      this.pdf.text(phone, this.margin, this.currentY);
-      this.currentY += this.lineHeight;
-    }
-    
     const location = this.sanitizeText(contactInfo.location);
-    if (location) {
-      this.pdf.text(location, this.margin, this.currentY);
-      this.currentY += this.lineHeight;
+    
+    if (email) contactParts.push(email);
+    if (phone) contactParts.push(phone);
+    if (location) contactParts.push(location);
+    
+    if (contactParts.length > 0) {
+      const contactLine = contactParts.join(' | ');
+      const contactWidth = this.pdf.getTextWidth(contactLine);
+      const contactX = (this.pageWidth - contactWidth) / 2;
+      this.pdf.text(contactLine, contactX, this.currentY);
+      this.currentY += 18;
     }
     
-    this.currentY += 20; // Space after header
+    this.currentY += 30; // Space after header
   }
 
   private addDate(): void {
@@ -155,7 +153,8 @@ export class CoverLetterPDFGenerator {
 
   private addContent(content: string): void {
     this.pdf.setFont('helvetica', 'normal');
-    this.pdf.setFontSize(12);
+    this.pdf.setFontSize(11);
+    this.lineHeight = 18; // Increase line height for better readability
     
     // Sanitize and split content into paragraphs
     const sanitizedContent = this.sanitizeText(content);
@@ -165,30 +164,31 @@ export class CoverLetterPDFGenerator {
       // Check if we need a new page
       if (this.currentY > this.pageHeight - this.margin - 100) {
         this.pdf.addPage();
-        this.currentY = this.margin;
+        this.currentY = this.margin + 20;
       }
       
-      // Wrap text to fit within margins
-      const lines = this.wrapText(paragraph.trim(), this.pageWidth - (2 * this.margin));
+      // Wrap text to fit within margins with better spacing
+      const textWidth = this.pageWidth - (2 * this.margin);
+      const lines = this.wrapText(paragraph.trim(), textWidth);
       
       lines.forEach((line, lineIndex) => {
         // Check for page break within paragraph
         if (this.currentY > this.pageHeight - this.margin - 50) {
           this.pdf.addPage();
-          this.currentY = this.margin;
+          this.currentY = this.margin + 20;
         }
         
         this.pdf.text(line, this.margin, this.currentY);
         this.currentY += this.lineHeight;
       });
       
-      // Add space between paragraphs (except for the last one)
+      // Add space between paragraphs
       if (index < paragraphs.length - 1) {
-        this.currentY += 12;
+        this.currentY += 14; // Increased paragraph spacing
       }
     });
     
-    this.currentY += 24; // Space after content
+    this.currentY += 30; // Space after content
   }
 
   private addClosing(name: string): void {

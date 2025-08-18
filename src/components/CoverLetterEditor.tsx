@@ -325,16 +325,30 @@ export const CoverLetterEditor: React.FC = () => {
                 style={{ resize: 'vertical' }}
               />
               
-              {/* Tips */}
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-medium mb-2 text-sm">Editing Tips:</h4>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• Keep it concise - aim for 3-4 paragraphs maximum</li>
-                  <li>• Personalize the greeting with the hiring manager's name when possible</li>
-                  <li>• Include specific achievements and metrics from your experience</li>
-                  <li>• Research the company culture and incorporate relevant values</li>
-                  <li>• End with a strong call to action</li>
-                </ul>
+              {/* Tips and Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <h4 className="font-medium mb-2 text-sm">Editing Tips:</h4>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• Keep it concise - under 200 words is ideal</li>
+                    <li>• Use 3 short paragraphs maximum</li>
+                    <li>• Include specific achievements with metrics</li>
+                    <li>• Focus on value you bring to the company</li>
+                    <li>• End with a clear call to action</li>
+                  </ul>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium mb-2 text-sm text-blue-800">Length Guidelines:</h4>
+                  <div className="text-xs space-y-1">
+                    <div className={`flex justify-between ${wordCount <= 200 ? 'text-green-600' : wordCount <= 250 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      <span>Word count:</span>
+                      <span className="font-medium">{wordCount}/200</span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {wordCount <= 200 ? '✓ Perfect length' : wordCount <= 250 ? '⚠️ Getting long' : '❌ Too long'}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>

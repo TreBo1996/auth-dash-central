@@ -163,17 +163,21 @@ ${cleanJobDescription}
 JOB TITLE: ${cleanJobTitle}
 COMPANY: ${cleanCompanyName || 'the company'}
 
+CRITICAL REQUIREMENTS:
+1. Keep the ENTIRE cover letter under 200 words maximum
+2. Write ONLY 3 short, impactful paragraphs
+3. Be concise and direct - no filler content or repetition
+4. Each paragraph should be 2-4 sentences maximum
+
 Instructions:
-1. Write a compelling cover letter that demonstrates how the candidate's experience aligns with the job requirements
-2. Use specific examples from the resume that relate to the job description
-3. Match the tone to be professional but engaging
-4. Keep it concise (3-4 paragraphs)
-5. Include a strong opening that mentions the specific role and company
-6. Highlight 2-3 key qualifications that make the candidate ideal for this position
-7. End with a call to action expressing interest in an interview
-8. Do not include placeholder text like [Your Name] - write it as if ready to send
-9. Use "Dear Hiring Manager" as the greeting
-10. Format it as a complete, professional cover letter
+1. Opening paragraph: State the position and 1 key qualification (2-3 sentences)
+2. Body paragraph: Highlight 1-2 most relevant achievements with metrics when possible (2-4 sentences)
+3. Closing paragraph: Express enthusiasm and request next steps (2-3 sentences)
+4. Use "Dear Hiring Manager" as the greeting
+5. End with "Sincerely," (no signature line needed)
+6. Focus on impact and value, not lengthy descriptions
+7. Use action verbs and quantifiable results
+8. Do not include any placeholder text
 
 Generate only the cover letter content, no additional commentary.`;
 
@@ -198,7 +202,7 @@ Generate only the cover letter content, no additional commentary.`;
           }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 600,
       }),
     });
 

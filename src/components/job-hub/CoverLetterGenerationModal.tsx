@@ -294,9 +294,13 @@ export const CoverLetterGenerationModal: React.FC<CoverLetterGenerationModalProp
                 
                 <div className="w-full max-w-2xl">
                   <div className="p-4 bg-white rounded-lg border mb-4">
-                    <h4 className="font-medium mb-2">{coverLetterTitle}</h4>
-                    <div className="max-h-40 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap">
-                      {coverLetterText.substring(0, 300)}...
+                    <h4 className="font-medium mb-3">{coverLetterTitle}</h4>
+                    <div className="max-h-60 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      {coverLetterText}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-xs text-gray-500">
+                      <span>{coverLetterText.trim().split(/\s+/).filter(word => word.length > 0).length} words</span>
+                      <span>{coverLetterText.length} characters</span>
                     </div>
                   </div>
                 </div>
