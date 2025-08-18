@@ -163,23 +163,59 @@ ${cleanJobDescription}
 JOB TITLE: ${cleanJobTitle}
 COMPANY: ${cleanCompanyName || 'the company'}
 
+ANALYSIS PHASE:
+First, identify the top 3-5 key requirements from the job description and find matching experiences from the resume that demonstrate these qualifications.
+
 CRITICAL REQUIREMENTS:
-1. Keep the ENTIRE cover letter under 200 words maximum
-2. Write ONLY 3 short, impactful paragraphs
-3. Be concise and direct - no filler content or repetition
-4. Each paragraph should be 2-4 sentences maximum
+1. Keep the ENTIRE cover letter between 300-350 words maximum
+2. Write 4-5 impactful paragraphs with proper structure
+3. Each paragraph should be 3-6 sentences for depth and detail
+4. Address specific job requirements with concrete examples
+5. Use keywords and phrases from the job description naturally
 
-Instructions:
-1. Opening paragraph: State the position and 1 key qualification (2-3 sentences)
-2. Body paragraph: Highlight 1-2 most relevant achievements with metrics when possible (2-4 sentences)
-3. Closing paragraph: Express enthusiasm and request next steps (2-3 sentences)
-4. Use "Dear Hiring Manager" as the greeting
-5. End with "Sincerely," (no signature line needed)
-6. Focus on impact and value, not lengthy descriptions
-7. Use action verbs and quantifiable results
-8. Do not include any placeholder text
+PARAGRAPH STRUCTURE:
+1. Opening paragraph (3-4 sentences): 
+   - State the specific position and company
+   - Mention your top qualification that directly matches the primary job requirement
+   - Create a compelling hook that shows understanding of the role
 
-Generate only the cover letter content, no additional commentary.`;
+2. First body paragraph (4-6 sentences):
+   - Address the most important job requirement with specific resume experience
+   - Include quantifiable achievements and metrics when possible
+   - Use action verbs and demonstrate direct impact
+   - Incorporate relevant keywords from the job description
+
+3. Second body paragraph (4-6 sentences):
+   - Address 2-3 additional key job requirements
+   - Highlight complementary skills and experiences
+   - Show progression and growth in relevant areas
+   - Demonstrate problem-solving or leadership abilities
+
+4. Optional third body paragraph (3-5 sentences) if needed:
+   - Address cultural fit, additional value-add, or industry knowledge
+   - Mention specific technologies, methodologies, or soft skills from job posting
+   - Show enthusiasm for the company/industry
+
+5. Closing paragraph (3-4 sentences):
+   - Summarize your value proposition
+   - Express genuine enthusiasm for the specific role and company
+   - Include a confident call to action for next steps
+
+ALIGNMENT GUIDELINES:
+- Explicitly address at least 3-5 key requirements from the job description
+- Use similar terminology and keywords from the job posting
+- Match resume experiences to specific job responsibilities
+- Emphasize transferable skills for any requirements not directly met
+- Include quantifiable results that relate to job performance expectations
+- Address any mentioned qualifications, technologies, or soft skills
+
+FORMATTING:
+- Use "Dear Hiring Manager," as the greeting
+- End with "Sincerely," (no signature line needed)
+- Ensure smooth transitions between paragraphs
+- Do not include any placeholder text or brackets
+
+Generate only the cover letter content, no additional commentary or analysis.`;
 
     console.log('Making request to OpenAI API');
     
@@ -194,7 +230,7 @@ Generate only the cover letter content, no additional commentary.`;
         messages: [
           {
             role: 'system',
-            content: 'You are an expert career counselor and professional writer specializing in creating compelling cover letters that help job seekers stand out.'
+            content: 'You are an expert career counselor and professional writer specializing in creating compelling, detailed cover letters that strategically align candidate experiences with job requirements. You excel at analyzing job descriptions to identify key requirements and matching them with relevant resume experiences using industry-appropriate language and terminology.'
           },
           {
             role: 'user',
@@ -202,7 +238,7 @@ Generate only the cover letter content, no additional commentary.`;
           }
         ],
         temperature: 0.7,
-        max_tokens: 600,
+        max_tokens: 1000,
       }),
     });
 
