@@ -156,9 +156,11 @@ export class CoverLetterPDFGenerator {
     this.pdf.setFontSize(11);
     this.lineHeight = 18; // Increase line height for better readability
     
-    // Sanitize and split content into paragraphs
+    // Sanitize content and handle greeting separately
     const sanitizedContent = this.sanitizeText(content);
-    const paragraphs = sanitizedContent.split(/\n\s*\n/).filter(p => p.trim());
+    
+    // Split content into paragraphs using single line breaks
+    const paragraphs = sanitizedContent.split(/\n+/).filter(p => p.trim());
     
     paragraphs.forEach((paragraph, index) => {
       // Check if we need a new page
@@ -166,6 +168,9 @@ export class CoverLetterPDFGenerator {
         this.pdf.addPage();
         this.currentY = this.margin + 20;
       }
+      
+      // Handle greeting line specially (e.g., "Dear Hiring Manager,")
+      const isGreeting = paragraph.trim().toLowerCase().startsWith('dear');
       
       // Wrap text to fit within margins with better spacing
       const textWidth = this.pageWidth - (2 * this.margin);
@@ -182,9 +187,9 @@ export class CoverLetterPDFGenerator {
         this.currentY += this.lineHeight;
       });
       
-      // Add space between paragraphs
+      // Add space between paragraphs - more space for greeting
       if (index < paragraphs.length - 1) {
-        this.currentY += 14; // Increased paragraph spacing
+        this.currentY += isGreeting ? 18 : 22; // Better paragraph spacing
       }
     });
     
