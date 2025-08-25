@@ -1,5 +1,4 @@
 import React from 'react';
-import { GoogleAd } from './GoogleAd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, TrendingUp, Users } from 'lucide-react';
@@ -33,12 +32,6 @@ export const AdSidebar: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Primary Ad Slot */}
-      <GoogleAd 
-        adSlot="1737766610"
-        adFormat="auto"
-        className="min-h-[250px]"
-      />
 
       {/* Job Search Tips Card */}
       <Card>

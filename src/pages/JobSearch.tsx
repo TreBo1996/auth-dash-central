@@ -4,7 +4,6 @@ import { CollapsibleFilters } from '@/components/job-search/CollapsibleFilters';
 import { MiniJobCard } from '@/components/job-search/MiniJobCard';
 import { CompactJobCard } from '@/components/job-search/CompactJobCard';
 import { AdSidebar } from '@/components/ads/AdSidebar';
-import { GoogleAd } from '@/components/ads/GoogleAd';
 import { Card, CardContent } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -511,15 +510,9 @@ export const JobSearch: React.FC = () => {
                   <h3 className="text-sm font-medium text-stone-950">Quick Jobs</h3>
                 </div>
                 <div className="h-[calc(100vh-350px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] space-y-3">
-                  {miniJobs.map((job, index) => <div key={`mini-${job.id}-${index}`}>
-                      <MiniJobCard job={job} onJobSelect={handleMiniJobSelect} />
-                      {/* Responsive square ad at positions 10 and 21 (at least 10 jobs apart) */}
-                      {(index + 1) % 3 === 0 && <div className="mt-3">
-                          <GoogleAd adSlot="6228224703" adFormat="auto" className="w-full" style={{
-                    minHeight: '120px'
-                  }} />
-                        </div>}
-                    </div>)}
+                  {miniJobs.map((job, index) => (
+                    <MiniJobCard key={`mini-${job.id}-${index}`} job={job} onJobSelect={handleMiniJobSelect} />
+                  ))}
                 </div>
               </div>}
           </div>
@@ -581,23 +574,13 @@ export const JobSearch: React.FC = () => {
               <div className="h-[calc(100vh-100px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="space-y-3">
                   {allJobs.map((job, index) => (
-                    <div key={`main-${job.id}-${index}`}>
-                      <CompactJobCard 
-                        job={job} 
-                        id={`job-${job.id}`} 
-                        isExpanded={expandedJobId === job.id} 
-                        onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} 
-                      />
-                      {(index + 1) % 5 === 0 && (
-                        <div className="my-6">
-                          <GoogleAd 
-                            adSlot="8234567890"
-                            adFormat="auto"
-                            className="w-full"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <CompactJobCard 
+                      key={`main-${job.id}-${index}`}
+                      job={job} 
+                      id={`job-${job.id}`} 
+                      isExpanded={expandedJobId === job.id} 
+                      onExpandChange={expanded => setExpandedJobId(expanded ? job.id : null)} 
+                    />
                   ))}
                 </div>
               </div>
