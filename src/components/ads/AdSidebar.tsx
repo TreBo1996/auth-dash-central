@@ -2,11 +2,21 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, TrendingUp, Users } from 'lucide-react';
+import { JobMarketInsights } from '@/components/job-search/JobMarketInsights';
 
-export const AdSidebar: React.FC = () => {
+interface AdSidebarProps {
+  jobQuery?: string;
+}
+
+export const AdSidebar: React.FC<AdSidebarProps> = ({ jobQuery }) => {
   return (
     <div className="space-y-6 h-full overflow-y-auto scrollbar-hide">
-      {/* Community Stats - Moved to top */}
+      {/* AI Market Insights - Show when there's a search query */}
+      {jobQuery && jobQuery.trim().length > 0 && (
+        <JobMarketInsights jobTitle={jobQuery} />
+      )}
+
+      {/* Community Stats */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm">

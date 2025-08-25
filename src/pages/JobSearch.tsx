@@ -590,7 +590,7 @@ export const JobSearch: React.FC = () => {
           {/* Right Column - Ads Sidebar */}
           <div className="flex flex-col h-[calc(100vh-100px)] overflow-hidden hidden lg:flex">
             <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <AdSidebar />
+              <AdSidebar jobQuery={currentFilters?.query || searchParams.get('q') || ''} />
             </div>
           </div>
         </div>
