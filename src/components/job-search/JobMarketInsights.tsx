@@ -231,15 +231,16 @@ export const JobMarketInsights: React.FC<JobMarketInsightsProps> = ({ jobTitle }
             <Clock className="h-3 w-3 text-indigo-500" />
             <span className="text-xs font-medium text-muted-foreground">Experience</span>
           </div>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <div className="flex justify-between">
-              <span>Entry:</span>
-              <span>{insights.experienceLevel.entry}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Senior:</span>
-              <span>{insights.experienceLevel.senior}</span>
-            </div>
+          <div className="flex flex-wrap gap-1">
+            <Badge variant="outline" className="text-xs px-1 py-0">
+              Entry: {insights.experienceLevel.entry}
+            </Badge>
+            <Badge variant="outline" className="text-xs px-1 py-0">
+              Mid: {insights.experienceLevel.mid}
+            </Badge>
+            <Badge variant="outline" className="text-xs px-1 py-0">
+              Senior: {insights.experienceLevel.senior}
+            </Badge>
           </div>
         </div>
 
