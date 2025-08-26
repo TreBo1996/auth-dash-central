@@ -113,10 +113,42 @@ export const JobMarketInsights: React.FC<JobMarketInsightsProps> = ({ jobTitle }
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
-            <div className="h-4 bg-muted rounded w-2/3"></div>
+          <div className="text-center py-4">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">Analyzing job market data...</p>
+          </div>
+          <div className="animate-pulse space-y-4">
+            {/* Salary & Demand */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="h-3 bg-muted rounded w-16"></div>
+                <div className="h-6 bg-muted rounded w-24"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-muted rounded w-20"></div>
+                <div className="h-6 bg-muted rounded w-16"></div>
+              </div>
+            </div>
+            {/* Skills */}
+            <div className="space-y-2">
+              <div className="h-3 bg-muted rounded w-16"></div>
+              <div className="flex flex-wrap gap-1">
+                <div className="h-6 bg-muted rounded w-16"></div>
+                <div className="h-6 bg-muted rounded w-20"></div>
+                <div className="h-6 bg-muted rounded w-14"></div>
+              </div>
+            </div>
+            {/* Experience & Locations */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <div className="h-3 bg-muted rounded w-20"></div>
+                <div className="flex gap-1">
+                  <div className="h-6 bg-muted rounded w-16"></div>
+                  <div className="h-6 bg-muted rounded w-12"></div>
+                  <div className="h-6 bg-muted rounded w-18"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -231,7 +263,7 @@ export const JobMarketInsights: React.FC<JobMarketInsightsProps> = ({ jobTitle }
             <Clock className="h-3 w-3 text-indigo-500" />
             <span className="text-xs font-medium text-muted-foreground">Experience</span>
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="text-xs px-1 py-0">
               Entry: {insights.experienceLevel.entry}
             </Badge>
