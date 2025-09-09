@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -287,7 +287,53 @@ export type Database = {
           user_id?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      entitlements: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          refreshed_at: string
+          source: string
+          user_id: string
+          value: Json
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          refreshed_at?: string
+          source: string
+          user_id: string
+          value?: Json
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          refreshed_at?: string
+          source?: string
+          user_id?: string
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       initial_resume_sections: {
         Row: {
@@ -434,6 +480,13 @@ export type Database = {
             referencedRelation: "job_descriptions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "interview_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       job_application_eeo_responses: {
@@ -495,6 +548,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "job_applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "job_applications_job_posting_id_fkey"
             columns: ["job_posting_id"]
@@ -629,7 +689,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_descriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       job_postings: {
         Row: {
@@ -869,6 +937,13 @@ export type Database = {
             referencedRelation: "resumes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "optimized_resumes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       profiles: {
@@ -885,6 +960,7 @@ export type Database = {
           email_notifications_enabled: boolean | null
           experience_level: string | null
           full_name: string | null
+          has_premium: boolean
           id: string
           industry_preferences: string[] | null
           is_admin: boolean | null
@@ -908,6 +984,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           experience_level?: string | null
           full_name?: string | null
+          has_premium?: boolean
           id: string
           industry_preferences?: string[] | null
           is_admin?: boolean | null
@@ -931,6 +1008,7 @@ export type Database = {
           email_notifications_enabled?: boolean | null
           experience_level?: string | null
           full_name?: string | null
+          has_premium?: boolean
           id?: string
           industry_preferences?: string[] | null
           is_admin?: boolean | null
@@ -941,7 +1019,15 @@ export type Database = {
           updated_at?: string
           work_setting_preference?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       resume_certifications: {
         Row: {
@@ -1115,6 +1201,13 @@ export type Database = {
             referencedRelation: "resume_templates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "resume_exports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       resume_sections: {
@@ -1254,7 +1347,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "resumes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       subscribers: {
         Row: {
@@ -1290,7 +1391,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscribers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_feature_usage: {
         Row: {
@@ -1460,7 +1569,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_role_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1484,7 +1601,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_template_preferences: {
         Row: {
@@ -1515,6 +1640,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "resume_templates"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_template_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_users_with_premium"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -1549,6 +1716,21 @@ export type Database = {
         }
         Relationships: []
       }
+      v_users_with_premium: {
+        Row: {
+          has_premium: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          has_premium?: never
+          user_id?: string | null
+        }
+        Update: {
+          has_premium?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       archive_old_jobs: {
@@ -1557,18 +1739,18 @@ export type Database = {
       }
       calculate_job_quality_score: {
         Args: {
-          title: string
           company: string
+          data_source: string
           description: string
+          employment_type: string
           location: string
           salary: string
-          employment_type: string
-          data_source: string
+          title: string
         }
         Returns: number
       }
       can_use_feature: {
-        Args: { p_user_id: string; p_feature_type: string }
+        Args: { p_feature_type: string; p_user_id: string }
         Returns: {
           can_use: boolean
           current_usage: number
@@ -1589,39 +1771,39 @@ export type Database = {
       }
       fast_search_jobs: {
         Args: {
-          search_query?: string
-          location_filter?: string
-          employment_type_filter?: string
-          seniority_filter?: string
           company_filter?: string
+          employment_type_filter?: string
+          location_filter?: string
           result_limit?: number
           result_offset?: number
+          search_query?: string
+          seniority_filter?: string
         }
         Returns: {
-          id: string
-          title: string
-          company: string
-          location: string
-          description: string
-          salary: string
-          posted_at: string
-          job_url: string
           apply_url: string
-          source: string
-          via: string
-          thumbnail: string
-          logo_url: string
-          job_type: string
+          company: string
+          company_size: string
+          description: string
           employment_type: string
           experience_level: string
-          seniority_level: string
-          remote_type: string
-          company_size: string
+          id: string
           industry: string
           job_function: string
-          scraped_at: string
+          job_type: string
+          job_url: string
+          location: string
+          logo_url: string
+          posted_at: string
           quality_score: number
           relevance_score: number
+          remote_type: string
+          salary: string
+          scraped_at: string
+          seniority_level: string
+          source: string
+          thumbnail: string
+          title: string
+          via: string
         }[]
       }
       get_employer_profile_id: {
@@ -1633,18 +1815,18 @@ export type Database = {
         Returns: Json
       }
       get_monthly_usage: {
-        Args: { p_user_id: string; p_feature_type: string }
+        Args: { p_feature_type: string; p_user_id: string }
         Returns: number
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       increment_feature_usage: {
-        Args: { p_user_id: string; p_feature_type: string }
+        Args: { p_feature_type: string; p_user_id: string }
         Returns: number
       }
       is_valid_job_title: {
@@ -1657,41 +1839,41 @@ export type Database = {
       }
       search_jobs: {
         Args: {
-          search_query?: string
-          location_filter?: string
-          remote_filter?: string
-          employment_type_filter?: string
-          seniority_filter?: string
           company_filter?: string
+          employment_type_filter?: string
+          location_filter?: string
           max_age_days?: number
+          remote_filter?: string
           result_limit?: number
           result_offset?: number
+          search_query?: string
+          seniority_filter?: string
         }
         Returns: {
-          id: string
-          title: string
-          company: string
-          location: string
-          description: string
-          salary: string
-          posted_at: string
-          job_url: string
           apply_url: string
-          source: string
-          via: string
-          thumbnail: string
-          logo_url: string
-          job_type: string
+          company: string
+          company_size: string
+          description: string
           employment_type: string
           experience_level: string
-          seniority_level: string
-          remote_type: string
-          company_size: string
+          id: string
           industry: string
           job_function: string
-          scraped_at: string
+          job_type: string
+          job_url: string
+          location: string
+          logo_url: string
+          posted_at: string
           quality_score: number
           relevance_score: number
+          remote_type: string
+          salary: string
+          scraped_at: string
+          seniority_level: string
+          source: string
+          thumbnail: string
+          title: string
+          via: string
         }[]
       }
     }
