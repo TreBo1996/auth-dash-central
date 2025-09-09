@@ -60,6 +60,37 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Solana Wallet Integration (Optional Feature)
+
+RezLit includes optional Solana wallet sign-in that provides premium access through token ownership instead of paid subscriptions.
+
+### Setup
+
+1. Copy `.env.example` to `.env` and configure the Solana variables:
+   ```
+   SOLANA_RPC_URL="https://api.mainnet-beta.solana.com"
+   REZLIT_TOKEN_MINT="your_token_mint_address"
+   REZLIT_SEEKER_MIN="10000"
+   REZLIT_EMPLOYER_MIN="100000"
+   ```
+
+2. Replace `REZLIT_TOKEN_MINT` with your actual SPL token contract address
+3. Adjust minimum token requirements as needed
+
+### How it works
+
+- **Job Seekers**: Hold minimum 10,000 tokens for premium features
+- **Employers**: Hold minimum 100,000 tokens for premium features  
+- **Token verification**: Happens server-side via Supabase Edge Functions
+- **Wallet support**: Compatible with Phantom, Solflare, and other Solana wallets
+- **Fallback**: Email/password + Stripe subscriptions remain fully functional
+
+### Security
+
+- Token balances are verified server-side only
+- RPC endpoints and sensitive data never exposed to client
+- Wallet connection is separate from premium verification
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/0909e254-490d-4016-8416-e92073c6a124) and click on Share -> Publish.
