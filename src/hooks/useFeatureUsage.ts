@@ -38,7 +38,7 @@ export const useFeatureUsage = () => {
   const [usage, setUsage] = useState<Record<string, FeatureUsage>>({});
   const [loading, setLoading] = useState(true);
 
-  const isPremium = profile?.plan_level === 'premium';
+  const isPremium = profile?.has_premium === true;
   const limits = isPremium ? PREMIUM_LIMITS : FREE_LIMITS;
 
   const fetchUsage = async () => {

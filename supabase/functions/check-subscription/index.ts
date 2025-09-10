@@ -125,6 +125,7 @@ serve(async (req) => {
     }
 
     // Update subscribers table
+    // Update subscribers table
     await supabaseClient.from("subscribers").upsert({
       email: user.email,
       user_id: user.id,
@@ -134,6 +135,19 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'email' });
+
+    // Update entitlements table for unified premium system
+    await supabaseClient.from("entitlements").upsert({
+      user_id: user.id,
+      source: 'stripe',
+      active: hasActiveSub,
+      value: {
+        subscription_tier: subscriptionTier,
+        subscription_end: subscriptionEnd,
+        stripe_customer_id: customerId
+      },
+      refreshed_at: new Date().toISOString()
+    }, { onConflict: 'user_id,source' });
 
     // Update user profile plan level
     await supabaseClient.from("profiles").update({

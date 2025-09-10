@@ -8,11 +8,12 @@ import { EmployerDashboard } from '@/pages/employer/EmployerDashboard';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
 import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
+import { WalletProviderWrapper } from '@/contexts/WalletContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { AppErrorBoundary } from '@/components/common/AppErrorBoundary';
-import Auth from '@/pages/Auth';
+import SimpleAuth from '@/pages/SimpleAuth';
 import VerifyEmail from '@/pages/VerifyEmail';
 import UploadResumePage from '@/pages/UploadResumePage';
 import UploadJobPage from '@/pages/UploadJobPage';
@@ -46,11 +47,12 @@ function App() {
     <AppErrorBoundary>
       <AuthProvider>
         <SubscriptionProvider>
-          <Router>
-            <RoleProvider>
+          <WalletProviderWrapper>
+            <Router>
+              <RoleProvider>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth" element={<SimpleAuth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/employer/auth" element={<EmployerAuth />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
@@ -291,10 +293,11 @@ function App() {
             </Routes>
           </RoleProvider>
         </Router>
-      </SubscriptionProvider>
-      </AuthProvider>
-    </AppErrorBoundary>
-  );
+      </WalletProviderWrapper>
+    </SubscriptionProvider>
+    </AuthProvider>
+  </AppErrorBoundary>
+);
 }
 
 export default App;

@@ -287,15 +287,7 @@ export type Database = {
           user_id?: string
           website?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "employer_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       entitlements: {
         Row: {
@@ -325,15 +317,7 @@ export type Database = {
           user_id?: string
           value?: Json
         }
-        Relationships: [
-          {
-            foreignKeyName: "entitlements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       initial_resume_sections: {
         Row: {
@@ -480,13 +464,6 @@ export type Database = {
             referencedRelation: "job_descriptions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "interview_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       job_application_eeo_responses: {
@@ -548,13 +525,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "job_applications_applicant_id_fkey"
-            columns: ["applicant_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "job_applications_job_posting_id_fkey"
             columns: ["job_posting_id"]
@@ -689,15 +659,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "job_descriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       job_postings: {
         Row: {
@@ -937,13 +899,6 @@ export type Database = {
             referencedRelation: "resumes"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "optimized_resumes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       profiles: {
@@ -1019,15 +974,7 @@ export type Database = {
           updated_at?: string
           work_setting_preference?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       resume_certifications: {
         Row: {
@@ -1201,13 +1148,6 @@ export type Database = {
             referencedRelation: "resume_templates"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "resume_exports_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       resume_sections: {
@@ -1347,15 +1287,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "resumes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       subscribers: {
         Row: {
@@ -1391,15 +1323,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "subscribers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       user_feature_usage: {
         Row: {
@@ -1569,15 +1493,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_role_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -1601,15 +1517,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       user_template_preferences: {
         Row: {
@@ -1641,13 +1549,6 @@ export type Database = {
             referencedRelation: "resume_templates"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_template_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
         ]
       }
       wallets: {
@@ -1675,15 +1576,7 @@ export type Database = {
           user_id?: string
           verified_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "wallets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_users_with_premium"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -1713,21 +1606,6 @@ export type Database = {
           thumbnail: string | null
           title: string | null
           via: string | null
-        }
-        Relationships: []
-      }
-      v_users_with_premium: {
-        Row: {
-          has_premium: boolean | null
-          user_id: string | null
-        }
-        Insert: {
-          has_premium?: never
-          user_id?: string | null
-        }
-        Update: {
-          has_premium?: never
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -1817,6 +1695,10 @@ export type Database = {
       get_monthly_usage: {
         Args: { p_feature_type: string; p_user_id: string }
         Returns: number
+      }
+      get_user_premium_status: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
