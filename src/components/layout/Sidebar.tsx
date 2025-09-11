@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { SignupBenefitsModal } from '@/components/auth/SignupBenefitsModal';
+import { WalletHeaderButton } from '@/components/wallet/WalletHeaderButton';
 const navigation = [{
   name: 'Job Hub',
   href: '/job-hub',
@@ -161,14 +162,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="p-4 border-t border-indigo-100 bg-gradient-to-r from-gray-50 to-blue-50">
         {user ? (
-          <Button 
-            onClick={handleLogout} 
-            variant="outline" 
-            className="w-full justify-start h-11 border-indigo-200 text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-700 hover:border-red-200 transition-all duration-200"
-          >
-            <LogOut className="mr-3 h-4 w-4" />
-            Log Out
-          </Button>
+          <div className="space-y-3">
+            <div className="flex justify-center">
+              <WalletHeaderButton />
+            </div>
+            <Button 
+              onClick={handleLogout} 
+              variant="outline" 
+              className="w-full justify-start h-11 border-indigo-200 text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-700 hover:border-red-200 transition-all duration-200"
+            >
+              <LogOut className="mr-3 h-4 w-4" />
+              Log Out
+            </Button>
+          </div>
         ) : (
           <div className="space-y-2">
             <Button 
