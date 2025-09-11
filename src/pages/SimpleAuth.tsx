@@ -13,7 +13,6 @@ import { WalletSignIn } from '@/components/auth/WalletSignIn';
 const SimpleAuth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
 
@@ -40,7 +39,7 @@ const SimpleAuth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password);
     
     if (error) {
       toast.error(error.message);
@@ -115,16 +114,6 @@ const SimpleAuth = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div>
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
                   <div>
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
