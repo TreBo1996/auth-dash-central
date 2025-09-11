@@ -23,6 +23,7 @@ interface EmploymentPreferences {
   email_notifications_enabled: boolean;
   newsletter_enabled: boolean;
   // Contact information fields
+  full_name: string;
   contact_phone: string;
   contact_location: string;
 }
@@ -91,13 +92,14 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
     industry_preferences: [],
     email_notifications_enabled: true,
     newsletter_enabled: true,
+    full_name: '',
     contact_phone: '',
     contact_location: '',
     ...initialData
   });
 
   // Validation for required fields
-  const requiredFields = ['desired_job_title', 'experience_level', 'work_setting_preference'] as const;
+  const requiredFields = ['full_name', 'desired_job_title', 'experience_level', 'work_setting_preference'] as const;
   const isFormValid = requiredFields.every(field => preferences[field] && preferences[field].trim() !== '');
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
@@ -183,6 +185,7 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
       
       // Map display values back to database values
       const dbData = {
+        full_name: preferences.full_name || null,
         desired_job_title: preferences.desired_job_title || null,
         experience_level: preferences.experience_level 
           ? EXPERIENCE_LEVEL_MAP[preferences.experience_level as keyof typeof EXPERIENCE_LEVEL_MAP] || null
@@ -306,24 +309,42 @@ export const EmploymentPreferencesForm: React.FC<EmploymentPreferencesFormProps>
           <h3 className="text-lg font-medium text-blue-900">Contact Information</h3>
           <p className="text-sm text-blue-700">This information will be used in your resumes and job applications</p>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="contact-phone">Phone Number</Label>
+              <Label htmlFor="full-name" className="flex items-center gap-2">
+                Full Name <span className="text-red-500">*</span>
+              </Label>
               <Input
-                id="contact-phone"
-                placeholder="e.g. (555) 123-4567"
-                value={preferences.contact_phone}
-                onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+                id="full-name"
+                placeholder="e.g. John Smith"
+                value={preferences.full_name}
+                onChange={(e) => handleInputChange('full_name', e.target.value)}
+                className={hasAttemptedSave && !preferences.full_name.trim() ? 'border-red-500' : ''}
               />
+              {hasAttemptedSave && !preferences.full_name.trim() && (
+                <p className="text-sm text-red-500">Full name is required</p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-location">Contact Location</Label>
-              <Input
-                id="contact-location"
-                placeholder="e.g. New York, NY"
-                value={preferences.contact_location}
-                onChange={(e) => handleInputChange('contact_location', e.target.value)}
-              />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-phone">Phone Number</Label>
+                <Input
+                  id="contact-phone"
+                  placeholder="e.g. (555) 123-4567"
+                  value={preferences.contact_phone}
+                  onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-location">Contact Location</Label>
+                <Input
+                  id="contact-location"
+                  placeholder="e.g. New York, NY"
+                  value={preferences.contact_location}
+                  onChange={(e) => handleInputChange('contact_location', e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -18,7 +18,6 @@ const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
@@ -207,7 +206,7 @@ const Auth: React.FC = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!email || !password || !fullName.trim()) {
+    if (!email || !password) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -243,7 +242,7 @@ const Auth: React.FC = () => {
     setLastSubmissionTime(Date.now());
 
     // Simplified signup - no redirect complexity, roles handled after auth
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password);
     
     if (error) {
       handleAuthError(error);
@@ -569,18 +568,6 @@ const Auth: React.FC = () => {
                     autoComplete="off"
                   />
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Name *</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
@@ -675,7 +662,7 @@ const Auth: React.FC = () => {
                    <Button 
                      type="submit" 
                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 shadow-lg" 
-                     disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short' || !fullName.trim() || !termsAccepted}
+                     disabled={isLoading || !rateLimit.canAttempt || emailValid === false || passwordStrength === 'Too short' || !termsAccepted}
                    >
                     {isLoading ? (
                       <>
