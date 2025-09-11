@@ -46,7 +46,7 @@ interface WalletProviderWrapperProps {
 
 // Inner component that uses wallet hooks
 const WalletContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { publicKey, connected, connecting, disconnect } = useWallet();
+  const { publicKey, connected, connecting, disconnect, signMessage } = useWallet();
   const { connection } = useConnection();
   const { user } = useAuth();
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
@@ -67,7 +67,8 @@ const WalletContextProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       const tokenMint = import.meta.env.VITE_REZLIT_TOKEN_MINT;
       if (!tokenMint || tokenMint === 'REPLACE_ME_MINT_ADDRESS') {
-        console.log('Token mint not configured');
+        console.log('Token mint not configured, setting balance to 0');
+        setTokenBalance(0);
         return;
       }
 
@@ -100,8 +101,7 @@ const WalletContextProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       // Create a message to sign for verification
       const message = `Verify wallet ownership for RezLit premium access as ${role}. Timestamp: ${Date.now()}`;
       
-      // Get wallet adapter to sign message
-      const { signMessage } = useWallet();
+      // Check if wallet supports message signing
       if (!signMessage) {
         throw new Error('Wallet does not support message signing');
       }
