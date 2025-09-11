@@ -67,64 +67,71 @@ const SimpleAuth = () => {
   const passwordsMismatch = confirmPassword && password !== confirmPassword;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-4">
-      <div className="w-full max-w-4xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-4 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/4 w-60 h-60 bg-purple-300/10 rounded-full blur-2xl"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
             <img 
               src="/lovable-uploads/41eb8276-f076-476b-93fb-6dab57a8c8b1.png" 
               alt="RezLit Logo" 
-              className="h-16 mx-auto"
+              className="h-16 mx-auto drop-shadow-lg"
             />
           </Link>
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-sm">
             Welcome to RezLit
           </h1>
-          <p className="text-blue-100 text-lg">
+          <p className="text-blue-100 text-lg drop-shadow-sm">
             AI-Powered Job Search Tool - Land Your Dream Job 3x Faster
           </p>
         </div>
 
         <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/20 backdrop-blur-sm border-white/30">
-            <TabsTrigger value="signin" className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80">Sign In</TabsTrigger>
-            <TabsTrigger value="signup" className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80">Sign Up</TabsTrigger>
-            <TabsTrigger value="wallet" className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80">Wallet</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-gray-100 mb-6 border-0 shadow-lg">
+            <TabsTrigger value="signin" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-600 font-medium">Sign In</TabsTrigger>
+            <TabsTrigger value="signup" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-600 font-medium">Sign Up</TabsTrigger>
+            <TabsTrigger value="wallet" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-600 font-medium">Wallet</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-white text-xl">Welcome Back</CardTitle>
-                <CardDescription className="text-blue-100">Sign in to access your AI-powered job search tools</CardDescription>
+            <Card className="backdrop-blur-md bg-white/95 border-0 shadow-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-gray-900 text-2xl">Welcome Back</CardTitle>
+                <CardDescription className="text-gray-600">Sign in to access your AI-powered job search tools</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSignIn} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-5">
                   <div>
-                    <Label htmlFor="signin-email" className="text-white">Email</Label>
+                    <Label htmlFor="signin-email" className="text-gray-700 font-medium">Email</Label>
                     <Input
                       id="signin-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-white/20 backdrop-blur-sm border-white/30 text-white placeholder:text-white/60"
+                      className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
                       placeholder="Enter your email"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signin-password" className="text-white">Password</Label>
+                    <Label htmlFor="signin-password" className="text-gray-700 font-medium">Password</Label>
                     <Input
                       id="signin-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="bg-white/20 backdrop-blur-sm border-white/30 text-white placeholder:text-white/60"
+                      className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
                       placeholder="Enter your password"
                     />
                   </div>
-                  <Button type="submit" className="w-full bg-white text-indigo-600 hover:bg-gray-100 font-semibold" disabled={loading}>
+                  <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 shadow-lg hover:shadow-xl transition-all" disabled={loading}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Sign In
                   </Button>
@@ -134,42 +141,42 @@ const SimpleAuth = () => {
           </TabsContent>
 
           <TabsContent value="signup">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-white text-xl">Join RezLit</CardTitle>
-                <CardDescription className="text-blue-100">Create your account and start landing more interviews</CardDescription>
+            <Card className="backdrop-blur-md bg-white/95 border-0 shadow-2xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-gray-900 text-2xl">Join RezLit</CardTitle>
+                <CardDescription className="text-gray-600">Create your account and start landing more interviews</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-5">
                   <div>
-                    <Label htmlFor="signup-email" className="text-white">Email</Label>
+                    <Label htmlFor="signup-email" className="text-gray-700 font-medium">Email</Label>
                     <Input
                       id="signup-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-white/20 backdrop-blur-sm border-white/30 text-white placeholder:text-white/60"
+                      className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
                       placeholder="Enter your email"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-password" className="text-white">Password</Label>
+                    <Label htmlFor="signup-password" className="text-gray-700 font-medium">Password</Label>
                     <Input
                       id="signup-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="bg-white/20 backdrop-blur-sm border-white/30 text-white placeholder:text-white/60"
+                      className="mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
                       placeholder="At least 6 characters"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signup-confirm-password" className="text-white flex items-center gap-2">
+                    <Label htmlFor="signup-confirm-password" className="text-gray-700 font-medium flex items-center gap-2">
                       Confirm Password
-                      {passwordsMatch && <CheckCircle className="h-4 w-4 text-green-400" />}
-                      {passwordsMismatch && <XCircle className="h-4 w-4 text-red-400" />}
+                      {passwordsMatch && <CheckCircle className="h-4 w-4 text-green-500" />}
+                      {passwordsMismatch && <XCircle className="h-4 w-4 text-red-500" />}
                     </Label>
                     <Input
                       id="signup-confirm-password"
@@ -177,19 +184,25 @@ const SimpleAuth = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
-                      className={`bg-white/20 backdrop-blur-sm border-white/30 text-white placeholder:text-white/60 ${
-                        passwordsMismatch ? 'border-red-400' : passwordsMatch ? 'border-green-400' : ''
+                      className={`mt-1 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500 ${
+                        passwordsMismatch ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : passwordsMatch ? 'border-green-400 focus:border-green-500 focus:ring-green-500' : ''
                       }`}
                       placeholder="Confirm your password"
                     />
                     {passwordsMismatch && (
-                      <p className="text-red-400 text-sm mt-1">Passwords do not match</p>
+                      <p className="text-red-500 text-sm mt-1 flex items-center gap-1">
+                        <XCircle className="h-3 w-3" />
+                        Passwords do not match
+                      </p>
                     )}
                     {passwordsMatch && (
-                      <p className="text-green-400 text-sm mt-1">Passwords match</p>
+                      <p className="text-green-500 text-sm mt-1 flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Passwords match
+                      </p>
                     )}
                   </div>
-                  <Button type="submit" className="w-full bg-white text-indigo-600 hover:bg-gray-100 font-semibold" disabled={loading || passwordsMismatch}>
+                  <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 shadow-lg hover:shadow-xl transition-all" disabled={loading || passwordsMismatch}>
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Create Account
                   </Button>
@@ -199,7 +212,7 @@ const SimpleAuth = () => {
           </TabsContent>
 
           <TabsContent value="wallet">
-            <div className="bg-white/10 backdrop-blur-sm border-white/20 shadow-2xl rounded-lg p-6">
+            <div className="backdrop-blur-md bg-white/95 border-0 shadow-2xl rounded-lg p-6">
               <WalletSignIn onSuccess={() => {}} />
             </div>
           </TabsContent>
