@@ -14,6 +14,7 @@ import { UsageDashboard } from '@/components/dashboard/UsageDashboard';
 import { SubscriptionCard } from '@/components/subscription/SubscriptionCard';
 import { EmploymentPreferencesForm } from '@/components/forms/EmploymentPreferencesForm';
 import { AnimatedSection } from '@/components/common/AnimatedSection';
+import { WalletConnectCard } from '@/components/wallet/WalletConnectCard';
 
 interface UserProfile {
   email: string;
@@ -304,7 +305,10 @@ const Profile: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Subscription & Billing</h2>
             <p className="text-gray-600">Manage your subscription plan and billing information</p>
           </div>
-          <SubscriptionCard />
+          <div className="grid gap-4">
+            <SubscriptionCard />
+            <WalletConnectCard />
+          </div>
         </AnimatedSection>
 
         {/* Usage Overview */}

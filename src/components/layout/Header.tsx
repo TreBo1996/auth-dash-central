@@ -2,9 +2,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Wallet } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useWalletContext } from '@/contexts/WalletContext';
 import { RoleSwitcher } from './RoleSwitcher';
 
 export const Header: React.FC = () => {
@@ -15,6 +16,8 @@ export const Header: React.FC = () => {
   const {
     toast
   } = useToast();
+  const { isConnected, tokenBalance } = useWalletContext();
+  
   const handleSignOut = async () => {
     await signOut();
     toast({
@@ -22,6 +25,8 @@ export const Header: React.FC = () => {
       description: "You have been signed out successfully."
     });
   };
+
+  const hasWalletPremium = isConnected && tokenBalance !== null && tokenBalance >= 10000;
   return (
     <header className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 sticky top-0 z-50">
       <div className="px-6 py-4">
@@ -43,6 +48,15 @@ export const Header: React.FC = () => {
                     Dashboard
                   </Button>
                 </Link>
+                {/* Wallet Status Indicator */}
+                {isConnected && (
+                  <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/20">
+                    <Wallet className={`h-3 w-3 ${hasWalletPremium ? 'text-green-300' : 'text-blue-300'}`} />
+                    <span className="text-xs text-white font-medium">
+                      {hasWalletPremium ? 'Premium' : 'Connected'}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
                   <User className="h-4 w-4 text-yellow-300" />
                   <span className="text-sm text-white font-medium">{user.email}</span>
