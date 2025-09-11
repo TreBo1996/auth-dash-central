@@ -163,9 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-t border-indigo-100 bg-gradient-to-r from-gray-50 to-blue-50">
         {user ? (
           <div className="space-y-3">
-            <div className="flex justify-center">
-              <WalletHeaderButton />
-            </div>
+            <WalletHeaderButton variant="sidebar" />
             <Button 
               onClick={handleLogout} 
               variant="outline" 
