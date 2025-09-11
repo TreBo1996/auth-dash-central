@@ -18,8 +18,11 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 import {
   PhantomWalletAdapter,
-  SolflareWalletAdapter
+  SolflareWalletAdapter,
+  CoinbaseWalletAdapter,
+  TrustWalletAdapter
 } from '@solana/wallet-adapter-wallets';
+import { WalletConnectWalletAdapter } from '@solana/wallet-adapter-walletconnect';
 import { clusterApiUrl } from '@solana/web3.js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -160,10 +163,18 @@ const WalletContextProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
 // Main wrapper component with all providers
 export const WalletProviderWrapper: React.FC<WalletProviderWrapperProps> = ({ children }) => {
-  // Configure which wallets to support
+  // Configure which wallets to support (ordered by popularity)
   const wallets = [
     new PhantomWalletAdapter(),
-    new SolflareWalletAdapter({ network: WalletAdapterNetwork.Mainnet })
+    new SolflareWalletAdapter({ network: WalletAdapterNetwork.Mainnet }),
+    new CoinbaseWalletAdapter(),
+    new WalletConnectWalletAdapter({
+      network: WalletAdapterNetwork.Mainnet,
+      options: {
+        projectId: '4fbb552f9d9e5e1e2e7b6b4c4c4c4c4c', // Replace with your WalletConnect project ID
+      },
+    }),
+    new TrustWalletAdapter()
   ];
 
   // Use mainnet for production
